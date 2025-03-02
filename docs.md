@@ -136,7 +136,7 @@ The next section explains all possible attributes in more detail.
 `Score`: the maximum number of points to score here.
 
 * By default, questions simply score 1 point, and you get them all for being right.
-* Use `ScoreMethod` to dictate some different way of (partial) scoring.
+* Use `ScoreMethod` to dictate some different, custom way of (partial) scoring.
 
 `Comment`: any comment(s) or remark(s) about this question.
 
@@ -294,6 +294,8 @@ Below is a list of all options, but don't be overwhelmed. They're all _optional_
 
 `url` (string): by default, it assumes all your content (questions and media) is relative to the quiz location. If this is not the case, set the actual base URL of the quiz here.
 
+`builtin` (JSON object): allows putting in the final quiz object on creation directly. No more loading/parsing needed, playable offline.
+
 `filename` (string): the string used for automatic text file name matching. (Default is `questions`, which looks for `questions_0.txt` first.)
 
 `filenames` (string[]): a list of filenames to use. If set, it _only_ loads these exact files and nothing else.
@@ -302,7 +304,13 @@ Below is a list of all options, but don't be overwhelmed. They're all _optional_
 
 `subFolders` (object): custom folders where it should look for the `questions` or the `media`.
 
-`allowInput` (boolean): if true, people can directly enter their answers into the quiz itself. (This can then be used to automatically grade the answers, if desired.)
+#### Interactivity
+
+`allowInput` (boolean): if true, people can directly enter their answers into the quiz itself. This can then be used to automatically grade the answers, if desired. 
+
+If turned on, the quiz is very _restricted_ (can't toggle on answer mode, for example). This allows letting everyone play on their own device, unsupervised, without cheating. (Or, well, without _too much_ cheating ;) You can never completely prevent it. If anyone wants to desperately find a way to ruin a fun night together, they will. Just don't invite them again.)
+
+This mode is also useful when the quiz is used educationally / collaboratively, such as a parent and their kid(s) trying one together to learn about a topic.
 
 #### Scores
 
@@ -360,11 +368,15 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `hideAuthor` (boolean): if set, doesn't show the author.
 
+#### Theming
+
+`theme` (QuizTheme): for loading your own custom theme. (See the _Themes / Custom Styling_ section for how to create/modify one.) If set, the default theme is NOT loaded.
+
+`loadDefaultStyles` (boolean): true by default, which loads a very minimal set of core styles to get things looking usable.
+
 #### UI & Usability
 
 `showErrors` (boolean): if true, errors are shown (in red boxes at top left).
-
-`loadDefaultStyles` (boolean): if true, some minimal default styling is loaded to make the quiz look functional.
 
 `enableInlineLists` (boolean): if true, inline lists are allowed in the question syntax.
 
@@ -375,6 +387,10 @@ exclude: { category: "Music", author: "Tiamo" }
 `enableKeys` (boolean): if true, allows navigation by keyboard
 
 `enableUI` (boolean): if true, shows buttons for the most common actions (such as prev/next questions) at the top.
+
+`hotkeys` (object): allows setting custom hotkeys (one or multiple per action) that override the defaults. See `QuizAction` for all possible actions to define.
+
+`hotkeysForbidden` (string[]): any action named will simply not trigger (when pressing a connected key).
 
 #### Timer
 
@@ -388,7 +404,7 @@ exclude: { category: "Music", author: "Tiamo" }
 
 * `nothing`: do nothing. Use when the timer is only meant as a subtle pressure but you want things to stay relaxed/manual otherwise.
 * `stayButHide`: you stay on the same question, but its content is hidden.
-* `autoContinue`: the quiz automatically skips to the next question.
+* `autoContinue`: the quiz automatically skips to the next question. (And its timer instantly starts too.)
 
 `allowTimersOnSections` (boolean): if true, section dividers can be timed as well. (This is disabled by default as sections are natural moments to take a breather/break.)
 
@@ -401,24 +417,48 @@ At the same time, I actually prefer playing quizzes without any screens. I know 
 
 This isn't something, however, that should clutter the main interface or workflow. Most people will never even consider this. As such, it's only available in code.
 
-* Once a quiz is loaded, open the Inspector Console of your browser.
+* Once a quiz is loaded, open the Inspector Console of your browser (usually `F12`).
 * (Make sure you have access to your quiz object, such as by saving it on the `window`)
 * Then,
-  * Use `quiz.exportToEmbedded()` to get all questions as a JSON object, so you can embed it directly into the quiz and don't need to load the text files anymore. 
-  * Use `quiz.exportToAnswerSheet()` to get a table with the answers to all questions filled-in. 
-  * Use `quiz.exportToAnswerForm()` to get an _empty_ table, for others to write their answers.
-  * Use `quiz.exportToMarkdown()` to get a Markdown string. This can be put into one of several "Markdown to Slideshow" converters (@TODO: List best option here)
+  * Use `quiz.export.toEmbedded()` to get all questions as a JSON object. (Using the `builtin` property, you can embed it directly into the quiz and don't need to load the text files anymore.)
+  * Use `quiz.export.toPrint()` to get all questions on one page (and nothing else), styled in such a way that you can print it. (One question = One full page.)
+  * Use `quiz.export.toAnswerSheet()` to get a table with the answers to all questions filled-in. 
+  * Use `quiz.export.toAnswerForm()` to get an _empty_ table, for others to write their answers.
+  * Use `quiz.export.toMarkdown()` to get a Markdown string. This can be put into one of several "Markdown to Slideshow" converters (@TODO: List best option here)
 
-When you have your result, use the browser's Print functionality to get it as a printable PDF.
+When you have your result, and want it as a PDF, use the browser's Print functionality.
 
 This area is most likely to change over time, as I refine this approach or switch to other existing frameworks.
 
-### Custom Styling
+### Themes / Custom Styling
 
-The system automatically loads some default styles to make things look acceptable. I tried to keep these absolutely as minimal as possible.
+The Quiz styles itself according to `QuizTheme` objects you put in.
 
-For my personal quizzes, which I sell in my online store, I add my own stylesheet(s). Some examples of these can be found under `themes` => @TODO.
+* The system automatically loads some core styles and CSS properties. These are very minimal, but _not_ optional, as they're needed to make all other theming work.
+* On top of that, it loads the `default` theme, which actually contains most style rules.
+* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ load yours instead.
 
-You can do the same thing! Simply load a CSS stylesheet on the HTML page that also hosts your quiz. You can check the quiz itself (through the Inspector) for the classes/IDs of different elements.
+Creating a new theme has the following steps.
 
-Adding full and proper "theme" support is on my wishlist. This would allow reading and modifying all sorts of things about the quiz without ever touching the code or content, and save all that inside a reusable theme file/folrder. It's not, however, an urgent or essential task and thus has no due date.
+* Create a folder (`yourthemename`) inside the `themes` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images.
+* When creating the Quiz, create a `QuizTheme` object, and insert it at the `theme` property. 
+* To connect that theme with the folder where it can find its files, set its `label` to te right name.
+
+The following properties are available for configuration in your theme. As usual, all are optional.
+
+* `label`: name of your theme; folder to look for assets by default. (Defaults to "unnamed-theme".)
+* `folder`: a custom folder where it should look for assets. Overrides the label if set.
+* `inline`: a flat string with CSS code, which gets inserted first (if set).
+* `external`: the filename of an external CSS stylesheet, which is inserted second (if set).
+* `fonts`: custom font files you want to load and how it should name them.
+  * You can set the `body` or `heading` font.
+  * These accept an object like `{ name: FONTNAME, regular: FONTFILE, bold: FONTFILE, italic: FONTFILE }`.
+  * If a variant isn't set, it just defaults to the _regular_ version. Don't forget extensions of font files.
+* `backgroundImages`: a list of image files that it should randomly select as backgrounds for questions.
+* `colors`: an object with colorschemes. These are evenly (but randomly) distributed over the questions.
+  * A color scheme has the shape `name: { light: COLOR, dark: COLOR, text: COLOR, dark: COLOR }`
+  * When a value isn't set, it just falls back on the default of the core styles (e.g. text = black, bg = white)
+
+Themes are the latest addition to this system. (When I was only using this system myself, all values and design were just baked-in, of course. Took some effort to decouple and make it more friendly to style.) They're still a bit barebones and I shall complete this documentation when their API is somewhat finalized.
+
+_Remark_: Obviously, you can also simply style the quiz by inserting your own stylesheet in the HTML page that hosts it. Probably the most flexible and fastest way for people who really know what they're doing.
