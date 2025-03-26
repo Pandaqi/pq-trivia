@@ -24,6 +24,12 @@ Implemented all this, didn't get chance to test yet.
 * When someone tries to continue without filling in their answer, highlight that box/make error nicer
 * Allow moving through answers on interactive anyway, and then display the REAL answer and YOUR answer side by side?
 
+## SETTINGS
+
+For now, the "settings" selection is some fixed, custom code. In the long run, find a general way to "expose" ANY setting here! 
+* Maybe some `QuizSetting` class that dictates how its shown, tooltip, max range, default value, etcetera
+* And then I input those classes for all properties I'd want to show/allow changing
+
 ## FEATURES
 
 * Allow injecting code/executable program (in JavaScript)? And a nice code highlighter?
@@ -37,6 +43,6 @@ Implemented all this, didn't get chance to test yet.
 ## CUSTOMIZATION
 
 * Allow adding **(CSS) classes** to questions (through `.txt` syntax) to change their layout + implement some default layouts to pick immediately.
-* Allow **directly responding** to quiz changes, so people can do their own HTML entirely. For this to work ...
+* Allow **directly responding** to quiz change signals (in your own custom implementation), so people can do their own HTML entirely. For this to work ...
   * I'd need to explain the basic functions here (`gotoNext`, `getCurrentQuestion`)
   * I'd need to allow completely turning off the Nodes output, or sending it through a custom filter to get the markup _you_ want.

@@ -103,6 +103,7 @@ The next section explains all possible attributes in more detail.
 ### Attributes
 
 `Question`: starts a new question. The value is the specific question you want to ask.
+* SPECIAL SYNTAX! You can also start a question with `## Question Here` (like a second Markdown heading).
 
 `Answers`: one or multiple answers.
 
@@ -343,6 +344,12 @@ exclude: { category: "Music", author: "Tiamo" }
 `maxAnswers` (number): the maximum number of options a question can have.
 
 `excludeSections` (boolean): if true, all section declarations are simply ignored.
+
+`randomizeQuestions` (boolean): if false, no randomization at all will take place. (Default = true)
+
+`randomizeSections` (boolean): if false, sections stay in the order that you input them. (Default = true)
+
+`randomizeAnswers` (boolean): if false, answers stay in the order that you input them. (Default = true)
 
 #### Links & Media
 
