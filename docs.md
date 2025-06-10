@@ -141,6 +141,13 @@ The next section explains all possible attributes in more detail.
 
 `Comment`: any comment(s) or remark(s) about this question.
 
+`Secret` (_Only applies to Sections_): A secret common "theme" for this section/round. It reveals this theme when the section starts on _answer mode_.
+
+* You can also use the `addSecretThemeQuestions` parameter on Quiz to automatically insert a question at the end of each round asking what the theme was (for 1 point).
+* I created this "quick" way to support secrets for individual rounds, because that's most common and would be more annoying to do manually each time. But if you want a single "secret theme" for _the entire quiz_ ... just invent one behind the scenes (and manually add a question about the secret at the very end) :)
+
+`Hints` (_Only applies to Questions_): One or more "hints". These are hidden by default, but can be revealed in the moment if desired.  
+
 `Timer`: how much time is available for this question (in _seconds_).
 
 * If excluded, it defaults to the global timer duration you set in the system configuration.
@@ -261,13 +268,32 @@ You can move **forward** using
 
 Press **A** to toggle show/hide answers. This _only_ changes the current question.
 
+Press **H** to toggle show/hide hints. This _only_ changes the current question, and obviously only applies if you added one or more hints yourself.
+
 Press **M** to toggle your mode (questions/answers). This is a global setting for the entire quiz.
 
 Press **Escape** to skip to the end of the quiz.
 
 Press **Enter** to play/pause the selected media ( = first one listed).
 
-Press **+** or **-** to change font size.
+Press **+** or **-** to change font size. This is a very easy way to _resize_ the quiz to fit every screen and make sure everyone can read it. (NOTE! You can also **click** all images to make them fullscreen, if they're ever too small. And then click the popup again to remove it.)
+
+### Text Formatting
+
+Like with the other parts of the system, we stole our formatting syntax from _Markdown_. It's supported basically anywhere in the system where text could be shown.
+
+* Use `**texthere**` for **bold text**.
+* Use `_texthere_` for _italic text_.
+* Use ``codehere`` for `code`.
+* Use `__texthere__` for <u>underlined text</u>.
+* Use `~texthere~` for ~~~struck-through text~~~
+* Use `[Name](Url)` to insert a [link](#).
+* Use `[color=COLOR]texthere[/color]` to recolor text to COLOR. Common color names will work (_orange, red, ..._). Otherwise, learn about CSS Hex Colors and put one of those in.
+* Use `[size=SIZE]texthere[/size]` to change font size to SIZE. Please note that you need to provide a _unit_, and the most common one is `px` for pixels, or `%` for a percentage of the default font size. So, to increase the font, you might say `[size=150%]BIG TEXT[/size]`
+* Use `^[texthere]` for a superscript, like E=mc<sup>2</sup>
+* Use `_[texthere]` for a subscript, like x<sub>2</sub>.
+
+If these don't suit you, then you can also directly write HTML tags. Do note, however, this isn't guaranteed to work or look like you wanted, due to the constraints and general styling/node hierarchy of the system.
 
 ### The Quiz object
 
@@ -375,9 +401,15 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `hideAuthor` (boolean): if set, doesn't show the author.
 
+`showPropertiesWithoutDiversity` (boolean): if false, properties that only have the same (default) values are not shown to minimize the interface clutter. (Example: all questions have the same author or no author.) 
+
+`addSecretThemeQuestions` (boolean): if a section has a `secret` theme attached, this will automatically inject a question at the _end_ of that round. An open question that asks what the theme was, for 1 point.
+
 #### Theming
 
 `theme` (QuizTheme): for loading your own custom theme. (See the _Themes / Custom Styling_ section for how to create/modify one.) If set, the default theme is NOT loaded.
+
+`themesEnabled` (boolean): true by default, just a quick toggle to test with/without current theme(s). (You can also turn off/on all theming in the settings after the quiz has been loaded.)
 
 `loadDefaultStyles` (boolean): true by default, which loads a very minimal set of core styles to get things looking usable.
 
@@ -428,12 +460,16 @@ This isn't something, however, that should clutter the main interface or workflo
 * (Make sure you have access to your quiz object, such as by saving it on the `window`)
 * Then,
   * Use `quiz.export.toEmbedded()` to get all questions as a JSON object. (Using the `builtin` property, you can embed it directly into the quiz and don't need to load the text files anymore.)
-  * Use `quiz.export.toPrint()` to get all questions on one page (and nothing else), styled in such a way that you can print it. (One question = One full page.)
+  * Use `quiz.export.toPrint()` to get all questions on one page (and nothing else), styled in such a way that you can print it. (One question = One full page. By default, backgrounds are removed to save ink and reduce file size.)
   * Use `quiz.export.toAnswerSheet()` to get a table with the answers to all questions filled-in. 
   * Use `quiz.export.toAnswerForm()` to get an _empty_ table, for others to write their answers.
   * Use `quiz.export.toMarkdown()` to get a Markdown string. This can be put into one of several "Markdown to Slideshow" converters (@TODO: List best option here)
 
 When you have your result, and want it as a PDF, use the browser's Print functionality.
+
+Please note that you can change your settings on the start screen, so the _final_ set of questions is only loaded once you press a button and start actually playing the quiz. To load them manually, use `quiz.export.toFinalQuestions()`.
+
+Also, you can use the shortcut `quiz.export.toGrade()` to immediately get the graded results of the quiz (even if not playing interactively).
 
 This area is most likely to change over time, as I refine this approach or switch to other existing frameworks.
 
@@ -443,13 +479,13 @@ The Quiz styles itself according to `QuizTheme` objects you put in.
 
 * The system automatically loads some core styles and CSS properties. These are very minimal, but _not_ optional, as they're needed to make all other theming work.
 * On top of that, it loads the `default` theme, which actually contains most style rules.
-* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ load yours instead.
+* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ loadz yours instead.
 
 Creating a new theme has the following steps.
 
 * Create a folder (`yourthemename`) inside the `themes` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images.
 * When creating the Quiz, create a `QuizTheme` object, and insert it at the `theme` property. 
-* To connect that theme with the folder where it can find its files, set its `label` to te right name.
+* To connect that theme with the folder where it can find its files, set its `label` to the right name.
 
 The following properties are available for configuration in your theme. As usual, all are optional.
 
