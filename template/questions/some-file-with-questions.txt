@@ -1,0 +1,6 @@
+Question => What do you think about this trivia framework?
+Media => some-image-of-a-quiz-or-something.webp
+Answers => Amazing | Wonderful | Incredible | Groundbreaking
+Correct => Groundbreaking
+Score => 2
+Author => Pandaqi
