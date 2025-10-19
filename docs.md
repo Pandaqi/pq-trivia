@@ -17,6 +17,8 @@ The idea behind this system was as follows.
 
 When surprised by how something works, or looking for how to achieve something, keep this general philosophy in mind and you'll probably figure it out quickly.
 
+> _DISCLAIMER: Some crucial parts of the system will change between major versions. The docs below are only for the latest version. It's unlikely that you can replace the framework by a much newer version willy-nilly and expect your old quiz questions to still work 100% (no tweaks needed). For example, going from v1 to v2 the system added full support for multiple languages + interface translations, which forced massive changes on input and quiz processing ;)_
+
 ## Input
 
 ### What you DON'T need to do
@@ -33,6 +35,7 @@ Below are some common examples of things I see often, but which you **shouldn't 
 * Add a title (or _any_ other data that isn't related to the quiz) to your text file. (If you really want to add more info, use the comment syntax explained below.)
 * Add returns ("line breaks") to make the text wrap or look nicer on your screen. (It assumes each individual line is a _new_ entry in a list.)
 * Add weird characters or spaces to your file names. (For maximum compatibility, only use _letters_ and _numbers_, and replace spaces by something like `-`.) 
+* Include your media _in the file itself_. (If you use simple text files, this is literally impossible.) For example: just throw it all in the folder called `media`, then type the name of the image/video/audio to show with the question.
 
 ### File Name & Type
 
@@ -62,7 +65,9 @@ Note that all parsing rules can be completely customized to your liking when ini
 
 ### Questions
 
-A question is nothing more than a list of attributes. Every attribute is formatted with an arrow (`=>`) between its _name_ and its _value_. For example, `Question => What is 2+2?`
+A question is nothing more than a list of attributes. Every attribute is formatted with an arrow (`=>`) between its _name_ and its _value_. 
+
+For example, `Question => What is 2+2?`
 
 Below is an example of the simplest possible question. (An _open-ended question_, relying on defaults, and most attributes are left out.)
 
@@ -71,7 +76,7 @@ Question => Which superhero is also called "Man of Steel"?
 Answers => Superman
 ```
 
-_Remark_: The arrow was chosen because the less digitally inclined understand it too, while very unlikely to show up inside an actual question or answer. A double colon (`:`), for example, is way more likely to be part of a question and thus screw up the parsing. Be mindful of this when customizing the syntax.
+> The arrow was chosen because the less digitally inclined understand it too, while very unlikely to show up inside an actual question or answer. A double colon (`:`), for example, is way more likely to be part of a question and thus screw up the parsing. Be mindful of this when customizing the syntax.
 
 Below is an example of a slightly more customized question. This one is _multiple choice_, displays a nice image as decoration, and shows whose question it is.
 
@@ -82,7 +87,7 @@ Superman
 Batman
 Wolverine
 Mandalorian
-Media => man_of_steel_logo.png
+Media => man-of-steel-logo.png
 Author => Tiamo
 ```
 
@@ -91,15 +96,14 @@ Below is a final example of a much more involved question, using almost everythi
 ```
 Question => Name all superheroes that were part of the Avengers in the 2012 movie.
 Answers => Iron Man|Captain America|Hulk|Thor|Black Widow|Hawkeye
-Type => ChoiceSecret
-Media => avengers_poster.jpg
-Category => Movies, Marvel
+Type => List
+Media => avengers-poster.jpg
+Category => Movies | Marvel
 Author => Tiamo
 Comment =>
 ? Use their superhero names, not their real names
 ! Nick Fury recruits them but is no superhero himself, and Loki is not part of the Avengers.
-Score => 6
-ScoreMethod => One point per correct name
+Score => 1
 ```
 
 The next section explains all possible attributes in more detail.
@@ -107,38 +111,39 @@ The next section explains all possible attributes in more detail.
 ### Attributes
 
 `Question`: starts a new question. The value is the specific question you want to ask.
-* SPECIAL SYNTAX! You can also start a section with `# Section Here` and a question with `## Question Here` (like a second Markdown heading).
+
+> SPECIAL SYNTAX! You can also start a section with `# Section Here` and a question with `## Question Here` (like a first and second Markdown heading). See [Sections](#sections) for more info.
 
 `Answers`: one or multiple answers.
 
-* If a single answer, it defaults to an _`Open` question_.
-* If multiple answers, it defaults to a _`ChoicePublic` question_.
+* If a single answer, it defaults to an `Open` question.
+* If multiple answers, it defaults to a `Choice` question.
 * You can override these defaults with the `Type` attribute.
-* The order of these answers is _randomly shuffled_ when the quiz is played, so you don't have to do it. (Except for question types where this doesn't make sense because the order of answers might matter; see `ChoiceSecret` and `Sort`.)
+* The order of these answers is _randomly shuffled_ when the quiz is played, so you don't have to do it. (Except for question types where this doesn't make sense because the order of answers might matter; see `List` and `Sort`.)
 
-`AnswerOrder`: if set to "keep", it will keep the answers in the order you input them (no matter your other settings/randomization).
+`AnswerOrder`: if set to "keep", it will keep the answers in the order in which you input them (no matter your other settings/randomization).
 
 `Correct`: its value should be the correct answer(s) to the question.
 
 * If left out, the _first_ answer listed is assumed to be the correct one.
-* It accepts _multiple_ correct answers, in which case it defaults to a _ChoicePublic_ question.
-* The system checks if your correct answer is actually an option (if multiple choice). It doesn't care about case or whitespace, but if you actually misspell or put in something wrong it will throw an error.
-
-`Range`: if it's an open question where the answer is a number, this property allows setting an "error margin". Any answer within the margin is still correct. If included, it defaults to a _Range_ question. (For example, you ask, "How many people lived in the Netherlands in 2024?" and allow people to be off by 500,000 at most.) 
+* It accepts _multiple_ correct answers, in which case it defaults to a `Choice` question.
+* The system checks if your correct answer is actually an option (if multiple choice). It doesn't care about letter case or whitespace, but if you actually misspell or put in something wrong it will throw an error.
 
 `Type`: force the question to be a specific type. It tries to follow this command, but it's not always possible. Possible types are ...
 
 * `Open`: only the question is displayed, nothing else. People are free to fill in whatever answer they want.
-* `ChoicePublic`: several options are displayed (labeled A, B, C, ...). People must pick the correct one. (Or multiple, if there are multiple correct answers.)
-* `ChoiceSecret`: no options are displayed. People are expected to give multiple answers.
+* `Choice` ("Multiple Choice"): several options are displayed (labeled A, B, C, ...). People must pick the correct one. (Or multiple, if there are multiple correct answers.)
+* `List` ("Multiple Answer"): no options are displayed. People are expected to give multiple answers.
 * `Range`: an open question where people must give a number. If it falls within the error margin ("range") set by the question, it's deemed correct.
 * `Sort`: provide multiple answers, they're all shown (in a random order) and people have to sort them into the correct order.
 * `Custom`: a completely custom question that does nothing for you by default, so you can fill it in however you like
-* `Section`: this is not a question, but an intermediate screen with some other purpose. Mostly used to split questions into smaller sections.
+* `Section`: this is not a question, but an intermediate screen with some other purpose. Mostly used to split questions into smaller "rounds".
+
+`Range` (_Only applies to `Range` questions_): this property sets an "error margin" around the correct (numeric) answer. Any answer within the margin is still correct. If included, it defaults to a _Range_ question. (For example, you ask, "How many people lived in the Netherlands in 2024?" and allow people to be off by 500,000 at most.) 
 
 `Media`: one or multiple media files to be displayed with the question. These can be images, audio, or videos. (See below. Also note that media can be inserted as an answer too; this attribute is for standalone media that relates to the question as a whole.)
 
-`MediaOrder`: if set to "keep", it will keep the media in the order you input them (no matter your other settings/randomization).
+`MediaOrder`: if set to `keep`, it will keep the media in the order you input them (no matter your other settings/randomization).
 
 `Category`: one or multiple categories to which the question belongs. (This can be used to sort by category automatically, or to have a quick check to see how varied your quiz is.)
 
@@ -147,7 +152,7 @@ The next section explains all possible attributes in more detail.
 `Score`: the maximum number of points to score here.
 
 * By default, questions simply score 1 point, and you get them all for being right.
-* Use `ScoreMethod` to dictate some different, custom way of (partial) scoring.
+* Use `ScoreMethod` to dictate some different, custom way of (partial) scoring. This is just a piece of text that you need to write yourself; the system can't "automatically" execute your creative custom scoring idea.
 
 `Comment`: any comment(s) or remark(s) about this question.
 
@@ -155,26 +160,25 @@ The next section explains all possible attributes in more detail.
 
 * You can also use the `addSecretThemeQuestions` parameter on Quiz to automatically insert a question at the end of each round asking what the theme was (for 1 point).
 * I created this "quick" way to support secrets for individual rounds, because that's most common and would be more annoying to do manually each time. But if you want a single "secret theme" for _the entire quiz_ ... just invent one behind the scenes (and manually add a question about the secret at the very end) :)
-* NOTE: As this question is auto-generated when loading the questions, it's _not_ included when you export the quiz (for example). That would mess things up, creating 2 auto-questions on next load, 3 auto-questions on the next load, etcetera ...
 
-`Hints` (_Only applies to Questions_): One or more "hints". These are hidden by default, but can be revealed in the moment if desired.  
+`Hints`: One or more "hints". These are hidden by default, but can be revealed in the moment if desired.  
 
-`Sources`: one or more "sources". This is meant for sourcing the info in your questions, or the media used, and perhaps provide a way to "learn more". These appear
+`Sources`: one or more "sources". This is meant for sourcing the info in your questions, or the media used, and perhaps provide a way to "learn more". These appear in a small font below all the other information. (Be mindful of not giving away the answer to your question by listing your sources.)
 
 `Timer`: how much time is available for this question (in _seconds_).
 
 * If excluded, it defaults to the global timer duration you set in the system configuration.
 * If that is excluded too, there simply is no timer.
 
-`ID`: a _unique_ identifier/name for this question. You'd only need this if you intend to reference this specific question from another question or support multiple languages. For example, you might want to say "question A must appear _before_ question B in the order". Speaking of that ...
+`ID`: a _unique_ identifier/name for this question. You'd only need this if you intend to reference this specific question from another question, or if you want to support multiple languages. For example, you might want to say "question A must appear _before_ question B in the order". Speaking of that ...
 
-`PlaceAt` (number) (_Only applies to Sections_): forcibly places this round at that location. For example, `PlaceAt => 1` will try and force this round to be the very first played.
+`PlaceAt` (number) (_Only applies to Sections_): forcibly places this section at that location. For example, `PlaceAt => 1` will try and force this section to be the very first you encounter.
 
 `PlaceBefore` (QuestionID): give the ID of another question, and it will place this question before it. (It _does not_ necessarily place it _directly_ before it.)
 
 `PlaceAfter` (QuestionID): give the ID of another question, and it will place this question after it. (It _does not_ necessarily place it _directly_ after it.)
 
-_Remark:_ Please note that it's easy to accidentally add "constraints" to question order that are unsolvable. In which case the system tries its best, but there are no guarantees. I focused a lot on a very robust sorting/shuffling system for the latest version (as the order of questions can be very important in educational quizzes, for example), but ... always check if the end result is what you wanted.
+> Please note that it's easy to accidentally add "constraints" to question order that are unsolvable. In which case the system tries its best, but there are no guarantees. I focused a lot on a very robust sorting/shuffling system for the latest version (as the order of questions can be very important in educational quizzes, for example), but ... always check if the end result is what you wanted.
 
 ### Lists
 
@@ -211,7 +215,7 @@ Below is an example of how you write a question where you display some vague med
 
 ```
 Question => Who's that Pokémon!?
-Media => ?image_blurred.png, !image_revealed.png
+Media => ?image_blurred.png | !image_revealed.png
 ```
 
 ### Links & Media
@@ -266,17 +270,17 @@ The system automatically calculates the metadata of a round (number of questions
 
 It also shuffles questions inside the same section.
 
-Please note that location inside the text file matters. Everything _after_ this section declaration will be put inside that section. (Until a new one is declared, of course.)
+Please note that location inside the text file matters. Everything _after_ this section declaration will be put inside that section, until a new one is declared. 
+
+You _can_ ignore all this. You can assign no sections at all, or give a custom `Section => blabla` to questions, and type them in the text file in a random order. The system will figure it out for you and group questions by section, without duplicate sections. (It will _not_ insert an actual "new section screen", unless you add `addMissingSectionScreens: true` to the quiz parameters.)
+
+But for your sanity and organization, it's best to just group questions by section and let the system automatically assign from input order ;)
 
 ## Output
 
-Once you've written your quiz into a text file, or bought a pack from me, the system takes care of everything else. Still it's worth explaining a bit how that works, especially because you can _customize_ almost everything to your liking.
+Once you've written your quiz into a text file, or bought a pack from my online store, the system takes care of everything else. Still, it's worth explaining a bit how that works, especially because you can _customize_ almost everything to your liking.
 
-If you're eager to dive into the actual _code_, please note that this system grew organically. Doing a quiz once or twice a year, implement some new requested features that same evening, and that's that. I obviously changed over time (and hopefully improved), which means some parts of the code can mix naming conventions or use some weird approach. 
-
-(For example, the error messages use _signals_ (`CustomEvent`s) in some enthusiastic attempt to decouple everything, but it just feels weird when absolutely nothing else in the system uses that.)
-
-As time goes on, and I actually sell quizzes with this system and test it way more, this will be streamlined.
+If you're looking to dive into the _code_ behind it all, please note the following. The original system started as a tiny thing and grew organically. V1 was a mess of different naming conventions, spaghetti code, and technical debt that accrued over 5 years of barely working on this. With v2 of the system, I did a massive rewrite and I actually dare say the code is quite clean and consistent now.
 
 ### Quiz States
 
@@ -299,7 +303,7 @@ You can move **forward** using
 
 * `>` (arrow key right)
 * spacebar
-* clicking anywhere
+* clicking near the left/right edge of the screen (as long as `enableMouse` is true)
 
 Press **A** to toggle show/hide answers. This _only_ changes the current question.
 
@@ -309,6 +313,8 @@ Press **M** to toggle your mode (questions/answers). This is a global setting fo
 
 Press **Escape** to skip to the end of the quiz.
 
+Press **L** to switch to the next language on the spot. (Not sure when anyone would ever use it, but the system can switch languages dynamically like that. Which is nice, I guess.)
+
 Press **Enter** to play/pause the selected media ( = first one listed).
 
 Press **+** or **-** to change font size. This is a very easy way to _resize_ the quiz to fit every screen and make sure everyone can read it. (NOTE! You can also **click** all images to make them fullscreen, if they're ever too small. And then click the popup again to remove it.)
@@ -317,7 +323,7 @@ Press **+** or **-** to change font size. This is a very easy way to _resize_ th
 
 Like with the other parts of the system, we stole our formatting syntax from _Markdown_. It's supported basically anywhere in the system where text could be shown.
 
-* Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as "___" by default. (You can use your own symbols for blanks if you want, this is simply a nice thing we decided to support. Because, as you see below, actually typing "___" would be interpreted as _italic text_ instead.)
+* Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as "___" by default. (You can use your own symbols for blanks if you want. This is simply a nice thing we decided to support. Because, as you see below, actually typing "___" would be interpreted as _italic text_ instead.)
 * Use `**texthere**` for **bold text**.
 * Use `_texthere_` for _italic text_.
 * Use ``codehere`` for `code`.
@@ -351,7 +357,7 @@ Almost everything can be customized when you create your `Quiz` instance. (By se
 
 Below is a list of all options, but don't be overwhelmed. They're all _optional_.
 
-**All properties default to false / 0 / empty string / empty list.** Setting the thing to _some value_ is always an action you do on purpose; the system doesn't set anything by default.
+> **All properties default to false / 0 / empty string / empty list.** Setting the thing to _some value_ is always an action you do on purpose; the system doesn't surprise you by toggling any of these switches to true by default.
 
 #### General
 
@@ -369,7 +375,7 @@ Below is a list of all options, but don't be overwhelmed. They're all _optional_
 
 `fileExtensions` (string[]): a list of allowed file extensions (for media, not questions).
 
-`subFolders` (object): custom folders where it should look for the `questions` or the `media`.
+`subFolders` ({ questions: string, media: string }): custom folders where it should look for the `questions` or the `media`.
 
 #### Settings
 
@@ -383,13 +389,15 @@ Supporting multiple languages is a multi-step process. See [Multi-Language](#mul
 
 `languageDefault` (string): a language code/name for your default language.
 
-`languages` (string[]): if set, it will automatically trigger an error if you add any question that isn't marked as one of these languages.
+`languages` (string[]): if set, it will automatically trigger an error if you add any question that isn't marked as one of these languages. (If not set, it populates this array with all unique languages it finds in your input data.)
 
 #### Interactivity
 
 `allowInput` (boolean): if true, people can directly enter their answers into the quiz itself. This can then be used to automatically grade the answers, if desired. 
 
-If turned on, the quiz is very _restricted_ (can't toggle on answer mode, for example). This allows letting everyone play on their own device, unsupervised, without cheating. (Or, well, without _too much_ cheating ;) You can never completely prevent it. If anyone wants to desperately find a way to ruin a fun night together, they will. Just don't invite them again.)
+If turned on, the quiz is very _restricted_ (can't toggle on answer mode, for example). This allows letting everyone play on their own device, unsupervised, without cheating. 
+
+Or, well, without _too much_ cheating ;) You can never completely prevent it. If anyone wants to desperately find a way to ruin a fun night together, they will. Just don't invite them again.
 
 This mode is also useful when the quiz is used educationally / collaboratively, such as a parent and their kid(s) trying one together to learn about a topic.
 
@@ -471,6 +479,8 @@ exclude: { category: "Music", author: "Tiamo" }
 
 #### UI & Usability
 
+`toolbar` (QuizAction[]): a list of buttons that you want to have in your toolbar. (Defined by their `QuizAction`. That is, the specific thing that they _do_ when you press it.) See the code for all possible QuizActions. If empty, uses the default toolbar (PREV/NEXT and FONT SIZE +/-).
+
 `hideErrors` (boolean): if true, errors are NOT shown (in red boxes at top left).
 
 `forbidInlineLists` (boolean): if true, inline lists are MOT allowed in the question syntax.
@@ -479,9 +489,9 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `enableMouse` (boolean): if true, allows navigation by clicking and scrolling.
 
-`enableKeys` (boolean): if true, allows navigation by keyboard
+`disableKeys` (boolean): if true, disables hotkeys / navigation by keyboard
 
-`enableUI` (boolean): if true, shows buttons for the most common actions (such as prev/next questions) at the top.
+`disableUI` (boolean): if true, removes the toolbar at the bottom. (The one that shows buttons for the most common actions.)
 
 `hotkeys` (object): allows setting custom hotkeys (one or multiple per action) that override the defaults. See `QuizAction` for all possible actions to define.
 
@@ -518,19 +528,18 @@ By default, buttons are added to the _settings_ screen for all these exports. Yo
 * (Make sure you have access to your quiz object, such as by saving it on the `window`)
 * Then,
   * Use `quiz.export.toEmbedded()` to get all questions as a JSON object. (Using the `builtin` property, you can embed it directly into the quiz and don't need to load the text files anymore.)
-  * Use `quiz.export.toPrintQuestions()` to get all questions on one page (and nothing else), styled in such a way that you can print it. (One question = One full page. By default, backgrounds are removed to save ink and reduce file size.)
+  * Use `quiz.export.toPrintQuestions()` to get all questions on one page (and nothing else), styled in such a way that you can print it. 
+    * You'll see all questions overlapping on your screen. This may look funny, but this is necessary such that when you _print_ it, everything is where it should be.
+    * One question = One full page. By default, backgrounds are removed to save ink and reduce file size.
+    * On large quizzes, wait a few seconds until everything has loaded.
   * Use `quiz.export.toPrintAnswers()` for the same thing, but now you have a PDF where all ANSWERS are revealed for each question.
   * Use `quiz.export.toAnswerSheet()` to get a table with the answers to all questions filled-in. 
   * Use `quiz.export.toAnswerForm()` to get an _empty_ table, for others to write their answers.
-  * Use `quiz.export.toMarkdown()` to get a Markdown string. This can be put into one of several "Markdown to Slideshow" converters (@TODO: List best option here)
+* Also, you can use the shortcut `quiz.export.toGrade()` to immediately get the graded results of the quiz (even if not playing interactively).
 
-When you have your result, and want it as a PDF, use the browser's Print functionality.
+When you have your result, and want it as a PDF, use the browser's Print functionality. You can also simply click the button on the page that does this for you.
 
-Please note that you can change your settings on the start screen, so the _final_ set of questions is only loaded once you press a button and start actually playing the quiz. To load them manually, use `quiz.export.toFinalQuestions()`.
-
-Also, you can use the shortcut `quiz.export.toGrade()` to immediately get the graded results of the quiz (even if not playing interactively).
-
-This area is most likely to change over time, as I refine this approach or switch to other existing frameworks.
+_Remark:_ In old versions, exporting the quiz "destroyed" the current instance. You'd need to reload the page and load your questions again afterwards. Not great, I admit, but I had never expected to create exporters at all when this system just started. In the latest version, this is fixed, and you can export all you want and still stay within the page/quiz!
 
 ### Custom Themes
 
@@ -611,3 +620,27 @@ The system will look at the filename and see "oh, these questions belong to lang
 If you use this, the system allows you to pick your language at the start. You can also press `L` to cycle through all the different languages loaded on demand.
 
 _Remark: This was the latest feature to be added to the system. It's hard to code well and not something that's typically stress-tested a lot. If you use it, and find issues, please let me know._
+
+You can also **translate the system/UI**. To do so, 
+
+* Supply a dictionary with your translations to the `translations` parameter on Quiz.
+* Set the `languageDefault` to the language code you chose.
+* (Optional: set the questions to the same language code too.)
+
+For example,
+
+```
+new Quiz({
+  translations:
+  {
+    nl:
+    {
+      "question-open-answer-type": "Dit is een open vraag!",
+      "settings-heading": "Instellingen"
+    }
+  }
+})
+```
+
+See the `translations/en.ts` folder of the source for the many (many) keys that the system automatically "translates" into your current language. The framework only supports `en` (English) and `nl` (Dutch) by default, as those are the only two languages in which I'm fluent. **If you want to help translate the interface to other languages, I'd be very grateful.** Send your final JS object/file with all translations to me (+ language code) and I'll include it.
+

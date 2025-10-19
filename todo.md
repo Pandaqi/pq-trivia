@@ -1,45 +1,33 @@
 # To-Do
 
-## Multi-Language Implementation
+## NEEDS FURTHER TESTING
 
-* If multiple languages loaded, add a Language picker to the Settings. Or directly on the Start Screen?
-* => In the long run, might also want to support translations for the _interface_ and all the _default texts_.
-  * Create a "multilanguage" or "i18n" folder?
-  * Allow players to input a dictionary of "ui-key" -> how to translate in that language.
-  * All UI will now run through that translator first. (Which probably requires adding quiz/params reference to a few things)
-
-
-
-* **CHERRYPICK:** Cleaner media file path handling -> so that it only exports the _original path_ and there's no trickery that can break at any time.   => It feels better if the _full path_ is created _at runtime_. (So the original path remains saved, we just need a reference to the params/loader then)
+* Constraint Solving -> PlaceBefore, PlaceAfter, PlaceAt
+* Other toolbar buttons (besides the default)
+* Setting language on questions _directly/manually_.
+* Check icons, banner image, and other styling for simplication/improvement.
 
 
 ## UI/USABILITY
 
-* **CHERRYPICK:** Ticking noise for timer (on timed questions)? (Customizable by user in settings too? Is this part of _theme_? Feels most clean ...)
-
-* A favicon?? Splash image/banner (for the whole quiz, displayed on startup)?
-* Auto-fade away errors? Prevent _duplicate_ (fully identical) errors from appearing?
-* More unique design for section pages?
-* Add touch controls (swipe left/right?) => not sure, clicking controls are a mess in such a complex UI
-  * A SWIPE is more useful, or a click on the EDGE (left/right) of the screen.
+* Ticking noise for timer (on timed questions)? (Customizable by user in settings too? Is this part of _theme_? Feels most clean ...)
+* Background music? (Would have to include turning on/off and controlling volume ... not sure what this adds. People can just play their own background music if they want / double-click an audio file.)
+* Auto-fade away errors? Prevent _duplicate_ (fully identical) errors from appearing? Nicer-looking error messages in the first place?
+  * Perhaps a few more possible errors that would like to have a visible message (instead of just in developer console).
+* More unique design for section pages? (Color inversion? White text on black background? Would have to be turned off when printing then ...)
 * When someone tries to continue without filling in their answer, make error nicer => probably highlight box itself
 * Allow moving through answers on interactive anyway, and then display the REAL answer and YOUR answer side by side?
-  * Just feel like there's no space for this, and the feature isn't important to have all that extra baggage in the code.
+  * Just feel like there's no space for this, and the feature isn't important enough to have all that extra baggage in the code.
 * Allow alternative "default templates/layouts" for questions? (Determining how exactly they're styled and laid out?) => For example, could one entire _side_ of the question be background-colored with the randomly chosen Color?
-* GRADING => Provide buttons to go back? **To print?**
-* Any other useful buttons we might want in the UI toolbar? It's now a pretty big/constant addition for just next/prev and font +/- ...
-  * On the other hand, in practice those are the buttons you really like to use a lot, and the others are far less important.
-  * Maybe something like "media fullscreen" or "media play/stop"? Or the skip section forward/backward thing?
-  * Maybe make this CUSTOMIZABLE / MODULAR so people can choose for themselves?
-* Make settings look prettier/more consistent.
-
-## MAJOR REWRITE (probs v2.0)
-
-REFACTORING: We're re-writing code (such as the 2/3 steps for displaying a MEDIA node) in different places, though it's not the end of the world.
-
-When we do this, a lot of code cleanup would be nice too. Lots of duplicate code/params setting and passing when creating answer/media nodes, also when exporting to answer sheet/form.
-
-IMPROVEMENT: More premium support for _grading_ and _input_ -> for using it in an actual traditional classroom setting, even if I don't _want_ people to do that. GRADING/INPUT IS PROBABLY COMPLETELY BROKEN AT THIS POINT.
+* TRANSLATIONS:
+  * Add a property to quiz like `copyPropertiesFromTranslations`.
+    * If true, all translations will copy any properties (which they don't set themselves) from the MAIN version of a question.
+    * (I don't want to enable this by default, or copy properties regardless, because there are certainly situations where you want e.g. different MEDIA files on the translated version.)
+  * Add a property to quiz like `matchPropertyOrderBetweenTranslations`
+    * If true, it ensures the _answers_ and _media_ are displayed in exactly the same order as the main database.
+    * (How? We save the original answersLoaded and mediaLoaded already. We can use this to figure out _how_ it was shuffled---e.g. index 0 to index 4---and shuffle our own to match.)
+* Make exported JSON/embedded object even more efficient? (EXAMPLE: Author/category don't need to be exported if they're the default. Correct answers don't need to be exported if we make sure it's the first one listed.)
+* Allow language switching on load screen already?
 
 
 ## FEATURES
@@ -48,6 +36,9 @@ IMPROVEMENT: More premium support for _grading_ and _input_ -> for using it in a
 * Animations?
 * A "match" question type? (You get _two rows of things_, and must match stuff from one side to the other side.)
 * Switch the entire nodes creation and stuff to [(Custom) Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements) instead?
+* "Unlockable" questions/rounds? -> Only if players have this one right/wrong, do more questions appear about that?
+  * I can see use cases for this, but not many.
+  * Also, the current system is anchored on the idea of "prepare the whole quiz in advance, then play through it" -> allowing dynamic changes to the whole thing (while playing) would require a complete rework of the entire core
 
 ## CUSTOMIZATION
 
