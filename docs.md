@@ -121,7 +121,7 @@ The next section explains all possible attributes in more detail.
 * You can override these defaults with the `Type` attribute.
 * The order of these answers is _randomly shuffled_ when the quiz is played, so you don't have to do it. (Except for question types where this doesn't make sense because the order of answers might matter; see `List` and `Sort`.)
 
-`AnswerOrder`: if set to "keep", it will keep the answers in the order in which you input them (no matter your other settings/randomization).
+`AnswersOrder`: if set to "keep", it will keep the answers in the order in which you input them (no matter your other settings/randomization).
 
 `Correct`: its value should be the correct answer(s) to the question.
 
@@ -179,6 +179,8 @@ The next section explains all possible attributes in more detail.
 `PlaceAfter` (QuestionID): give the ID of another question, and it will place this question after it. (It _does not_ necessarily place it _directly_ after it.)
 
 > Please note that it's easy to accidentally add "constraints" to question order that are unsolvable. In which case the system tries its best, but there are no guarantees. I focused a lot on a very robust sorting/shuffling system for the latest version (as the order of questions can be very important in educational quizzes, for example), but ... always check if the end result is what you wanted.
+
+`FormatText` (boolean): you can set this to false on specific questions if you don't want their text to be run through the (Markdown-like) formatter. Not sure why you'd do this, but hey, it's there.
 
 ### Lists
 
@@ -375,7 +377,7 @@ Below is a list of all options, but don't be overwhelmed. They're all _optional_
 
 `fileExtensions` (string[]): a list of allowed file extensions (for media, not questions).
 
-`subFolders` ({ questions: string, media: string }): custom folders where it should look for the `questions` or the `media`.
+`subFolderQuestions` / `subFolderMedia` / `subFolderTheme`: custom folders where it should look for the respective files.
 
 #### Settings
 
@@ -390,6 +392,8 @@ Supporting multiple languages is a multi-step process. See [Multi-Language](#mul
 `languageDefault` (string): a language code/name for your default language.
 
 `languages` (string[]): if set, it will automatically trigger an error if you add any question that isn't marked as one of these languages. (If not set, it populates this array with all unique languages it finds in your input data.)
+
+`syncPropertiesWithTranslations` (boolean): if true, questions in other languages will look at the "root language" and copy their properties _if they didn't set anything themselves_. Useful if you only want to set properties once on the main translation (e.g. score, media to show) and have everything else automatically use the same stuff. As soon as a question has its own value for a property, it will just keep that and ignore the root language. REMARK: This is off by default because it's very powerful but not that necessary for most people.
 
 #### Interactivity
 
@@ -471,9 +475,9 @@ exclude: { category: "Music", author: "Tiamo" }
 
 #### Theming
 
-`themes` (QuizTheme[]): for loading your own custom theme. (See the _Themes / Custom Styling_ section for how to create/modify one.) If set, the default theme is NOT loaded. See [Custom Themes](#custom-themes).
+`theme` (QuizTheme[]): for loading your own custom theme. (See the _Themes / Custom Styling_ section for how to create/modify one.) If set, the default theme is NOT loaded. See [Custom Themes](#custom-themes).
 
-`themesDisabled` (boolean): if true, turns off all theming (fonts/colors/background images). You can also turn off/on all theming in the settings after the quiz has been loaded.
+`themeDisabled` (boolean): if true, turns off all theming (fonts/colors/background images). You can also turn off/on all theming in the settings after the quiz has been loaded.
 
 `hideDefaultStyles` (boolean): if true, does NOT load the very minimal set of core styles to get things looking usable.
 
@@ -539,7 +543,9 @@ By default, buttons are added to the _settings_ screen for all these exports. Yo
 
 When you have your result, and want it as a PDF, use the browser's Print functionality. You can also simply click the button on the page that does this for you.
 
-_Remark:_ In old versions, exporting the quiz "destroyed" the current instance. You'd need to reload the page and load your questions again afterwards. Not great, I admit, but I had never expected to create exporters at all when this system just started. In the latest version, this is fixed, and you can export all you want and still stay within the page/quiz!
+> _Remark:_ The Embedded exporter will try to "compress" the quiz as much as possible, leaving out any properties that it doesn't need to save (such as default values). This saves a lot of space, I can tell you, especially on huge quizzes in multiple languages. If this causes issues, let me know, as I haven't been able to test whether this compression is too aggressive or not.
+
+> _Remark:_ In old versions, exporting the quiz "destroyed" the current instance. You'd need to reload the page and load your questions again afterwards. Not great, I admit, but I had never expected to create exporters at all when this system just started. In the latest version, this is fixed, and you can export all you want and still stay within the page/quiz!
 
 ### Custom Themes
 

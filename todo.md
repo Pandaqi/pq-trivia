@@ -8,26 +8,19 @@
 * Check icons, banner image, and other styling for simplication/improvement.
 
 
+
 ## UI/USABILITY
 
 * Ticking noise for timer (on timed questions)? (Customizable by user in settings too? Is this part of _theme_? Feels most clean ...)
-* Background music? (Would have to include turning on/off and controlling volume ... not sure what this adds. People can just play their own background music if they want / double-click an audio file.)
 * Auto-fade away errors? Prevent _duplicate_ (fully identical) errors from appearing? Nicer-looking error messages in the first place?
   * Perhaps a few more possible errors that would like to have a visible message (instead of just in developer console).
+  * **Copy design from PQ-ESCAPE**, add as much error feedback as possible.
 * More unique design for section pages? (Color inversion? White text on black background? Would have to be turned off when printing then ...)
 * When someone tries to continue without filling in their answer, make error nicer => probably highlight box itself
 * Allow moving through answers on interactive anyway, and then display the REAL answer and YOUR answer side by side?
   * Just feel like there's no space for this, and the feature isn't important enough to have all that extra baggage in the code.
 * Allow alternative "default templates/layouts" for questions? (Determining how exactly they're styled and laid out?) => For example, could one entire _side_ of the question be background-colored with the randomly chosen Color?
-* TRANSLATIONS:
-  * Add a property to quiz like `copyPropertiesFromTranslations`.
-    * If true, all translations will copy any properties (which they don't set themselves) from the MAIN version of a question.
-    * (I don't want to enable this by default, or copy properties regardless, because there are certainly situations where you want e.g. different MEDIA files on the translated version.)
-  * Add a property to quiz like `matchPropertyOrderBetweenTranslations`
-    * If true, it ensures the _answers_ and _media_ are displayed in exactly the same order as the main database.
-    * (How? We save the original answersLoaded and mediaLoaded already. We can use this to figure out _how_ it was shuffled---e.g. index 0 to index 4---and shuffle our own to match.)
-* Make exported JSON/embedded object even more efficient? (EXAMPLE: Author/category don't need to be exported if they're the default. Correct answers don't need to be exported if we make sure it's the first one listed.)
-* Allow language switching on load screen already?
+* Allow creating "START" and "END" questions (like PQ-ESCAPE)? To customize a starting screen and end screen for the whole quiz, while keeping syntax completely consistent?
 
 
 ## FEATURES
@@ -47,3 +40,8 @@
 * Allow **directly responding** to quiz change signals (in your own custom implementation), so people can do their own HTML entirely. For this to work ...
   * I'd need to explain the basic functions here (`gotoNext`, `getCurrentQuestion`)
   * I'd need to allow completely turning off the Nodes output, or sending it through a custom filter to get the markup _you_ want.
+
+## DISCARDED
+
+* Allow language switching on load screen already? => Can't be done, as there's nothing loaded yet, so the different possible languages aren't even known yet. To make this possible, I would need to input "possible languages" myself manually for each quiz, and only to "refresh" the UI so the load buttons are in the right language.
+* Background music? (Would have to include turning on/off and controlling volume ... not sure what this adds. People can just play their own background music if they want / double-click an audio file.)
