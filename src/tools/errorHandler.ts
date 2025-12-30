@@ -1,6 +1,6 @@
-import { QuizParams } from "./quiz";
+import type { QuizParams } from "./params";
 
-enum ErrorType
+export enum ErrorType
 {
     FAIL = "fail",
     WARNING = "warning",
@@ -8,32 +8,32 @@ enum ErrorType
     SUCCESS = "success"
 }
 
-// @TODO: this disallows multiple quiz instances on the same page, but would anyone ever want that?
-// (they'd all send signals through the same function / node = body)
-const showMessage = (text:any, id:string, type = ErrorType.FAIL) =>
+export const showMessage = (...contents) =>
 {
-    const ev = new CustomEvent("error-message", { detail: { text: text, type: type, id: id } });
+    if(contents.length <= 0) { return; }
+
+    let type = ErrorType.FAIL;
+    if(Object.values(ErrorType).includes(contents[0])) { type = contents.shift(); }
+
+    const ev = new CustomEvent("error-message", { detail: { text: contents, type: type } });
     document.body.dispatchEvent(ev);
 }
 
-export { ErrorHandler, ErrorType, showMessage }
-export default class ErrorHandler
+export class ErrorHandler
 {
     node: HTMLElement;
-    id: string;
 
     constructor(params:QuizParams = {})
     {
-        this.id = params.id;
         this.listenForSignals();
-        if(!params.showErrors) { return; }
+        if(params.hideErrors) { return; }
         this.createContainer();
     }
 
     listenForSignals()
     {
-        document.body.addEventListener("error-message", (ev:CustomEvent) => {
-            if(ev.detail.id != this.id) { return; }
+        document.body.addEventListener("error-message", (ev:CustomEvent) => 
+        {
             this.show(ev.detail.text, ev.detail.type);
         });
     }
@@ -61,11 +61,11 @@ export default class ErrorHandler
             str = "";
             for(const elem of val)
             {
-                str += "<p>" + elem.toString() + "</p>"
+                str += `<p>${ elem.toString() }</p>`
             }
         }
 
-        let prefix = "<strong>Error (from id '" + this.id + "'): </strong>";
+        let prefix = `<strong>Error: </strong>`;
 
         div.innerHTML = prefix + str;
         this.node.appendChild(div);

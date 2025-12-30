@@ -11,6 +11,7 @@
 
 ## UI/USABILITY
 
+* LIGHT/DARK MODE TOGGLE (in Settings)
 * Ticking noise for timer (on timed questions)? (Customizable by user in settings too? Is this part of _theme_? Feels most clean ...)
 * Auto-fade away errors? Prevent _duplicate_ (fully identical) errors from appearing? Nicer-looking error messages in the first place?
   * Perhaps a few more possible errors that would like to have a visible message (instead of just in developer console).

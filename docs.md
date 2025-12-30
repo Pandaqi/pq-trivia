@@ -325,7 +325,7 @@ Press **+** or **-** to change font size. This is a very easy way to _resize_ th
 
 Like with the other parts of the system, we stole our formatting syntax from _Markdown_. It's supported basically anywhere in the system where text could be shown.
 
-* Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as "___" by default. (You can use your own symbols for blanks if you want. This is simply a nice thing we decided to support. Because, as you see below, actually typing "___" would be interpreted as _italic text_ instead.)
+* Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as `___` by default. (You can use your own symbols for blanks if you want. This is simply a nice thing we decided to support. Because, as you see below, actually typing `___` would be interpreted as _italic text_ instead.)
 * Use `**texthere**` for **bold text**.
 * Use `_texthere_` for _italic text_.
 * Use ``codehere`` for `code`.
@@ -345,12 +345,11 @@ You can **turn this off completely** with the `disableTextFormatting:true` param
 
 This framework exposes a `Quiz` class.
 
-As such, to turn a webpage into a Quiz, use
+As such, to turn a webpage into a Quiz, just use
 
 ```
 const params = {}; // your unique configuration 
 const quiz = new Quiz(params);
-quiz.load();
 ```
 
 ### Configuration
@@ -393,7 +392,9 @@ Supporting multiple languages is a multi-step process. See [Multi-Language](#mul
 
 `languages` (string[]): if set, it will automatically trigger an error if you add any question that isn't marked as one of these languages. (If not set, it populates this array with all unique languages it finds in your input data.)
 
-`syncPropertiesWithTranslations` (boolean): if true, questions in other languages will look at the "root language" and copy their properties _if they didn't set anything themselves_. Useful if you only want to set properties once on the main translation (e.g. score, media to show) and have everything else automatically use the same stuff. As soon as a question has its own value for a property, it will just keep that and ignore the root language. REMARK: This is off by default because it's very powerful but not that necessary for most people.
+`syncPropertiesWithTranslations` (boolean): if true, questions in other languages will look at the "root language" and copy their properties _if they didn't set anything themselves_. Useful if you only want to set properties once on the main translation (e.g. score, media to show) and have everything else automatically use the same stuff. As soon as a question has its own value for a property, it will just keep that and ignore the root language. 
+
+> _Remark_: This is off by default because it's very powerful but not that necessary for most people.
 
 #### Interactivity
 
@@ -553,12 +554,12 @@ The Quiz styles itself according to `QuizTheme` objects you put in.
 
 * The system automatically loads some core styles and CSS properties. These are very minimal, but _not_ optional, as they're needed to make all other theming work.
 * On top of that, it loads the `default` theme, which actually contains most style rules.
-* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ loadz yours instead.
+* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ loads yours instead.
 
 Creating a new theme has the following steps.
 
-* Create a folder (`yourthemename`) inside the `themes` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images.
-* When creating the Quiz, create a `QuizTheme` object, and insert it at the `theme` property. 
+* Create a folder (`yourthemename`) inside the `theme` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images. (NOTE: You can change this root folder where it will look with the `subFolderTheme` Quiz parameter.)
+* When creating the Quiz, insert the parameters for your theme at the `theme` property. 
 * To connect that theme with the folder where it can find its files, set its `label` to the right name.
 
 The following properties are available for configuration in your theme. As usual, all are optional.
@@ -577,13 +578,13 @@ The following properties are available for configuration in your theme. As usual
   * When a value isn't set, it just falls back on the default of the core styles (e.g. text = black, bg = white)
 * `boldHeadings` (boolean): a very common way to make the questions big and stand out is to make them bold by default. If you want that, set this to true. (Otherwise, all "headings"---questions, sections, etcetera---will just use regular weight of the "heading" font.)
 
-Themes are the latest addition to this system. (When I was only using this system myself, all values and design were just baked-in, of course. Took some effort to decouple and make it more friendly to style.) They're still a bit barebones and I shall complete this documentation when their API is somewhat finalized.
+For an example, see the quick start file in `templates`.
 
-_Remark_: Obviously, you can also simply style the quiz by inserting your own stylesheet in the HTML page that hosts it. Probably the most flexible and fastest way for people who really know what they're doing.
+> _Remark_: Obviously, you can also simply style the quiz by inserting your own stylesheet in the HTML page that hosts it. Probably the most flexible and fastest way for people who really know what they're doing.
 
 ### Custom Settings
 
-The system also exposes a `QuizSetting` object. By adding a list of these to the `settings:` parameter (of Quiz), you can add your own custom settings that players can access and modify.
+Like the custom themes, you can define custom settings through parameters in an object. By adding a list of these to the `settings:` parameter (of Quiz), you can add your own custom settings that players can access and modify. 
 
 The possible parameters are ...
 
@@ -594,6 +595,8 @@ The possible parameters are ...
 * `value`: the default value to fill in
 
 Each parameter can also accept a _function_ (taking the `quiz` as parameter), instead of a fixed string, for even more custom settings.
+
+For an example, check the source code for the parameters that make up the default settings (e.g. styling on/off) each quiz has.
 
 ### Multi-Language
 
@@ -619,13 +622,13 @@ The system basically does the following: "oh I need to display this ID" -> "oh i
 
 In many cases, however, it's cleaner to _split_ translations. Put each different "translation" of the quiz into its own _file_.
 
-**Method 2: Create files ending in `languageCode.extension`. Make sure all questions are in the same order. Upload them all at once.**
+**Method 2: Create files ending in `languageCode.extension`. Make sure all questions are in the same order.**
 
-The system will look at the filename and see "oh, these questions belong to language `languageCode`". Then, assuming the order of questions is identical, it can match every question with its translations in the other files.
+For example, the file `questions.en.md` and `questions.nl.md` will have the separate EN and NL versions of the quiz.
+
+The system will look at the filename and see "oh, these questions belong to language `languageCode`". Then, assuming the order of questions is identical, it can match every question with its translations in the other files. 
 
 If you use this, the system allows you to pick your language at the start. You can also press `L` to cycle through all the different languages loaded on demand.
-
-_Remark: This was the latest feature to be added to the system. It's hard to code well and not something that's typically stress-tested a lot. If you use it, and find issues, please let me know._
 
 You can also **translate the system/UI**. To do so, 
 
@@ -649,4 +652,3 @@ new Quiz({
 ```
 
 See the `translations/en.ts` folder of the source for the many (many) keys that the system automatically "translates" into your current language. The framework only supports `en` (English) and `nl` (Dutch) by default, as those are the only two languages in which I'm fluent. **If you want to help translate the interface to other languages, I'd be very grateful.** Send your final JS object/file with all translations to me (+ language code) and I'll include it.
-
