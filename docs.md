@@ -378,6 +378,8 @@ Below is a list of all options, but don't be overwhelmed. They're all _optional_
 
 `subFolderQuestions` / `subFolderMedia` / `subFolderTheme`: custom folders where it should look for the respective files.
 
+`dateCreation` (number): the year in which the quiz was created, in case it contains questions that are time sensitive. (It displays a default message informing the player of this date.)
+
 #### Settings
 
 `settings` (QuizSetting[]): list of custom settings you created yourself, which will be displayed and used within the system. See [Custom Settings](#custom-settings).
@@ -572,7 +574,8 @@ The following properties are available for configuration in your theme. As usual
   * You can set the `body` or `heading` font.
   * These accept an object like `{ name: FONTNAME, regular: FONTFILE, bold: FONTFILE, italic: FONTFILE, bold_italic: FONTFILE }`.
   * If a variant isn't set, it just defaults to the _regular_ version. Don't forget extensions of font files.
-* `backgroundImages`: a list of image files that it should randomly select as backgrounds for questions.
+* `backgroundImages` (string[]): a list of image files that it should randomly select as backgrounds for questions.
+* `backgroundAlpha` (number): Between 0.0 and 1.0, the alpha/opacity of those background images. Defaults to 1 = fully visible.
 * `colors`: an object with colorschemes. These are evenly (but randomly) distributed over the questions.
   * A color scheme has the shape `name: { light: COLOR, dark: COLOR, text: COLOR, dark: COLOR }`
   * When a value isn't set, it just falls back on the default of the core styles (e.g. text = black, bg = white)
