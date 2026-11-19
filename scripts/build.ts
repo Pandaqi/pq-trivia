@@ -53,7 +53,12 @@ const IIFE_ENTRIES: Readonly<Record<string, string>> = {
  * Themes built from parts. Sources stay small and readable; hosts link one file.
  */
 const THEME_PARTS: Readonly<Record<string, readonly string[]>> = {
-  "paper.css": ["paper.base.css", "paper.answers.css", "paper.controls.css"],
+  "paper.css": [
+    "paper.base.css",
+    "paper.answers.css",
+    "paper.controls.css",
+    "paper.interactive.css",
+  ],
   "print.css": ["print.pages.css", "print.questions.css", "print.forms.css"],
 };
 

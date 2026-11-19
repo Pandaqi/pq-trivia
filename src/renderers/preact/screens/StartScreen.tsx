@@ -4,8 +4,14 @@ import type { JSX } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
 import type { StartViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
+import { Inline } from "../components/Inline";
+import { Media } from "../components/Media";
 import { Problems } from "../components/Problems";
 import { SettingsPanel } from "./SettingsPanel";
+
+function allowed(buttons: readonly string[], id: string): boolean {
+  return buttons.length === 0 || buttons.includes(id);
+}
 
 export function StartScreen({
   quiz,
@@ -27,7 +33,20 @@ export function StartScreen({
         {screen.author.length === 0 ? null : (
           <p class="pq-byline">by {screen.author}</p>
         )}
+        {screen.comments.length === 0 ? null : (
+          <div class="pq-intro">
+            <Inline nodes={screen.comments} />
+          </div>
+        )}
       </header>
+
+      {screen.media.length === 0 ? null : (
+        <div class="pq-media-list">
+          {screen.media.map((item) => (
+            <Media key={item.path} item={item} />
+          ))}
+        </div>
+      )}
 
       <dl class="pq-stats">
         <div>
@@ -44,9 +63,33 @@ export function StartScreen({
         </div>
       </dl>
 
+      {screen.resume === null ? null : (
+        <section class="pq-resume" aria-label="Unfinished attempt">
+          <h2 class="pq-resume-title">You have an unfinished attempt</h2>
+          <p class="pq-resume-note">
+            {screen.resume.answered} of {screen.resume.total} answered. Your
+            answers are still here.
+          </p>
+          <div class="pq-resume-actions">
+            <button
+              type="button"
+              class="pq-primary"
+              onClick={() => quiz.resume()}
+            >
+              Resume
+            </button>
+            <button type="button" onClick={() => void quiz.clearAttempt()}>
+              Start over
+            </button>
+          </div>
+        </section>
+      )}
+
       <Problems diagnostics={quiz.diagnostics()} />
 
-      <SettingsPanel quiz={quiz} seed={screen.seed} />
+      {allowed(screen.buttons, "settings") ? (
+        <SettingsPanel quiz={quiz} seed={screen.seed} />
+      ) : null}
 
       <p class="pq-keys">
         Keys: <kbd>→</kbd> next, <kbd>←</kbd> back, <kbd>r</kbd> reveal,{" "}
@@ -55,9 +98,11 @@ export function StartScreen({
 
       <footer class="pq-toolbar">
         <Actions quiz={quiz} />
-        <button type="button" class="pq-primary" onClick={() => quiz.next()}>
-          Start
-        </button>
+        {allowed(screen.buttons, "play") ? (
+          <button type="button" class="pq-primary" onClick={() => quiz.next()}>
+            Start
+          </button>
+        ) : null}
       </footer>
     </main>
   );

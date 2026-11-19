@@ -7,6 +7,7 @@ export enum InlineKind {
   Underline = "underline",
   Strike = "strike",
   Code = "code",
+  CodeBlock = "code-block",
   Link = "link",
   Span = "span",
   Mark = "mark",
@@ -40,6 +41,12 @@ export interface InlineTextNode {
 export interface InlineCodeNode {
   readonly kind: InlineKind.Code;
   readonly text: string;
+}
+
+export interface InlineCodeBlockNode {
+  readonly kind: InlineKind.CodeBlock;
+  readonly code: string;
+  readonly language: string;
 }
 
 export interface InlineEmphasisNode {
@@ -76,6 +83,7 @@ export interface InlineBreakNode {
 export type InlineNode =
   | InlineTextNode
   | InlineCodeNode
+  | InlineCodeBlockNode
   | InlineEmphasisNode
   | InlineLinkNode
   | InlineSpanNode

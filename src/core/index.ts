@@ -39,9 +39,28 @@ export * from "./plan/shuffle";
 export * from "./plan/order";
 export * from "./plan/plan";
 
+// grading
+export * from "./grading/normalize";
+export * from "./grading/grading";
+export * from "./grading/report";
+
 // session
 export * from "./session/responses";
 export * from "./session/session";
+export * from "./session/policies";
+export * from "./session/storage";
+export * from "./session/attempts";
+export * from "./session/timers";
+export * from "./session/flow";
+
+// content
+export * from "./content/include";
 
 // export
 export * from "./export/embedded";
+export * from "./export/json";
+export * from "./export/csv";
+export * from "./export/gift";
+export * from "./export/qti";
+export * from "./export/printModel";
+export * from "./export/standalone";

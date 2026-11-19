@@ -135,6 +135,28 @@
   margin: 0;
 }
 
+.pq-settings-group {
+  margin: 0.2rem 0 0;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--pq-line);
+  border-radius: var(--pq-r-sm);
+}
+
+.pq-settings-group legend {
+  padding: 0 0.35rem;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pq-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .pq-check {
   display: flex;
   align-items: center;

@@ -1,14 +1,13 @@
 /** Bundle entry for `dist/v3/player.js`. Core plus the default Preact view. */
 
-export * from "../core/index";
+export * from "./core";
 export {
   createQuiz,
   type Quiz,
   type QuizConfig,
   type LoadInput,
   type QuizEventMap,
-} from "../core/session/quiz";
-export * from "../core/session/viewModel";
+} from "../core/quiz";
 export {
   mountQuiz,
   mountPrintSheet,
@@ -17,6 +16,8 @@ export {
 } from "../renderers/preact/mount";
 export { PrintSheet } from "../renderers/preact/print/PrintSheet";
 export { PlayMode, SessionStatus } from "../core/session/session";
+export { browserAnswerKey, encryptQuiz } from "../platform/answerKey";
+export { downloadText, fileSlug } from "../platform/browser/download";
 export { QuizApp } from "../renderers/preact/QuizApp";
 export { defineQuizElement, QuizElement } from "../renderers/dom/quizElement";
 export { VERSION } from "../core/version";

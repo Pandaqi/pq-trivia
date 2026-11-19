@@ -220,6 +220,41 @@ function questionFromEmbedded(
   };
 }
 
+/** An encrypted quiz file. Everything but the envelope is opaque. */
+export interface EncryptedQuizPayload {
+  readonly format: "pq-encrypted";
+  readonly version: 1;
+  readonly salt: string;
+  readonly iv: string;
+  readonly data: string;
+}
+
+export function isEncryptedQuiz(value: unknown): value is EncryptedQuizPayload {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    record["format"] === "pq-encrypted" &&
+    record["version"] === 1 &&
+    typeof record["salt"] === "string" &&
+    typeof record["iv"] === "string" &&
+    typeof record["data"] === "string"
+  );
+}
+
+/**
+ * Injected crypto. Core never touches `crypto.subtle` itself, so a test, a CLI
+ * or a browser all get to choose how the answers are locked.
+ */
+export interface AnswerKey {
+  encrypt(
+    value: unknown,
+    passphrase: string,
+  ): Promise<Omit<EncryptedQuizPayload, "format" | "version">>;
+  unlock(payload: EncryptedQuizPayload, passphrase: string): Promise<unknown>;
+}
+
 export function fromEmbedded(input: unknown): ImportResult {
   const diagnostics: Diagnostic[] = [];
   const data = input as Partial<EmbeddedQuizV3> | null;

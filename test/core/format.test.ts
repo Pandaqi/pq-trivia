@@ -88,4 +88,22 @@ describe("inline formatting", () => {
     expect(countBlanks(parseInline("one [blank] two [blank]").nodes)).toBe(2);
     expect(inlineToPlainText(parseInline("**a** b").nodes)).toBe("a b");
   });
+
+  test("a fenced block keeps its language and code", () => {
+    const parsed = parseInline("before\n```js\nlet x = 1;\n```\nafter");
+    const block = parsed.nodes.find(
+      (node) => node.kind === InlineKind.CodeBlock,
+    );
+    expect(block).toEqual({
+      kind: InlineKind.CodeBlock,
+      code: "let x = 1;",
+      language: "js",
+    });
+    expect(inlineToPlainText(parsed.nodes)).toContain("let x = 1;");
+  });
+
+  test("an unclosed fence is warned about, not swallowed", () => {
+    const parsed = parseInline("```js\nlet x = 1;");
+    expect(parsed.diagnostics.length).toBeGreaterThan(0);
+  });
 });

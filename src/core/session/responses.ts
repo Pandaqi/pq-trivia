@@ -3,7 +3,6 @@
  */
 
 import { countBlanks, parseInline } from "../format/inline";
-import { answerRefs } from "../model/answers";
 import { QuestionType, type QuestionModel } from "../model/question";
 
 export enum ResponseKind {
@@ -41,10 +40,9 @@ export function defaultResponse(question: QuestionModel): Response {
     case QuestionType.List:
       return { kind: ResponseKind.List, items: [] };
     case QuestionType.Sort:
-      return {
-        kind: ResponseKind.Sort,
-        order: answerRefs(question).map((ref) => ref.id),
-      };
+      // Empty means "the author order is showing". The first move fills it in,
+      // so an untouched sort question counts as unanswered.
+      return { kind: ResponseKind.Sort, order: [] };
     case QuestionType.Match:
       return { kind: ResponseKind.Match, pairs: [] };
     case QuestionType.Cloze: {

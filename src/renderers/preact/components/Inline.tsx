@@ -2,6 +2,7 @@
 
 import type { JSX } from "preact";
 import { InlineKind, type InlineNode } from "../../../core/format/inline";
+import { CodeBlock } from "./CodeBlock";
 
 const CONTAINERS: Readonly<Record<string, string>> = {
   [InlineKind.Strong]: "strong",
@@ -40,6 +41,8 @@ function NodeView({
       return node.text;
     case InlineKind.Code:
       return <code class="pq-code">{node.text}</code>;
+    case InlineKind.CodeBlock:
+      return <CodeBlock code={node.code} language={node.language} />;
     case InlineKind.Blank:
       return (
         <span class="pq-blank" role="img" aria-label="blank">

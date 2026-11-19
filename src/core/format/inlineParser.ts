@@ -194,6 +194,10 @@ class InlineParser {
       return true;
     }
 
+    if (char === "`" && this.#tryFence(nodes)) {
+      return true;
+    }
+
     if (char === "`" && this.#tryCode(nodes)) {
       return true;
     }
@@ -221,6 +225,48 @@ class InlineParser {
     }
 
     return false;
+  }
+
+  /** ```js, a newline, the code, a newline, ```. Language is optional. */
+  #tryFence(nodes: InlineNode[]): boolean {
+    if (!this.#startsWith("```")) {
+      return false;
+    }
+    let cursor = this.#index + 3;
+    let language = "";
+    while (cursor < this.#text.length) {
+      const char = this.#text.charAt(cursor);
+      if (char === "\n") {
+        break;
+      }
+      if (char === "`") {
+        return false;
+      }
+      language += char;
+      cursor += 1;
+    }
+    if (this.#text.charAt(cursor) === "\n") {
+      cursor += 1;
+    }
+    const close = this.#text.indexOf("```", cursor);
+    if (close < 0) {
+      this.#diagnostics.push(
+        syntaxWarning(
+          DiagnosticCodes.InvalidInline,
+          "A code fence was never closed.",
+          { suggestion: "Close it with ```." },
+        ),
+      );
+      return false;
+    }
+    const code = this.#text.slice(cursor, close).replace(/\n$/, "");
+    nodes.push({
+      kind: InlineKind.CodeBlock,
+      code,
+      language: language.trim().toLowerCase(),
+    });
+    this.#index = close + 3;
+    return true;
   }
 
   #tryCode(nodes: InlineNode[]): boolean {

@@ -6,7 +6,10 @@
  */
 
 import { h, render } from "preact";
+import { attemptKeyFor } from "../../core/session/attempts";
 import type { Quiz } from "../../core/session/quiz";
+import { browserTimerSound } from "../../platform/browser/sound";
+import { createBrowserJournal } from "../../platform/browser/storage/local";
 import { QuizApp } from "./QuizApp";
 import { mountPrintSheet, type MountedPrintSheet } from "./print/mountPrint";
 import type { PrintOptions, PrintVariant } from "./print/PrintSheet";
@@ -22,6 +25,8 @@ export interface MountOptions {
   readonly printVariant?: PrintVariant;
   /** Slides per page, flash cards, form style. */
   readonly printOptions?: PrintOptions;
+  /** Remember answers between reloads. On by default. */
+  readonly attempts?: boolean;
 }
 
 export function mountQuiz(
@@ -29,7 +34,25 @@ export function mountQuiz(
   target: Element,
   options: MountOptions = {},
 ): MountedQuiz {
-  render(h(QuizApp, { quiz }), target);
+  render(h(QuizApp, { quiz, timerSound: browserTimerSound }), target);
+
+  // Attempts need the quiz key, which needs the title, seed and count. So the
+  // journal attaches on the first real state, not at create time.
+  let journalAttached = false;
+  const unsubscribeAttempts = quiz.subscribe((state) => {
+    if (journalAttached || options.attempts === false) {
+      return;
+    }
+    const plan = state.plan;
+    const meta = quiz.meta;
+    if (plan === null || meta === null) {
+      return;
+    }
+    journalAttached = true;
+    quiz.attachAttempts(
+      createBrowserJournal(attemptKeyFor(meta.title, plan.seed, plan.total)),
+    );
+  });
 
   const doc = target.ownerDocument;
   const printHost = doc.createElement("div");
@@ -63,6 +86,7 @@ export function mountQuiz(
     destroy() {
       window.removeEventListener("beforeprint", onBeforePrint);
       window.removeEventListener("afterprint", onAfterPrint);
+      unsubscribeAttempts();
       sheet?.destroy();
       sheet = null;
       printHost.remove();

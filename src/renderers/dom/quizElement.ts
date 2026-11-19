@@ -5,7 +5,9 @@
  * mounted with JS or wrote a tag. One element, one quiz.
  */
 
+import { isEncryptedQuiz } from "../../core/export/embedded";
 import { createQuiz, type Quiz } from "../../core/session/quiz";
+import { browserAnswerKey } from "../../platform/answerKey";
 import { fetchText } from "../../platform/browser/fetchText";
 import { mountQuiz, type MountedQuiz } from "../preact/mount";
 
@@ -56,6 +58,7 @@ export class QuizElement extends HTMLElement {
         seed: this.getAttribute("seed") ?? "",
         shuffleQuestions: truthy(this.getAttribute("shuffle-questions")),
         shuffleRounds: truthy(this.getAttribute("shuffle-rounds")),
+        answersKey: browserAnswerKey,
       },
     });
     this.#quiz = quiz;
@@ -70,7 +73,16 @@ export class QuizElement extends HTMLElement {
       if (generation !== this.#generation) {
         return;
       }
-      await quiz.load({ type: "text", text, file: source });
+      if (text.trimStart().startsWith("{")) {
+        const data = JSON.parse(text) as unknown;
+        await quiz.load(
+          isEncryptedQuiz(data)
+            ? { type: "encrypted", data }
+            : { type: "inline", data },
+        );
+      } else {
+        await quiz.load({ type: "text", text, file: source });
+      }
     } catch (error) {
       if (generation === this.#generation) {
         quiz.fail(error instanceof Error ? error.message : String(error));

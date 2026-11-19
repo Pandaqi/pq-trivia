@@ -42,6 +42,9 @@ export function inlineToPlainText(nodes: readonly InlineNode[]): string {
       case InlineKind.Code:
         out += node.text;
         break;
+      case InlineKind.CodeBlock:
+        out += node.code;
+        break;
       case InlineKind.Blank:
         out += "____";
         break;

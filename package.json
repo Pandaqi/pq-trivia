@@ -6,7 +6,13 @@
   "sideEffects": false,
   "description": "Plain-text quiz engine for pub quizzes and classrooms.",
   "license": "MIT",
-  "keywords": ["quiz", "trivia", "pub-quiz", "education", "plain-text"],
+  "keywords": [
+    "quiz",
+    "trivia",
+    "pub-quiz",
+    "education",
+    "plain-text"
+  ],
   "scripts": {
     "check": "bun check -p tsconfig.json && bun check -p tsconfig.core.json && bun check -p tsconfig.scripts.json",
     "lint": "bun run scripts/lint.ts",
@@ -21,6 +27,7 @@
     "validate": "bun run cli/index.ts validate",
     "format": "bun run cli/index.ts format",
     "docs": "bun run cli/index.ts docs",
+    "pack": "bun run cli/index.ts pack",
     "preview": "bun run scripts/serve.ts"
   },
   "dependencies": {

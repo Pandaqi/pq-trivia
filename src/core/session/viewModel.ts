@@ -15,6 +15,7 @@ import {
   type QuestionModel,
 } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
+import type { GradeReport } from "../grading/report";
 import { PlayMode, type Progress, type SessionState } from "./session";
 import type { MediaKind } from "../values/media";
 
@@ -22,6 +23,7 @@ export enum ScreenKind {
   Start = "start",
   Question = "question",
   End = "end",
+  Results = "results",
 }
 
 export interface AnswerViewModel {
@@ -56,6 +58,8 @@ export interface QuestionViewModel {
   readonly timerMs: number | null;
   readonly layout: string | null;
   readonly classes: readonly string[];
+  readonly colorScheme: string | null;
+  readonly transition: string | null;
   readonly background: string | null;
   readonly index: number;
   readonly total: number;
@@ -72,6 +76,15 @@ export interface QuestionViewModel {
   readonly revealable: boolean;
   readonly revealed: boolean;
   readonly answered: boolean;
+  readonly expired: boolean;
+  /** Sandboxed widget. Only rendered when the host allows scripts. */
+  readonly script: { readonly path: string; readonly height: string } | null;
+}
+
+export interface ResumeViewModel {
+  readonly savedAt: number;
+  readonly answered: number;
+  readonly total: number;
 }
 
 export interface StartViewModel {
@@ -83,6 +96,11 @@ export interface StartViewModel {
   readonly roundCount: number;
   readonly seed: string;
   readonly language: string | null;
+  readonly resume: ResumeViewModel | null;
+  readonly comments: readonly InlineNode[];
+  readonly media: readonly MediaViewModel[];
+  readonly buttons: readonly string[];
+  readonly credits: readonly string[];
 }
 
 export interface EndViewModel {
@@ -91,9 +109,20 @@ export interface EndViewModel {
   readonly questionCount: number;
   readonly answered: number;
   readonly progress: Progress;
+  readonly comments: readonly InlineNode[];
+  readonly media: readonly MediaViewModel[];
+  readonly buttons: readonly string[];
+  readonly credits: readonly string[];
 }
 
-export type ScreenViewModel = QuestionViewModel | StartViewModel | EndViewModel;
+export interface ResultsViewModel {
+  readonly kind: ScreenKind.Results;
+  readonly title: string;
+  readonly report: GradeReport;
+}
+
+export type ScreenViewModel =
+  QuestionViewModel | StartViewModel | EndViewModel | ResultsViewModel;
 
 export {
   ViewRegistry,
@@ -168,6 +197,8 @@ export function questionScreen(
     timerMs: question.timerMs,
     layout: question.layout,
     classes: question.classes,
+    colorScheme: question.colorScheme,
+    transition: question.transition,
     background: question.background,
     index,
     total,
@@ -184,13 +215,46 @@ export function questionScreen(
     revealable: !showAnswers,
     revealed,
     answered: state.responses[question.id] !== undefined,
+    expired: state.expired.includes(question.id),
+    script:
+      question.script === null
+        ? null
+        : { path: question.script, height: question.height ?? "24em" },
   };
+}
+
+function screenMedia(question: QuestionModel | null): MediaViewModel[] {
+  if (question === null) {
+    return [];
+  }
+  return question.media.map((descriptor) => ({
+    path: descriptor.path,
+    kind: descriptor.kind,
+    alt: descriptor.options["alt"] ?? null,
+  }));
+}
+
+function screenComments(question: QuestionModel | null): InlineNode[] {
+  if (question === null) {
+    return [];
+  }
+  return question.comments.flatMap((value) => parseInline(value.text).nodes);
+}
+
+function screenButtons(question: QuestionModel | null): readonly string[] {
+  return question?.buttons ?? [];
+}
+
+function screenCredits(question: QuestionModel | null): readonly string[] {
+  return question?.credits ?? [];
 }
 
 export function startScreen(
   meta: QuizMeta,
   plan: QuizPlan | null,
   language: string | null,
+  resume: ResumeViewModel | null = null,
+  intro: QuestionModel | null = null,
 ): StartViewModel {
   return {
     kind: ScreenKind.Start,
@@ -201,15 +265,44 @@ export function startScreen(
     roundCount: plan?.rounds.length ?? 0,
     seed: plan?.seed ?? "",
     language: language ?? meta.language,
+    resume,
+    comments: screenComments(intro),
+    media: screenMedia(intro),
+    buttons: screenButtons(intro),
+    credits: screenCredits(intro),
   };
 }
 
-export function endScreen(meta: QuizMeta, progress: Progress): EndViewModel {
+export function endScreen(
+  meta: QuizMeta,
+  progress: Progress,
+  outro: QuestionModel | null = null,
+): EndViewModel {
   return {
     kind: ScreenKind.End,
-    title: meta.title.length > 0 ? meta.title : "Untitled quiz",
+    title:
+      outro !== null && outro.text.length > 0
+        ? (outro.text[0]?.text ?? meta.title)
+        : meta.title.length > 0
+          ? meta.title
+          : "Untitled quiz",
     questionCount: progress.total,
     answered: progress.answered,
     progress,
+    comments: screenComments(outro),
+    media: screenMedia(outro),
+    buttons: screenButtons(outro),
+    credits: screenCredits(outro),
+  };
+}
+
+export function resultsScreen(
+  meta: QuizMeta,
+  report: GradeReport,
+): ResultsViewModel {
+  return {
+    kind: ScreenKind.Results,
+    title: meta.title.length > 0 ? meta.title : "Untitled quiz",
+    report,
   };
 }

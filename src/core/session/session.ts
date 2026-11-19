@@ -5,6 +5,7 @@
 
 import type { QuizPlan } from "../plan/plan";
 import type { Diagnostic } from "../syntax/diagnostics";
+import type { GradeReport } from "../grading/report";
 import {
   defaultResponse,
   isEmptyResponse,
@@ -14,6 +15,7 @@ import {
   type ResponseMap,
 } from "./responses";
 import type { QuestionModel } from "../model/question";
+import { timerFor, type TimerState } from "./timers";
 
 export enum SessionStatus {
   Idle = "idle",
@@ -42,6 +44,14 @@ export interface SessionState {
   readonly diagnostics: readonly Diagnostic[];
   readonly startedAt: number | null;
   readonly endedAt: number | null;
+  /** Running question timer. Null when the question has none. */
+  readonly timer: TimerState | null;
+  /** Questions whose timer ran out. */
+  readonly expired: readonly string[];
+  /** The report, once grades have been calculated. */
+  readonly report: GradeReport | null;
+  /** Results are a screen of their own, not a mode on the end screen. */
+  readonly showingResults: boolean;
 }
 
 export type SessionAction =
@@ -70,12 +80,29 @@ export type SessionAction =
   | { readonly type: "hint/reveal"; readonly questionId: string }
   | { readonly type: "reveal"; readonly questionId: string }
   | { readonly type: "language/set"; readonly language: string }
+  | { readonly type: "timer/expire"; readonly questionId: string }
+  | { readonly type: "results/show"; readonly report: GradeReport }
+  | { readonly type: "results/hide" }
+  | {
+      readonly type: "attempt/restore";
+      readonly responses: ResponseMap;
+      readonly index: number;
+      readonly startedAt: number | null;
+      readonly endedAt: number | null;
+    }
   | { readonly type: "finish" };
 
 export interface SessionOptions {
   readonly language?: string | null;
   readonly diagnostics?: readonly Diagnostic[];
 }
+
+export const EMPTY_PROGRESS: Progress = {
+  index: 0,
+  total: 0,
+  answered: 0,
+  percent: 0,
+};
 
 export function createSessionState(options: SessionOptions = {}): SessionState {
   return {
@@ -90,6 +117,19 @@ export function createSessionState(options: SessionOptions = {}): SessionState {
     diagnostics: options.diagnostics ?? [],
     startedAt: null,
     endedAt: null,
+    timer: null,
+    expired: [],
+    report: null,
+    showingResults: false,
+  };
+}
+
+/** A new question means a fresh timer, or none at all. */
+function withTimer(state: SessionState, now: number): SessionState {
+  const question = currentQuestion(state);
+  return {
+    ...state,
+    timer: question === null ? null : timerFor(question, now),
   };
 }
 
@@ -115,6 +155,10 @@ export function sessionReducer(
         plan: action.plan,
         index: -1,
         responses,
+        timer: null,
+        expired: [],
+        report: null,
+        showingResults: false,
       };
     }
 
@@ -132,7 +176,8 @@ export function sessionReducer(
           : index >= 0
             ? SessionStatus.Playing
             : SessionStatus.Ready;
-      return { ...state, plan: action.plan, responses, index, status };
+      const next = { ...state, plan: action.plan, responses, index, status };
+      return withTimer(next, now);
     }
 
     case "load/failure":
@@ -149,27 +194,34 @@ export function sessionReducer(
       const next = Math.min(state.index + 1, total);
       const playing = next >= 0 ? SessionStatus.Playing : state.status;
       const finished = next === total ? SessionStatus.Finished : playing;
-      return {
-        ...state,
-        index: next,
-        status: finished,
-        startedAt: state.startedAt ?? now,
-        endedAt: next === total ? now : state.endedAt,
-      };
+      return withTimer(
+        {
+          ...state,
+          index: next,
+          status: finished,
+          startedAt: state.startedAt ?? now,
+          endedAt: next === total ? now : state.endedAt,
+          showingResults: false,
+        },
+        now,
+      );
     }
 
     case "nav/prev": {
       if (state.plan === null) {
         return state;
       }
-      return { ...state, index: Math.max(state.index - 1, -1) };
+      return withTimer({ ...state, index: Math.max(state.index - 1, -1) }, now);
     }
 
     case "nav/goTo": {
       if (state.plan === null) {
         return state;
       }
-      return { ...state, index: Math.max(-1, Math.min(action.index, total)) };
+      return withTimer(
+        { ...state, index: Math.max(-1, Math.min(action.index, total)) },
+        now,
+      );
     }
 
     case "nav/restart":
@@ -182,6 +234,10 @@ export function sessionReducer(
         hints: {},
         startedAt: null,
         endedAt: null,
+        timer: null,
+        expired: [],
+        report: null,
+        showingResults: false,
       };
 
     case "mode/set":
@@ -228,12 +284,49 @@ export function sessionReducer(
     case "language/set":
       return { ...state, language: action.language };
 
+    case "timer/expire":
+      return {
+        ...state,
+        timer: null,
+        expired: state.expired.includes(action.questionId)
+          ? state.expired
+          : [...state.expired, action.questionId],
+      };
+
+    case "results/show":
+      return { ...state, report: action.report, showingResults: true };
+
+    case "results/hide":
+      return { ...state, showingResults: false };
+
+    case "attempt/restore": {
+      const index = Math.max(-1, Math.min(action.index, total));
+      const restored: SessionState = {
+        ...state,
+        responses: { ...state.responses, ...action.responses },
+        index,
+        status:
+          index >= total && total > 0
+            ? SessionStatus.Finished
+            : index >= 0
+              ? SessionStatus.Playing
+              : SessionStatus.Ready,
+        startedAt: action.startedAt,
+        endedAt: action.endedAt,
+        showingResults: false,
+        report: null,
+      };
+      return withTimer(restored, now);
+    }
+
     case "finish":
       return {
         ...state,
         status: SessionStatus.Finished,
         index: total,
         endedAt: now,
+        timer: null,
+        showingResults: false,
       };
 
     default:

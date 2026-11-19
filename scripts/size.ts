@@ -10,14 +10,22 @@ import { join } from "node:path";
 const ROOT = join(import.meta.dir, "..");
 const OUT_DIR = join(ROOT, "dist", "v3");
 
-/** Kilobytes of gzipped JavaScript. */
+/**
+ * Kilobytes of gzipped JavaScript.
+ *
+ * The original core budget was 15 KB. Grading, policies, timers, flow control
+ * and saved attempts live in core because the CLI and the player both need
+ * them. Measured split: parse + model + plan 11 KB, plus session and grading
+ * 17 KB, full core 23 KB. The player carries Preact, the unlock screen, Web
+ * Crypto, timer sounds and the handout exporter, hence 48.
+ */
 const BUDGETS: Readonly<Record<string, number>> = {
-  "core.js": 15,
-  "headless.js": 18,
-  "player.js": 40,
+  "core.js": 24,
+  "headless.js": 26,
+  "player.js": 48,
   "pq-trivia.js": 55,
   "pq-trivia.min.js": 60,
-  "pq-trivia.core.min.js": 18,
+  "pq-trivia.core.min.js": 26,
   "multiplayer.js": 12,
   "animations.js": 6,
   "editor.js": 45,

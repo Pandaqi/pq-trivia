@@ -55,6 +55,16 @@ export class ActionRegistry {
     this.#actions.delete(id);
   }
 
+  /** Pin or unpin without re-registering. Pinned actions come first. */
+  setPinned(id: string, pinned: boolean): boolean {
+    const action = this.#actions.get(id);
+    if (action === undefined) {
+      return false;
+    }
+    this.#actions.set(id, { ...action, pinned });
+    return true;
+  }
+
   get(id: string): ToolbarAction | undefined {
     return this.#actions.get(id);
   }

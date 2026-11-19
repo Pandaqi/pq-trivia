@@ -11,6 +11,12 @@ import {
   SessionStatus,
 } from "../../src/core/session/session";
 import {
+  AttemptJournal,
+  createAttempt,
+  type TimerApi,
+} from "../../src/core/session/attempts";
+import { MemoryStorage } from "../../src/core/session/storage";
+import {
   defaultResponse,
   isEmptyResponse,
   ResponseKind,
@@ -180,5 +186,56 @@ describe("session", () => {
     expect(state.index).toBe(-1);
     expect(state.status).toBe(SessionStatus.Ready);
     expect(Object.keys(state.responses)).toHaveLength(0);
+  });
+});
+
+describe("attempt autosave", () => {
+  test("typing queues one write instead of one per key", async () => {
+    let pending: (() => void) | null = null;
+    const timers: TimerApi = {
+      schedule: (callback) => {
+        pending = callback;
+        return 1;
+      },
+      cancel: () => {
+        pending = null;
+      },
+    };
+    const journal = new AttemptJournal(new MemoryStorage(), "quiz", {
+      debounceMs: 300,
+      timers,
+    });
+    const record = (index: number): ReturnType<typeof createAttempt> =>
+      createAttempt(
+        "quiz",
+        "Title",
+        {
+          seed: "",
+          shuffleQuestions: false,
+          shuffleRounds: false,
+          mode: PlayMode.Questions,
+          restricted: false,
+        },
+        {
+          index,
+          status: "playing",
+          responses: {},
+          startedAt: 0,
+          endedAt: null,
+          report: null,
+          savedAt: index,
+        },
+      );
+
+    journal.saveSoon(() => record(1));
+    journal.saveSoon(() => record(2));
+    journal.saveSoon(() => record(3));
+    expect(pending).not.toBeNull();
+    (pending as unknown as () => void)();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const history = await journal.history();
+    expect(history).toHaveLength(1);
+    expect(history[0]?.index).toBe(3);
   });
 });

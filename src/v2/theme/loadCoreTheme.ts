@@ -681,14 +681,12 @@ table tr:nth-child(even)
         width: auto;
     }
 }
-`
+`;
 
-export const loadCoreTheme = () =>
-{
-    const params = 
-    {
-        label: "core",
-        inline: INLINE_STYLES
-    }
-    return new QuizTheme(params);
-}
+export const loadCoreTheme = () => {
+  const params = {
+    label: "core",
+    inline: INLINE_STYLES,
+  };
+  return new QuizTheme(params);
+};

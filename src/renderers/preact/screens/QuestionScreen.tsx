@@ -4,14 +4,19 @@
  */
 
 import type { JSX } from "preact";
+import { useEffect, useState } from "preact/hooks";
 import { parseInline } from "../../../core/format/inline";
+import type { ResponseIssue } from "../../../core/session/policies";
 import type { Quiz } from "../../../core/session/quiz";
 import type { SessionState } from "../../../core/session/session";
+import type { TimerSound } from "../../../core/session/timers";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
 import { Answers } from "../components/Answers";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
+import { ScriptWidget } from "../components/ScriptWidget";
+import { Timer } from "../components/Timer";
 import { backgroundStyle } from "../components/background";
 import { roundAccent } from "../components/roundAccent";
 
@@ -36,15 +41,39 @@ export function QuestionScreen({
   quiz,
   screen,
   state,
+  timerSound,
 }: {
   readonly quiz: Quiz;
   readonly screen: QuestionViewModel;
   readonly state: SessionState;
+  readonly timerSound?: TimerSound | undefined;
 }): JSX.Element {
   const response = state.responses[screen.id];
+  const [issues, setIssues] = useState<readonly ResponseIssue[]>([]);
+
+  // A new response, or a new question, clears the red border. Nobody wants to
+  // be told off for a mistake they already fixed.
+  useEffect(() => {
+    setIssues([]);
+  }, [response, screen.id]);
+
+  const next = (): void => {
+    const result = quiz.next();
+    setIssues(result.ok || result.issues === undefined ? [] : result.issues);
+  };
+
   const hintCount = screen.hints.revealed.length;
   const canHint = hintCount < screen.hints.total;
   const accent = roundAccent(screen.roundNumber);
+
+  const className = [
+    "pq-screen",
+    "pq-screen-question",
+    ...screen.classes.map((name) =>
+      name.startsWith("pq-") ? name : `pq-${name}`,
+    ),
+  ].join(" ");
+  const transition = screen.transition ?? "fade";
 
   const hasMedia = screen.media.length > 0;
   const hasAnswers = screen.answers.length > 0;
@@ -57,17 +86,26 @@ export function QuestionScreen({
 
   const answers =
     response === undefined ? null : (
-      <Answers quiz={quiz} screen={screen} response={response} />
+      <Answers
+        quiz={quiz}
+        screen={screen}
+        response={response}
+        issues={issues}
+      />
     );
 
   return (
     <main
-      class="pq-screen pq-screen-question"
+      class={className}
       data-pq-layout={screen.layout ?? "text-only"}
+      data-pq-scheme={screen.colorScheme ?? undefined}
+      data-pq-transition={transition === "none" ? undefined : transition}
       data-pq-answered={String(screen.answered)}
       data-pq-split={split ? "true" : "false"}
       style={`${backgroundStyle(screen.background) ?? ""};--pq-round-accent:${accent}`}
     >
+      <Timer quiz={quiz} sound={timerSound} />
+
       <p class="pq-meta-strip">
         <span class="pq-meta-round">{screen.roundName ?? "Quiz"}</span>
         <span class="pq-count">{screen.heading}</span>
@@ -97,6 +135,12 @@ export function QuestionScreen({
               <Inline nodes={screen.body} />
             </div>
           )}
+
+          <ScriptWidget
+            quiz={quiz}
+            screen={screen}
+            allowed={quiz.config.allowScripts === true}
+          />
 
           {answersLeft ? answers : null}
 
@@ -150,7 +194,12 @@ export function QuestionScreen({
             Show answer
           </button>
         ) : null}
-        <button type="button" class="pq-primary" onClick={() => quiz.next()}>
+        {screen.expired ? (
+          <p class="pq-timer-note" role="status">
+            Time is up. Answers stay open.
+          </p>
+        ) : null}
+        <button type="button" class="pq-primary" onClick={next}>
           Next
         </button>
       </footer>

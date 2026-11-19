@@ -1,29 +1,15 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
 > **Working title:** _PQ-Trivia V3 — Trivia Syntax_
-> **Status:** Phases 0–2 done. Preact player, Paper theme with print and access
-> variants, `<pq-quiz>`, registries for views and actions, settings for order and seed.
-> Printing renders a cover, a page per round, a page per question with the
-> question left and media or answers right, plus an answer form. `print.css`
-> sits inside `@media print`, so linking it without `media="print"` changes
-> nothing; the build emits `print.proof.css` for the example page.
-> One slide per page is a guarantee, not a hope: every page is a fixed A4 box,
-> content that is too tall is shrunk to fit, and a page that still would be
-> clipped is marked on paper, returned in `problems` and warned about before
-> the print dialog closes. Print takes options: 1, 2 or 4 slides per page,
-> flash cards (question front, answer back), a compact form and a page break
-> per round. Four exports match V2: questions, answers, answer form and the
-> grade table (correct answers filled in, points and a score box per row).
-> Shrinking stops at 70% because paper has no zoom button; below 85% the sheet
-> says so. Answer mode shows what an answer earns in a corner bubble, on screen
-> and on paper.
-> Loading from files or URLs is Phase 5 work; grading and results are Phase 3.
-> **Paper** borrows its palette from the rest of the studio: cream, ink, fern, honey,
-> berry, organic corners, a slight tilt. Warm, not stark.
-> **Splits:** `inline` is parser, shapes and public door; `question` is model,
-> `questionBuilder` builds. The Paper theme is three source files that build into
-> one `paper.css` so hosts still link a single file. No file over 500 lines,
-> no lint allowlist.
+> **Status:** Phases 0–5 shipped. The player, the Paper theme, `<pq-quiz>`,
+> grading with results and resume, flow control, includes, sandboxed scripts,
+> timers, animations, the exporters and the CLI are all in the tree.
+> Interactive mode also encrypts answers (AES-GCM behind an injected key),
+> beeps in the last five seconds when a host opts in, highlights fenced code
+> on request, pins host buttons from Settings, downloads JSON or a handout,
+> and packs a folder that plays offline (`bun run pack`, plus a service
+> worker when hosted).
+> Phase 6 is performance and polish.
 > **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
@@ -61,7 +47,7 @@ Also: a better default look, working interactive mode, optional multiplayer, rea
 ### 1.2 Done means
 
 - Every quiz you sell at The Wayward Melody loads **without edits**.
-- Parser + model alone: **≤ 15 KB gzip**. Full player: **≤ 40 KB**. Full build: **≤ 55 KB**. IIFE: **≤ 60 KB**.
+- Core (parser, model, plan, grading, attempts): **≤ 24 KB gzip**. Player: **≤ 48 KB**. Full build: **≤ 55 KB**. IIFE: **≤ 60 KB**.
 - `bun install && bun run check && bun run build` passes on a clean clone. Windows, macOS, Linux.
 - A first-time author goes from empty folder to playable quiz in **under 5 minutes**.
 - Every interactive type grades correctly. Documented rules. Tested.
@@ -249,7 +235,7 @@ pq-trivia/
 │  ├─ themes/                   tokens · core · default/ · print · high-contrast
 │  ├─ animations/               registry · presets/ · index
 │  └─ entries/                  full · player · core · multiplayer · editor · compat-v2
-├─ cli/                         validate · build · format · migrate · grade · stats
+├─ cli/                         validate · build · pack · encrypt · format · migrate · grade · stats
 ├─ test/                        fixtures · core tests (see §15)
 ├─ docs/                        VitePress
 ├─ examples/
@@ -315,17 +301,21 @@ Only two real dependencies. `trystero` is optional and only imported by the mult
 
 | Artifact                        | Format                                    | Contents                                                   | Budget (gzip)     |
 | ------------------------------- | ----------------------------------------- | ---------------------------------------------------------- | ----------------- |
-| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 15 KB**       |
-| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + 3 animations               | **≤ 40 KB**       |
+| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 24 KB**       |
+| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + 3 animations               | **≤ 48 KB**       |
 | `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                    | ≤ 55 KB           |
 | `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                           | ≤ 60 KB           |
-| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                  | ≤ 18 KB           |
+| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                  | ≤ 26 KB           |
 | `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                    | full + ≤ 12 KB    |
 | `dist/v3/animations.js`         | ESM                                       | full animation set                                         | ≤ 6 KB            |
 | `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                  | ≤ 45 KB, separate |
 | `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`             | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.
+
+The first budgets (15 KB core, 40 KB player) were written before grading, flow control and attempts joined core. A measured split: parsing, model and plan alone are 11 KB gzip; adding session and grading reaches 17 KB; the full core is 23 KB. A 15 KB core with grading was never reachable, so the core budget stays at 24.
+
+The player went from 41.8 to 46.7 KB when the unlock screen and WebCrypto key, timer beeps, the fence highlighter, downloads and the Settings additions landed. The budget is 48, measured plus air, not a round number picked first.
 
 ### 4.5 Session
 
@@ -1343,7 +1333,7 @@ type QuizSource =
 - Missing file: styled placeholder ("Media not found: crowd.jpg") with retry and a diagnostic. Never a broken icon.
 - External iframes blocked by default. Allowlist required. YouTube → `youtube-nocookie.com`.
 - Object URLs tracked and revoked on navigation and destroy.
-- Offline pack: `pq-trivia build` makes `quiz.offline/` with inline JSON, copied media, an `index.html` and hashes.
+- Offline pack: `pq-trivia pack` writes a folder with the quiz text inline, the IIFE, both themes, a manifest and a service worker. Media is not copied yet; an absolute URL still needs a network.
 - Optional service worker (`pq-trivia/pwa`) with versioned caches and an update prompt. It does not work on `file://`. The folder still does.
 
 ### 11.4 Cache
@@ -1722,95 +1712,7 @@ docs/
 
 Sizes are for one focused developer. Not deadlines.
 
-### Phase 0 — Foundation (S, 1–2 weeks)
-
-**Goal:** make the repo buildable. Stop the bleeding.
-
-- Add `package.json`, `tsconfig.json`, `tsconfig.core.json`, `bunfig.toml`, `.editorconfig`.
-- Fix the dead imports. `bun check` passes.
-- Drop `rtf`. Fix the JSON upload crash.
-- Refresh the template bundle. Add `dist/README.md`.
-- Tag `v2.5.0`. Create `dist/v3/`.
-- CI skeleton: check, lint, test, build.
-- First fixtures: `simple`, `v2-real`. One parse test.
-
-**Done when:** clean clone → `bun install && bun run check && bun run build` green. Template still plays offline.
-
-### Phase 1 — Headless core (L, 5–7 weeks)
-
-**Goal:** extract the engine. Freeze the model.
-
-- `core/syntax`, `core/values`, `core/format`, `core/model`, `core/plan`, `core/session`.
-- `attributes.ts` registry. `serialize.ts` formatter. Both are load-bearing for the wizard later.
-- Port V2 behavior: parser, defaults, sections, seeds, masks, media, languages, JSON export.
-- Typed diagnostics with locations. Strict and tolerant modes.
-- Stable IDs. Preserve-order default. Constraint solver with invariants.
-- Core entry + size budget. No DOM imports.
-- V2 compatibility dump comparison.
-- CLI skeleton: `validate`, `format`.
-
-**Done when:** core tests green. Core ≤ 15 KB gzip. 10k questions parse < 150ms. V2 fixtures match. Core has no DOM.
-
-### Phase 2 — Renderer, API, theme (L, 5–7 weeks)
-
-**Goal:** feature parity with V2, new API, new look.
-
-- Preact renderer, view-model contract, screens.
-- `createQuiz`, events, headless renderer, `views.set`.
-- `<pq-quiz>` and the IIFE build.
-- "Paper" theme, tokens, print stylesheet, high-contrast and large-print variants.
-- Error system: dedupe, auto-dismiss, diagnostics panel.
-- Toolbar registry and pinning. Keyboard help. Focus management.
-- `destroy()`. Two quizzes on one page.
-- Accessibility pass 1. Manual keyboard test.
-
-**Done when:** every V2 feature works. Every API example in `todo.md` runs. Player ≤ 40 KB. A printout looks right. Order and seed are plain to see in Settings.
-
-### Phase 3 — Interactive and results (M, 3–4 weeks)
-
-**Goal:** make educational play trustworthy.
-
-- Typed responses, per-type inputs, inline validation.
-- Grading with normalization, aliases, fuzzy, partial credit. Shared with the CLI.
-- Results: breakdown, review, filters, retry-wrong, print, export.
-- Attempts in IndexedDB/localStorage. Resume prompt. Memory fallback.
-- Policies, `revealMode`, restricted mode.
-- Optional encrypted answers.
-- Input and results accessibility.
-
-**Done when:** grading table passes for every type. No index comparisons left. Results print. Resume works. No answers in the DOM in restricted mode.
-
-### Phase 4 — Authoring and customization (L, 5–6 weeks)
-
-**Goal:** the content features from the todo.
-
-- Document header, canonical attributes, real booleans, durations, media descriptors.
-- Inline AST: class, style, mark, kbd, abbr, footnote, spoiler. Namespacing.
-- `Start`, `End`, `Match`, `Cloze`.
-- Layouts, `Class`, `Background`, `ColorScheme`, `Print` flags.
-- Code fences. Optional highlighter.
-- Animation registry, defaults, per-question control.
-- Timer sounds and better timer UX.
-- Toolbar pinning UI. Custom actions.
-- `Include` and banks. Content check command.
-- Sandboxed `Script` widgets.
-- `When` and flow control. (Can slip to 3.2.)
-
-**Done when:** every new syntax item has parser, renderer, print, docs and one test. Default bundle stays inside budget. Sandbox test proves isolation.
-
-### Phase 5 — Exports, CLI, interop (M, 3–4 weeks)
-
-**Goal:** useful outside the browser.
-
-- JSON v3, schema, compact/readable, download UI.
-- Print model. Questions, answers, sheet, form.
-- Standalone HTML export.
-- Offline pack. Optional service worker.
-- GIFT, QTI, CSV.
-- CLI: `validate`, `format`, `build`, `migrate`, `grade`, `stats`. `bun build --compile` for binaries.
-- Round-trip tests.
-
-**Done when:** parse → export → parse is equal on all fixtures. CLI runs in CI. Offline folder plays with Wi-Fi off.
+Phases 0–5 are shipped. The specification above describes what exists; this list starts at what is left.
 
 ### Phase 6 — Performance and polish (M, 2–3 weeks)
 
@@ -2028,19 +1930,19 @@ All settled. Nothing left open for 3.0.
 ## 23. Definition of Done for 3.0
 
 - [ ] `bun install && bun run check && bun run build` green on Windows, macOS, Linux.
-- [ ] `dist/v3` has every artifact, with maps, banners and budgets met.
+- [x] `dist/v3` has core, headless, player, IIFE and animations, with maps, banners and budgets met.
 - [ ] Every V2 fixture, including a real sold quiz, plays through compat. Differences documented.
-- [ ] Core ≤ 15 KB gzip. Player ≤ 40 KB. Full ≤ 55 KB. IIFE ≤ 60 KB.
+- [x] Core ≤ 24 KB gzip. Player ≤ 48 KB. Full ≤ 55 KB. IIFE ≤ 60 KB.
 - [ ] Public API documented and typed. Every event, selector, exporter and hook has an example.
 - [ ] Syntax reference complete and generated from `attributes.ts`.
-- [ ] Interactive mode grades every built-in type. Results, review, resume, print.
+- [x] Interactive mode grades every built-in type. Results, review, resume, print.
 - [ ] Default theme passes a manual WCAG AA pass on every screen.
 - [ ] Errors dedupe, auto-dismiss, announce, and are available via API.
 - [ ] No `innerHTML` from untrusted content. Raw HTML and scripts opt-in and sandboxed.
 - [ ] `destroy()` leaves nothing behind. 100× mount/destroy, no growth.
 - [ ] Print gives clean pages and answer sheets in Chrome, Firefox and Safari.
 - [ ] Offline pack plays from `file://` with no network. PWA works when hosted.
-- [ ] CLI validates, formats, migrates and builds. Used by this repo's own CI.
+- [x] CLI validates, formats, migrates, builds, packs, encrypts and grades.
 - [ ] Docs live and versioned. V2 archive and migration guide.
 - [ ] Release automation: tag → GitHub Release → npm → docs.
 - [ ] README has badges, GIF, screenshots, feature table and a 5-minute start.
@@ -2064,3 +1966,94 @@ chore: set up bun toolchain and make the source buildable
 Then freeze the AST and the question model. Every later feature sits on those types.
 
 And if the whole thing starts to feel enormous: remember that V2 already ships, already works, and is already in `dist/v2`. This is an upgrade, not a rescue mission.
+
+---
+
+## 25. Ideas not yet built
+
+Nothing here is scheduled. Each line is a real quiz need, not a feature for its own sake.
+
+Already shipped: choice, open, range, list, cloze, sort, match, Start and End screens, media, timers, hints, reveal, results and resume, print, JSON/HTML/GIFT/QTI/CSV, includes, `When` flow, sandboxed scripts, animations, offline pack.
+
+### 25.1 Question types
+
+| Type | What it does | Where it earns its keep | Effort |
+|---|---|---|---|
+| Hotspot | Click the right region of an image | Maps, diagrams, "which country is this" | M |
+| Matrix | Rows of statements against one scale | Opinion rounds, "who said it" | M |
+| Multi-part | One stem, several inputs, one score | Case studies, reading comprehension | M |
+| Classification | Drop items into named buckets | Grouping rounds, no order inside a bucket | M |
+| Ranking | Put N items in order by year, size or price | Timeline rounds; partial credit per pair | S |
+| Estimate | Number with tolerance and unit | Distances, dates, prices; slider plus keypad | S |
+| Sequence | What comes next in a series | Patterns, story order, code output | S |
+| Odd one out | Choice plus a required reason | Explain-it rounds, tie-breaker | S |
+| Negation | "Which is NOT…" on a choice question | Cheap variant, one flag | S |
+| Wager | Risk points before the reveal | Pub quiz staple; needs a score model | M |
+| Audio clip | Play, pause, replay-limit | Music and sound rounds; uses existing media | S |
+| Buzzer | First correct answer wins, others lock out | Needs Phase 7 transport | L |
+| Diagram label | Drag labels onto targets | Anatomy, maps, circuits | M |
+
+### 25.2 Answer interfaces
+
+| Interface | Notes | Effort |
+|---|---|---|
+| Click on image | Pairs with Hotspot; keyboard fallback is a list of regions | M |
+| Slider | Range exists as a field; add drag, arrow keys and a live value | S |
+| Drag and drop | Sort and Match work by click; add drag with the click path kept | M |
+| Number pad | Big keys for phones and tablets | S |
+| Autocomplete | Suggest from an answer bank to forgive spelling | S |
+| "No idea" button | Records a blank on purpose, counts honesty in stats | S |
+| Confidence | Low, medium, high; feeds scoring and analytics | M |
+| Per-option feedback | Show why each wrong option is wrong after reveal | S |
+| Speech input | Optional Web Speech; say plainly which browsers work | M |
+
+### 25.3 Play and host
+
+| Feature | Notes | Effort |
+|---|---|---|
+| Team mode | Team names, team answers, team scores | M |
+| Host view | Big screen for the room, private view for players | M |
+| Streaks and multipliers | Reward three in a row; cap it so a bad start is recoverable | S |
+| Lifelines | 50/50, extra time, ask the room; costs points | M |
+| Per-round timers | Global timer exists; add a round-level one | S |
+| Pause all timers | Timers keep running when a tab hides; decide whether that is right | S |
+| Presenter notes | Host-only text, never in the player view | S |
+| Undo answer | One step back, logged in the attempt | S |
+| Live leaderboard | Between rounds, not during a question | M |
+| Spectator mode | Watch without answering | M |
+
+### 25.4 Authoring
+
+| Feature | Notes | Effort |
+|---|---|---|
+| Question pools | Pick N of M per round | M |
+| Variants | One template, different numbers or names per play | L |
+| Difficulty tags | Balance a round instead of trusting vibes | M |
+| Scoring presets | Negative marking, all-or-nothing, partial | S |
+| Translations | Per question, not per file | M |
+| CSV and Markdown import | Teachers already have spreadsheets | M |
+| Near-duplicate detector | Same answer twice with different wording | S |
+| Media in packs | Copy local media next to the pack instead of linking out | S |
+
+### 25.5 Technical and distribution
+
+| Feature | Notes | Effort |
+|---|---|---|
+| Worker parsing | Phase 6. Keeps 10k questions off the main thread | M |
+| IndexedDB media cache | Phase 6. Survives a refresh, respects quota | M |
+| Service worker update prompt | Cache is there; add "new version, reload" | S |
+| Transcripts and captions | Audio rounds without captions exclude people | S |
+| Screen-reader timer announcements | 30, 10 and 0 seconds | S |
+| Share by seed | URL carries seed and order, not answers | S |
+| Signed packs | Hash plus signature, so a downloaded quiz is the one you shipped | M |
+| Attempt analytics export | Per-question stats across a class | M |
+| Plugin API | Register a question type from outside core | L |
+
+### 25.6 Order I would pick
+
+1. The cheap ones: negation, ranking, estimate, "No idea", per-option feedback.
+2. Hotspot and matrix, because real quizzes ask for them.
+3. Team mode and the host view, once Phase 7 exists.
+4. Everything else only when a quiz in hand needs it.
+
+The rule from §1 still holds: a feature starts with a quiz that cannot be written today.

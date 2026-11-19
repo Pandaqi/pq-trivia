@@ -1,14 +1,19 @@
 /** One input per question type, chosen from a table. */
 
 import type { JSX } from "preact";
+import { useMemo, useState } from "preact/hooks";
 import { QuestionType } from "../../../core/model/question";
+import { derivedRng, shuffleWith } from "../../../core/plan/shuffle";
 import type { Quiz } from "../../../core/session/quiz";
+import type { ResponseIssue } from "../../../core/session/policies";
 import {
   ResponseKind,
   setClozeBlanks,
   setListItems,
+  setMatchPairs,
   setOpenText,
   setRangeValue,
+  setSortOrder,
   toggleChoice,
   type Response,
 } from "../../../core/session/responses";
@@ -18,66 +23,104 @@ interface InputProps {
   readonly quiz: Quiz;
   readonly screen: QuestionViewModel;
   readonly response: Response;
+  readonly issues: readonly ResponseIssue[];
 }
 
-function ChoiceInput({ quiz, screen, response }: InputProps): JSX.Element {
-  const selected =
-    response.kind === ResponseKind.Choice ? response.selected : [];
-  return (
-    <ul class="pq-answers">
-      {screen.answers.map((answer, index) => {
-        const chosen = selected.includes(answer.id);
-        return (
-          <li key={answer.id}>
-            <button
-              type="button"
-              class="pq-answer"
-              aria-pressed={chosen}
-              data-pq-selected={chosen ? "true" : "false"}
-              data-pq-correct={
-                answer.correct === null ? undefined : String(answer.correct)
-              }
-              onClick={() => {
-                if (response.kind === ResponseKind.Choice) {
-                  quiz.setResponse(
-                    screen.id,
-                    toggleChoice(response, answer.id),
-                  );
-                }
-              }}
-            >
-              <span class="pq-answer-number" aria-hidden="true">
-                {index + 1}
-              </span>
-              <span class="pq-answer-text">{answer.text}</span>
-              {answer.points === null ? null : (
-                <span
-                  class="pq-answer-score"
-                  aria-label={`${answer.points} ${answer.points === 1 ? "point" : "points"}`}
-                >
-                  +{answer.points}
-                </span>
-              )}
-              {answer.correct === null ? null : (
-                <span class="pq-mark" aria-hidden="true">
-                  {answer.correct ? "✓" : "✗"}
-                </span>
-              )}
-              {answer.correct === null ? null : (
-                <span class="pq-visually-hidden">
-                  {answer.correct ? "Correct" : "Not correct"}
-                </span>
-              )}
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+function messageFor(
+  issues: readonly ResponseIssue[],
+  field: string,
+): string | null {
+  return issues.find((issue) => issue.field === field)?.message ?? null;
+}
+
+function FieldError({
+  issues,
+  field,
+}: {
+  readonly issues: readonly ResponseIssue[];
+  readonly field: string;
+}): JSX.Element | null {
+  const message = messageFor(issues, field);
+  return message === null ? null : (
+    <span class="pq-field-error" role="alert">
+      {message}
+    </span>
   );
 }
 
-function OpenInput({ quiz, screen, response }: InputProps): JSX.Element {
+function ChoiceInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
+  const selected =
+    response.kind === ResponseKind.Choice ? response.selected : [];
+  const invalid = messageFor(issues, "answer") !== null;
+  return (
+    <>
+      <ul class="pq-answers" aria-invalid={invalid}>
+        {screen.answers.map((answer, index) => {
+          const chosen = selected.includes(answer.id);
+          return (
+            <li key={answer.id}>
+              <button
+                type="button"
+                class="pq-answer"
+                aria-pressed={chosen}
+                data-pq-selected={chosen ? "true" : "false"}
+                data-pq-correct={
+                  answer.correct === null ? undefined : String(answer.correct)
+                }
+                onClick={() => {
+                  if (response.kind === ResponseKind.Choice) {
+                    quiz.setResponse(
+                      screen.id,
+                      toggleChoice(response, answer.id),
+                    );
+                  }
+                }}
+              >
+                <span class="pq-answer-number" aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span class="pq-answer-text">{answer.text}</span>
+                {answer.points === null ? null : (
+                  <span
+                    class="pq-answer-score"
+                    aria-label={`${answer.points} ${answer.points === 1 ? "point" : "points"}`}
+                  >
+                    +{answer.points}
+                  </span>
+                )}
+                {answer.correct === null ? null : (
+                  <span class="pq-mark" aria-hidden="true">
+                    {answer.correct ? "✓" : "✗"}
+                  </span>
+                )}
+                {answer.correct === null ? null : (
+                  <span class="pq-visually-hidden">
+                    {answer.correct ? "Correct" : "Not correct"}
+                  </span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      <FieldError issues={issues} field="answer" />
+    </>
+  );
+}
+
+function OpenInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
   const value = response.kind === ResponseKind.Open ? response.text : "";
+  const invalid = messageFor(issues, "answer") !== null;
   return (
     <label class="pq-field">
       <span class="pq-field-label">Your answer</span>
@@ -86,6 +129,7 @@ function OpenInput({ quiz, screen, response }: InputProps): JSX.Element {
         type="text"
         value={value}
         autocomplete="off"
+        aria-invalid={invalid}
         onInput={(event) =>
           quiz.setResponse(
             screen.id,
@@ -93,12 +137,19 @@ function OpenInput({ quiz, screen, response }: InputProps): JSX.Element {
           )
         }
       />
+      <FieldError issues={issues} field="answer" />
     </label>
   );
 }
 
-function RangeInput({ quiz, screen, response }: InputProps): JSX.Element {
+function RangeInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
   const value = response.kind === ResponseKind.Range ? response.value : null;
+  const invalid = messageFor(issues, "number") !== null;
   return (
     <label class="pq-field">
       <span class="pq-field-label">Number</span>
@@ -107,6 +158,7 @@ function RangeInput({ quiz, screen, response }: InputProps): JSX.Element {
         type="number"
         inputMode="decimal"
         value={value ?? ""}
+        aria-invalid={invalid}
         onInput={(event) => {
           const raw = event.currentTarget.value;
           const parsed =
@@ -117,12 +169,19 @@ function RangeInput({ quiz, screen, response }: InputProps): JSX.Element {
           );
         }}
       />
+      <FieldError issues={issues} field="number" />
     </label>
   );
 }
 
-function ListInput({ quiz, screen, response }: InputProps): JSX.Element {
+function ListInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
   const items = response.kind === ResponseKind.List ? response.items : [];
+  const invalid = messageFor(issues, "answer") !== null;
   return (
     <label class="pq-field">
       <span class="pq-field-label">One answer per line</span>
@@ -130,6 +189,7 @@ function ListInput({ quiz, screen, response }: InputProps): JSX.Element {
         class="pq-input"
         rows={3}
         value={items.join("\n")}
+        aria-invalid={invalid}
         onInput={(event) =>
           quiz.setResponse(
             screen.id,
@@ -137,41 +197,221 @@ function ListInput({ quiz, screen, response }: InputProps): JSX.Element {
           )
         }
       />
+      <FieldError issues={issues} field="answer" />
     </label>
   );
 }
 
-function ClozeInput({ quiz, screen, response }: InputProps): JSX.Element {
+function ClozeInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
   const blanks = response.kind === ResponseKind.Cloze ? response.blanks : [];
   return (
     <div class="pq-cloze">
-      {blanks.map((blank, index) => (
-        <label key={index} class="pq-field pq-field-inline">
-          <span class="pq-field-label">Blank {index + 1}</span>
-          <input
-            class="pq-input"
-            type="text"
-            value={blank}
-            autocomplete="off"
-            onInput={(event) => {
-              const next = [...blanks];
-              next[index] = event.currentTarget.value;
-              quiz.setResponse(screen.id, setClozeBlanks(response, next));
-            }}
-          />
-        </label>
-      ))}
+      {blanks.map((blank, index) => {
+        const field = `blank-${index}`;
+        return (
+          <label key={index} class="pq-field pq-field-inline">
+            <span class="pq-field-label">Blank {index + 1}</span>
+            <input
+              class="pq-input"
+              type="text"
+              value={blank}
+              autocomplete="off"
+              aria-invalid={messageFor(issues, field) !== null}
+              onInput={(event) => {
+                const next = [...blanks];
+                next[index] = event.currentTarget.value;
+                quiz.setResponse(screen.id, setClozeBlanks(response, next));
+              }}
+            />
+            <FieldError issues={issues} field={field} />
+          </label>
+        );
+      })}
     </div>
   );
 }
 
-function OrderedAnswers({ screen }: InputProps): JSX.Element {
+/** Ordering by ID. Positions move, IDs do not. */
+function SortInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
+  const stored = response.kind === ResponseKind.Sort ? response.order : [];
+  const authorOrder = screen.answers.map((answer) => answer.id);
+  const order = stored.length === 0 ? authorOrder : stored;
+  const textOf = new Map(
+    screen.answers.map((answer) => [answer.id, answer.text]),
+  );
+  const invalid = messageFor(issues, "order") !== null;
+
+  const move = (index: number, delta: number): void => {
+    const target = index + delta;
+    if (target < 0 || target >= order.length) {
+      return;
+    }
+    const next = [...order];
+    const a = next[index];
+    const b = next[target];
+    if (a === undefined || b === undefined) {
+      return;
+    }
+    next[index] = b;
+    next[target] = a;
+    quiz.setResponse(screen.id, setSortOrder(response, next));
+  };
+
   return (
-    <ol class="pq-answers pq-answers-plain">
-      {screen.answers.map((answer) => (
-        <li key={answer.id}>{answer.text}</li>
-      ))}
-    </ol>
+    <>
+      <ol class="pq-sort" aria-invalid={invalid}>
+        {order.map((id, index) => (
+          <li key={id} class="pq-sort-item">
+            <span class="pq-sort-rank" aria-hidden="true">
+              {index + 1}
+            </span>
+            <span class="pq-sort-text">{textOf.get(id) ?? id}</span>
+            <button
+              type="button"
+              class="pq-sort-button"
+              aria-label={`Move ${textOf.get(id) ?? id} up`}
+              disabled={index === 0}
+              onClick={() => move(index, -1)}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              class="pq-sort-button"
+              aria-label={`Move ${textOf.get(id) ?? id} down`}
+              disabled={index === order.length - 1}
+              onClick={() => move(index, 1)}
+            >
+              ↓
+            </button>
+          </li>
+        ))}
+      </ol>
+      <FieldError issues={issues} field="order" />
+    </>
+  );
+}
+
+function splitPair(text: string): [string, string] {
+  const index = text.indexOf("~");
+  if (index < 0) {
+    return [text.trim(), ""];
+  }
+  return [text.slice(0, index).trim(), text.slice(index + 1).trim()];
+}
+
+/** Two columns. Click a left item, then its match on the right. */
+function MatchInput({
+  quiz,
+  screen,
+  response,
+  issues,
+}: InputProps): JSX.Element {
+  const pairs = response.kind === ResponseKind.Match ? response.pairs : [];
+  const [active, setActive] = useState<string | null>(null);
+  const parsed = useMemo(
+    () => screen.answers.map((answer) => splitPair(answer.text)),
+    [screen.answers],
+  );
+  const lefts = parsed.map((pair) => pair[0]);
+  const rights = useMemo(
+    () =>
+      shuffleWith(
+        parsed.map((pair) => pair[1]),
+        derivedRng(screen.id, "match-right"),
+      ),
+    [parsed, screen.id],
+  );
+  const connected = new Map(pairs.map((pair) => [pair[0], pair[1]]));
+  const usedRights = new Set(pairs.map((pair) => pair[1]));
+  const invalid = messageFor(issues, "pairs") !== null;
+
+  const connect = (left: string): void => {
+    setActive((current) => (current === left ? null : left));
+  };
+
+  const rightClick = (right: string): void => {
+    if (response.kind !== ResponseKind.Match) {
+      return;
+    }
+    const owner = pairs.find((pair) => pair[1] === right);
+    if (owner !== undefined) {
+      quiz.setResponse(
+        screen.id,
+        setMatchPairs(
+          response,
+          pairs.filter((pair) => pair[1] !== right),
+        ),
+      );
+      return;
+    }
+    if (active === null) {
+      return;
+    }
+    const next = [
+      ...pairs.filter((pair) => pair[0] !== active),
+      [active, right] as const,
+    ];
+    quiz.setResponse(screen.id, setMatchPairs(response, next));
+    setActive(null);
+  };
+
+  return (
+    <>
+      <div class="pq-match" aria-invalid={invalid}>
+        <ul class="pq-match-column" aria-label="Left">
+          {lefts.map((left) => {
+            const match = connected.get(left);
+            return (
+              <li key={left}>
+                <button
+                  type="button"
+                  class="pq-match-item"
+                  aria-pressed={active === left}
+                  data-pq-connected={match === undefined ? "false" : "true"}
+                  onClick={() => connect(left)}
+                >
+                  <span>{left}</span>
+                  {match === undefined ? null : (
+                    <span class="pq-match-pair">→ {match}</span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <ul class="pq-match-column" aria-label="Right">
+          {rights.map((right) => (
+            <li key={right}>
+              <button
+                type="button"
+                class="pq-match-item"
+                data-pq-connected={usedRights.has(right) ? "true" : "false"}
+                onClick={() => rightClick(right)}
+              >
+                {right}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <p class="pq-match-hint">
+        {active === null
+          ? "Pick an item on the left, then its match on the right."
+          : `Now pick the match for "${active}".`}
+      </p>
+      <FieldError issues={issues} field="pairs" />
+    </>
   );
 }
 
@@ -181,8 +421,8 @@ const INPUTS: Readonly<Record<string, (props: InputProps) => JSX.Element>> = {
   [QuestionType.Range]: RangeInput,
   [QuestionType.List]: ListInput,
   [QuestionType.Cloze]: ClozeInput,
-  [QuestionType.Sort]: OrderedAnswers,
-  [QuestionType.Match]: OrderedAnswers,
+  [QuestionType.Sort]: SortInput,
+  [QuestionType.Match]: MatchInput,
 };
 
 export function Answers(props: InputProps): JSX.Element {

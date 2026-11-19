@@ -1,680 +1,634 @@
-* 
-{
-    box-sizing: border-box;
-    user-select: none;
+* {
+  box-sizing: border-box;
+  user-select: none;
 }
 
-html, body 
-{
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 
-    --font-heading: "Helvetica";
-    --font-body: "Helvetica";
-    --heading-weight: "regular";
+  --font-heading: "Helvetica";
+  --font-body: "Helvetica";
+  --heading-weight: "regular";
 
-    --color-scheme-light: #DDDDDD;
-    --color-scheme-dark: #555555;
-    --color-scheme-text: #010101;
-    --color-scheme-bg: #FFFFFF;
+  --color-scheme-light: #DDDDDD;
+  --color-scheme-dark: #555555;
+  --color-scheme-text: #010101;
+  --color-scheme-bg: #FFFFFF;
 
-    --border-radius: 0.35em;
-    --color-white: #ECECEC;
-    --color-black: #212121;
-    --color-tint: #afc2ff;
+  --border-radius: 0.35em;
+  --color-white: #ECECEC;
+  --color-black: #212121;
+  --color-tint: #afc2ff;
 }
 
-body 
-{
-    font-family: var(--font-body);
-    font-size: var(--font-size);
+body {
+  font-family: var(--font-body);
+  font-size: var(--font-size);
 
-    color: var(--color-scheme-text);
-    background-color: var(--color-scheme-bg);
+  color: var(--color-scheme-text);
+  background-color: var(--color-scheme-bg);
 }
 
 /* Because we've moved those declarations onto nodes themselves, we need to tell all elements to copy vars */
-.quiz-ui, .quiz-screen
-{
-    font-family: var(--font-body);
-    font-size: var(--font-size);
-    color: var(--color-scheme-text);
+.quiz-ui,
+.quiz-screen {
+  font-family: var(--font-body);
+  font-size: var(--font-size);
+  color: var(--color-scheme-text);
 }
 
 /* @TODO: create a .use-body-font class or something and slap THAT on what needs it? */
-.printable-table
-{
-    font-family: var(--font-body);
+.printable-table {
+  font-family: var(--font-body);
 }
 
-video, audio
-{
-    width: 100%;
-    min-width: 8em;
-    max-height: 20em;
+video,
+audio {
+  width: 100%;
+  min-width: 8em;
+  max-height: 20em;
 }
 
-img 
-{
-    height: auto;
-    max-height: 80vh;
-    max-width: 100%;
+img {
+  height: auto;
+  max-height: 80vh;
+  max-width: 100%;
 }
 
-.printable-table img
-{
-    max-height: 4em;
+.printable-table img {
+  max-height: 4em;
 }
 
-small
-{
-    font-size: 0.66em;
-    opacity: 0.66;
+small {
+  font-size: 0.66em;
+  opacity: 0.66;
 }
 
-b
-{
-    font-weight: 900;
-    opacity: 1.0;
-    font-size: 1em;
+b {
+  font-weight: 900;
+  opacity: 1;
+  font-size: 1em;
 }
 
-.answer-text img
-{
-    max-height: 3em;
+.answer-text img {
+  max-height: 3em;
 }
 
-iframe 
-{
-    width: 560px;
-    height: 315px;
+iframe {
+  width: 560px;
+  height: 315px;
 }
 
-h1,h2,h3,h4,h5,h6
-{
-    font-family: var(--font-heading);
-    text-align: center;
-    font-weight: var(--heading-weight);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  text-align: center;
+  font-weight: var(--heading-weight);
 }
 
-h1 
-{
-    font-size: 2.5em;
+h1 {
+  font-size: 2.5em;
 }
 
-h2
-{
-    font-size: 2em;
+h2 {
+  font-size: 2em;
 }
 
-h3
-{
-    font-size: 1.5em;
+h3 {
+  font-size: 1.5em;
 }
 
-h4,h5,h6
-{
-    font-size: 1em;
+h4,
+h5,
+h6 {
+  font-size: 1em;
 }
 
-.quiz-container
-{
-    height: 100%;
-    width: 100%;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    margin: 0;
-    overflow:hidden;
+.quiz-container {
+  height: 100%;
+  width: 100%;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  margin: 0;
+  overflow: hidden;
 }
 
-.quiz-screens-area 
-{
-    position: relative;
-    height: 100%;
-    width: 100%
+.quiz-screens-area {
+  position: relative;
+  height: 100%;
+  width: 100%;
 }
 
-.quiz-screen 
-{
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    break-after: always;
+.quiz-screen {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  break-after: always;
 
-    background-image: var(--image-bg);
-    background-size: cover;
-    background-position: center center;
+  background-image: var(--image-bg);
+  background-size: cover;
+  background-position: center center;
 }
 
-.double-view 
-{
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: center;
-    align-content: center;
-    gap: 1em;
-    height: 100%;
+.double-view {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  gap: 1em;
+  height: 100%;
 }
 
-.double-view-left, .double-view-right
-{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    align-content: safe center; /* @SOURCE: https://stackoverflow.com/questions/33454533/cant-scroll-to-top-of-flex-item-that-is-overflowing-container */
-    width: 100%;
-    height: 100%;
-    padding: 2em;
-    max-width: 50em;
-    max-height: 90vh;
-    overflow-x: visible;
-    overflow-y: auto;
+.double-view-left,
+.double-view-right {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  align-content: safe center; /* @SOURCE: https://stackoverflow.com/questions/33454533/cant-scroll-to-top-of-flex-item-that-is-overflowing-container */
+  width: 100%;
+  height: 100%;
+  padding: 2em;
+  max-width: 50em;
+  max-height: 90vh;
+  overflow-x: visible;
+  overflow-y: auto;
 }
 
 /*
     METADATA
 */
-.question-metadata 
-{
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
+.question-metadata {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1em;
 
-    padding: 0.25em;
-    background-color: var(--color-scheme-dark);
-    color: var(--color-white);
+  padding: 0.25em;
+  background-color: var(--color-scheme-dark);
+  color: var(--color-white);
 
-    font-family: var(--font-heading);
-    text-transform: uppercase;
-    font-weight: bold;
-    letter-spacing: 1px;
-    font-size: 0.8em;
+  font-family: var(--font-heading);
+  text-transform: uppercase;
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-size: 0.8em;
 }
 
 .question-metadata div {
-    white-space: preserve;
+  white-space: preserve;
 }
 
-.metadata-score-method
-{
-    font-style:italic;
-    font-size:0.75em;
+.metadata-score-method {
+  font-style: italic;
+  font-size: 0.75em;
 }
 
 /*
     INPUT / BUTTONS
 */
-input 
-{
-    width: 100%;
-    margin: 0.75em;
-    padding: 0.5em;
-    font-size: 1.35em;
-    font-family: var(--font-body);
+input {
+  width: 100%;
+  margin: 0.75em;
+  padding: 0.5em;
+  font-size: 1.35em;
+  font-family: var(--font-body);
 }
 
-input[type="checkbox"]
-{
-    width: auto;
+input[type="checkbox"] {
+  width: auto;
 }
 
-input[type=file]::file-selector-button
-{
-    font-family: var(--font-body);
+input[type="file"]::file-selector-button {
+  font-family: var(--font-body);
 }
 
-.question-answers > input
-{
-    margin: 0;
+.question-answers > input {
+  margin: 0;
 }
 
-.input-node-combination
-{
-    display: flex;
-    gap: 0.75em;
-    flex-wrap: nowrap;
-    align-items: center;
+.input-node-combination {
+  display: flex;
+  gap: 0.75em;
+  flex-wrap: nowrap;
+  align-items: center;
 }
 
-select
-{
-    width: 100%;
-    padding: 1em;
-    font-family: var(--font-body);
-    border-radius: var(--border-radius);
-    border: none;
+select {
+  width: 100%;
+  padding: 1em;
+  font-family: var(--font-body);
+  border-radius: var(--border-radius);
+  border: none;
 }
 
-button 
-{
-    font-family: var(--font-body);
-    color: var(--color-scheme-dark);
-    background-color: var(--color-scheme-light);
-    display: block;
-    width: 100%;
-    border: none;
-    padding: 1.0em;
-    font-size: 1.0em;
-    border-radius: var(--border-radius);
-    background-color: var(--color-scheme-light);
-    cursor: pointer;
-    transition: color 0.2s, background-color 0.2s, filter 0.2s;
+button {
+  font-family: var(--font-body);
+  color: var(--color-scheme-dark);
+  background-color: var(--color-scheme-light);
+  display: block;
+  width: 100%;
+  border: none;
+  padding: 1em;
+  font-size: 1em;
+  border-radius: var(--border-radius);
+  background-color: var(--color-scheme-light);
+  cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    filter 0.2s;
 }
 
-button:disabled
-{
-    pointer-events: none;
-    opacity: 0.5;
-    background-color: var(--color-white);
-    color: var(--color-black);
-    font-style: italic;
+button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  background-color: var(--color-white);
+  color: var(--color-black);
+  font-style: italic;
 }
 
-button:hover
-{
-    color: var(--color-white);
-    background-color: var(--color-scheme-dark);
-    filter: drop-shadow(0 0 0.2em black);
+button:hover {
+  color: var(--color-white);
+  background-color: var(--color-scheme-dark);
+  filter: drop-shadow(0 0 0.2em black);
 }
 
-.button-list 
-{
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5em;
-    padding: 1em;
-    max-width: 50em;
-    margin: auto;
+.button-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  padding: 1em;
+  max-width: 50em;
+  margin: auto;
 }
 
-.settings-container
-{
-    max-width: 50em;
-    overflow-y: scroll;
-    height: 100%;
-    padding: 1em;
-    padding-bottom: 4em;
-    margin: auto;
+.settings-container {
+  max-width: 50em;
+  overflow-y: scroll;
+  height: 100%;
+  padding: 1em;
+  padding-bottom: 4em;
+  margin: auto;
 }
 
 /*
     QUESTIONS
 */
-.quiz-question 
-{
-    justify-content: center;
+.quiz-question {
+  justify-content: center;
 }
 
-.question-header 
-{
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    position: relative;
+.question-header {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
 }
 
-.question-question
-{
-    text-align: center;
-    width: 100%;
+.question-question {
+  text-align: center;
+  width: 100%;
 }
 
-.question-comment 
-{
-    margin-bottom: 0.5em;
-    font-size: 1.35em;
-    padding: 1rem;
-    white-space: preserve;
+.question-comment {
+  margin-bottom: 0.5em;
+  font-size: 1.35em;
+  padding: 1rem;
+  white-space: preserve;
 }
 
-.question-sources
-{
-    font-size: 0.6em;
-    font-style: italic;
-    margin: 0.2em;
-    padding: 0.2em;
+.question-sources {
+  font-size: 0.6em;
+  font-style: italic;
+  margin: 0.2em;
+  padding: 0.2em;
 }
 
-.question-media 
-{
-    display: flex;
-    flex-direction: column;
-    gap: 1em;
-    justify-content: center;
-    align-items: center;
-    max-height: 80vh;
+.question-media {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  justify-content: center;
+  align-items: center;
+  max-height: 80vh;
 }
 
-.question-media img
-{
-    max-width: 100%;
-    /*max-height: 100%;*/ /* @NOTE: Don't ask me why, enabling this makes the styling work perfectly on Firefox-based browsers but not Chromium-based */
-    height: 100%;
-    width: auto;
+.question-media img {
+  max-width: 100%;
+  /*max-height: 100%;*/ /* @NOTE: Don't ask me why, enabling this makes the styling work perfectly on Firefox-based browsers but not Chromium-based */
+  height: 100%;
+  width: auto;
 }
 
-.question-timer-container
-{
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    align-items: center;
-    min-width: 10em;
-    position: relative;
+.question-timer-container {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  min-width: 10em;
+  position: relative;
 }
 
-.question-timer-container > div
-{
-    position: relative;
-    z-index: 2;
+.question-timer-container > div {
+  position: relative;
+  z-index: 2;
 }
 
-.question-timer-container > .question-timer-bar
-{
-    background-color: red;
-    border-radius: var(--border-radius);
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    z-index: 1;
+.question-timer-container > .question-timer-bar {
+  background-color: red;
+  border-radius: var(--border-radius);
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
 }
 
-.question-round, .question-index, .question-author, .question-category
-{
-    opacity: 0.66;
+.question-round,
+.question-index,
+.question-author,
+.question-category {
+  opacity: 0.66;
 }
 
-.screen-title, .instruction-text
-{
-    text-align: center;
-    width: 100%;
+.screen-title,
+.instruction-text {
+  text-align: center;
+  width: 100%;
 }
 
 /*
     ANSWERS
 */
-.question-answers 
-{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1em;
-    margin-bottom: 1rem;
-    width: 100%;
+.question-answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1em;
+  margin-bottom: 1rem;
+  width: 100%;
 }
 
-.answer 
-{
-    width: 100%;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    background-color: var(--color-scheme-light);
-    border-radius: var(--border-radius);
-    font-size: 2em;
+.answer {
+  width: 100%;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  background-color: var(--color-scheme-light);
+  border-radius: var(--border-radius);
+  font-size: 2em;
 }
 
-.plain-text
-{
-    width: 100%;
-    text-align: center;
+.plain-text {
+  width: 100%;
+  text-align: center;
 }
 
-.answer-short 
-{
-    max-width: 10em;
+.answer-short {
+  max-width: 10em;
 }
 
-.answer-long
-{
-    max-width: 100%;
+.answer-long {
+  max-width: 100%;
 }
 
-.answer-wrong 
-{
-    opacity: 0.33;
-    transform: scale(0.925);
+.answer-wrong {
+  opacity: 0.33;
+  transform: scale(0.925);
 }
 
-.answer-right, .answer-toggled
-{
-    border: 0.25em solid white;
-    filter: drop-shadow(0 0 0.075em #333);
-    animation-name: pop-up;
-    animation-duration: 0.15s;
+.answer-right,
+.answer-toggled {
+  border: 0.25em solid white;
+  filter: drop-shadow(0 0 0.075em #333);
+  animation-name: pop-up;
+  animation-duration: 0.15s;
 }
 
-.answer-text 
-{
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    white-space: preserve;
+.answer-text {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: preserve;
 }
 
-.answer-text-inner
-{
-    text-align: center;
+.answer-text-inner {
+  text-align: center;
 }
 
-.answer-number 
-{
-    font-weight: bold;
+.answer-number {
+  font-weight: bold;
 }
 
-.answer-score
-{
-    position: absolute;
-    top: -1em;
-    background-color: var(--color-scheme-dark);
-    right: -1em;
-    border-radius: 100%;
-    width: 2em;
-    height: 2em;
-    border: 0.25em solid white;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    color: white;
+.answer-score {
+  position: absolute;
+  top: -1em;
+  background-color: var(--color-scheme-dark);
+  right: -1em;
+  border-radius: 100%;
+  width: 2em;
+  height: 2em;
+  border: 0.25em solid white;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  color: white;
 }
 
 /* only display scores on correct answers */
-.answer-right .answer-score
-{
-    display: flex;
+.answer-right .answer-score {
+  display: flex;
 }
 
 /*
     TABLES / EXPORTING
 */
-table
-{
-    width: 100%;
-    padding: 1.5em; /* margin somehow doesn't change width properly, creating scrollbars ... */
+table {
+  width: 100%;
+  padding: 1.5em; /* margin somehow doesn't change width properly, creating scrollbars ... */
 }
 
-table td 
-{
-    border: none;
-    text-align: center;
-    padding: 0.33em;
-    width: 100%;
-    font-family: var(--font-body);
+table td {
+  border: none;
+  text-align: center;
+  padding: 0.33em;
+  width: 100%;
+  font-family: var(--font-body);
 }
 
-table thead
-{
-    font-family: var(--font-heading);
-    font-weight: bold;
+table thead {
+  font-family: var(--font-heading);
+  font-weight: bold;
 }
 
 /* all children except the first (which indicates question number) try to maximize their size. */
-.table-question-number
-{
-    width: auto;
+.table-question-number {
+  width: auto;
 }
 
-table tr:nth-child(odd) 
-{
-    background-color: #FFFFFF;
+table tr:nth-child(odd) {
+  background-color: #ffffff;
 }
 
-table tr:nth-child(even) 
-{
-    background-color: #DDDDDD;
+table tr:nth-child(even) {
+  background-color: #dddddd;
 }
 
-.answer-sheet-multiple-choice-list, .grade-multiple-option-list
-{
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 2em;
-    justify-content: center;
-    align-items: center;
+.answer-sheet-multiple-choice-list,
+.grade-multiple-option-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 2em;
+  justify-content: center;
+  align-items: center;
 }
 
 /*  
     UI
 */
-.quiz-ui
-{
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
+.quiz-ui {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
 
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.55rem; /* the rem (instead of em) makes the ui stay consistent size no matter the chosen font size */
-    gap: 1rem;
-    padding: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.55rem; /* the rem (instead of em) makes the ui stay consistent size no matter the chosen font size */
+  gap: 1rem;
+  padding: 0.5rem;
 }
 
-.quiz-ui button
-{
-    padding: 0.4rem;
-    font-size: 0.7rem;
+.quiz-ui button {
+  padding: 0.4rem;
+  font-size: 0.7rem;
 }
 
-.quiz-statistics 
-{
-    text-align: center;
-    font-style: italic;
-    opacity: 0.66;
+.quiz-statistics {
+  text-align: center;
+  font-style: italic;
+  opacity: 0.66;
 }
 
-.ui-timer-global
-{
-    text-align: center;
+.ui-timer-global {
+  text-align: center;
 }
 
-.error-handler 
-{
-    position: fixed;
-    z-index: 10000;
-    width: 100%;
-    max-width: 200px;
-    font-size: 0.5rem;
-    padding: 0.5rem;
+.error-handler {
+  position: fixed;
+  z-index: 10000;
+  width: 100%;
+  max-width: 200px;
+  font-size: 0.5rem;
+  padding: 0.5rem;
 }
 
-.error-message 
-{
-    background-color: #FFFFFF;
-    padding: 0.5em;
-    border: 0.125em solid black;
-    filter: drop-shadow(0 0 0.125rem black);
-    cursor: pointer;
+.error-message {
+  background-color: #ffffff;
+  padding: 0.5em;
+  border: 0.125em solid black;
+  filter: drop-shadow(0 0 0.125rem black);
+  cursor: pointer;
 }
 
-.error-type-fail { background-color: #FFAAAA; border-color: red; }
-.error-type-warning { background-color: #ffff75; border-color: yellow; }
-.error-type-feedback { background-color: #AAAAFF; border-color: blue; }
-.error-type-success { background-color: #AAFFAA; border-color: green; }
+.error-type-fail {
+  background-color: #ffaaaa;
+  border-color: red;
+}
+.error-type-warning {
+  background-color: #ffff75;
+  border-color: yellow;
+}
+.error-type-feedback {
+  background-color: #aaaaff;
+  border-color: blue;
+}
+.error-type-success {
+  background-color: #aaffaa;
+  border-color: green;
+}
 
-.export-ui-float-on-top
-{
-    position: absolute;
-    top: 0;
-    padding: 1em;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1em;
+.export-ui-float-on-top {
+  position: absolute;
+  top: 0;
+  padding: 1em;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
 }
 
 /*
     RESPONSIVE / PRINT
 */
-@keyframes pop-up 
-{
-    from { transform: scale(1.0); }
-    to { transform: scale(0.98); }
+@keyframes pop-up {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.98);
+  }
 }
 
-@media all and (max-width:500px)
-{
-    .quiz-container
-    {
-        overflow: scroll;
-    }
+@media all and (max-width: 500px) {
+  .quiz-container {
+    overflow: scroll;
+  }
 
-    .double-view
-    {
-        flex-wrap: wrap;
-    }
+  .double-view {
+    flex-wrap: wrap;
+  }
 
-    .double-view-left, .double-view-right
-    {
-        height: auto;
-    }
+  .double-view-left,
+  .double-view-right {
+    height: auto;
+  }
 }
 
-@media print 
-{
-    .quiz-container 
-    {
-        overflow: visible;
-        background-color: #fff
-    }
+@media print {
+  .quiz-container {
+    overflow: visible;
+    background-color: #fff;
+  }
 
-    .quiz-screen {
-        display: block;
-        position: relative
-    }
+  .quiz-screen {
+    display: block;
+    position: relative;
+  }
 
-    .hide-in-print
-    {
-        display: none;
-    }
+  .hide-in-print {
+    display: none;
+  }
 }
 
-@page 
-{
-    /*margin: 0.1in; HOW TO ONLY SET THIS MARGIN WHEN PRINTING THE WHOLE QUIZ? (Not answer form/sheet/graded table) */
+@page {
+  /*margin: 0.1in; HOW TO ONLY SET THIS MARGIN WHEN PRINTING THE WHOLE QUIZ? (Not answer form/sheet/graded table) */
 
-    /* reduce timer to whatever size it needs */
-    .question-timer-container
-    {
-        min-width: 0; 
-        width: auto;
-    }
+  /* reduce timer to whatever size it needs */
+  .question-timer-container {
+    min-width: 0;
+    width: auto;
+  }
 }
