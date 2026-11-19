@@ -1,0 +1,757 @@
+/* Print, pages: cover, round, question. Built into print.css. */
+@media print {
+  :root {
+    --pq-ink: #111;
+    --pq-muted: #333;
+    --pq-paper: #fff;
+    --pq-paper-deep: #f2f2f2;
+    --pq-slide: #fff;
+    --pq-line: #999;
+    --pq-line-strong: #333;
+    --pq-strip: #111;
+    --pq-strip-ink: #fff;
+    --pq-accent: #333;
+    --pq-accent-ink: #fff;
+    --pq-honey: #e8c66a;
+    --pq-honey-soft: #f6e7bd;
+    --pq-fern: #4f7a3f;
+    --pq-fern-soft: #e6efdb;
+    --pq-right: #1f5b2c;
+    --pq-wrong: #7a1f1f;
+    --pq-title-size: 21pt;
+    --pq-answer-size: 12pt;
+    --pq-space: 0;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    color: #000;
+  }
+
+  .pq-quiz {
+    display: none !important;
+  }
+
+  .pq-print-only {
+    display: block;
+  }
+
+  .pq-print-hide,
+  .pq-live,
+  .pq-toolbar,
+  .pq-keys,
+  .pq-settings,
+  .pq-problems-panel,
+  .pq-progress,
+  .pq-visually-hidden,
+  .pq-suggestion {
+    display: none !important;
+  }
+
+  .pq-print-sheet {
+    color: #000;
+    font-family: var(--pq-font-body);
+    font-size: 10.5pt;
+    line-height: 1.35;
+  }
+
+  .pq-print-sheet *,
+  .pq-print-sheet *::before,
+  .pq-print-sheet *::after {
+    box-sizing: border-box;
+    min-width: 0;
+  }
+
+  /* One page each, in a fixed A4 box. fit.ts shrinks a page that is too tall. */
+  .pq-print-page {
+    position: relative;
+    display: block;
+    height: var(--pq-print-page-height, 273mm);
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    break-after: page;
+    break-inside: avoid;
+    background: #fff;
+  }
+
+  .pq-print-page-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Bar at the top, halves centred in the space that is left. */
+  .pq-print-question > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  .pq-print-question-body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .pq-print-page:last-child {
+    break-after: auto;
+  }
+
+  /* Cover. */
+  .pq-print-cover {
+    text-align: center;
+  }
+
+  .pq-print-cover > .pq-print-page-inner,
+  .pq-print-round > .pq-print-page-inner {
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Flash cards: one face per page, reading from the top. */
+  .pq-print-card > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  .pq-card-label {
+    margin: 0 0 4mm;
+    color: #555;
+    font-size: 8.5pt;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+  }
+
+  /* A page that could not be made to fit. Visible on paper, so it is not lost. */
+  .pq-print-page[data-pq-overflow="true"] {
+    outline: 0.8pt dashed #7a1f1f;
+    outline-offset: -2mm;
+  }
+
+  .pq-print-page[data-pq-overflow="true"]::after {
+    content: "Page too full — would be clipped";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding: 1mm 2mm;
+    background: #7a1f1f;
+    color: #fff;
+    font-size: 7pt;
+    letter-spacing: 0.04em;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Slides per page: two stacked, or four in a 2×2 grid. */
+  .pq-print-group > .pq-print-page-inner {
+    justify-content: stretch;
+  }
+
+  .pq-print-grid {
+    display: grid;
+    flex: 1 1 auto;
+    gap: 4mm;
+    min-height: 0;
+  }
+
+  .pq-print-grid[data-pq-per-page="2"] {
+    grid-auto-rows: minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pq-print-grid[data-pq-per-page="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .pq-print-tile {
+    min-width: 0;
+    min-height: 0;
+    padding: 2mm 3mm;
+    border: 0.4pt solid #bbb;
+    border-radius: 1mm;
+    overflow: hidden;
+  }
+
+  .pq-print-tile .pq-meta-strip {
+    margin-bottom: 3mm;
+    font-size: 7pt;
+  }
+
+  .pq-print-tile .pq-title {
+    margin-bottom: 2mm;
+    font-size: 14pt;
+  }
+
+  .pq-print-tile .pq-body,
+  .pq-print-tile .pq-answer {
+    font-size: 9pt;
+  }
+
+  .pq-print-tile .pq-answer {
+    gap: 2mm;
+    padding: 1.2mm 2mm;
+  }
+
+  .pq-print-tile .pq-split {
+    gap: 4mm;
+  }
+
+  .pq-print-tile .pq-media-list img,
+  .pq-print-tile .pq-media-list video {
+    max-height: 42mm;
+  }
+
+  .pq-cover-kicker {
+    margin: 0 0 6mm;
+    font-size: 9pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  .pq-cover-title {
+    margin: 0;
+    font-family: var(--pq-font-heading);
+    font-size: 34pt;
+    line-height: 1.18;
+    max-width: 150mm;
+  }
+
+  .pq-cover-description {
+    margin: 5mm 0 0;
+    max-width: 140mm;
+    font-family: var(--pq-font-heading);
+    font-style: italic;
+    font-size: 13pt;
+    color: #333;
+  }
+
+  .pq-cover-byline {
+    margin: 3mm 0 0;
+    font-size: 10pt;
+    color: #333;
+  }
+
+  .pq-cover-banner {
+    margin: 10mm 0 0;
+    padding: 3mm 10mm;
+    border: 0.8pt solid #000;
+    border-radius: 1.5mm;
+    background: #f6e7bd;
+    font-size: 11pt;
+    letter-spacing: 0.04em;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-cover-seed {
+    margin: 4mm 0 0;
+    font-size: 8.5pt;
+    color: #555;
+  }
+
+  /* Round page. */
+  .pq-print-round {
+    align-items: center;
+    text-align: center;
+  }
+
+  .pq-print-round .pq-round-name {
+    margin: 0;
+    font-family: var(--pq-font-heading);
+    font-size: 28pt;
+    font-style: italic;
+  }
+
+  .pq-print-round .pq-round-number {
+    margin: 0 0 3mm;
+    font-size: 10pt;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+
+  .pq-print-round .pq-round-stats {
+    margin: 6mm 0 0;
+    font-size: 11pt;
+  }
+
+  .pq-print-round .pq-round-secret {
+    margin: 4mm 0 0;
+    font-style: italic;
+    color: #333;
+  }
+}
+
+
+/* Print, question pages: bar, two halves, answers, hints, fields. Built into print.css. */
+@media print {
+  /* Question page: the coloured bar, then two balanced halves. */
+  .pq-meta-strip {
+    margin: 0 0 6mm;
+    padding: 2mm 3mm;
+    border: 0;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-meta-strip > .pq-points {
+    border-left-color: #fff;
+    color: #fff;
+  }
+
+  .pq-meta-author,
+  .pq-meta-category,
+  .pq-count,
+  .pq-meta-round {
+    opacity: 1;
+  }
+
+  .pq-round-banner {
+    margin: 0 0 5mm;
+    padding: 3mm 4mm;
+    border: none;
+    border-left: 3mm solid var(--pq-round-accent, #111);
+    background: #f2f2f2 !important;
+    color: #000 !important;
+    text-align: left;
+  }
+
+  .pq-round-banner::before {
+    content: none;
+  }
+
+  .pq-round-banner .pq-round-name {
+    font-size: 16pt;
+    transform: none;
+    text-align: left;
+  }
+
+  .pq-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: 10mm;
+    align-items: center;
+    flex: 1 1 auto;
+  }
+
+  .pq-split-single {
+    display: block;
+  }
+
+  .pq-split-left,
+  .pq-split-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4mm;
+  }
+
+  .pq-split-right {
+    padding-left: 8mm;
+    border-left: 0.5pt dashed #999;
+  }
+
+  .pq-header {
+    padding: 0;
+  }
+
+  .pq-kicker,
+  .pq-description,
+  .pq-byline {
+    color: #333;
+  }
+
+  .pq-title {
+    margin: 0 0 3mm;
+    font-size: 20pt;
+    line-height: 1.2;
+    text-align: left;
+    text-wrap: pretty;
+  }
+
+  .pq-body {
+    margin: 0;
+    max-width: none;
+    color: #333;
+    text-align: left;
+    font-size: 11pt;
+  }
+
+  .pq-media-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4mm;
+    margin: 0;
+  }
+
+  .pq-media-list img,
+  .pq-media-list video {
+    max-height: 95mm;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Tinted option blocks with letter badges, like the old answer sheet. */
+  .pq-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5mm;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pq-answers > li {
+    break-inside: avoid;
+  }
+
+  .pq-answer {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    min-height: 0;
+    padding: 2mm 3mm;
+    border: 0.8pt solid
+      color-mix(in srgb, var(--pq-round-accent, #111) 60%, #000);
+    border-radius: 1.2mm;
+    background: color-mix(
+      in srgb,
+      var(--pq-round-accent, #111) 24%,
+      #fff
+    ) !important;
+    box-shadow: none !important;
+    font-size: var(--pq-answer-size);
+    transform: none !important;
+    opacity: 1;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer-number {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 5.5mm;
+    height: 5.5mm;
+    border-radius: 50%;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8pt;
+    font-weight: 700;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer[data-pq-correct="false"] {
+    opacity: 1;
+    border-style: dashed;
+    background: #fff !important;
+  }
+
+  .pq-answer[data-pq-correct="false"] .pq-answer-text {
+    text-decoration: line-through;
+    text-decoration-thickness: 0.6pt;
+  }
+
+  .pq-answer[data-pq-correct="true"] {
+    border-width: 1.6pt;
+    box-shadow: none !important;
+  }
+
+  .pq-mark {
+    display: inline !important;
+    margin-left: auto;
+    font-size: 1.1em;
+    font-weight: 700;
+  }
+
+  /* Points earned by a correct answer, in a bubble at the right edge. */
+  .pq-print-sheet .pq-answer-score {
+    position: static;
+    display: inline-grid;
+    border: none;
+    flex: 0 0 auto;
+    place-items: center;
+    min-width: 6mm;
+    height: 6mm;
+    padding: 0 1mm;
+    border-radius: 999rem;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .pq-answers-plain {
+    display: block;
+    margin: 0;
+    padding-left: 6mm;
+    color: #333;
+    font-size: 11pt;
+  }
+
+  .pq-hints,
+  .pq-explanation {
+    max-width: none;
+    margin: 0;
+    padding: 2mm 3mm;
+    border-left: 1.5pt solid var(--pq-round-accent, #111);
+    border-radius: 0;
+    background: none !important;
+    font-size: 10pt;
+  }
+
+  .pq-explanation {
+    margin-top: 5mm;
+    font-style: italic;
+  }
+
+  .pq-answer-key {
+    display: flex;
+    gap: 3mm;
+    align-items: center;
+    margin: 0;
+    padding-left: 3mm;
+    border-left: 1.5pt solid #000;
+    font-size: 11pt;
+  }
+
+  .pq-answer-key .pq-answer-score {
+    margin-left: auto;
+  }
+
+  .pq-print-line {
+    display: block;
+    height: 7mm;
+    border-bottom: 0.8pt solid #000;
+  }
+
+  .pq-field {
+    margin: 0;
+    max-width: 90mm;
+  }
+
+  .pq-field-label {
+    color: #333;
+    font-size: 8.5pt;
+    letter-spacing: 0.06em;
+  }
+
+  .pq-input {
+    width: 100%;
+    padding: 0;
+    border: none;
+    border-bottom: 0.8pt solid #000;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 12pt;
+  }
+
+  .pq-cloze {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5mm;
+    margin: 0;
+  }
+
+  .pq-cloze .pq-field {
+    max-width: 45mm;
+    margin: 0;
+    break-inside: avoid;
+  }
+}
+
+
+/* Print, forms: the answer table, fields and utilities. Built into print.css. */
+@media print {
+  /* Answer form: a table a player writes on. */
+  .pq-print-form {
+    display: block;
+  }
+
+  .pq-print-form > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  /* Typed questions get a line to write on, not an empty cell. */
+  .pq-form-line {
+    display: block;
+    width: 100%;
+    height: 6mm;
+    border-bottom: 0.6pt solid #000;
+  }
+
+  .pq-form-new-page {
+    break-before: page;
+  }
+
+  /* Compact form: fewer millimetres per row. */
+  .pq-form-compact .pq-form,
+  .pq-form-compact .pq-grade {
+    margin-bottom: 5mm;
+    font-size: 9pt;
+  }
+
+  .pq-form-compact .pq-form td,
+  .pq-form-compact .pq-grade td {
+    padding: 1.2mm 2mm;
+  }
+
+  .pq-form-compact .pq-form caption,
+  .pq-form-compact .pq-grade caption {
+    font-size: 12pt;
+  }
+
+  .pq-form-compact .pq-form-line {
+    height: 4mm;
+  }
+
+  .pq-form,
+  .pq-grade {
+    width: 100%;
+    margin: 0 0 8mm;
+    border-collapse: collapse;
+    font-size: 10pt;
+  }
+
+  .pq-form caption,
+  .pq-grade caption {
+    padding: 0 0 2mm;
+    font-family: var(--pq-font-heading);
+    font-size: 14pt;
+    font-style: italic;
+    text-align: left;
+    caption-side: top;
+  }
+
+  .pq-form th,
+  .pq-grade th {
+    padding: 1.5mm 2mm;
+    border-bottom: 1pt solid #000;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .pq-form td,
+  .pq-grade td {
+    padding: 2mm;
+    border-bottom: 0.4pt solid #999;
+    vertical-align: top;
+  }
+
+  .pq-form tbody tr:nth-child(even) td,
+  .pq-grade tbody tr:nth-child(even) td {
+    background: #f4f4f4;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-form-number {
+    width: 8mm;
+    font-weight: 700;
+  }
+
+  .pq-form-answer {
+    width: 70mm;
+    white-space: nowrap;
+  }
+
+  .pq-form-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 1mm;
+    margin-right: 4mm;
+    font-size: 9pt;
+  }
+
+  .pq-form-box {
+    display: inline-block;
+    width: 3.5mm;
+    height: 3.5mm;
+    border: 0.6pt solid #000;
+  }
+
+  .pq-form-points {
+    width: 12mm;
+    text-align: right;
+  }
+
+  /* Grade table: correct answers filled in, a score box per row. */
+  .pq-print-grade {
+    display: block;
+  }
+
+  .pq-print-grade > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  .pq-grade-correct {
+    width: 62mm;
+    font-weight: 700;
+  }
+
+  .pq-grade-number {
+    width: 10mm;
+    font-weight: 700;
+  }
+
+  .pq-grade-points {
+    width: 12mm;
+    text-align: right;
+  }
+
+  .pq-grade-tick {
+    width: 14mm;
+    text-align: center;
+  }
+
+  .pq-grade tfoot td {
+    border-bottom: none;
+    font-weight: 700;
+  }
+
+  .pq-grade tfoot td:first-child {
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .pq-custom-view,
+  .pq-host {
+    display: contents;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}

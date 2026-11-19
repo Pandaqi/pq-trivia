@@ -1,0 +1,294 @@
+/* Print, question pages: bar, two halves, answers, hints, fields. Built into print.css. */
+@media print {
+  /* Question page: the coloured bar, then two balanced halves. */
+  .pq-meta-strip {
+    margin: 0 0 6mm;
+    padding: 2mm 3mm;
+    border: 0;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-meta-strip > .pq-points {
+    border-left-color: #fff;
+    color: #fff;
+  }
+
+  .pq-meta-author,
+  .pq-meta-category,
+  .pq-count,
+  .pq-meta-round {
+    opacity: 1;
+  }
+
+  .pq-round-banner {
+    margin: 0 0 5mm;
+    padding: 3mm 4mm;
+    border: none;
+    border-left: 3mm solid var(--pq-round-accent, #111);
+    background: #f2f2f2 !important;
+    color: #000 !important;
+    text-align: left;
+  }
+
+  .pq-round-banner::before {
+    content: none;
+  }
+
+  .pq-round-banner .pq-round-name {
+    font-size: 16pt;
+    transform: none;
+    text-align: left;
+  }
+
+  .pq-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: 10mm;
+    align-items: center;
+    flex: 1 1 auto;
+  }
+
+  .pq-split-single {
+    display: block;
+  }
+
+  .pq-split-left,
+  .pq-split-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4mm;
+  }
+
+  .pq-split-right {
+    padding-left: 8mm;
+    border-left: 0.5pt dashed #999;
+  }
+
+  .pq-header {
+    padding: 0;
+  }
+
+  .pq-kicker,
+  .pq-description,
+  .pq-byline {
+    color: #333;
+  }
+
+  .pq-title {
+    margin: 0 0 3mm;
+    font-size: 20pt;
+    line-height: 1.2;
+    text-align: left;
+    text-wrap: pretty;
+  }
+
+  .pq-body {
+    margin: 0;
+    max-width: none;
+    color: #333;
+    text-align: left;
+    font-size: 11pt;
+  }
+
+  .pq-media-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4mm;
+    margin: 0;
+  }
+
+  .pq-media-list img,
+  .pq-media-list video {
+    max-height: 95mm;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Tinted option blocks with letter badges, like the old answer sheet. */
+  .pq-answers {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5mm;
+    width: auto;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .pq-answers > li {
+    break-inside: avoid;
+  }
+
+  .pq-answer {
+    display: flex;
+    align-items: center;
+    gap: 3mm;
+    min-height: 0;
+    padding: 2mm 3mm;
+    border: 0.8pt solid
+      color-mix(in srgb, var(--pq-round-accent, #111) 60%, #000);
+    border-radius: 1.2mm;
+    background: color-mix(
+      in srgb,
+      var(--pq-round-accent, #111) 24%,
+      #fff
+    ) !important;
+    box-shadow: none !important;
+    font-size: var(--pq-answer-size);
+    transform: none !important;
+    opacity: 1;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer-number {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 5.5mm;
+    height: 5.5mm;
+    border-radius: 50%;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8pt;
+    font-weight: 700;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer[data-pq-correct="false"] {
+    opacity: 1;
+    border-style: dashed;
+    background: #fff !important;
+  }
+
+  .pq-answer[data-pq-correct="false"] .pq-answer-text {
+    text-decoration: line-through;
+    text-decoration-thickness: 0.6pt;
+  }
+
+  .pq-answer[data-pq-correct="true"] {
+    border-width: 1.6pt;
+    box-shadow: none !important;
+  }
+
+  .pq-mark {
+    display: inline !important;
+    margin-left: auto;
+    font-size: 1.1em;
+    font-weight: 700;
+  }
+
+  /* Points earned by a correct answer, in a bubble at the right edge. */
+  .pq-print-sheet .pq-answer-score {
+    position: static;
+    display: inline-grid;
+    border: none;
+    flex: 0 0 auto;
+    place-items: center;
+    min-width: 6mm;
+    height: 6mm;
+    padding: 0 1mm;
+    border-radius: 999rem;
+    background: var(--pq-round-accent, #111) !important;
+    color: #fff !important;
+    font-size: 8pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-answer-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .pq-answers-plain {
+    display: block;
+    margin: 0;
+    padding-left: 6mm;
+    color: #333;
+    font-size: 11pt;
+  }
+
+  .pq-hints,
+  .pq-explanation {
+    max-width: none;
+    margin: 0;
+    padding: 2mm 3mm;
+    border-left: 1.5pt solid var(--pq-round-accent, #111);
+    border-radius: 0;
+    background: none !important;
+    font-size: 10pt;
+  }
+
+  .pq-explanation {
+    margin-top: 5mm;
+    font-style: italic;
+  }
+
+  .pq-answer-key {
+    display: flex;
+    gap: 3mm;
+    align-items: center;
+    margin: 0;
+    padding-left: 3mm;
+    border-left: 1.5pt solid #000;
+    font-size: 11pt;
+  }
+
+  .pq-answer-key .pq-answer-score {
+    margin-left: auto;
+  }
+
+  .pq-print-line {
+    display: block;
+    height: 7mm;
+    border-bottom: 0.8pt solid #000;
+  }
+
+  .pq-field {
+    margin: 0;
+    max-width: 90mm;
+  }
+
+  .pq-field-label {
+    color: #333;
+    font-size: 8.5pt;
+    letter-spacing: 0.06em;
+  }
+
+  .pq-input {
+    width: 100%;
+    padding: 0;
+    border: none;
+    border-bottom: 0.8pt solid #000;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    font-size: 12pt;
+  }
+
+  .pq-cloze {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5mm;
+    margin: 0;
+  }
+
+  .pq-cloze .pq-field {
+    max-width: 45mm;
+    margin: 0;
+    break-inside: avoid;
+  }
+}

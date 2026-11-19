@@ -1,0 +1,35 @@
+{
+  "name": "pq-trivia",
+  "version": "3.0.0-dev.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "description": "Plain-text quiz engine for pub quizzes and classrooms.",
+  "license": "MIT",
+  "keywords": ["quiz", "trivia", "pub-quiz", "education", "plain-text"],
+  "scripts": {
+    "check": "bun check -p tsconfig.json && bun check -p tsconfig.core.json && bun check -p tsconfig.scripts.json",
+    "lint": "bun run scripts/lint.ts",
+    "layers": "bun run scripts/lint.ts --layers-only",
+    "fmt": "bun fmt",
+    "fmt:check": "bun fmt --check",
+    "build": "bun run scripts/build.ts",
+    "dev": "bun run scripts/build.ts --watch",
+    "size": "bun run scripts/size.ts",
+    "test": "bun test",
+    "check:content": "bun run cli/index.ts validate template/questions test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
+    "validate": "bun run cli/index.ts validate",
+    "format": "bun run cli/index.ts format",
+    "docs": "bun run cli/index.ts docs",
+    "preview": "bun run scripts/serve.ts"
+  },
+  "dependencies": {
+    "preact": "^11.2.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  }
+}

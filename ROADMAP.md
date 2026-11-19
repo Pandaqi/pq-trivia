@@ -1,8 +1,30 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
-> **Working title:** *PQ-Trivia V3 — Trivia Syntax*
-> **Status:** plan. Nothing built yet.
-> **Baseline:** v2.5.0 (`src/`, `dist/v2/pq-trivia.min.js`, 108 KB)
+> **Working title:** _PQ-Trivia V3 — Trivia Syntax_
+> **Status:** Phases 0–2 done. Preact player, Paper theme with print and access
+> variants, `<pq-quiz>`, registries for views and actions, settings for order and seed.
+> Printing renders a cover, a page per round, a page per question with the
+> question left and media or answers right, plus an answer form. `print.css`
+> sits inside `@media print`, so linking it without `media="print"` changes
+> nothing; the build emits `print.proof.css` for the example page.
+> One slide per page is a guarantee, not a hope: every page is a fixed A4 box,
+> content that is too tall is shrunk to fit, and a page that still would be
+> clipped is marked on paper, returned in `problems` and warned about before
+> the print dialog closes. Print takes options: 1, 2 or 4 slides per page,
+> flash cards (question front, answer back), a compact form and a page break
+> per round. Four exports match V2: questions, answers, answer form and the
+> grade table (correct answers filled in, points and a score box per row).
+> Shrinking stops at 70% because paper has no zoom button; below 85% the sheet
+> says so. Answer mode shows what an answer earns in a corner bubble, on screen
+> and on paper.
+> Loading from files or URLs is Phase 5 work; grading and results are Phase 3.
+> **Paper** borrows its palette from the rest of the studio: cream, ink, fern, honey,
+> berry, organic corners, a slight tilt. Warm, not stark.
+> **Splits:** `inline` is parser, shapes and public door; `question` is model,
+> `questionBuilder` builds. The Paper theme is three source files that build into
+> one `paper.css` so hosts still link a single file. No file over 500 lines,
+> no lint allowlist.
+> **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
 ---
@@ -27,14 +49,14 @@ Also: a better default look, working interactive mode, optional multiplayer, rea
 
 ### 1.1 Who it is for
 
-| Who | What they need | What V3 promises |
-|---|---|---|
+| Who                      | What they need                                       | What V3 promises                                                  |
+| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
 | **Pub quiz hosts** (you) | Fast authoring, projector playback, printed fallback | Same seed = same quiz. Keyboard play. Print that works. No setup. |
-| **Teachers** | Interactive play, grading, review, LMS export | Correct grading. Results page. Accessible. GIFT/QTI/CSV. |
-| **Players** | Phone or laptop, clear feedback | Responsive. Keyboard and touch. Progress saved. |
-| **Authors** | Send one text file | Tolerant parser. Helpful errors. No numbering. |
-| **Developers** | Custom frontends, tiny bundles | Headless API. Events. Plugin types. Import only what you use. |
-| **Theme designers** | Stable CSS contract | Documented tokens and classes. No framework lock-in. |
+| **Teachers**             | Interactive play, grading, review, LMS export        | Correct grading. Results page. Accessible. GIFT/QTI/CSV.          |
+| **Players**              | Phone or laptop, clear feedback                      | Responsive. Keyboard and touch. Progress saved.                   |
+| **Authors**              | Send one text file                                   | Tolerant parser. Helpful errors. No numbering.                    |
+| **Developers**           | Custom frontends, tiny bundles                       | Headless API. Events. Plugin types. Import only what you use.     |
+| **Theme designers**      | Stable CSS contract                                  | Documented tokens and classes. No framework lock-in.              |
 
 ### 1.2 Done means
 
@@ -73,52 +95,52 @@ Also: a better default look, working interactive mode, optional multiplayer, rea
 
 ### 2.2 Structural problems
 
-| Problem | Evidence | Result |
-|---|---|---|
-| No `package.json`, no `tsconfig.json`, no build config | repo root | Cannot install, typecheck or build from source. `dist/v2` came from somewhere else. |
-| Imports that cannot resolve | `quizScreenLoad.ts` → `lib/pq-trivia/...`; `quizScreenSettings.ts` → `lib/pq-trivia/...`; `quizTheme.ts` → `..` (cycle) | No clean build is possible today. |
-| One class owns everything | `Quiz` owns loader, nodes, DOM, export, storage, translator, timers | "Parser only" is impossible. Every test needs a DOM. |
-| DOM mixed into data | `QuestionTyper*` return `HTMLElement` | Cannot run in a Worker or a CLI. |
-| Global side effects | `document.head`, `document.body`, `window.onbeforeunload`, `localStorage`, `document.fonts` | No teardown. No two quizzes per page. No isolation. |
-| Docs drift from code | `backgroundAlpha`, `filenamePattern`, `loadDefaultStyles`, `FormatText`, `fileExtensions` | Authors follow the docs and get silence. |
-| Zero tests | — | The "needs testing" list is exactly the branching logic. |
+| Problem                                                | Evidence                                                                                                                | Result                                                                              |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| No `package.json`, no `tsconfig.json`, no build config | repo root                                                                                                               | Cannot install, typecheck or build from source. `dist/v2` came from somewhere else. |
+| Imports that cannot resolve                            | `quizScreenLoad.ts` → `lib/pq-trivia/...`; `quizScreenSettings.ts` → `lib/pq-trivia/...`; `quizTheme.ts` → `..` (cycle) | No clean build is possible today.                                                   |
+| One class owns everything                              | `Quiz` owns loader, nodes, DOM, export, storage, translator, timers                                                     | "Parser only" is impossible. Every test needs a DOM.                                |
+| DOM mixed into data                                    | `QuestionTyper*` return `HTMLElement`                                                                                   | Cannot run in a Worker or a CLI.                                                    |
+| Global side effects                                    | `document.head`, `document.body`, `window.onbeforeunload`, `localStorage`, `document.fonts`                             | No teardown. No two quizzes per page. No isolation.                                 |
+| Docs drift from code                                   | `backgroundAlpha`, `filenamePattern`, `loadDefaultStyles`, `FormatText`, `fileExtensions`                               | Authors follow the docs and get silence.                                            |
+| Zero tests                                             | —                                                                                                                       | The "needs testing" list is exactly the branching logic.                            |
 
 ### 2.3 Defects
 
 **S1** = data loss, crash or security. **S2** = visibly wrong. **S3** = papercut.
 
-| # | Sev | Issue | Where | Fixed in |
-|---|---|---|---|---|
-| 1 | S1 | **HTML injection.** Question text, answers, comments, sources, titles and translations go through `innerHTML`. A submitted quiz file can run script. | `createNode.ts`, `createAnswerNode.ts`, `createQuestionNode.ts`, `markdownify.ts` | 1–2 |
-| 2 | S2 | **`translate()` renders all text.** Every `[...]` in any string is treated as a UI key. Unknown keys become empty strings. | `createNode.ts`, `translator.ts` | 1 |
-| 3 | S1 | **Grade screen wipes the page.** `document.body.innerHTML = ""` kills the quiz, error handler and toolbar. "Go Back" has nowhere to go. | `quizScreenEnd.ts` | 2 |
-| 4 | S1 | **Toolbar mutates config.** `toolbarActions.splice()` edits `quiz.params.toolbar` itself. Each screen change removes buttons. | `nodes.ts` | 2 |
-| 5 | S1 | **HTTP loader duplicates URLs.** `arr.push(path)` inside the language loop and again after it. Path may point at a file that failed. | `loaderHTTP.ts` | 1 |
-| 6 | S1 | **JSON and RTF upload crash.** `parseRawFile` returns an object or `undefined`, then `.split` is called on it. RTF is offered in the picker. | `parser.ts`, `loaderUpload.ts` | 0 |
-| 7 | S2 | **camelCase attributes ignored.** Parser lowercases keys; `Question.fromData` reads `formatText` etc. Also `"false"` is truthy. Booleans can never be off. | `question.ts`, `parser.ts` | 1 |
-| 8 | S1 | **Choice grading compares by index.** Sparse arrays keyed by click order. Sort has the same shape. Reveal reads `dataset.id`, which choice inputs overwrite. | `questionTyperChoice.ts`, `storageInteractive.ts` | 3 |
-| 9 | S1 | **No teardown.** Listeners, intervals, `<style>`, fonts and `onbeforeunload` all outlive the quiz. | `dom.ts`, `timer.ts`, `quizTheme.ts` | 2 |
-| 10 | S2 | **Theme URLs break on file pages.** `${window.location.href}/${path}` gives `.../index.html/theme/...`. | `quizTheme.ts` | 1 |
-| 11 | S2 | **Sync XHR per media file.** `HEAD` with `async=false`, once per item. On `file://` status `0` counts as "exists". | `loader.ts` | 6 |
-| 12 | S2 | **Export re-randomizes the quiz.** `finalizeQuestions()` shuffles in place. Export twice, lose the author's order. | `exporter.ts` | 1/5 |
-| 13 | S2 | **Embedded export is clipboard-only.** Needs a secure context and a gesture. No download. No error. | `exporter.ts` | 5 |
-| 14 | S2 | **Sorting fights authors.** Defaults alphabetize rounds, then shuffle. Questions too. | `questionDatabase.ts` | 1 |
-| 15 | S2 | **IDs depend on load order.** Assigned before sorting, with parallel file loads. Unstable across machines. | `questionDatabase.ts` | 1 |
-| 16 | S2 | **Naive `setInterval` timer.** Drift, no pause, no visibility handling, `STAY_BUT_HIDE` is a one-way trip. | `timer.ts` | 3 |
-| 17 | S2 | **Fragile language matching.** Equal counts required, matched by order, silent fallback. | `translator.ts` | 1 |
-| 18 | S2 | **Print CSS is broken.** Absolute-positioned screens, nested selector inside `@page`, `print-color-adjust: exact` against the docs. | `stylesCoreTheme.css` | 2/5 |
-| 19 | S3 | **Invalid CSS.** `--heading-weight: "regular"`, `white-space: preserve`, `--font-size` never set. | `stylesCoreTheme.css` | 2 |
-| 20 | S3 | **`.includes` link detection.** Any answer containing `.com` becomes a link. | `parser.ts` | 1 |
-| 21 | S3 | **`parseFloat(...) ?? 1`.** Gives `NaN`, not `1`. One typo poisons the stats. | `question.ts` | 1 |
-| 22 | S3 | **`initializeParameters` mutates the caller.** Pushes defaults into `params.settings` every call. | `params.ts` | 1 |
-| 23 | S3 | **Inverted booleans.** `this.failed = ... && length <= 0` works by accident. | `question.ts` | 1 |
-| 24 | S3 | **Dead code.** `console.log` in `gotoNextSection`, no-op `finalizeMedia`, `this` at module scope, stray TODOs. | multiple | 1 |
-| 25 | S3 | **Hardcoded `VERSION`.** Duplicated in docs. No changelog. No source map. | `quiz.ts` | 0 |
-| 26 | S3 | **Template ships its own 108 KB copy.** Nothing refreshes it. It will drift. | `template/` | 0 |
-| 27 | S3 | **`getURLsFixed` hardcodes `.txt`.** Stops at the first gap. Ignores `fileExtensions`. | `loaderHTTP.ts` | 1 |
-| 28 | S3 | **Storage key has no version.** No attempt separation. Quota errors unhandled. Start screen wipes answers. | `storageInteractive.ts` | 3 |
-| 29 | S3 | **No accessibility baseline.** Global `user-select:none`, emoji-only icons, no live regions, no focus management, no `alt`. | theme, screens | 2 |
-| 30 | S3 | **"Raw" and "initialized" params are the same object.** Later refactors are unsafe. | `quiz.ts` | 1 |
+| #   | Sev | Issue                                                                                                                                                        | Where                                                                             | Fixed in |
+| --- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | -------- |
+| 1   | S1  | **HTML injection.** Question text, answers, comments, sources, titles and translations go through `innerHTML`. A submitted quiz file can run script.         | `createNode.ts`, `createAnswerNode.ts`, `createQuestionNode.ts`, `markdownify.ts` | 1–2      |
+| 2   | S2  | **`translate()` renders all text.** Every `[...]` in any string is treated as a UI key. Unknown keys become empty strings.                                   | `createNode.ts`, `translator.ts`                                                  | 1        |
+| 3   | S1  | **Grade screen wipes the page.** `document.body.innerHTML = ""` kills the quiz, error handler and toolbar. "Go Back" has nowhere to go.                      | `quizScreenEnd.ts`                                                                | 2        |
+| 4   | S1  | **Toolbar mutates config.** `toolbarActions.splice()` edits `quiz.params.toolbar` itself. Each screen change removes buttons.                                | `nodes.ts`                                                                        | 2        |
+| 5   | S1  | **HTTP loader duplicates URLs.** `arr.push(path)` inside the language loop and again after it. Path may point at a file that failed.                         | `loaderHTTP.ts`                                                                   | 1        |
+| 6   | S1  | **JSON and RTF upload crash.** `parseRawFile` returns an object or `undefined`, then `.split` is called on it. RTF is offered in the picker.                 | `parser.ts`, `loaderUpload.ts`                                                    | 0        |
+| 7   | S2  | **camelCase attributes ignored.** Parser lowercases keys; `Question.fromData` reads `formatText` etc. Also `"false"` is truthy. Booleans can never be off.   | `question.ts`, `parser.ts`                                                        | 1        |
+| 8   | S1  | **Choice grading compares by index.** Sparse arrays keyed by click order. Sort has the same shape. Reveal reads `dataset.id`, which choice inputs overwrite. | `questionTyperChoice.ts`, `storageInteractive.ts`                                 | 3        |
+| 9   | S1  | **No teardown.** Listeners, intervals, `<style>`, fonts and `onbeforeunload` all outlive the quiz.                                                           | `dom.ts`, `timer.ts`, `quizTheme.ts`                                              | 2        |
+| 10  | S2  | **Theme URLs break on file pages.** `${window.location.href}/${path}` gives `.../index.html/theme/...`.                                                      | `quizTheme.ts`                                                                    | 1        |
+| 11  | S2  | **Sync XHR per media file.** `HEAD` with `async=false`, once per item. On `file://` status `0` counts as "exists".                                           | `loader.ts`                                                                       | 6        |
+| 12  | S2  | **Export re-randomizes the quiz.** `finalizeQuestions()` shuffles in place. Export twice, lose the author's order.                                           | `exporter.ts`                                                                     | 1/5      |
+| 13  | S2  | **Embedded export is clipboard-only.** Needs a secure context and a gesture. No download. No error.                                                          | `exporter.ts`                                                                     | 5        |
+| 14  | S2  | **Sorting fights authors.** Defaults alphabetize rounds, then shuffle. Questions too.                                                                        | `questionDatabase.ts`                                                             | 1        |
+| 15  | S2  | **IDs depend on load order.** Assigned before sorting, with parallel file loads. Unstable across machines.                                                   | `questionDatabase.ts`                                                             | 1        |
+| 16  | S2  | **Naive `setInterval` timer.** Drift, no pause, no visibility handling, `STAY_BUT_HIDE` is a one-way trip.                                                   | `timer.ts`                                                                        | 3        |
+| 17  | S2  | **Fragile language matching.** Equal counts required, matched by order, silent fallback.                                                                     | `translator.ts`                                                                   | 1        |
+| 18  | S2  | **Print CSS is broken.** Absolute-positioned screens, nested selector inside `@page`, `print-color-adjust: exact` against the docs.                          | `stylesCoreTheme.css`                                                             | 2/5      |
+| 19  | S3  | **Invalid CSS.** `--heading-weight: "regular"`, `white-space: preserve`, `--font-size` never set.                                                            | `stylesCoreTheme.css`                                                             | 2        |
+| 20  | S3  | **`.includes` link detection.** Any answer containing `.com` becomes a link.                                                                                 | `parser.ts`                                                                       | 1        |
+| 21  | S3  | **`parseFloat(...) ?? 1`.** Gives `NaN`, not `1`. One typo poisons the stats.                                                                                | `question.ts`                                                                     | 1        |
+| 22  | S3  | **`initializeParameters` mutates the caller.** Pushes defaults into `params.settings` every call.                                                            | `params.ts`                                                                       | 1        |
+| 23  | S3  | **Inverted booleans.** `this.failed = ... && length <= 0` works by accident.                                                                                 | `question.ts`                                                                     | 1        |
+| 24  | S3  | **Dead code.** `console.log` in `gotoNextSection`, no-op `finalizeMedia`, `this` at module scope, stray TODOs.                                               | multiple                                                                          | 1        |
+| 25  | S3  | **Hardcoded `VERSION`.** Duplicated in docs. No changelog. No source map.                                                                                    | `quiz.ts`                                                                         | 0        |
+| 26  | S3  | **Template ships its own 108 KB copy.** Nothing refreshes it. It will drift.                                                                                 | `template/`                                                                       | 0        |
+| 27  | S3  | **`getURLsFixed` hardcodes `.txt`.** Stops at the first gap. Ignores `fileExtensions`.                                                                       | `loaderHTTP.ts`                                                                   | 1        |
+| 28  | S3  | **Storage key has no version.** No attempt separation. Quota errors unhandled. Start screen wipes answers.                                                   | `storageInteractive.ts`                                                           | 3        |
+| 29  | S3  | **No accessibility baseline.** Global `user-select:none`, emoji-only icons, no live regions, no focus management, no `alt`.                                  | theme, screens                                                                    | 2        |
+| 30  | S3  | **"Raw" and "initialized" params are the same object.** Later refactors are unsafe.                                                                          | `quiz.ts`                                                                         | 1        |
 
 **The pattern:** almost every S1 comes from two choices. Strings go straight into `innerHTML`. State is smeared across mutable classes. Fix the architecture and the whole class of bug goes away.
 
@@ -146,12 +168,12 @@ Also: a better default look, working interactive mode, optional multiplayer, rea
 
 `todo.md` asks: Preact, Svelte, or Web Components? Answer: **all three, at different levels.**
 
-| Option | Good | Bad |
-|---|---|---|
-| **Preact** | ~4 KB. JSX. Huge ecosystem. Works on `file://`. | One dependency. Needs a build step (we have one). |
-| **Svelte 5** | Great DX. Compiled output. | Compiler coupling. Scoped CSS fights author themes. Harder to swap one screen. |
-| **Web Components** | Native. `<pq-quiz>` tag. | **Shadow DOM hurts here.** Authors must restyle everything with plain CSS. Print and fonts get harder. |
-| **Raw DOM (now)** | No deps. | Manual diffing. Imperative updates. That is where the bugs live. |
+| Option             | Good                                            | Bad                                                                                                    |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Preact**         | ~4 KB. JSX. Huge ecosystem. Works on `file://`. | One dependency. Needs a build step (we have one).                                                      |
+| **Svelte 5**       | Great DX. Compiled output.                      | Compiler coupling. Scoped CSS fights author themes. Harder to swap one screen.                         |
+| **Web Components** | Native. `<pq-quiz>` tag.                        | **Shadow DOM hurts here.** Authors must restyle everything with plain CSS. Print and fonts get harder. |
+| **Raw DOM (now)**  | No deps.                                        | Manual diffing. Imperative updates. That is where the bugs live.                                       |
 
 **Decision:**
 
@@ -181,7 +203,7 @@ Strict. One direction only.
 
 Rules:
 
-- Layer *n* imports layers `< n`. Same-layer imports stay acyclic.
+- Layer _n_ imports layers `< n`. Same-layer imports stay acyclic.
 - `core/**` (0–4) never imports `renderers`, `themes`, `platform` or `entries`.
 - Only `platform` touches `window`, `document`, `navigator`, `localStorage`, `fetch`, `File`, `WebSocket`.
 - Only `renderers` creates DOM nodes.
@@ -247,46 +269,61 @@ pq-trivia/
   "version": "3.0.0",
   "sideEffects": false,
   "dependencies": {
-    "preact": "^10.27.0"
+    "preact": "^10.27.0",
   },
   "peerDependencies": {
-    "trystero": "^0.21.0"
+    "trystero": "^0.21.0",
   },
   "peerDependenciesMeta": {
-    "trystero": { "optional": true }
+    "trystero": { "optional": true },
   },
   "devDependencies": {
     "@types/bun": "^1.3.0",
-    "vitepress": "^1.6.0"
+    "vitepress": "^1.6.0",
   },
   "exports": {
-    ".":              { "types": "./dist/v3/types/index.d.ts", "import": "./dist/v3/pq-trivia.js" },
-    "./core":         { "types": "./dist/v3/types/core.d.ts", "import": "./dist/v3/core.js" },
-    "./player":       { "types": "./dist/v3/types/player.d.ts", "import": "./dist/v3/player.js" },
-    "./headless":     { "types": "./dist/v3/types/headless.d.ts", "import": "./dist/v3/headless.js" },
-    "./animations":   { "types": "./dist/v3/types/animations.d.ts", "import": "./dist/v3/animations.js" },
-    "./multiplayer":  { "import": "./dist/v3/multiplayer.js" },
-    "./editor":       { "import": "./dist/v3/editor.js" },
-    "./compat/v2":    { "import": "./dist/v3/compat-v2.js" },
+    ".": {
+      "types": "./dist/v3/types/index.d.ts",
+      "import": "./dist/v3/pq-trivia.js",
+    },
+    "./core": {
+      "types": "./dist/v3/types/core.d.ts",
+      "import": "./dist/v3/core.js",
+    },
+    "./player": {
+      "types": "./dist/v3/types/player.d.ts",
+      "import": "./dist/v3/player.js",
+    },
+    "./headless": {
+      "types": "./dist/v3/types/headless.d.ts",
+      "import": "./dist/v3/headless.js",
+    },
+    "./animations": {
+      "types": "./dist/v3/types/animations.d.ts",
+      "import": "./dist/v3/animations.js",
+    },
+    "./multiplayer": { "import": "./dist/v3/multiplayer.js" },
+    "./editor": { "import": "./dist/v3/editor.js" },
+    "./compat/v2": { "import": "./dist/v3/compat-v2.js" },
     "./themes/default.css": "./dist/v3/themes/default.css",
-    "./themes/print.css":   "./dist/v3/themes/print.css"
-  }
+    "./themes/print.css": "./dist/v3/themes/print.css",
+  },
 }
 ```
 
 Only two real dependencies. `trystero` is optional and only imported by the multiplayer entry. `typescript` is **not** listed: `bun check` does the type checking, and declarations are emitted at release with `bunx tsc` (cache only, no manifest entry).
 
-| Artifact | Format | Contents | Budget (gzip) |
-|---|---|---|---|
-| `dist/v3/core.js` | ESM | syntax, values, model, plan, session, grading, JSON export | **≤ 15 KB** |
-| `dist/v3/player.js` | ESM | core + Preact + default theme + 3 animations | **≤ 40 KB** |
-| `dist/v3/pq-trivia.js` | ESM | player + all question types + exporters | ≤ 55 KB |
-| `dist/v3/pq-trivia.min.js` | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe | ≤ 60 KB |
-| `dist/v3/pq-trivia.core.min.js` | IIFE | core only | ≤ 18 KB |
-| `dist/v3/multiplayer.js` | ESM | full + Trystero adapter | full + ≤ 12 KB |
-| `dist/v3/animations.js` | ESM | full animation set | ≤ 6 KB |
-| `dist/v3/editor.js` | ESM | QuizWizard. **Not in any default build.** | ≤ 45 KB, separate |
-| `dist/v3/types/**` | `.d.ts` | release only, `bunx tsc --emitDeclarationOnly` | — |
+| Artifact                        | Format                                    | Contents                                                   | Budget (gzip)     |
+| ------------------------------- | ----------------------------------------- | ---------------------------------------------------------- | ----------------- |
+| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 15 KB**       |
+| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + 3 animations               | **≤ 40 KB**       |
+| `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                    | ≤ 55 KB           |
+| `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                           | ≤ 60 KB           |
+| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                  | ≤ 18 KB           |
+| `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                    | full + ≤ 12 KB    |
+| `dist/v3/animations.js`         | ESM                                       | full animation set                                         | ≤ 6 KB            |
+| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                  | ≤ 45 KB, separate |
+| `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`             | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.
 
@@ -296,13 +333,13 @@ Pure reducer. Injected clock. Injected storage. Testable without a browser. Reus
 
 ```ts
 interface SessionState {
-  status: 'idle' | 'loading' | 'ready' | 'playing' | 'finished' | 'error';
+  status: "idle" | "loading" | "ready" | "playing" | "finished" | "error";
   plan: QuizPlan | null;
   config: ResolvedConfig;
   language: string;
-  mode: 'questions' | 'answers';
-  index: number;                  // -1 start, 0..n-1 questions, n end
-  responses: ResponseMap;         // questionId -> typed response
+  mode: "questions" | "answers";
+  index: number; // -1 start, 0..n-1 questions, n end
+  responses: ResponseMap; // questionId -> typed response
   hinted: Record<string, number>;
   revealed: Set<string>;
   startedAt?: number;
@@ -311,36 +348,51 @@ interface SessionState {
 }
 
 type Action =
-  | { type: 'load/start' } | { type: 'load/success'; plan: QuizPlan }
-  | { type: 'load/failure'; diagnostics: Diagnostic[] }
-  | { type: 'nav/next' } | { type: 'nav/prev' } | { type: 'nav/goTo'; index: number }
-  | { type: 'mode/set'; mode: 'questions' | 'answers' }
-  | { type: 'answer/toggle'; index: number }
-  | { type: 'response/set'; questionId: string; response: Response }
-  | { type: 'hint/reveal'; questionId: string }
-  | { type: 'timer/tick'; questionId: string; remainingMs: number }
-  | { type: 'timer/expire'; questionId: string }
-  | { type: 'language/set'; language: string }
-  | { type: 'finish' } | { type: 'restart' };
+  | { type: "load/start" }
+  | { type: "load/success"; plan: QuizPlan }
+  | { type: "load/failure"; diagnostics: Diagnostic[] }
+  | { type: "nav/next" }
+  | { type: "nav/prev" }
+  | { type: "nav/goTo"; index: number }
+  | { type: "mode/set"; mode: "questions" | "answers" }
+  | { type: "answer/toggle"; index: number }
+  | { type: "response/set"; questionId: string; response: Response }
+  | { type: "hint/reveal"; questionId: string }
+  | { type: "timer/tick"; questionId: string; remainingMs: number }
+  | { type: "timer/expire"; questionId: string }
+  | { type: "language/set"; language: string }
+  | { type: "finish" }
+  | { type: "restart" };
 ```
 
 Selectors produce the renderer contract:
 
 ```ts
 type ScreenViewModel =
-  | StartScreenVM | QuestionScreenVM | RoundScreenVM
-  | SettingsScreenVM | EndScreenVM | ResultsScreenVM;
+  | StartScreenVM
+  | QuestionScreenVM
+  | RoundScreenVM
+  | SettingsScreenVM
+  | EndScreenVM
+  | ResultsScreenVM;
 
 interface QuestionScreenVM {
-  kind: 'question' | 'round';
+  kind: "question" | "round";
   layout: LayoutId;
   classes: string[];
-  meta: { index: number; total: number; round?: string; points?: number;
-          categories: string[]; authors: string[]; language?: string };
+  meta: {
+    index: number;
+    total: number;
+    round?: string;
+    points?: number;
+    categories: string[];
+    authors: string[];
+    language?: string;
+  };
   title: InlineAst;
   body: InlineAst[];
   media: MediaVM[];
-  answers: AnswerVM[];              // no `correct` in restricted mode
+  answers: AnswerVM[]; // no `correct` in restricted mode
   input?: InputVM;
   hints: { revealed: InlineAst[]; total: number };
   explanation?: InlineAst;
@@ -358,22 +410,22 @@ Typed emitter. Also mirrored as `CustomEvent`s on the host element.
 
 ```ts
 interface QuizEventMap {
-  'ready':           { version: string; stats: QuizStats };
-  'state:change':    { from: SessionState['status']; to: SessionState['status'] };
-  'screen:change':   { screen: ScreenViewModel };
-  'question:enter':  { index: number; id: string };
-  'question:leave':  { index: number; id: string; responses: ResponseMap };
-  'answer:reveal':   { index: number; id: string };
-  'response:change': { id: string; response: Response };
-  'hint:reveal':     { id: string; remaining: number };
-  'timer:tick':      { id: string; remainingMs: number; totalMs: number };
-  'timer:expire':    { id: string };
-  'language:change': { from: string; to: string };
-  'grade:ready':     { report: GradeReport };
-  'diagnostic':      { diagnostic: Diagnostic };
-  'export:ready':    { kind: ExportKind; blob: Blob };
-  'destroy':         {};
-  'error':           { error: QuizError };
+  ready: { version: string; stats: QuizStats };
+  "state:change": { from: SessionState["status"]; to: SessionState["status"] };
+  "screen:change": { screen: ScreenViewModel };
+  "question:enter": { index: number; id: string };
+  "question:leave": { index: number; id: string; responses: ResponseMap };
+  "answer:reveal": { index: number; id: string };
+  "response:change": { id: string; response: Response };
+  "hint:reveal": { id: string; remaining: number };
+  "timer:tick": { id: string; remainingMs: number; totalMs: number };
+  "timer:expire": { id: string };
+  "language:change": { from: string; to: string };
+  "grade:ready": { report: GradeReport };
+  diagnostic: { diagnostic: Diagnostic };
+  "export:ready": { kind: ExportKind; blob: Blob };
+  destroy: {};
+  error: { error: QuizError };
 }
 ```
 
@@ -429,55 +481,55 @@ Also allowed: `Languages`, `License`, `Homepage`, `Image`. A manifest can overri
 
 Aliases are accepted and rewritten to canonical form by the formatter.
 
-| Canonical | Aliases | Type | Notes |
-|---|---|---|---|
-| `Question` | `Q` | text | starts a question |
-| `Answers` | `Answer`, `A` | list | options or expected answers |
-| `Correct` | `CorrectAnswer` | list | defaults to first answer |
-| `Type` | | enum | `Open`, `Choice`, `List`, `Range`, `Sort`, `Match`, `Cloze`, `Section`, `Start`, `End`, `Custom` |
-| `Range` | `Margin` | number | error margin. Implies `Range`. |
-| `Media` | `Image`, `Audio`, `Video` | media list | §5.6 |
-| `Category` | `Categories`, `Tag`, `Tags` | list | |
-| `Author` | `Authors`, `By` | list | |
-| `Score` | `Points` | number | checked against `minScore` / `maxScore` |
-| `Scoring` | `ScoreMethod` | enum | `all-or-nothing`, `partial`, `per-correct` |
-| `Grading` | | enum | `exact`, `normalized` (default), `fuzzy` |
-| `FuzzyDistance` | | number | max edit distance |
-| `AlsoAccept` | `Aliases`, `Accept` | list | equivalent answers |
-| `Reject` | | list | explicitly wrong. Beats fuzzy. |
-| `Explanation` | `Explain` | text | after reveal and in results |
-| `Comment` | `Comments`, `Note` | list | shown to players |
-| `Hints` | `Hint` | list | |
-| `Sources` | `Source` | list | |
-| `Secret` | `Theme` | text | rounds only |
-| `Timer` | `Time` | duration | `90`, `1:30`, `1m30s` |
-| `ID` | `Id` | string | stable reference |
-| `Language` | `Lang` | string | |
-| `Translation` | `TranslationOf` | string | explicit cross-language link |
-| `Section` | `Round` | string | assign to a round |
-| `PlaceAt` | | number | rounds only |
-| `PlaceBefore` | | id list | |
-| `PlaceAfter` | | id list | |
-| `AnswersOrder` | | `keep` \| `shuffle` | |
-| `MediaOrder` | | `keep` \| `shuffle` | |
-| `FormatText` | | boolean | real boolean now |
-| `HiddenAtPlay` | `Hide` | boolean | |
-| `HiddenAtExport` | | boolean | |
-| `SyncAll` | | boolean | copy missing props from root |
-| `Class` | `Classes` | list | CSS classes on the screen |
-| `Layout` | | enum | §7.3 |
-| `Background` | | descriptor | `color:...`, `image:...`, `none` |
-| `ColorScheme` | | string | named scheme |
-| `Transition` | `Animation` | preset | screen enter |
-| `Reveal` | | preset | answer reveal |
-| `Print` | | flags | `hide`, `background`, `no-background`, `notes` |
-| `Direction` | `Dir` | `auto`/`ltr`/`rtl` | |
-| `Description` | | text | screen-reader summary |
-| `Alt` | | list | fallback alt text |
-| `Include` | `Import` | path[#selector] | merge a file or bank |
-| `Script` | | path | sandboxed widget |
-| `When` | | expression | conditional visibility |
-| `Continue` | | `always`/`onCorrect`/`onWrong` | flow control |
+| Canonical        | Aliases                     | Type                           | Notes                                                                                            |
+| ---------------- | --------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `Question`       | `Q`                         | text                           | starts a question                                                                                |
+| `Answers`        | `Answer`, `A`               | list                           | options or expected answers                                                                      |
+| `Correct`        | `CorrectAnswer`             | list                           | defaults to first answer                                                                         |
+| `Type`           |                             | enum                           | `Open`, `Choice`, `List`, `Range`, `Sort`, `Match`, `Cloze`, `Section`, `Start`, `End`, `Custom` |
+| `Range`          | `Margin`                    | number                         | error margin. Implies `Range`.                                                                   |
+| `Media`          | `Image`, `Audio`, `Video`   | media list                     | §5.6                                                                                             |
+| `Category`       | `Categories`, `Tag`, `Tags` | list                           |                                                                                                  |
+| `Author`         | `Authors`, `By`             | list                           |                                                                                                  |
+| `Score`          | `Points`                    | number                         | checked against `minScore` / `maxScore`                                                          |
+| `Scoring`        | `ScoreMethod`               | enum                           | `all-or-nothing`, `partial`, `per-correct`                                                       |
+| `Grading`        |                             | enum                           | `exact`, `normalized` (default), `fuzzy`                                                         |
+| `FuzzyDistance`  |                             | number                         | max edit distance                                                                                |
+| `AlsoAccept`     | `Aliases`, `Accept`         | list                           | equivalent answers                                                                               |
+| `Reject`         |                             | list                           | explicitly wrong. Beats fuzzy.                                                                   |
+| `Explanation`    | `Explain`                   | text                           | after reveal and in results                                                                      |
+| `Comment`        | `Comments`, `Note`          | list                           | shown to players                                                                                 |
+| `Hints`          | `Hint`                      | list                           |                                                                                                  |
+| `Sources`        | `Source`                    | list                           |                                                                                                  |
+| `Secret`         | `Theme`                     | text                           | rounds only                                                                                      |
+| `Timer`          | `Time`                      | duration                       | `90`, `1:30`, `1m30s`                                                                            |
+| `ID`             | `Id`                        | string                         | stable reference                                                                                 |
+| `Language`       | `Lang`                      | string                         |                                                                                                  |
+| `Translation`    | `TranslationOf`             | string                         | explicit cross-language link                                                                     |
+| `Section`        | `Round`                     | string                         | assign to a round                                                                                |
+| `PlaceAt`        |                             | number                         | rounds only                                                                                      |
+| `PlaceBefore`    |                             | id list                        |                                                                                                  |
+| `PlaceAfter`     |                             | id list                        |                                                                                                  |
+| `AnswersOrder`   |                             | `keep` \| `shuffle`            |                                                                                                  |
+| `MediaOrder`     |                             | `keep` \| `shuffle`            |                                                                                                  |
+| `FormatText`     |                             | boolean                        | real boolean now                                                                                 |
+| `HiddenAtPlay`   | `Hide`                      | boolean                        |                                                                                                  |
+| `HiddenAtExport` |                             | boolean                        |                                                                                                  |
+| `SyncAll`        |                             | boolean                        | copy missing props from root                                                                     |
+| `Class`          | `Classes`                   | list                           | CSS classes on the screen                                                                        |
+| `Layout`         |                             | enum                           | §7.3                                                                                             |
+| `Background`     |                             | descriptor                     | `color:...`, `image:...`, `none`                                                                 |
+| `ColorScheme`    |                             | string                         | named scheme                                                                                     |
+| `Transition`     | `Animation`                 | preset                         | screen enter                                                                                     |
+| `Reveal`         |                             | preset                         | answer reveal                                                                                    |
+| `Print`          |                             | flags                          | `hide`, `background`, `no-background`, `notes`                                                   |
+| `Direction`      | `Dir`                       | `auto`/`ltr`/`rtl`             |                                                                                                  |
+| `Description`    |                             | text                           | screen-reader summary                                                                            |
+| `Alt`            |                             | list                           | fallback alt text                                                                                |
+| `Include`        | `Import`                    | path[#selector]                | merge a file or bank                                                                             |
+| `Script`         |                             | path                           | sandboxed widget                                                                                 |
+| `When`           |                             | expression                     | conditional visibility                                                                           |
+| `Continue`       |                             | `always`/`onCorrect`/`onWrong` | flow control                                                                                     |
 
 Deprecated but still parsed (warning + rewrite): `ScoreMethod` as free text, `FormatText` as a string.
 
@@ -698,29 +750,29 @@ Additions:
 ### 6.1 Create and mount
 
 ```ts
-import { createQuiz } from 'pq-trivia';
+import { createQuiz } from "pq-trivia";
 
 const quiz = createQuiz({
-  target: '#quiz',
-  theme: { name: 'vinyl' },
-  renderer: 'default',            // 'default' | 'headless' | Renderer
+  target: "#quiz",
+  theme: { name: "vinyl" },
+  renderer: "default", // 'default' | 'headless' | Renderer
   config: {
-    seed: 'music-night',
-    language: 'en',
+    seed: "music-night",
+    language: "en",
     allowInput: true,
-    interactivePolicy: 'permissive',
+    interactivePolicy: "permissive",
     requireAltText: true,
     allowScripts: false,
   },
 });
 
-await quiz.load({ type: 'url', manifest: './quiz.manifest.json' });
+await quiz.load({ type: "url", manifest: "./quiz.manifest.json" });
 // or: { type: 'upload', files }
 // or: { type: 'inline', data: embeddedJson }
 // or: { type: 'text', files: [{ name: 'questions.trivia', text }] }
 
 await quiz.ready();
-quiz.mount(document.querySelector('#quiz')!);
+quiz.mount(document.querySelector("#quiz")!);
 ```
 
 Lifecycle: `createQuiz()` → `load()` → `ready()` → `mount()` → play → `destroy()`.
@@ -751,21 +803,23 @@ Everything goes through the reducer. Keyboard, toolbar, custom code and multipla
 ### 6.3 Read
 
 ```ts
-quiz.state;                     // Readonly<SessionState>
-quiz.currentQuestion();         // QuestionMeta | null
-quiz.currentScreen();           // ScreenViewModel
-quiz.progress();                // { index, total, answered, scoreSoFar, percent }
-quiz.responses.get('north-sea-flood');
+quiz.state; // Readonly<SessionState>
+quiz.currentQuestion(); // QuestionMeta | null
+quiz.currentScreen(); // ScreenViewModel
+quiz.progress(); // { index, total, answered, scoreSoFar, percent }
+quiz.responses.get("north-sea-flood");
 quiz.responses.all();
 quiz.diagnostics();
-quiz.grade();                   // GradeReport
+quiz.grade(); // GradeReport
 quiz.stats();
 ```
 
 Selectors, not mutable fields. `quiz.state` is replaced on every transition, so the "signal" todo is one line:
 
 ```ts
-quiz.subscribe((state, screen) => { /* your UI */ });
+quiz.subscribe((state, screen) => {
+  /* your UI */
+});
 ```
 
 ### 6.4 Render overrides
@@ -775,11 +829,11 @@ Three levels.
 1. **Headless:** `createQuiz({ renderer: 'headless' })`. No DOM renderer imported. You get view models and events.
 2. **Per screen:**
    ```ts
-   quiz.views.set('question', (vm, ctx) => {
-     const el = document.createElement('section');
-     el.className = 'my-question';
+   quiz.views.set("question", (vm, ctx) => {
+     const el = document.createElement("section");
+     el.className = "my-question";
      el.append(ctx.renderInline(vm.title));
-     vm.answers.forEach(a => el.append(ctx.renderAnswer(a)));
+     vm.answers.forEach((a) => el.append(ctx.renderAnswer(a)));
      return el;
    });
    ```
@@ -828,17 +882,25 @@ Every exporter is a pure `(plan, options) => ExportResult` in `core/export`. The
 ### 6.7 Plugins
 
 ```ts
-import { defineQuestionType } from 'pq-trivia';
+import { defineQuestionType } from "pq-trivia";
 
-quiz.registerQuestionType(defineQuestionType({
-  id: 'hotspot',
-  parse({ answers, raw }) { /* -> HotspotModel */ },
-  validate(model, ctx) { return ctx.diagnostics; },
-  defaultResponse: () => ({ kind: 'hotspot', points: [] }),
-  render: { screen: HotspotView, input: HotspotInput, print: printHotspot },
-  grade(response, model) { /* -> { score, correct, given } */ },
-  export: { embedded: toJSON, answerSheet: toCell },
-}));
+quiz.registerQuestionType(
+  defineQuestionType({
+    id: "hotspot",
+    parse({ answers, raw }) {
+      /* -> HotspotModel */
+    },
+    validate(model, ctx) {
+      return ctx.diagnostics;
+    },
+    defaultResponse: () => ({ kind: "hotspot", points: [] }),
+    render: { screen: HotspotView, input: HotspotInput, print: printHotspot },
+    grade(response, model) {
+      /* -> { score, correct, given } */
+    },
+    export: { embedded: toJSON, answerSheet: toCell },
+  }),
+);
 ```
 
 Built-ins use the same interface. No `switch (type)` in core. That is both the plugin API and the reason core stays tree-shakeable.
@@ -850,8 +912,8 @@ Built-ins use the same interface. No `switch (type)` in core. That is both the p
 <pq-quiz src="./quiz.manifest.json" theme="./theme.css"></pq-quiz>
 
 <script>
-  const el = document.querySelector('pq-quiz');
-  el.addEventListener('pq:question:enter', e => console.log(e.detail.id));
+  const el = document.querySelector("pq-quiz");
+  el.addEventListener("pq:question:enter", (e) => console.log(e.detail.id));
   el.quiz.next();
 </script>
 ```
@@ -878,14 +940,14 @@ Built-ins use the same interface. No `switch (type)` in core. That is both the p
 
 ### 7.2 Screens
 
-| Screen | Purpose | Contents |
-|---|---|---|
-| Load | pick a source | title, cover, built-in/server/upload/drop, manifest picker, problem summary |
-| Start | set expectations | cover, title, description, date, language, mode buttons, settings |
-| Settings | options + export | order and seed, rounds, theme, motion, exports, reset |
-| Play | question or round | metadata, content, media, answers, hints, timer, toolbar |
-| End | breathe before review | stats, grade/answers/restart/exit |
-| Results | grade breakdown | total, percentage, per-round table, review, filters, print/export |
+| Screen   | Purpose               | Contents                                                                    |
+| -------- | --------------------- | --------------------------------------------------------------------------- |
+| Load     | pick a source         | title, cover, built-in/server/upload/drop, manifest picker, problem summary |
+| Start    | set expectations      | cover, title, description, date, language, mode buttons, settings           |
+| Settings | options + export      | order and seed, rounds, theme, motion, exports, reset                       |
+| Play     | question or round     | metadata, content, media, answers, hints, timer, toolbar                    |
+| End      | breathe before review | stats, grade/answers/restart/exit                                           |
+| Results  | grade breakdown       | total, percentage, per-round table, review, filters, print/export           |
 
 ### 7.3 Layouts
 
@@ -960,14 +1022,14 @@ This is the teacher-facing half. Right now it is the least reliable part.
 
 ```ts
 type Response =
-  | { kind: 'open';   text: string }
-  | { kind: 'range';  value: number | null }
-  | { kind: 'choice'; selected: string[] }        // answer IDs, not indices
-  | { kind: 'list';   items: string[] }
-  | { kind: 'sort';   order: string[] }           // answer IDs
-  | { kind: 'match';  pairs: Array<[string, string]> }
-  | { kind: 'cloze';  blanks: string[] }
-  | { kind: 'custom'; value: unknown };
+  | { kind: "open"; text: string }
+  | { kind: "range"; value: number | null }
+  | { kind: "choice"; selected: string[] } // answer IDs, not indices
+  | { kind: "list"; items: string[] }
+  | { kind: "sort"; order: string[] } // answer IDs
+  | { kind: "match"; pairs: Array<[string, string]> }
+  | { kind: "cloze"; blanks: string[] }
+  | { kind: "custom"; value: unknown };
 ```
 
 - Answers have stable IDs (content hash, or explicit `ID`). Never display indices. That fixes defect #8 by construction.
@@ -1003,16 +1065,16 @@ Normalization:
 7. Compare against `Correct` + `AlsoAccept`, minus `Reject`.
 8. `fuzzy` only: Levenshtein ≤ `FuzzyDistance`. Default 1 for short words, 2 for long. Never for words under 3 characters. (Nobody deserves "a" matching "i".)
 
-| Type | Correct when | Points |
-|---|---|---|
-| Open | normalized match against accepted list | all-or-nothing |
-| Range | `abs(given - correct) <= margin` | all-or-nothing |
-| Choice | set equality (subset for multi-select) | all-or-nothing, or `partial` |
-| List | each expected answer matched once, any order | per item |
-| Sort | exact position | per position |
-| Match | pair equality | per pair |
-| Cloze | per blank | per blank |
-| Custom | plugin | plugin |
+| Type   | Correct when                                 | Points                       |
+| ------ | -------------------------------------------- | ---------------------------- |
+| Open   | normalized match against accepted list       | all-or-nothing               |
+| Range  | `abs(given - correct) <= margin`             | all-or-nothing               |
+| Choice | set equality (subset for multi-select)       | all-or-nothing, or `partial` |
+| List   | each expected answer matched once, any order | per item                     |
+| Sort   | exact position                               | per position                 |
+| Match  | pair equality                                | per pair                     |
+| Cloze  | per blank                                    | per blank                    |
+| Custom | plugin                                       | plugin                       |
 
 `Scoring => partial` and `per-correct` become real. `Answers` order is the truth for list, sort and cloze.
 
@@ -1167,7 +1229,7 @@ Author a quiz **inside** the page. No text file, no editor.
 - Add, remove, duplicate and reorder slides (rounds, questions, start, end).
 - Edit fields through generated forms. Forms come from the attribute registry, so new attributes appear automatically. No hand-written field lists.
 - Edit the text pane directly. Press Refresh (or blur) → parse → forms update.
-- Form edits rewrite the text buffer via `serialize()`. One serializer. The text *is* the model.
+- Form edits rewrite the text buffer via `serialize()`. One serializer. The text _is_ the model.
 - Diagnostics appear on the slide that owns them.
 - Media: drop a file → copied to `media/` when File System Access is available; otherwise a preview-only data URL with a warning.
 - Undo/redo: stack of serialized snapshots. Text is small. No dependency.
@@ -1237,11 +1299,11 @@ Every source returns the same `RawQuiz` (path → text or parsed JSON). One pipe
 
 ```ts
 type QuizSource =
-  | { type: 'inline'; data: EmbeddedQuizV3 }
-  | { type: 'text'; files: Array<{ name: string; text: string }> }
-  | { type: 'upload'; files: FileList | File[] }
-  | { type: 'url'; manifest?: string; files?: string[]; baseUrl?: string }
-  | { type: 'custom'; load: () => Promise<RawQuiz> };
+  | { type: "inline"; data: EmbeddedQuizV3 }
+  | { type: "text"; files: Array<{ name: string; text: string }> }
+  | { type: "upload"; files: FileList | File[] }
+  | { type: "url"; manifest?: string; files?: string[]; baseUrl?: string }
+  | { type: "custom"; load: () => Promise<RawQuiz> };
 ```
 
 - No sync XHR. No `HEAD` probing. Discovery is a manifest, an explicit list, or one index file.
@@ -1302,7 +1364,14 @@ type QuizSource =
   "schemaVersion": 3,
   "meta": { "title": "...", "languages": ["en"], "created": "2026-03-01" },
   "config": { "seed": "music-night" },
-  "rounds": [{ "id": "round-1", "name": "Warm-up", "secret": "Colors", "questions": ["q1", "q2"] }],
+  "rounds": [
+    {
+      "id": "round-1",
+      "name": "Warm-up",
+      "secret": "Colors",
+      "questions": ["q1", "q2"]
+    }
+  ],
   "questions": {
     "q1": {
       "type": "choice",
@@ -1323,19 +1392,19 @@ type QuizSource =
 
 ### 12.2 Formats
 
-| Format | Use | Version |
-|---|---|---|
-| Embedded JSON v3 | builtin, offline packs, other tools | 3.0 |
-| Standalone HTML | one file to email or host | 3.0 |
-| Print HTML / PDF | questions, answers, explanations | 3.0 |
-| Answer sheet / form | classrooms | 3.0 |
-| Grade report | results, CSV/JSON | 3.0 |
-| Offline pack | USB stick | 3.0 |
-| Moodle GIFT | teacher platforms | 3.1 |
-| QTI 2.1 | Canvas, Moodle, Blackboard | 3.1 |
-| Generic CSV | spreadsheets, Kahoot/Quizlet import | 3.1 |
-| `.trivia` formatter | authoring, diffs, migration | 3.0 |
-| Anki apkg | plugin | later |
+| Format              | Use                                 | Version |
+| ------------------- | ----------------------------------- | ------- |
+| Embedded JSON v3    | builtin, offline packs, other tools | 3.0     |
+| Standalone HTML     | one file to email or host           | 3.0     |
+| Print HTML / PDF    | questions, answers, explanations    | 3.0     |
+| Answer sheet / form | classrooms                          | 3.0     |
+| Grade report        | results, CSV/JSON                   | 3.0     |
+| Offline pack        | USB stick                           | 3.0     |
+| Moodle GIFT         | teacher platforms                   | 3.1     |
+| QTI 2.1             | Canvas, Moodle, Blackboard          | 3.1     |
+| Generic CSV         | spreadsheets, Kahoot/Quizlet import | 3.1     |
+| `.trivia` formatter | authoring, diffs, migration         | 3.0     |
+| Anki apkg           | plugin                              | later   |
 
 Rules: pure functions. Never mutate the plan. Header with source, version, seed, date. Round-trip where the format allows.
 
@@ -1396,19 +1465,19 @@ Target WCAG 2.2 AA on the default theme.
 
 ### 14.1 Bun does everything
 
-| Job | Command | Dependency |
-|---|---|---|
-| Run TypeScript | `bun src/...` | none |
-| Type check | `bun check` | none (built in since 1.4.3) |
-| Lint | `bun lint` | none (built in) |
-| Format | `bun fmt` | none (built in since 1.4.4) |
-| Test | `bun test` | none |
-| Bundle | `bun build` | none |
-| Docs | `vitepress` | VitePress (allowed) |
-| Renderer | `preact` | Preact (allowed) |
-| Multiplayer | `trystero` | optional peer |
-| `.d.ts` | `bunx tsc --emitDeclarationOnly` | release only, not in `package.json` |
-| Bun globals in scripts | `tsconfig.scripts.json` | `@types/bun` (dev only) |
+| Job                    | Command                          | Dependency                          |
+| ---------------------- | -------------------------------- | ----------------------------------- |
+| Run TypeScript         | `bun src/...`                    | none                                |
+| Type check             | `bun check`                      | none (built in since 1.4.3)         |
+| Lint                   | `bun lint`                       | none (built in)                     |
+| Format                 | `bun fmt`                        | none (built in since 1.4.4)         |
+| Test                   | `bun test`                       | none                                |
+| Bundle                 | `bun build`                      | none                                |
+| Docs                   | `vitepress`                      | VitePress (allowed)                 |
+| Renderer               | `preact`                         | Preact (allowed)                    |
+| Multiplayer            | `trystero`                       | optional peer                       |
+| `.d.ts`                | `bunx tsc --emitDeclarationOnly` | release only, not in `package.json` |
+| Bun globals in scripts | `tsconfig.scripts.json`          | `@types/bun` (dev only)             |
 
 No Biome. No ESLint. No Prettier. No dependency-cruiser. No ts-node. No bundler config file. One `bunfig.toml` and one `tsconfig.json`.
 
@@ -1443,8 +1512,8 @@ No Biome. No ESLint. No Prettier. No dependency-cruiser. No ts-node. No bundler 
     "module": "preserve",
     "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": []
-  }
+    "types": [],
+  },
 }
 ```
 
@@ -1467,12 +1536,12 @@ No Biome. No ESLint. No Prettier. No dependency-cruiser. No ts-node. No bundler 
     "test": "bun test",
     "size": "bun run scripts/size.ts",
     "i18n:check": "bun run scripts/i18n-check.ts",
-    "check:content": "bun run cli/index.ts validate test/fixtures --strict",
+    "check:content": "bun run cli/index.ts validate template/questions test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
     "dev": "bun run scripts/build.ts --watch",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "release": "bun run scripts/release.ts"
-  }
+    "release": "bun run scripts/release.ts",
+  },
 }
 ```
 
@@ -1529,13 +1598,13 @@ Your laptop is 15 years old and has opinions. The suite must stay cheap.
 
 `bun test`. Core only. No DOM. No browser.
 
-| What | Why it earns its place |
-|---|---|
-| Parser fixtures | One file per syntax feature, plus the full attribute table. Catches regressions in the thing users type. |
-| Formatter round-trip | `parse(format(x))` equals `parse(x)`. Protects the wizard and the CLI. |
-| Grading tables | Every type × normalization option. This is where wrong answers get marked wrong. Fixed inputs, fixed outputs, no clock. |
-| Plan and constraints | Shuffle determinism, `PlaceBefore/After/At`, 1,000 random seeds. Cheap and fast. |
-| JSON round-trip | Embedded export → import → same plan. |
+| What                 | Why it earns its place                                                                                                  |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Parser fixtures      | One file per syntax feature, plus the full attribute table. Catches regressions in the thing users type.                |
+| Formatter round-trip | `parse(format(x))` equals `parse(x)`. Protects the wizard and the CLI.                                                  |
+| Grading tables       | Every type × normalization option. This is where wrong answers get marked wrong. Fixed inputs, fixed outputs, no clock. |
+| Plan and constraints | Shuffle determinism, `PlaceBefore/After/At`, 1,000 random seeds. Cheap and fast.                                        |
+| JSON round-trip      | Embedded export → import → same plan.                                                                                   |
 
 Rules:
 
@@ -1628,18 +1697,18 @@ docs/
 
 ### 17.2 Intentional breaking changes
 
-| Change | Why | What you do |
-|---|---|---|
-| Default order keeps author order | Shuffling by default surprises everyone | Toggle "Shuffle questions" in Settings, or set `shuffleQuestions: true` |
-| Raw HTML off by default | Security | `allowHtml: true`, or use the syntax |
-| `ScoreMethod` free text no longer implies scoring | It never did | Use `Scoring => partial` |
-| `FormatText` / `HiddenAtPlay` need real booleans | `"false"` was truthy | Write `false` |
-| Theme URLs resolve from base, not page URL | The old one was broken | None, unless your assets were oddly placed |
-| Toolbar no longer mutates config | Bug | None |
-| `document.body` is never wiped | Bug | None |
-| Export no longer re-randomizes | Bug | None |
-| `rtf` upload removed | Never worked | Convert to `.txt` |
-| `AnswersOrder => keep` canonical is `keep|shuffle` | Clarity | Formatter rewrites |
+| Change                                            | Why                                     | What you do                                                             |
+| ------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------------- |
+| Default order keeps author order                  | Shuffling by default surprises everyone | Toggle "Shuffle questions" in Settings, or set `shuffleQuestions: true` |
+| Raw HTML off by default                           | Security                                | `allowHtml: true`, or use the syntax                                    |
+| `ScoreMethod` free text no longer implies scoring | It never did                            | Use `Scoring => partial`                                                |
+| `FormatText` / `HiddenAtPlay` need real booleans  | `"false"` was truthy                    | Write `false`                                                           |
+| Theme URLs resolve from base, not page URL        | The old one was broken                  | None, unless your assets were oddly placed                              |
+| Toolbar no longer mutates config                  | Bug                                     | None                                                                    |
+| `document.body` is never wiped                    | Bug                                     | None                                                                    |
+| Export no longer re-randomizes                    | Bug                                     | None                                                                    |
+| `rtf` upload removed                              | Never worked                            | Convert to `.txt`                                                       |
+| `AnswersOrder => keep` canonical is `keep         | shuffle`                                | Clarity                                                                 | Formatter rewrites |
 
 ### 17.3 Migration tool
 
@@ -1800,51 +1869,51 @@ Sizes are for one focused developer. Not deadlines.
 
 ## 19. Todo traceability
 
-| # | Todo | Spec | Phase |
-|---|---|---|---|
-| T1 | Bun build into `dist`, archive old versions, call it V3 | §14.1–14.4 | 0 |
-| T2 | Preact vs Svelte vs Web Components | §4.1 | 0, 2 |
-| T3 | CSS classes per question | §5.3, §5.8 | 4 |
-| T4 | Default layouts | §7.3 | 4 |
-| T5 | Full background color per question | §5.8 | 4 |
-| T6 | Default to no backgrounds on print | §5.3, §7.6 | 4 |
-| T7 | Inline `[class]` / `[style]` | §5.5 | 4 |
-| T8 | Turn off default output, plain nodes | §6.4 | 2 |
-| T9 | `onQuestionLoad` with full info | §6.4 | 2 |
-| T10 | Default display is just a callback | §6.4 | 2 |
-| T11 | Clean public API, signals | §6 | 2 |
-| T12 | Modular pure functions, no side effects | §4.2 | 1 |
-| T13 | Import only what you need | §4.4 | 1–2 |
-| T14 | Stay fast with many questions and media | §11.3, Phase 6 | 6 |
-| T15 | Big animation library, no bundle bloat | §7.5 | 4 |
-| T16 | A few animations by default | §7.5 | 4 |
-| T17 | Animations in syntax, theme and API | §5.3, §7.5 | 4 |
-| T18 | Better default look | §7.4 | 2 |
-| T19 | Errors centered, auto-fade | §13.1 | 2 |
-| T20 | No duplicate errors | §13.1 | 2 |
-| T21 | More visible problem messages | §13.1 | 1–2 |
-| T22 | Distinct section pages | §7.4 | 2 |
-| T23 | Interactive play, grade, results | §8 | 3 |
-| T24 | Nice error when continuing empty | §8.2 | 3 |
-| T25 | Compare real and given answers, optional | §8.5 | 3 |
-| T26 | Multiplayer via Trystero, optional | §9 | 7 |
-| T27 | Timer tick sound | §10.6 | 4 |
-| T28 | Toolbar pinning via config | §10.7 | 4 |
-| T29 | Code display, optional highlighter | §10.4 | 4 |
-| T30 | Executable JS in questions | §5.10 | 4 |
-| T31 | `Start` / `End` types | §5.7 | 4 |
-| T32 | `Match` type | §5.7 | 4 |
-| T33 | Unlockable rounds | §5.9 | 4 (or 3.2) |
-| T34 | GitHub page: badges, images, examples | §14.6, §16 | 8 |
-| T35 | CI/CD tagging and release | §14.5 | 0, 5–8 |
-| T36 | Docs split by topic | §16.1 | 5–8 |
-| T37 | Test `PlaceBefore/After/At` | §15.1 | 1 |
-| T38 | Test toolbar buttons | §15.3 | 2 |
-| T39 | Test manual `Language` | §15.1 | 1–2 |
-| T40 | Icons, banner, styling | §7.4 | 2 |
-| T41 | *(Discarded)* language switch before load | §1.3 | — |
-| T42 | *(Discarded)* background music | §1.3 | — |
-| T43 | **QuizWizard: build and edit a quiz in the UI** (new) | §10.5 | 9 (stretch) |
+| #   | Todo                                                    | Spec           | Phase       |
+| --- | ------------------------------------------------------- | -------------- | ----------- |
+| T1  | Bun build into `dist`, archive old versions, call it V3 | §14.1–14.4     | 0           |
+| T2  | Preact vs Svelte vs Web Components                      | §4.1           | 0, 2        |
+| T3  | CSS classes per question                                | §5.3, §5.8     | 4           |
+| T4  | Default layouts                                         | §7.3           | 4           |
+| T5  | Full background color per question                      | §5.8           | 4           |
+| T6  | Default to no backgrounds on print                      | §5.3, §7.6     | 4           |
+| T7  | Inline `[class]` / `[style]`                            | §5.5           | 4           |
+| T8  | Turn off default output, plain nodes                    | §6.4           | 2           |
+| T9  | `onQuestionLoad` with full info                         | §6.4           | 2           |
+| T10 | Default display is just a callback                      | §6.4           | 2           |
+| T11 | Clean public API, signals                               | §6             | 2           |
+| T12 | Modular pure functions, no side effects                 | §4.2           | 1           |
+| T13 | Import only what you need                               | §4.4           | 1–2         |
+| T14 | Stay fast with many questions and media                 | §11.3, Phase 6 | 6           |
+| T15 | Big animation library, no bundle bloat                  | §7.5           | 4           |
+| T16 | A few animations by default                             | §7.5           | 4           |
+| T17 | Animations in syntax, theme and API                     | §5.3, §7.5     | 4           |
+| T18 | Better default look                                     | §7.4           | 2           |
+| T19 | Errors centered, auto-fade                              | §13.1          | 2           |
+| T20 | No duplicate errors                                     | §13.1          | 2           |
+| T21 | More visible problem messages                           | §13.1          | 1–2         |
+| T22 | Distinct section pages                                  | §7.4           | 2           |
+| T23 | Interactive play, grade, results                        | §8             | 3           |
+| T24 | Nice error when continuing empty                        | §8.2           | 3           |
+| T25 | Compare real and given answers, optional                | §8.5           | 3           |
+| T26 | Multiplayer via Trystero, optional                      | §9             | 7           |
+| T27 | Timer tick sound                                        | §10.6          | 4           |
+| T28 | Toolbar pinning via config                              | §10.7          | 4           |
+| T29 | Code display, optional highlighter                      | §10.4          | 4           |
+| T30 | Executable JS in questions                              | §5.10          | 4           |
+| T31 | `Start` / `End` types                                   | §5.7           | 4           |
+| T32 | `Match` type                                            | §5.7           | 4           |
+| T33 | Unlockable rounds                                       | §5.9           | 4 (or 3.2)  |
+| T34 | GitHub page: badges, images, examples                   | §14.6, §16     | 8           |
+| T35 | CI/CD tagging and release                               | §14.5          | 0, 5–8      |
+| T36 | Docs split by topic                                     | §16.1          | 5–8         |
+| T37 | Test `PlaceBefore/After/At`                             | §15.1          | 1           |
+| T38 | Test toolbar buttons                                    | §15.3          | 2           |
+| T39 | Test manual `Language`                                  | §15.1          | 1–2         |
+| T40 | Icons, banner, styling                                  | §7.4           | 2           |
+| T41 | _(Discarded)_ language switch before load               | §1.3           | —           |
+| T42 | _(Discarded)_ background music                          | §1.3           | —           |
+| T43 | **QuizWizard: build and edit a quiz in the UI** (new)   | §10.5          | 9 (stretch) |
 
 ---
 
@@ -1916,19 +1985,19 @@ Not in `todo.md`. Ordered by value per unit of pain.
 
 ## 21. Risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| Scope creep | V3 never ships | Phase gates. 3.0 = parity + architecture + theme + interactive. Everything else is a minor version. |
-| Preact ages badly | Renderer rewrite | Headless contract. Only one folder depends on it. |
-| Animations bloat the bundle | Breaks "lean" | Separate entry, dynamic import, size script. |
-| Multiplayer becomes its own project | Delays launch | After 3.0. Separate package. |
-| XSS from submitted questions | Reputation | AST rendering. No raw HTML by default. Sanitizer. |
-| Print fidelity differs per browser | Pub workflow breaks | Print model, dedicated CSS, manual check in three browsers. |
-| `file://` limits | "It's broken" | Detect it. Explain it. Offer upload, inline and offline pack. |
-| Translation capacity | UI stuck in en/nl | Typed keys, JSON files, English fallback, credit. |
-| Migration breaks sold quizzes | Angry customers | Real-quiz fixture, migration CLI, v2 archive, staged deprecations. |
-| Public API churn | Developer trust | Freeze types before docs. Deprecation policy. |
-| Solo maintainer burnout | Nothing ships | Phases sized part-time. The wizard is a stretch, not a promise. |
+| Risk                                | Impact              | Mitigation                                                                                          |
+| ----------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| Scope creep                         | V3 never ships      | Phase gates. 3.0 = parity + architecture + theme + interactive. Everything else is a minor version. |
+| Preact ages badly                   | Renderer rewrite    | Headless contract. Only one folder depends on it.                                                   |
+| Animations bloat the bundle         | Breaks "lean"       | Separate entry, dynamic import, size script.                                                        |
+| Multiplayer becomes its own project | Delays launch       | After 3.0. Separate package.                                                                        |
+| XSS from submitted questions        | Reputation          | AST rendering. No raw HTML by default. Sanitizer.                                                   |
+| Print fidelity differs per browser  | Pub workflow breaks | Print model, dedicated CSS, manual check in three browsers.                                         |
+| `file://` limits                    | "It's broken"       | Detect it. Explain it. Offer upload, inline and offline pack.                                       |
+| Translation capacity                | UI stuck in en/nl   | Typed keys, JSON files, English fallback, credit.                                                   |
+| Migration breaks sold quizzes       | Angry customers     | Real-quiz fixture, migration CLI, v2 archive, staged deprecations.                                  |
+| Public API churn                    | Developer trust     | Freeze types before docs. Deprecation policy.                                                       |
+| Solo maintainer burnout             | Nothing ships       | Phases sized part-time. The wizard is a stretch, not a promise.                                     |
 
 ---
 
@@ -1936,21 +2005,21 @@ Not in `todo.md`. Ordered by value per unit of pain.
 
 All settled. Nothing left open for 3.0.
 
-| # | Decision | Choice |
-|---|---|---|
-| 1 | Renderer | Preact + light-DOM `<pq-quiz>`. Shadow DOM opt-in only. |
-| 2 | Default order | Author order. Shuffle is opt-in, and obvious in Settings (§7.7). |
-| 3 | Extension | `.trivia` canonical. `.txt` and `.md` accepted forever. |
-| 4 | Multiplayer | Not in 3.0. Ships as `pq-trivia/multiplayer` in 3.1+. |
-| 5 | LMS exports | GIFT + CSV first (3.0/3.1). QTI in 3.1. |
-| 6 | Encrypted answers | Optional, off by default. Documented limits. |
-| 7 | Docs hosting | VitePress on GitHub Pages. |
-| 8 | Package name | `pq-trivia`, unscoped. |
-| 9 | `window.Quiz` | Stays in the IIFE build. `PQTrivia.createQuiz` is the future. |
-| 10 | Theme name | "Paper". |
-| 11 | Timer sound | Off by default. Opt-in per theme. |
-| 12 | Store builds | `--strict`. Warnings fail the build. |
-| 13 | Wizard | Same repo, `editor` entry, separate bundle. Phase 9. |
+| #   | Decision          | Choice                                                           |
+| --- | ----------------- | ---------------------------------------------------------------- |
+| 1   | Renderer          | Preact + light-DOM `<pq-quiz>`. Shadow DOM opt-in only.          |
+| 2   | Default order     | Author order. Shuffle is opt-in, and obvious in Settings (§7.7). |
+| 3   | Extension         | `.trivia` canonical. `.txt` and `.md` accepted forever.          |
+| 4   | Multiplayer       | Not in 3.0. Ships as `pq-trivia/multiplayer` in 3.1+.            |
+| 5   | LMS exports       | GIFT + CSV first (3.0/3.1). QTI in 3.1.                          |
+| 6   | Encrypted answers | Optional, off by default. Documented limits.                     |
+| 7   | Docs hosting      | VitePress on GitHub Pages.                                       |
+| 8   | Package name      | `pq-trivia`, unscoped.                                           |
+| 9   | `window.Quiz`     | Stays in the IIFE build. `PQTrivia.createQuiz` is the future.    |
+| 10  | Theme name        | "Paper".                                                         |
+| 11  | Timer sound       | Off by default. Opt-in per theme.                                |
+| 12  | Store builds      | `--strict`. Warnings fail the build.                             |
+| 13  | Wizard            | Same repo, `editor` entry, separate bundle. Phase 9.             |
 
 **On #2, be loud about it.** Author order is the default. Someone who wants chaos gets it in two clicks: Settings → Order → **Shuffle questions** / **Shuffle rounds**, plus a seed field and a **New seed** button. See §7.7. No config file, no hidden switch, no surprise reshuffle between sessions.
 

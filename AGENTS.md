@@ -8,6 +8,8 @@ PQ-Trivia: a plain-text quiz engine for pub quizzes and classrooms. V2 ships. V3
 
 Read `ROADMAP.md` before changing anything. It holds the plan, the syntax, the API and the phases.
 
+Code style rules live in `CODING_STYLE.md`. Read that too.
+
 ## Writing style
 
 Write in Tiamo's voice, not the default AI voice. This covers commits, code comments, docs, UI copy, error messages and PR text.
@@ -45,7 +47,9 @@ Adds replay protection to the multiplayer lobby
 | Plan, phases, API, syntax | `ROADMAP.md` |
 | V2 documentation | `docs.md` |
 | Requirements list | `todo.md` |
-| V2 code and template | `src/`, `template/`, `dist/v2/` |
+| V3 code | `src/core/`, `src/entries/`, `cli/` |
+| Runnable examples | `examples/` (`player`, `element`, `print`, `custom`) |
+| V2 code, frozen | `src/v2/`, `template/`, `dist/v2/` |
 | User-facing intro | `README.md` |
 
 ## Commands
@@ -58,6 +62,9 @@ bun run fmt
 bun run test
 bun run build
 bun run size
+bun run check:content   # parse, validate and count the real quiz files
+bun run docs            # print the attribute reference as a Markdown table
+bun run preview         # serve the repo and open examples/player.html
 ```
 
 These exist once Phase 0 is done. Until then, there is nothing to build. Do not fake a green check.

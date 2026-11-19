@@ -1,0 +1,283 @@
+/* Paper, part three: controls, notes and utilities. Built into paper.css. */
+
+/* Controls stay small, pinned to the bottom, out of the way. */
+.pq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding: var(--pq-space) 0 calc(var(--pq-space) * 0.75);
+}
+
+.pq-toolbar button,
+.pq-action,
+.pq-settings button {
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
+  border: 1.5px solid var(--pq-line-strong);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background-color 130ms,
+    border-color 130ms,
+    transform 130ms;
+}
+
+.pq-toolbar button:hover:not(:disabled),
+.pq-settings button:hover {
+  border-color: var(--pq-ink);
+  background: var(--pq-paper-deep);
+}
+
+.pq-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The one loud button. Honey, ink border, hand-pressed feel. */
+.pq-primary {
+  border: 2px solid var(--pq-strip) !important;
+  background: var(--pq-honey) !important;
+  color: #33260f !important;
+  font-weight: 700;
+  box-shadow: 0 2px 0 var(--pq-strip);
+}
+
+.pq-primary:hover {
+  background: #ebb548 !important;
+  transform: translateY(-1px);
+}
+
+.pq-primary:active {
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+.pq-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.pq-stats div {
+  min-width: 6.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px dashed var(--pq-line-strong);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+  text-align: center;
+}
+
+.pq-stats dt {
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pq-stats dd {
+  margin: 0.1rem 0 0;
+  font-family: var(--pq-font-heading);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-progress {
+  width: min(100%, 56rem);
+  height: 0.35rem;
+  margin: 1.6rem auto 0;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-paper-deep);
+  overflow: hidden;
+}
+
+.pq-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pq-honey), var(--pq-fern));
+}
+
+/* Settings, problems, keys: paper notes, not app chrome. */
+.pq-settings {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  border: 1px dashed var(--pq-line-strong);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+}
+
+.pq-settings > summary {
+  padding: 0.7rem 1rem;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pq-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0 1rem 1rem;
+}
+
+.pq-settings .pq-field {
+  margin: 0;
+}
+
+.pq-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.pq-settings-note,
+.pq-keys {
+  margin: 0;
+  color: var(--pq-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.pq-keys {
+  font-size: 0.8rem;
+}
+
+.pq-keys kbd {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--pq-line-strong);
+  border-radius: var(--pq-r-sm);
+  background: var(--pq-slide);
+  font-family: var(--pq-font-mono);
+  font-size: 0.9em;
+}
+
+.pq-problems-panel {
+  width: min(100%, 40rem);
+  margin: 0 auto;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--pq-berry);
+  border-left-width: 5px;
+  border-radius: var(--pq-r-md);
+  background: color-mix(in srgb, var(--pq-berry) 8%, var(--pq-slide));
+  text-align: left;
+}
+
+.pq-problems-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.pq-problems-close {
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pq-problems {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.pq-problems strong {
+  font-family: var(--pq-font-mono);
+  font-size: 0.85em;
+}
+
+.pq-problems-reopen {
+  align-self: center;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--pq-berry);
+  border-radius: var(--pq-r-pill);
+  background: none;
+  color: var(--pq-berry);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.pq-suggestion {
+  color: var(--pq-muted);
+  font-style: italic;
+}
+
+.pq-custom-view {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pq-code {
+  padding: 0.1em 0.3em;
+  border-radius: 0.25em;
+  background: color-mix(in srgb, var(--pq-ink) 9%, transparent);
+  font-family: var(--pq-font-mono);
+  font-size: 0.92em;
+}
+
+.pq-blank {
+  display: inline-block;
+  min-width: 3.5em;
+  border-bottom: 2px dotted currentColor;
+}
+
+.pq-visually-hidden,
+.pq-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pq-print-only {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-quiz * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 34rem) {
+  .pq-screen-question,
+  .pq-screen-end,
+  .pq-screen-message {
+    padding-inline: 0.9rem;
+  }
+
+  .pq-meta-strip,
+  .pq-round-banner {
+    margin-inline: -0.9rem;
+  }
+
+  .pq-toolbar {
+    gap: 0.4rem;
+  }
+
+  .pq-toolbar button,
+  .pq-action {
+    flex: 1 1 auto;
+  }
+}

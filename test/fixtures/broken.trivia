@@ -1,0 +1,15 @@
+Title => Broken On Purpose
+
+Quesiton => This attribute is misspelled.
+ID => dup
+
+Question => Second question, same ID.
+ID => dup
+Answers =>
+Type => Choice
+
+Question => A boolean that is not a boolean.
+Answers => Yes | No
+HiddenAtPlay => maybe
+Type => Choice
+Correct => Perhaps

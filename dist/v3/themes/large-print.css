@@ -1,0 +1,53 @@
+/*
+ * Large print — the same theme, scaled for a big room or a small handout.
+ * Load after paper.css.
+ */
+
+:root {
+  --pq-title-size: clamp(2.4rem, 6vw, 5rem);
+  --pq-answer-size: clamp(1.4rem, 2.6vw, 2.2rem);
+}
+
+.pq-quiz {
+  font-size: 1.15rem;
+}
+
+.pq-meta-strip {
+  font-size: clamp(0.85rem, 1.2vw, 1rem);
+}
+
+.pq-answer {
+  min-height: 4rem;
+  padding: 1.1rem 1.3rem;
+}
+
+.pq-answer-number {
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.pq-toolbar button,
+.pq-settings button {
+  min-height: 3.25rem;
+  font-size: 1.05rem;
+}
+
+.pq-input {
+  font-size: 1.5rem;
+}
+
+.pq-hints,
+.pq-explanation {
+  font-size: 1.15rem;
+}
+
+@media print {
+  :root {
+    --pq-title-size: 30pt;
+    --pq-answer-size: 18pt;
+  }
+
+  .pq-quiz {
+    font-size: 15pt;
+  }
+}

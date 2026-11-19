@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia print proof</title>
+    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <!-- Generated copy of print.css with the @media print wrapper removed. -->
+    <link
+      rel="stylesheet"
+      href="../dist/v3/themes/print.proof.css"
+      media="all"
+    />
+    <style>
+      .pq-lab-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #d9d0be;
+        background: #fffdf7;
+        font:
+          0.9rem/1.4 "Segoe UI",
+          system-ui,
+          sans-serif;
+      }
+
+      .pq-lab-bar p {
+        margin: 0 auto 0 0;
+        color: #5f585e;
+      }
+
+      .pq-lab-bar label {
+        display: inline-flex;
+        gap: 0.4rem;
+        align-items: center;
+        color: #5f585e;
+      }
+
+      .pq-lab-bar button,
+      .pq-lab-bar select {
+        padding: 0.4rem 0.9rem;
+        border: 1.5px solid #b9ad99;
+        border-radius: 999rem;
+        background: #faf5ea;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .pq-lab-bar button[aria-pressed="true"] {
+        border-color: #2f2a33;
+        background: #f5c65d;
+      }
+
+      .pq-lab-report {
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #d9d0be;
+        background: #f3efe4;
+        color: #3f3a44;
+        font:
+          0.85rem/1.45 "Segoe UI",
+          system-ui,
+          sans-serif;
+      }
+
+      .pq-lab-report[data-problem="true"] {
+        background: #f6d9d4;
+        color: #6d1f16;
+      }
+
+      .pq-lab-report[data-warning="true"] {
+        background: #f7edcb;
+        color: #5a4410;
+      }
+
+      /* The page margin @page gives on paper, so the proof matches the printout. */
+      #sheet {
+        padding: 12mm;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pq-lab-bar pq-print-hide">
+      <p>Print proof: A4 landscape, 12 mm margins.</p>
+      <button type="button" data-variant="quiz" aria-pressed="false">
+        Questions
+      </button>
+      <button type="button" data-variant="answers" aria-pressed="true">
+        Answers
+      </button>
+      <button type="button" data-variant="form" aria-pressed="false">
+        Answer form
+      </button>
+      <button type="button" data-variant="grade" aria-pressed="false">
+        Grade table
+      </button>
+      <button type="button" data-flash aria-pressed="false">Flash cards</button>
+      <label>
+        Slides
+        <select data-per-page>
+          <option value="1" selected>1 per page</option>
+          <option value="2">2 per page</option>
+          <option value="4">4 per page</option>
+        </select>
+      </label>
+      <button type="button" data-compact aria-pressed="false">
+        Compact form
+      </button>
+      <button type="button" data-round-break aria-pressed="false">
+        Round starts a page
+      </button>
+      <button type="button" data-print>Print</button>
+    </div>
+    <p class="pq-lab-report pq-print-hide" data-report>Measuring…</p>
+
+    <div id="sheet"></div>
+
+    <script type="module">
+      import { createQuiz, mountPrintSheet } from "../dist/v3/player.js";
+
+      const text = `
+Title => Print Proof
+Description => Two rounds, a long question, six answers, a hint and an explanation.
+Author => Pandaqi
+Seed => print-proof
+
+# Warm-up
+
+Question => Which of these six instruments is the only one that produces sound by vibrating a column of air rather than a string, a membrane or a solid block?
+Answers => Trumpet | Violin | Snare drum | Xylophone | Cello | Harp
+Type => Choice
+Correct => Trumpet
+Hints => It is played with the lips, not the hands.
+Hints => You could call it a very fancy tube.
+Explanation => A trumpet's sound comes from the player's lips buzzing into a resonating column of air. The others are string, membrane or struck-solid instruments.
+
+Question => How many strings does a standard violin have?
+Answers => 4
+Type => Range
+Range => 0
+Explanation => Four: G, D, A and E. The viola has the same count, one fifth lower.
+
+# Odd ones out
+
+Question => Name the composer of the Four Seasons.
+Answers => Vivaldi
+Type => Open
+Hints => An Italian, and a priest.
+
+Question => The Moonlight Sonata was written by [blank], in [blank].
+Answers => Beethoven | 1801
+Type => Cloze
+Explanation => Published in 1802, composed around 1801. Close enough for a quiz.
+`;
+
+      const quiz = createQuiz({ config: { seed: "print-proof" } });
+      await quiz.load({ type: "text", text, file: "print.trivia" });
+
+      const host = document.querySelector("#sheet");
+      const report = document.querySelector("[data-report]");
+      let sheet = null;
+      const state = {
+        variant: "answers",
+        flash: false,
+        perPage: 1,
+        compact: false,
+        roundBreak: false,
+      };
+
+      const draw = () => {
+        sheet?.destroy();
+        sheet = mountPrintSheet(quiz, host, {
+          variant: state.flash ? "quiz" : state.variant,
+          flashCards: state.flash,
+          perPage: state.perPage,
+          formStyle: state.compact ? "compact" : "roomy",
+          roundPageBreak: state.roundBreak,
+        });
+        const fit = sheet.fit();
+        const problems = sheet.problems;
+        const clipped = problems.filter(
+          (problem) => problem.kind === "overflow",
+        );
+        report.textContent =
+          problems.length === 0
+            ? `${fit.pages} pages, ${fit.zoomed} shrunk to fit. Every page fits its box.`
+            : `${fit.pages} pages, ${fit.zoomed} shrunk. ${problems
+                .map((problem) => problem.message)
+                .join(" ")}`;
+        report.dataset.problem = clipped.length > 0 ? "true" : "false";
+        report.dataset.warning = String(
+          clipped.length === 0 && problems.length > 0,
+        );
+
+        for (const button of document.querySelectorAll("[data-variant]")) {
+          button.setAttribute(
+            "aria-pressed",
+            String(!state.flash && button.dataset.variant === state.variant),
+          );
+        }
+        document
+          .querySelector("[data-flash]")
+          .setAttribute("aria-pressed", String(state.flash));
+        document
+          .querySelector("[data-compact]")
+          .setAttribute("aria-pressed", String(state.compact));
+        document
+          .querySelector("[data-round-break]")
+          .setAttribute("aria-pressed", String(state.roundBreak));
+      };
+
+      for (const button of document.querySelectorAll("[data-variant]")) {
+        button.addEventListener("click", () => {
+          state.variant = button.dataset.variant;
+          state.flash = false;
+          draw();
+        });
+      }
+      document.querySelector("[data-flash]").addEventListener("click", () => {
+        state.flash = !state.flash;
+        draw();
+      });
+      document.querySelector("[data-compact]").addEventListener("click", () => {
+        state.compact = !state.compact;
+        draw();
+      });
+      document
+        .querySelector("[data-round-break]")
+        .addEventListener("click", () => {
+          state.roundBreak = !state.roundBreak;
+          draw();
+        });
+      document
+        .querySelector("[data-per-page]")
+        .addEventListener("change", (event) => {
+          state.perPage = Number(event.target.value);
+          draw();
+        });
+      document.querySelector("[data-print]").addEventListener("click", () => {
+        window.print();
+      });
+
+      draw();
+      window.printQuiz = quiz;
+      window.printSheetNow = () => sheet;
+    </script>
+  </body>
+</html>

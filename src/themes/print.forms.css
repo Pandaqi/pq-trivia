@@ -1,0 +1,171 @@
+/* Print, forms: the answer table, fields and utilities. Built into print.css. */
+@media print {
+  /* Answer form: a table a player writes on. */
+  .pq-print-form {
+    display: block;
+  }
+
+  .pq-print-form > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  /* Typed questions get a line to write on, not an empty cell. */
+  .pq-form-line {
+    display: block;
+    width: 100%;
+    height: 6mm;
+    border-bottom: 0.6pt solid #000;
+  }
+
+  .pq-form-new-page {
+    break-before: page;
+  }
+
+  /* Compact form: fewer millimetres per row. */
+  .pq-form-compact .pq-form,
+  .pq-form-compact .pq-grade {
+    margin-bottom: 5mm;
+    font-size: 9pt;
+  }
+
+  .pq-form-compact .pq-form td,
+  .pq-form-compact .pq-grade td {
+    padding: 1.2mm 2mm;
+  }
+
+  .pq-form-compact .pq-form caption,
+  .pq-form-compact .pq-grade caption {
+    font-size: 12pt;
+  }
+
+  .pq-form-compact .pq-form-line {
+    height: 4mm;
+  }
+
+  .pq-form,
+  .pq-grade {
+    width: 100%;
+    margin: 0 0 8mm;
+    border-collapse: collapse;
+    font-size: 10pt;
+  }
+
+  .pq-form caption,
+  .pq-grade caption {
+    padding: 0 0 2mm;
+    font-family: var(--pq-font-heading);
+    font-size: 14pt;
+    font-style: italic;
+    text-align: left;
+    caption-side: top;
+  }
+
+  .pq-form th,
+  .pq-grade th {
+    padding: 1.5mm 2mm;
+    border-bottom: 1pt solid #000;
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .pq-form td,
+  .pq-grade td {
+    padding: 2mm;
+    border-bottom: 0.4pt solid #999;
+    vertical-align: top;
+  }
+
+  .pq-form tbody tr:nth-child(even) td,
+  .pq-grade tbody tr:nth-child(even) td {
+    background: #f4f4f4;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .pq-form-number {
+    width: 8mm;
+    font-weight: 700;
+  }
+
+  .pq-form-answer {
+    width: 70mm;
+    white-space: nowrap;
+  }
+
+  .pq-form-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 1mm;
+    margin-right: 4mm;
+    font-size: 9pt;
+  }
+
+  .pq-form-box {
+    display: inline-block;
+    width: 3.5mm;
+    height: 3.5mm;
+    border: 0.6pt solid #000;
+  }
+
+  .pq-form-points {
+    width: 12mm;
+    text-align: right;
+  }
+
+  /* Grade table: correct answers filled in, a score box per row. */
+  .pq-print-grade {
+    display: block;
+  }
+
+  .pq-print-grade > .pq-print-page-inner {
+    justify-content: flex-start;
+  }
+
+  .pq-grade-correct {
+    width: 62mm;
+    font-weight: 700;
+  }
+
+  .pq-grade-number {
+    width: 10mm;
+    font-weight: 700;
+  }
+
+  .pq-grade-points {
+    width: 12mm;
+    text-align: right;
+  }
+
+  .pq-grade-tick {
+    width: 14mm;
+    text-align: center;
+  }
+
+  .pq-grade tfoot td {
+    border-bottom: none;
+    font-weight: 700;
+  }
+
+  .pq-grade tfoot td:first-child {
+    font-size: 8.5pt;
+    letter-spacing: 0.08em;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .pq-custom-view,
+  .pq-host {
+    display: contents;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}
+@page {
+  size: A4 landscape;
+  margin: 12mm;
+}

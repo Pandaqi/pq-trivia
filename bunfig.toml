@@ -1,0 +1,8 @@
+# One config file. Bun builds, tests, formats and type checks.
+# No bundler config, no second linter, no second formatter.
+
+[install]
+exact = false
+
+[test]
+root = "."

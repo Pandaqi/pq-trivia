@@ -1,0 +1,30 @@
+Question => What do you think about this trivia framework?
+Media => some-image-of-a-quiz-or-something.webp
+Answers => Amazing | Wonderful | Incredible | Groundbreaking
+Correct => Groundbreaking
+Score => 2
+Author => Pandaqi
+
+## Old shorthand question
+
+Answers => Yes | No
+Correct => Yes
+ScoreMethod => partial
+
+# A round with a secret
+Secret => Instruments
+
+Question => Which instrument has 88 keys?
+Answers => Piano
+
+Question =>
+What is the capital of the Netherlands?
+Answers =>
+Amsterdam
+Type => Open
+Score => 1.5
+
+Question => Name two colours.
+Answers => Red | Blue
+Type => List
+HiddenAtPlay => false

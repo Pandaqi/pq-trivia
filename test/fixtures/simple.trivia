@@ -1,0 +1,42 @@
+Quiz => The Wayward Melody Test
+Syntax => 3
+Language => en
+Title => The Wayward Melody Test
+Theme => vinyl
+Seed => music-night
+Author => Tiamo
+
+Type => Start
+Question => The Wayward Melody presents
+Comment => A night of questionable music knowledge.
+Buttons => play | interactive | answers | settings
+
+# Warm-up
+
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Category => comics
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0
+Score => 2
+Explanation => The wall came down on 9 November 1989.
+
+Question => The first moon landing was in [blank] and the mission was [blank].
+Answers => 1969 | Apollo 11
+Type => Cloze
+Hints => It was the sixties. | You know the name.
+
+Question => Match the artist to the album.
+Answers => The Beatles ~ Abbey Road | Daft Punk ~ Discovery | Björk ~ Homogenic
+Type => Match
+Score => 3
+
+Type => End
+Question => That's all, folks!
+Credits => Questions by Tiamo
+Buttons => answers | restart | exit

@@ -1,0 +1,25 @@
+Title => The Wayward Melody Demo
+Description => Three questions, one winner, one element.
+Seed => music-night
+Author => Pandaqi
+
+# Warm-up
+
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Category => Comics
+Explanation => Clark Kent, mild-mannered reporter.
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0
+Hints => It was a year ending in nine.
+
+# Odd one out
+
+Question => The first moon landing was in [blank].
+Answers => 1969
+Type => Cloze

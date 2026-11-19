@@ -1,0 +1,898 @@
+/*
+ * Paper — the default theme.
+ *
+ * Two ideas from V2, kept: a question is a slide, and the answer is the biggest
+ * thing on it. One idea from the rest of the studio: paper, not glass. Warm
+ * cream, ink, fern and honey, slightly uneven corners, a soft shadow instead of
+ * a hard border. Rough edges, natural tones, nothing stark.
+ *
+ * Colours are sampled from Pandaqi's own palette so a quiz night looks like the
+ * rest of the shelf. Everything here is a token. Override the tokens, keep the
+ * layout.
+ */
+
+:root {
+  --pq-font-heading:
+    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --pq-font-body: "Segoe UI", system-ui, "Trebuchet MS", Helvetica, sans-serif;
+  --pq-font-label: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --pq-font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --pq-ink: #2f2a33;
+  --pq-muted: #5f585e;
+  --pq-paper: #faf5ea;
+  --pq-paper-deep: #f2e9d9;
+  --pq-slide: #fffdf7;
+  --pq-line: #d9d0be;
+  --pq-line-strong: #b9ad99;
+  --pq-strip: #2f2a33;
+  --pq-strip-ink: #fbf7ee;
+
+  --pq-accent: #6f4b98;
+  --pq-accent-ink: #fffdf7;
+  --pq-honey: #f5c65d;
+  --pq-honey-soft: #fbe7b4;
+  --pq-fern: #839c66;
+  --pq-fern-soft: #dce6cc;
+  --pq-berry: #a9556b;
+  --pq-sparkle: #f0b93f;
+  --pq-right: #3e7a4c;
+  --pq-wrong: #a03a3a;
+
+  --pq-r-sm: 0.4rem;
+  --pq-r-md: 0.75rem;
+  --pq-r-lg: 1.15rem;
+  --pq-r-organic: 1.15rem 0.85rem 1.3rem 0.9rem;
+  --pq-r-pill: 999rem;
+
+  --pq-shadow-1:
+    0 1px 2px rgb(74 58 30 / 0.1), 0 2px 6px -3px rgb(74 58 30 / 0.1);
+  --pq-shadow-2: 0 10px 26px -16px rgb(74 58 30 / 0.55);
+  --pq-tilt: -1.1deg;
+
+  --pq-space: clamp(1rem, 2.6vw, 2.25rem);
+  --pq-title-size: clamp(1.9rem, 4.6vw, 3.5rem);
+  --pq-answer-size: clamp(1.05rem, 1.9vw, 1.55rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pq-ink: #f3ebdd;
+    --pq-muted: #b9b0a4;
+    --pq-paper: #1d2522;
+    --pq-paper-deep: #141a18;
+    --pq-slide: #24302a;
+    --pq-line: #46564a;
+    --pq-line-strong: #63755f;
+    --pq-strip: #121815;
+    --pq-strip-ink: #f3ebdd;
+
+    --pq-accent: #c6a8e8;
+    --pq-accent-ink: #1d2522;
+    --pq-honey: #f5c65d;
+    --pq-honey-soft: #4a3d20;
+    --pq-fern: #a8c48a;
+    --pq-fern-soft: #2f3d2a;
+    --pq-berry: #e39aa9;
+    --pq-right: #8cc4a0;
+    --pq-wrong: #e79a92;
+
+    --pq-shadow-2: 0 12px 30px -18px rgb(0 0 0 / 0.7);
+  }
+}
+
+.pq-quiz {
+  box-sizing: border-box;
+  min-height: 100dvh;
+  background-color: var(--pq-paper);
+  /* Paper grain: two dot layers, barely there, no image needed. */
+  background-image:
+    radial-gradient(
+      circle at 1px 1px,
+      rgb(47 42 51 / 0.045) 1px,
+      transparent 0
+    ),
+    radial-gradient(circle at 7px 11px, rgb(47 42 51 / 0.03) 1px, transparent 0);
+  background-size:
+    26px 26px,
+    41px 37px;
+  color: var(--pq-ink);
+  font-family: var(--pq-font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+.pq-quiz *,
+.pq-quiz *::before,
+.pq-quiz *::after,
+.pq-print-only *,
+.pq-print-only *::before,
+.pq-print-only *::after {
+  box-sizing: border-box;
+}
+
+.pq-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--pq-slide);
+  background-position: center;
+  background-size: cover;
+}
+
+.pq-screen-question,
+.pq-screen-end,
+.pq-screen-message {
+  padding: 0 var(--pq-space);
+}
+
+.pq-screen-start {
+  justify-content: center;
+  gap: var(--pq-space);
+  padding: var(--pq-space);
+}
+
+/* On a wide screen the slide becomes a sheet on the desk. */
+@media screen and (min-width: 48rem) {
+  .pq-quiz {
+    padding: clamp(0.75rem, 2vw, 1.75rem);
+  }
+
+  .pq-screen {
+    width: min(100%, 78rem);
+    min-height: calc(100dvh - 2 * clamp(0.75rem, 2vw, 1.75rem));
+    margin-inline: auto;
+    overflow: clip;
+    border: 1px solid var(--pq-line);
+    border-radius: var(--pq-r-organic);
+    box-shadow: var(--pq-shadow-2);
+  }
+}
+
+/* V2's strip, warmed up. A host reads it at a glance across a room. */
+.pq-meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.1rem;
+  margin: 0 calc(var(--pq-space) * -1);
+  padding: 0.55rem var(--pq-space);
+  background: var(--pq-strip);
+  color: var(--pq-strip-ink);
+  font-family: var(--pq-font-label);
+  font-size: clamp(0.68rem, 1vw, 0.8rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pq-meta-strip > .pq-points {
+  margin-left: auto;
+  padding-left: 0.7rem;
+  border-left: 1px solid rgb(255 253 247 / 0.3);
+  color: var(--pq-honey);
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-meta-author,
+.pq-meta-category {
+  opacity: 0.72;
+}
+
+.pq-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+/* The round page: a fern-washed stamp, tilted a hair. Never quite a rectangle. */
+.pq-round-banner {
+  position: relative;
+  margin: 0 calc(var(--pq-space) * -1);
+  padding: clamp(0.6rem, 1.6vw, 1.1rem) var(--pq-space);
+  border-bottom: 1px dashed var(--pq-line-strong);
+  background: var(--pq-fern-soft);
+  color: #22301a;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pq-round-banner {
+    color: var(--pq-ink);
+  }
+}
+
+.pq-round-banner::before {
+  content: "❧";
+  position: absolute;
+  top: 0.35rem;
+  left: 0.75rem;
+  color: var(--pq-fern);
+  font-size: 1.1rem;
+  transform: rotate(-8deg);
+}
+
+.pq-round-number {
+  margin: 0;
+  font-family: var(--pq-font-label);
+  font-size: 0.75rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.pq-round-name {
+  margin: 0.25rem 0 0;
+  font-family: var(--pq-font-heading);
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  font-style: italic;
+  font-weight: 500;
+  transform: rotate(var(--pq-tilt));
+}
+
+.pq-round-secret {
+  margin: 0.55rem 0 0;
+  font-style: italic;
+  opacity: 0.85;
+}
+
+.pq-header {
+  padding: clamp(1.1rem, 3.6vh, 2.2rem) 0 0;
+  text-align: center;
+}
+
+.pq-kicker {
+  display: inline-block;
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.15rem;
+  border-bottom: 2px dotted var(--pq-honey);
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.72rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.pq-title {
+  margin: 0;
+  font-family: var(--pq-font-heading);
+  font-size: var(--pq-title-size);
+  font-weight: 500;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.pq-screen-start .pq-title {
+  font-size: clamp(2.2rem, 6vw, 4rem);
+}
+
+.pq-title:focus {
+  outline: none;
+}
+
+.pq-description,
+.pq-byline {
+  margin: 0.7rem auto 0;
+  max-width: 42ch;
+  color: var(--pq-muted);
+  text-align: center;
+}
+
+.pq-description {
+  font-family: var(--pq-font-heading);
+  font-style: italic;
+  font-size: 1.1rem;
+}
+
+.pq-body {
+  margin: clamp(0.8rem, 2vh, 1.3rem) auto 0;
+  max-width: 46ch;
+  color: var(--pq-muted);
+  text-align: center;
+  font-size: 1.05rem;
+  white-space: pre-wrap;
+}
+
+
+/* Paper, part two: answers, fields, notes, controls. Built into paper.css. */
+
+/* Answers: cream cards, honey numbers, one good shadow. */
+.pq-answers {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+  max-width: 56rem;
+  margin: clamp(1rem, 3vh, 2rem) auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 60rem) {
+  .pq-answers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem 1rem;
+  }
+
+  .pq-answers > li:only-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.pq-answer {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: 100%;
+  min-height: 3.35rem;
+  padding: 0.8rem 1.05rem;
+  border: 1px solid var(--pq-line);
+  border-radius: var(--pq-r-organic);
+  background: var(--pq-slide);
+  box-shadow: var(--pq-shadow-1);
+  color: var(--pq-ink);
+  font: inherit;
+  font-size: var(--pq-answer-size);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 140ms,
+    box-shadow 140ms,
+    border-color 140ms;
+}
+
+.pq-answer:hover {
+  border-color: var(--pq-line-strong);
+  box-shadow: var(--pq-shadow-2);
+  transform: translateY(-1px) rotate(-0.35deg);
+}
+
+.pq-answer:focus-visible {
+  outline: 3px solid var(--pq-accent);
+  outline-offset: 3px;
+}
+
+.pq-answer[data-pq-selected="true"] {
+  border-color: var(--pq-accent);
+  background: color-mix(in srgb, var(--pq-accent) 9%, var(--pq-slide));
+  box-shadow:
+    inset 0 0 0 2px var(--pq-accent),
+    var(--pq-shadow-1);
+}
+
+.pq-answer-number {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50% 45% 50% 48%;
+  background: var(--pq-honey-soft);
+  color: #3b2e14;
+  font-family: var(--pq-font-label);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-color-scheme: dark) {
+  .pq-answer-number {
+    color: var(--pq-ink);
+  }
+}
+
+.pq-answer-text {
+  flex: 1 1 auto;
+  white-space: pre-wrap;
+}
+
+.pq-answer[data-pq-correct="true"] {
+  border-color: var(--pq-right);
+  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
+  box-shadow:
+    inset 0 0 0 2px var(--pq-right),
+    var(--pq-shadow-1);
+  animation: pq-pop 180ms ease-out;
+}
+
+.pq-answer[data-pq-correct="true"] .pq-answer-number {
+  background: var(--pq-fern);
+  color: #1d2a16;
+}
+
+.pq-answer[data-pq-correct="false"] {
+  opacity: 0.45;
+  transform: scale(0.985);
+  box-shadow: none;
+}
+
+.pq-answer[data-pq-correct="false"] .pq-answer-number {
+  text-decoration: line-through;
+}
+
+.pq-mark {
+  font-weight: 700;
+}
+
+/* Points earned by this answer, in the corner, like V2. */
+.pq-answer {
+  position: relative;
+  padding-right: 3.2rem;
+}
+
+.pq-answer-score {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.4rem;
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border: 2px solid var(--pq-slide);
+  border-radius: 999rem;
+  background: var(--pq-fern);
+  box-shadow: var(--pq-shadow-1);
+  color: #14200f;
+  font-family: var(--pq-font-label);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.pq-answer[data-pq-correct="true"] .pq-mark {
+  color: var(--pq-right);
+}
+
+.pq-answer[data-pq-correct="false"] .pq-mark {
+  color: var(--pq-wrong);
+}
+
+@keyframes pq-pop {
+  from {
+    transform: scale(0.99);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* Two halves, like V2: question left, media or answers right. */
+.pq-split {
+  display: grid;
+  gap: var(--pq-space);
+  width: 100%;
+  flex: 1 1 auto;
+  align-items: center;
+  padding: clamp(0.5rem, 2vh, 1.25rem) 0 0;
+}
+
+.pq-split-left,
+.pq-split-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.pq-split-single {
+  display: block;
+  max-width: 56rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 60rem) {
+  .pq-split:not(.pq-split-single) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .pq-split-right {
+    padding-left: var(--pq-space);
+    border-left: 1px dashed var(--pq-line);
+  }
+}
+
+.pq-split-right .pq-answers {
+  margin-top: 0;
+}
+
+/* One answer per row inside a half. Two columns in 550px is a squeeze. */
+.pq-split .pq-answers {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.6rem;
+}
+
+.pq-split-right .pq-media-list {
+  margin-top: 0;
+}
+
+.pq-screen-question .pq-meta-strip {
+  border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
+}
+
+.pq-screen-question .pq-round-banner {
+  border-left: 0.5rem solid var(--pq-round-accent, var(--pq-accent));
+}
+
+/* Typed answers sit on a line, like a form on paper. */
+.pq-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  max-width: 32rem;
+  margin: clamp(1rem, 3vh, 1.8rem) auto 0;
+}
+
+.pq-field-label {
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.pq-input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--pq-line);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-size: 1.25rem;
+  box-shadow: inset 0 1px 2px rgb(74 58 30 / 0.08);
+}
+
+.pq-input:focus-visible {
+  outline: 3px solid var(--pq-accent);
+  outline-offset: 1px;
+}
+
+.pq-input-number {
+  max-width: 12rem;
+}
+
+.pq-cloze {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.9rem;
+  margin-top: clamp(1rem, 3vh, 1.8rem);
+}
+
+.pq-cloze .pq-field {
+  max-width: 14rem;
+  margin: 0;
+}
+
+.pq-answers-plain {
+  display: block;
+  max-width: 40rem;
+  margin-top: 1.4rem;
+  padding-left: 1.4rem;
+  color: var(--pq-muted);
+  font-size: 1.1rem;
+}
+
+.pq-media-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: clamp(1rem, 3vh, 1.8rem);
+}
+
+.pq-media-list img,
+.pq-media-list video {
+  max-width: 100%;
+  max-height: 55vh;
+  border-radius: var(--pq-r-md);
+  box-shadow: var(--pq-shadow-1);
+}
+
+.pq-hints,
+.pq-explanation {
+  max-width: 46ch;
+  margin: clamp(0.9rem, 2.6vh, 1.5rem) auto 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--pq-honey);
+  border-radius: 0 var(--pq-r-md) var(--pq-r-md) 0;
+  background: color-mix(in srgb, var(--pq-honey) 14%, transparent);
+  text-align: left;
+}
+
+.pq-hints ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.pq-explanation {
+  border-left-color: var(--pq-fern);
+  background: color-mix(in srgb, var(--pq-fern) 14%, transparent);
+  font-family: var(--pq-font-heading);
+  font-style: italic;
+  font-size: 1.05rem;
+}
+
+
+/* Paper, part three: controls, notes and utilities. Built into paper.css. */
+
+/* Controls stay small, pinned to the bottom, out of the way. */
+.pq-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding: var(--pq-space) 0 calc(var(--pq-space) * 0.75);
+}
+
+.pq-toolbar button,
+.pq-action,
+.pq-settings button {
+  min-height: 2.75rem;
+  padding: 0.55rem 1.15rem;
+  border: 1.5px solid var(--pq-line-strong);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition:
+    background-color 130ms,
+    border-color 130ms,
+    transform 130ms;
+}
+
+.pq-toolbar button:hover:not(:disabled),
+.pq-settings button:hover {
+  border-color: var(--pq-ink);
+  background: var(--pq-paper-deep);
+}
+
+.pq-toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The one loud button. Honey, ink border, hand-pressed feel. */
+.pq-primary {
+  border: 2px solid var(--pq-strip) !important;
+  background: var(--pq-honey) !important;
+  color: #33260f !important;
+  font-weight: 700;
+  box-shadow: 0 2px 0 var(--pq-strip);
+}
+
+.pq-primary:hover {
+  background: #ebb548 !important;
+  transform: translateY(-1px);
+}
+
+.pq-primary:active {
+  box-shadow: none;
+  transform: translateY(1px);
+}
+
+.pq-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.pq-stats div {
+  min-width: 6.5rem;
+  padding: 0.6rem 1rem;
+  border: 1px dashed var(--pq-line-strong);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+  text-align: center;
+}
+
+.pq-stats dt {
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pq-stats dd {
+  margin: 0.1rem 0 0;
+  font-family: var(--pq-font-heading);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-progress {
+  width: min(100%, 56rem);
+  height: 0.35rem;
+  margin: 1.6rem auto 0;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-paper-deep);
+  overflow: hidden;
+}
+
+.pq-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--pq-honey), var(--pq-fern));
+}
+
+/* Settings, problems, keys: paper notes, not app chrome. */
+.pq-settings {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  border: 1px dashed var(--pq-line-strong);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+}
+
+.pq-settings > summary {
+  padding: 0.7rem 1rem;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pq-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0 1rem 1rem;
+}
+
+.pq-settings .pq-field {
+  margin: 0;
+}
+
+.pq-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.pq-settings-note,
+.pq-keys {
+  margin: 0;
+  color: var(--pq-muted);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.pq-keys {
+  font-size: 0.8rem;
+}
+
+.pq-keys kbd {
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--pq-line-strong);
+  border-radius: var(--pq-r-sm);
+  background: var(--pq-slide);
+  font-family: var(--pq-font-mono);
+  font-size: 0.9em;
+}
+
+.pq-problems-panel {
+  width: min(100%, 40rem);
+  margin: 0 auto;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--pq-berry);
+  border-left-width: 5px;
+  border-radius: var(--pq-r-md);
+  background: color-mix(in srgb, var(--pq-berry) 8%, var(--pq-slide));
+  text-align: left;
+}
+
+.pq-problems-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.pq-problems-close {
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pq-problems {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+}
+
+.pq-problems strong {
+  font-family: var(--pq-font-mono);
+  font-size: 0.85em;
+}
+
+.pq-problems-reopen {
+  align-self: center;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--pq-berry);
+  border-radius: var(--pq-r-pill);
+  background: none;
+  color: var(--pq-berry);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.pq-suggestion {
+  color: var(--pq-muted);
+  font-style: italic;
+}
+
+.pq-custom-view {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pq-code {
+  padding: 0.1em 0.3em;
+  border-radius: 0.25em;
+  background: color-mix(in srgb, var(--pq-ink) 9%, transparent);
+  font-family: var(--pq-font-mono);
+  font-size: 0.92em;
+}
+
+.pq-blank {
+  display: inline-block;
+  min-width: 3.5em;
+  border-bottom: 2px dotted currentColor;
+}
+
+.pq-visually-hidden,
+.pq-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pq-print-only {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-quiz * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 34rem) {
+  .pq-screen-question,
+  .pq-screen-end,
+  .pq-screen-message {
+    padding-inline: 0.9rem;
+  }
+
+  .pq-meta-strip,
+  .pq-round-banner {
+    margin-inline: -0.9rem;
+  }
+
+  .pq-toolbar {
+    gap: 0.4rem;
+  }
+
+  .pq-toolbar button,
+  .pq-action {
+    flex: 1 1 auto;
+  }
+}

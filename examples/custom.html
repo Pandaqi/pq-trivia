@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia custom views and actions</title>
+    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <link rel="stylesheet" href="../dist/v3/themes/print.css" media="print" />
+  </head>
+  <body>
+    <div id="quiz"></div>
+
+    <script type="module">
+      import { createQuiz, mountQuiz, ScreenKind } from "../dist/v3/player.js";
+
+      const text = `
+Title => Custom Views
+Description => Two questions, one replaced screen, two buttons.
+Seed => custom
+
+Question => What is the capital of Portugal?
+Answers => Lisbon | Porto | Madrid
+Type => Choice
+Correct => Lisbon
+
+Question => What is the capital of Japan?
+Answers => Tokyo
+Type => Open
+`;
+
+      const quiz = createQuiz({ config: { seed: "custom" } });
+
+      // Replace the end screen. Same contract, our DOM.
+      quiz.views.set(ScreenKind.End, (screen, q) => {
+        const section = document.createElement("section");
+        section.className = "pq-screen pq-screen-end";
+
+        const kicker = document.createElement("p");
+        kicker.className = "pq-kicker";
+        kicker.textContent = "Your own view";
+
+        const title = document.createElement("h1");
+        title.className = "pq-title";
+        title.dataset.pqHeading = "";
+        title.tabIndex = -1;
+        title.textContent = "That was the custom end screen.";
+
+        const note = document.createElement("p");
+        note.className = "pq-description";
+        note.textContent = `You answered ${screen.answered} of ${screen.questionCount} questions.`;
+
+        const again = document.createElement("button");
+        again.type = "button";
+        again.className = "pq-primary";
+        again.textContent = "Play again";
+        again.addEventListener("click", () => q.restart());
+
+        section.append(kicker, title, note, again);
+        return section;
+      });
+
+      // Two toolbar buttons. The pinned one comes first.
+      quiz.actions.add({
+        id: "restart",
+        label: "Start over",
+        title: "Back to the first screen, keep the order",
+        run: (q) => q.restart(),
+      });
+      quiz.actions.add({
+        id: "print",
+        label: "Print quiz",
+        title: "Print every question, one page each",
+        pinned: true,
+        run: () => window.print(),
+      });
+
+      mountQuiz(quiz, document.querySelector("#quiz"));
+      await quiz.load({ type: "text", text, file: "custom.trivia" });
+
+      // Handy in the console: quiz.views.get(ScreenKind.End), quiz.actions.list().
+      window.customQuiz = quiz;
+    </script>
+  </body>
+</html>

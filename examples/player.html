@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia player</title>
+    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <link rel="stylesheet" href="../dist/v3/themes/print.css" media="print" />
+  </head>
+  <body>
+    <div id="quiz"></div>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../dist/v3/player.js";
+
+      const text = `
+Title => The Wayward Melody Demo
+Description => Three questions, one winner.
+Seed => music-night
+Author => Pandaqi
+
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Category => Comics
+Explanation => Clark Kent, mild-mannered reporter.
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0
+Hints => It was a year ending in nine.
+
+Question => The first moon landing was in [blank].
+Answers => 1969
+Type => Cloze
+`;
+
+      const quiz = createQuiz({ config: { seed: "music-night" } });
+      mountQuiz(quiz, document.querySelector("#quiz"));
+      await quiz.load({ type: "text", text, file: "demo.trivia" });
+    </script>
+  </body>
+</html>
