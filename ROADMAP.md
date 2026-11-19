@@ -303,8 +303,8 @@ Only two real dependencies. `trystero` is optional and only imported by the mult
 
 | Artifact                        | Format                                    | Contents                                                   | Budget (gzip)     |
 | ------------------------------- | ----------------------------------------- | ---------------------------------------------------------- | ----------------- |
-| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 24 KB**       |
-| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + 3 animations               | **≤ 48 KB**       |
+| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 24 KB**       |**       |
+| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + theme folders + 3 animations | **≤ 52 KB**     |
 | `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                    | ≤ 55 KB           |
 | `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                           | ≤ 60 KB           |
 | `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                  | ≤ 26 KB           |
@@ -1528,7 +1528,7 @@ No Biome. No ESLint. No Prettier. No dependency-cruiser. No ts-node. No bundler 
     "test": "bun test",
     "size": "bun run scripts/size.ts",
     "i18n:check": "bun run scripts/i18n-check.ts",
-    "check:content": "bun run cli/index.ts validate template/questions test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
+    "check:content": "bun run cli/index.ts validate examples/quick-start-template/template/quiz.trivia test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
     "dev": "bun run scripts/build.ts --watch",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
@@ -1748,7 +1748,7 @@ migration guide, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, README with
 badges and sizes, `bun run release:dry`, checksums, and the release and docs
 workflows.
 
-- [ ] Set `"private": false`, then `npm publish --provenance --access public`.
+- [ ]  `npm publish --provenance --access public`.
 - [ ] Tag `3.0.0`, push the tag, check the GitHub Release.
 - [ ] Deploy the docs and the examples to GitHub Pages.
 - [ ] GIF and screenshots in the README. A gallery, starting with The Wayward Melody.
@@ -1762,6 +1762,11 @@ workflows.
 - Slide list, generated forms, text pane, preview.
 - Add, remove, reorder, duplicate.
 - Parse-on-blur and serialize-on-edit. One buffer.
+- Basic edits to questions can be done through this wizard/UI. For example (the UI should do much more than these few examples):
+  - Click part of the slide/question and type what text should be there instead ("edit a textbox")
+  - Add/remove multiple choice answers, change the correct answer 
+  - Add/remove media in place
+  - The "Trivia Syntax" edit box is per-slide too, so you can (for example) design the overall quiz structure with the UI/automatically, but then update a few individual slides by hand through changing the Trivia Syntax for it.
 - Undo/redo over text snapshots.
 - Media picker, save/download, open folder.
 - Keyboard reorder. Labels. No drag-only.
@@ -2019,7 +2024,8 @@ All settled. Nothing left open for 3.0.
 - [ ] `bun install && bun run check && bun run build` green on Windows, macOS, Linux.
 - [x] `dist/v3` has core, headless, player, IIFE and animations, with maps, banners and budgets met.
 - [ ] Every V2 fixture, including a real sold quiz, plays through compat. Differences documented.
-- [x] Core ≤ 24 KB gzip. Player ≤ 48 KB. Full ≤ 55 KB. IIFE ≤ 60 KB.
+- [x] Core ≤ 24 KB gzip. Player ≤ 52 KB. Full ≤ 55 KB. IIFE ≤ 60 KB.
+- [x] Theme folders: `.trivia-theme` settings, fonts, randomized backgrounds, per-folder uploads, one-file bundle.
 - [ ] Public API documented and typed. Every event, selector, exporter and hook has an example.
 - [x] Syntax reference complete and generated from `attributes.ts`.
 - [x] Interactive mode grades every built-in type. Results, review, resume, print.

@@ -81,10 +81,13 @@ export interface ImportResult {
   readonly diagnostics: readonly Diagnostic[];
 }
 
+import { visibleModel } from "./visible";
+
 export function toEmbedded(
   quiz: QuizModel,
   options: EmbeddedOptions = {},
 ): EmbeddedQuizV3 {
+  quiz = visibleModel(quiz);
   const compact = options.compact ?? false;
   const questions: Record<string, EmbeddedQuestion> = {};
 

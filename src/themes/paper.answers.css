@@ -316,3 +316,40 @@
   font-style: italic;
   font-size: 1.05rem;
 }
+
+/* Markdown images, in a question or an answer. Small enough to share a card. */
+.pq-inline-media {
+  max-width: min(100%, 22rem);
+  max-height: 10rem;
+  border-radius: var(--pq-r-sm);
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+/* An answer that *is* a media file, as V2 allowed. */
+.pq-answer .pq-media {
+  margin: 0;
+  pointer-events: none;
+}
+
+.pq-answer .pq-media img,
+.pq-answer .pq-media video {
+  max-height: 5.5rem;
+  max-width: 100%;
+  border-radius: var(--pq-r-sm);
+}
+
+.pq-answer .pq-media audio {
+  max-width: 100%;
+}
+
+/* Sources, quiet, under the explanation. V2 put them in small print too. */
+.pq-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  max-width: 46ch;
+  margin: 0.55rem auto 0;
+  color: var(--pq-muted);
+  font-size: 0.82rem;
+}

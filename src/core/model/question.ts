@@ -66,6 +66,10 @@ export interface QuestionModel {
   readonly alsoAccept: readonly string[];
   readonly reject: readonly string[];
   readonly media: readonly MediaDescriptor[];
+  /** Fallback alt text for this question's media. */
+  readonly alt: string | null;
+  /** Text to print when a `Script` widget cannot. */
+  readonly printFallback: string | null;
   readonly categories: readonly string[];
   readonly authors: readonly string[];
   readonly comments: readonly QuestionValue[];

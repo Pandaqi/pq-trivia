@@ -50,6 +50,10 @@ describe("formatter round-trip", () => {
 });
 
 describe("inline formatting", () => {
+  test("V2's single tilde is strike-through", () => {
+    expect(parseInline("~gone~").nodes[0]?.kind).toBe(InlineKind.Strike);
+  });
+
   test("bold, italic, underline, strike", () => {
     const nodes = parseInline("**bold** _italic_ __under__ ~~gone~~").nodes;
     expect(nodes.map((node) => node.kind)).toEqual([

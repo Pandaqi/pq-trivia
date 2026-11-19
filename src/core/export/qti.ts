@@ -9,6 +9,7 @@ import { inlineToPlainText, parseInline } from "../format/inline";
 import { QuestionType, type QuestionModel } from "../model/question";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import { visiblePlan } from "./visible";
 
 function escapeXml(text: string): string {
   return text
@@ -97,6 +98,7 @@ function numericItem(question: QuestionModel, index: number): string {
 }
 
 export function toQti(plan: QuizPlan, meta: QuizMeta): string {
+  plan = visiblePlan(plan);
   const items = plan.questions
     .map((question, index) => {
       if (

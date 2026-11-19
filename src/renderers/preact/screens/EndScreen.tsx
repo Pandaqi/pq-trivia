@@ -6,6 +6,8 @@ import type { EndViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
+import { useT } from "../i18n";
+import { showsAction } from "../toolbar";
 
 function allowed(buttons: readonly string[], id: string): boolean {
   return buttons.length === 0 || buttons.includes(id);
@@ -18,15 +20,19 @@ export function EndScreen({
   readonly quiz: Quiz;
   readonly screen: EndViewModel;
 }): JSX.Element {
+  const t = useT();
   return (
     <main class="pq-screen pq-screen-end">
       <header class="pq-header">
-        <p class="pq-kicker">That's all</p>
+        <p class="pq-kicker">{t("thatIsAll")}</p>
         <h1 class="pq-title" data-pq-heading tabIndex={-1}>
-          {screen.title}
+          {screen.title || t("untitled")}
         </h1>
         <p class="pq-description">
-          You answered {screen.answered} of {screen.questionCount} questions.
+          {t("answeredOf", {
+            answered: screen.answered,
+            total: screen.questionCount,
+          })}
         </p>
         {screen.comments.length === 0 ? null : (
           <div class="pq-intro">
@@ -51,26 +57,30 @@ export function EndScreen({
         <span style={`width: ${screen.progress.percent}%`} />
       </div>
 
-      <footer class="pq-toolbar">
-        <Actions quiz={quiz} />
-        <button type="button" onClick={() => quiz.prev()}>
-          Back to the last question
-        </button>
-        {allowed(screen.buttons, "restart") ? (
-          <button type="button" onClick={() => quiz.restart()}>
-            Play again
-          </button>
-        ) : null}
-        {allowed(screen.buttons, "grade") ? (
-          <button
-            type="button"
-            class="pq-primary"
-            onClick={() => quiz.showResults()}
-          >
-            See results
-          </button>
-        ) : null}
-      </footer>
+      {quiz.config.disableUI === true ? null : (
+        <footer class="pq-toolbar">
+          <Actions quiz={quiz} />
+          {showsAction(quiz, "prev") ? (
+            <button type="button" onClick={() => quiz.prev()}>
+              {t("backToQuestion")}
+            </button>
+          ) : null}
+          {allowed(screen.buttons, "restart") ? (
+            <button type="button" onClick={() => quiz.restart()}>
+              {t("playAgain")}
+            </button>
+          ) : null}
+          {allowed(screen.buttons, "grade") ? (
+            <button
+              type="button"
+              class="pq-primary"
+              onClick={() => quiz.showResults()}
+            >
+              {t("seeResults")}
+            </button>
+          ) : null}
+        </footer>
+      )}
     </main>
   );
 }

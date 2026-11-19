@@ -17,6 +17,39 @@ Question => Seven
 Question => Eight
 `;
 
+describe("V2 defaults on the plan", () => {
+  test("defaultTimer fills in questions without a Timer", () => {
+    const model = quiz("Question => One\nQuestion => Two\nTimer => 10");
+    const plan = planQuiz(model, { defaultTimerMs: 30_000 });
+    expect(plan.questions.map((question) => question.timerMs)).toEqual([
+      30_000,
+      10_000,
+    ]);
+  });
+
+  test("disableTextFormatting turns formatting off everywhere", () => {
+    const plan = planQuiz(quiz("Question => **Bold**"), {
+      disableTextFormatting: true,
+    });
+    expect(plan.questions[0]?.formatText).toBe(false);
+  });
+
+  test("a secret round can ask its own theme", () => {
+    const model = quiz(
+      "# Instruments\nSecret => Instruments\nQuestion => One\nQuestion => Two",
+    );
+    const plan = planQuiz(model, {
+      addSecretThemeQuestions: true,
+      secretQuestionText: "What was the secret theme of this round?",
+    });
+    expect(plan.questions).toHaveLength(3);
+    const last = plan.questions[2];
+    expect(last?.text[0]?.text).toBe("What was the secret theme of this round?");
+    expect(last?.correct[0]?.text).toBe("Instruments");
+    expect(last?.round).toBe(plan.rounds[0]?.id ?? "missing");
+  });
+});
+
 describe("plan", () => {
   test("author order is the default", () => {
     const model = quiz(eight);

@@ -66,6 +66,10 @@ export function inlineToHtml(nodes: readonly InlineNode[]): string {
           return isSafeHref(node.href)
             ? `<a href="${escapeHtml(node.href)}" rel="noopener noreferrer">${inlineToHtml(node.children)}</a>`
             : inlineToHtml(node.children);
+        case InlineKind.Image:
+          return isSafeHref(node.src)
+            ? `<img class="inline-media" src="${escapeHtml(node.src)}" alt="${escapeHtml(node.alt)}" loading="lazy" />`
+            : escapeHtml(node.alt);
         case InlineKind.Abbr:
           return `<abbr title="${escapeHtml(node.title)}">${inlineToHtml(node.children)}</abbr>`;
         case InlineKind.Span: {

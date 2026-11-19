@@ -1,0 +1,34 @@
+Title => Friday Night
+Author => Pandaqi
+Seed => friday
+Description => One file, a handful of questions, a whole evening.
+
+## What do you think about this trivia framework?
+Media => themes/forest/bg-dots.svg { alt="A dotted paper pattern" }
+### Answers
+Amazing
+Wonderful
+Incredible
+Groundbreaking
+Correct => Groundbreaking
+Score => 2
+Author => Pandaqi
+Explanation => Thank you. It is **one file** and it works offline.
+
+## Which band wrote "Bohemian Rhapsody"?
+Answers => Queen
+
+# Round two
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0.5
+
+Question => Put these in order, oldest first.
+Type => Sort
+### Answers
+The wheel
+The printing press
+The internet
+Correct => The wheel | The printing press | The internet

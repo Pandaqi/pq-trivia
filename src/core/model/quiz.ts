@@ -58,6 +58,7 @@ export interface BuildOptions {
   readonly strictness?: Strictness;
   readonly defaultScore?: number;
   readonly defaultLanguage?: string | null;
+  readonly forbidInlineLists?: boolean;
 }
 
 const HEADER_KNOWN: ReadonlySet<string> = new Set([
@@ -153,6 +154,9 @@ export function parseQuiz(
     symbols,
     ...(options.strictness !== undefined
       ? { strictness: options.strictness }
+      : {}),
+    ...(options.forbidInlineLists === true
+      ? { forbidInlineLists: true }
       : {}),
   });
   return {

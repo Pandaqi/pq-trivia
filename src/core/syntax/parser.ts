@@ -36,6 +36,8 @@ export interface ParseOptions {
   readonly file?: string;
   readonly symbols?: Partial<Symbols>;
   readonly strictness?: Strictness;
+  /** V2's `forbidInlineLists`: keep `|` in the value. */
+  readonly forbidInlineLists?: boolean;
 }
 
 export interface ParseResult {
@@ -65,8 +67,9 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
   const state: {
     current: MutableAttribute[] | null;
     blockList: MutableAttribute | null;
+    group: MutableAttribute | null;
     lastAttribute: MutableAttribute | null;
-  } = { current: null, blockList: null, lastAttribute: null };
+  } = { current: null, blockList: null, group: null, lastAttribute: null };
 
   const at = (line: number, column: number): SourceLocation => ({
     file,
@@ -79,6 +82,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
     blocks.push(block);
     state.current = block;
     state.blockList = null;
+    state.group = null;
     state.lastAttribute = null;
     return block;
   };
@@ -106,6 +110,53 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
       continue;
     }
     if (trimmed.startsWith(symbols.comment)) {
+      continue;
+    }
+
+    // `### Answers` starts a block where every line is one value for the key.
+    // Checked before `##`, which would otherwise read it as a question.
+    const groupHeading = symbols.question + symbols.section;
+    if (trimmed.startsWith(groupHeading)) {
+      const name = trimmed.slice(groupHeading.length).trim();
+      const column = raw.indexOf(trimmed) + 1;
+      const location = at(line.number, column);
+      if (name.length === 0) {
+        diagnostics.push(
+          syntaxError(
+            DiagnosticCodes.MissingQuestion,
+            "A block heading has no key.",
+            {
+              location,
+              suggestion: "Write `### Answers`, then one value per line.",
+            },
+          ),
+        );
+        continue;
+      }
+      const spec = findAttribute(name);
+      const headerKey =
+        state.current === null ? findHeaderKey(name) : undefined;
+      if (!spec && headerKey === undefined) {
+        const suggestion = nearestAttributeName(name);
+        diagnostics.push(
+          syntaxWarning(
+            DiagnosticCodes.UnknownAttribute,
+            `Unknown attribute "${name}".`,
+            suggestion === undefined
+              ? { location }
+              : { location, suggestion: `Did you mean ${suggestion}?` },
+          ),
+        );
+      }
+      const attribute = makeAttribute(
+        headerKey ?? spec?.key ?? name.toLowerCase(),
+        name,
+        [],
+        location,
+      );
+      pushAttribute(attribute);
+      state.group = attribute;
+      state.blockList = null;
       continue;
     }
 
@@ -174,6 +225,11 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
 
     const pair = splitPair(trimmed, symbols.pairing);
     if (!pair) {
+      // Inside a `### Key` block every line is a value, verbatim.
+      if (state.group !== null) {
+        state.group.values.push(trimmed);
+        continue;
+      }
       const target = state.blockList ?? state.lastAttribute;
       if (target !== null && state.blockList !== null) {
         target.values.push(trimmed);
@@ -193,6 +249,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
       continue;
     }
 
+    state.group = null;
     const [rawKeyRaw, rawValue] = pair;
     const rawKey = rawKeyRaw.trim();
     const column = Math.max(raw.indexOf(rawKey), 0) + 1;
@@ -221,7 +278,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
 
     if (value.length > 0) {
       const isList = spec !== undefined && isListAttribute(spec.key);
-      if (isList && !value.startsWith("$")) {
+      if (isList && options.forbidInlineLists !== true && !value.startsWith("$")) {
         for (const part of splitUnescaped(value, symbols.inlineList)) {
           const item = part.trim();
           if (item.length > 0) {
@@ -289,6 +346,16 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
       continue;
     }
     state.blockList = attribute;
+  }
+
+  if (state.group !== null && state.group.values.length === 0) {
+    diagnostics.push(
+      syntaxError(
+        DiagnosticCodes.EmptyList,
+        `"${state.group.rawKey}" has an empty block.`,
+        { location: state.group.location },
+      ),
+    );
   }
 
   if (state.blockList !== null && state.blockList.values.length === 0) {

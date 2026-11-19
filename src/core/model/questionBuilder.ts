@@ -291,6 +291,8 @@ export function createQuestion(
     media: attributeValues(attributes, "Media").map((raw) =>
       parseMediaDescriptor(pickValue(raw, symbols).text),
     ),
+    alt: firstAttributeValue(attributes, "Alt") ?? null,
+    printFallback: firstAttributeValue(attributes, "PrintFallback") ?? null,
     categories: attributeValues(attributes, "Category"),
     authors: attributeValues(attributes, "Author"),
     comments: attributeValues(attributes, "Comment").map((raw) =>

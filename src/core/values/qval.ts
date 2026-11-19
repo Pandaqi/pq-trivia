@@ -36,7 +36,12 @@ export function parseQuestionValue(
   if (first.length > 0 && first === symbols.questionMask) {
     text = text.slice(1).trim();
     mask = ValueMask.Question;
-  } else if (first.length > 0 && first === symbols.answerMask) {
+  } else if (
+    first.length > 0 &&
+    first === symbols.answerMask &&
+    // `![alt](src)` is a Markdown image, not an answer-only mask.
+    !text.startsWith(`${symbols.answerMask}[`)
+  ) {
     text = text.slice(1).trim();
     mask = ValueMask.Answer;
   } else if (first.length > 0 && first === symbols.keepAsIs) {

@@ -35,15 +35,19 @@ export enum RevealMode {
 export interface ResponseIssue {
   readonly questionId: string;
   readonly field: string;
+  /** English fallback for hosts that do not translate. */
   readonly message: string;
+  /** UI dictionary key. The player prefers this. */
+  readonly key: string;
 }
 
 function issue(
   question: QuestionModel,
   field: string,
   message: string,
+  key = "needAnswer",
 ): ResponseIssue {
-  return { questionId: question.id, field, message };
+  return { questionId: question.id, field, message, key };
 }
 
 function isComplete(question: QuestionModel, response: Response): boolean {
@@ -84,7 +88,7 @@ export function responseIssues(
   const empty = isEmptyResponse(response);
 
   if (empty) {
-    issues.push(issue(question, "answer", messageFor(question)));
+    issues.push(issue(question, "answer", messageFor(question)[0], messageFor(question)[1]));
     if (policy === InteractivePolicy.Strict) {
       issues.push(...completenessIssues(question, response));
     }
@@ -97,24 +101,24 @@ export function responseIssues(
   return dedupe(issues);
 }
 
-function messageFor(question: QuestionModel): string {
+function messageFor(question: QuestionModel): readonly [string, string] {
   switch (question.type) {
     case QuestionType.Choice:
-      return "Choose at least one answer.";
+      return ["Choose at least one answer.", "needChoice"];
     case QuestionType.Range:
-      return "Enter a number.";
+      return ["Enter a number.", "needNumber"];
     case QuestionType.List:
-      return "Give at least one answer.";
+      return ["Give at least one answer.", "needList"];
     case QuestionType.Sort:
-      return "Put the answers in order.";
+      return ["Put the answers in order.", "needSort"];
     case QuestionType.Match:
-      return "Connect the pairs.";
+      return ["Connect the pairs.", "needMatch"];
     case QuestionType.Cloze:
-      return "Fill in the blanks.";
+      return ["Fill in the blanks.", "needCloze"];
     case QuestionType.Custom:
-      return "Complete the widget.";
+      return ["Complete the widget.", "needWidget"];
     default:
-      return "Type an answer.";
+      return ["Type an answer.", "needText"];
   }
 }
 
@@ -130,7 +134,12 @@ function completenessIssues(
       blanks.forEach((blank, index) => {
         if (blank.trim().length === 0) {
           issues.push(
-            issue(question, `blank-${index}`, `Fill in blank ${index + 1}.`),
+            issue(
+              question,
+              `blank-${index}`,
+              `Fill in blank ${index + 1}.`,
+              "needBlank",
+            ),
           );
         }
       });
@@ -139,7 +148,9 @@ function completenessIssues(
     case QuestionType.Sort: {
       const order = response.kind === ResponseKind.Sort ? response.order : [];
       if (order.length !== answerRefs(question).length) {
-        issues.push(issue(question, "order", "Use every answer exactly once."));
+        issues.push(
+          issue(question, "order", "Use every answer exactly once.", "needAllOnce"),
+        );
       }
       break;
     }
@@ -147,7 +158,9 @@ function completenessIssues(
       const pairs = response.kind === ResponseKind.Match ? response.pairs : [];
       const expected = question.answers.length;
       if (pairs.length !== expected) {
-        issues.push(issue(question, "pairs", `Connect all ${expected} pairs.`));
+        issues.push(
+          issue(question, "pairs", `Connect all ${expected} pairs.`, "needPairs"),
+        );
       }
       break;
     }
@@ -155,7 +168,9 @@ function completenessIssues(
       const value =
         response.kind === ResponseKind.Range ? response.value : null;
       if (value === null) {
-        issues.push(issue(question, "number", "Enter a number."));
+        issues.push(
+          issue(question, "number", "Enter a number.", "needNumber"),
+        );
       }
       break;
     }

@@ -2,6 +2,7 @@
 
 import type { JSX } from "preact";
 import type { Diagnostic } from "../../../core/syntax/diagnostics";
+import { useT } from "../i18n";
 
 export function MessageScreen({
   title,
@@ -10,6 +11,7 @@ export function MessageScreen({
   readonly title: string;
   readonly messages: readonly Diagnostic[];
 }): JSX.Element {
+  const t = useT();
   return (
     <main class="pq-screen pq-screen-message">
       <header class="pq-header">
@@ -18,7 +20,7 @@ export function MessageScreen({
         </h1>
       </header>
       {messages.length === 0 ? (
-        <p class="pq-description">Pick a quiz file to begin.</p>
+        <p class="pq-description">{t("pickFile")}</p>
       ) : (
         <ul class="pq-problems">
           {messages.slice(0, 8).map((message, index) => (

@@ -3,6 +3,7 @@
 import type { JSX } from "preact";
 import { InlineKind, type InlineNode } from "../../../core/format/inline";
 import { CodeBlock } from "./CodeBlock";
+import { useT } from "../i18n";
 
 const CONTAINERS: Readonly<Record<string, string>> = {
   [InlineKind.Strong]: "strong",
@@ -36,6 +37,7 @@ function NodeView({
 }: {
   readonly node: InlineNode;
 }): JSX.Element | string {
+  const t = useT();
   switch (node.kind) {
     case InlineKind.Text:
       return node.text;
@@ -45,12 +47,22 @@ function NodeView({
       return <CodeBlock code={node.code} language={node.language} />;
     case InlineKind.Blank:
       return (
-        <span class="pq-blank" role="img" aria-label="blank">
+        <span class="pq-blank" role="img" aria-label={t("blank", { number: 1 })}>
           ____
         </span>
       );
     case InlineKind.Break:
       return <br />;
+    case InlineKind.Image:
+      return (
+        <img
+          class="pq-inline-media"
+          src={node.src}
+          alt={node.alt}
+          loading="lazy"
+          decoding="async"
+        />
+      );
     case InlineKind.Link:
       return (
         <a href={node.href} rel="noopener noreferrer">

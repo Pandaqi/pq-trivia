@@ -15,6 +15,7 @@ import type { SessionState } from "../../../core/session/session";
 import { toMediaViewModel } from "../../../core/session/viewModel";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
+import { useT } from "../i18n";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -35,6 +36,7 @@ export function PrintQuestion({
   readonly showAnswers: boolean;
   readonly face?: "front" | "back" | null;
 }): JSX.Element {
+  const t = useT();
   const [title = "", ...body] = question.text.map((value) => value.text);
   const correctTexts = new Set(question.correct.map((value) => value.text));
   const refs = answerRefs(question);
@@ -83,15 +85,16 @@ export function PrintQuestion({
   return (
     <div class="pq-print-question-body">
       <p class="pq-meta-strip">
-        <span class="pq-meta-round">{roundName ?? "Quiz"}</span>
+        <span class="pq-meta-round">{roundName ?? t("quizWord")}</span>
         <span class="pq-count">
-          Question {index + 1} of {total}
+          {t("printQuestion")} {index + 1} / {total}
         </span>
         {question.categories.map((category) => (
           <span class="pq-meta-category">{category}</span>
         ))}
         <span class="pq-points">
-          {question.score} {question.score === 1 ? "point" : "points"}
+          {question.score}{" "}
+          {t(question.score === 1 ? "point_one" : "point_other")}
         </span>
       </p>
 
@@ -109,14 +112,14 @@ export function PrintQuestion({
           {isChoice && front ? answers : null}
           {typed && !reveal ? (
             <div class="pq-field">
-              <span class="pq-field-label">Answer</span>
+              <span class="pq-field-label">{t("printAnswer")}</span>
               <span class="pq-print-line" />
             </div>
           ) : null}
           {typed && reveal && question.correct.length > 0 ? (
             <p class="pq-answer-key">
               <span>
-                <strong>Answer:</strong>{" "}
+                <strong>{t("printAnswerColon")}</strong>{" "}
                 {question.correct.map((value) => value.text).join(", ")}
               </span>
               <span class="pq-answer-score" aria-hidden="true">
@@ -130,6 +133,11 @@ export function PrintQuestion({
                 <li key={ref.id}>{ref.value.text}</li>
               ))}
             </ol>
+          ) : null}
+          {question.script !== null &&
+          question.printFallback !== null &&
+          !front ? (
+            <p class="pq-body">{question.printFallback}</p>
           ) : null}
           {hints.length === 0 || front ? null : (
             <div class="pq-hints">
@@ -149,7 +157,10 @@ export function PrintQuestion({
             {hasMedia ? (
               <div class="pq-media-list">
                 {question.media.map((item) => (
-                  <Media key={item.path} item={toMediaViewModel(item)} />
+                  <Media
+                    key={item.path}
+                    item={toMediaViewModel(item, question.alt)}
+                  />
                 ))}
               </div>
             ) : null}

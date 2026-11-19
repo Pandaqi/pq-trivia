@@ -12,17 +12,7 @@ import {
 } from "../syntax/diagnostics";
 import { InlineKind, type EmphasisKind, type InlineNode } from "./inlineAst";
 
-const ALLOWED_LINK_PROTOCOLS = ["http:", "https:", "mailto:", "tel:"];
-const SAFE_CLASS = /^[a-zA-Z][\w-]*$/;
-const ALLOWED_STYLE_PROPERTIES: ReadonlySet<string> = new Set([
-  "color",
-  "background-color",
-  "font-size",
-  "font-weight",
-  "font-style",
-  "text-decoration",
-  "text-align",
-]);
+import { SAFE_CLASS, isSafeHref, sanitizeStyle } from "./safe";
 
 const EMPHASIS_MARKERS: ReadonlyArray<readonly [string, EmphasisKind]> = [
   ["**", InlineKind.Strong],
@@ -45,58 +35,6 @@ const STYLE_TAGS: ReadonlySet<string> = new Set([
   "color",
   "size",
 ]);
-
-export function isSafeHref(href: string): boolean {
-  const value = href.trim();
-  if (value.startsWith("#")) {
-    return true;
-  }
-  const lowered = value.toLowerCase();
-  if (
-    lowered.startsWith("javascript:") ||
-    lowered.startsWith("data:") ||
-    lowered.startsWith("vbscript:")
-  ) {
-    return false;
-  }
-  const colon = lowered.indexOf(":");
-  if (colon < 0) {
-    return true;
-  }
-  return ALLOWED_LINK_PROTOCOLS.includes(lowered.slice(0, colon + 1));
-}
-
-export function sanitizeStyle(raw: string): {
-  style: string;
-  dropped: string[];
-} {
-  const kept: string[] = [];
-  const dropped: string[] = [];
-  for (const declaration of raw.split(";")) {
-    const body = declaration.trim();
-    if (body.length === 0) {
-      continue;
-    }
-    const colon = body.indexOf(":");
-    if (colon < 0) {
-      dropped.push(body);
-      continue;
-    }
-    const property = body.slice(0, colon).trim().toLowerCase();
-    const value = body.slice(colon + 1).trim();
-    const unsafe = /url\(|expression\(|@import/i.test(value);
-    if (
-      !ALLOWED_STYLE_PROPERTIES.has(property) ||
-      unsafe ||
-      value.length === 0
-    ) {
-      dropped.push(body);
-      continue;
-    }
-    kept.push(`${property}: ${value}`);
-  }
-  return { style: kept.join("; "), dropped };
-}
 
 function unquote(raw: string): string {
   const value = raw.trim();
@@ -210,6 +148,14 @@ class InlineParser {
       return true;
     }
 
+    if (char === "!" && this.#peek(1) === "[") {
+      const image = this.#tryImage();
+      if (image !== null) {
+        nodes.push(image);
+        return true;
+      }
+    }
+
     if (char === "[") {
       const bracket = this.#tryBracket();
       if (bracket !== null) {
@@ -315,16 +261,29 @@ class InlineParser {
       this.#peek() === "_" &&
       this.#peek(1) !== "[" &&
       this.#peek(1) !== "_";
-    if (!isSingleUnderscore) {
+    if (isSingleUnderscore) {
+      const close = this.#find("_", 1);
+      if (close < 0) {
+        return null;
+      }
+      const inner = this.#text.slice(this.#index + 1, close);
+      this.#index = close + 1;
+      return { kind: InlineKind.Em, children: parseOnce(inner).nodes };
+    }
+
+    // V2 wrote strike-through with one tilde. Keep both spellings.
+    const isSingleTilde =
+      stop !== "~" && this.#peek() === "~" && this.#peek(1) !== "~";
+    if (!isSingleTilde) {
       return null;
     }
-    const close = this.#find("_", 1);
+    const close = this.#find("~", 2);
     if (close < 0) {
       return null;
     }
     const inner = this.#text.slice(this.#index + 1, close);
     this.#index = close + 1;
-    return { kind: InlineKind.Em, children: parseOnce(inner).nodes };
+    return { kind: InlineKind.Strike, children: parseOnce(inner).nodes };
   }
 
   #findClosingParen(openIndex: number): number {
@@ -357,6 +316,39 @@ class InlineParser {
       cursor += 1;
     }
     return -1;
+  }
+
+  /** `![alt](path)`. Local paths are fine; dangerous protocols are not. */
+  #tryImage(): InlineNode | null {
+    const start = this.#index;
+    const close = this.#text.indexOf("]", start + 2);
+    if (close < 0 || this.#text.charAt(close + 1) !== "(") {
+      return null;
+    }
+    const sourceEnd = this.#findClosingParen(close + 1);
+    if (sourceEnd < 0) {
+      return null;
+    }
+    const src = this.#text.slice(close + 2, sourceEnd).trim();
+    if (src.length === 0) {
+      return null;
+    }
+    this.#index = sourceEnd + 1;
+    if (!isSafeHref(src)) {
+      this.#diagnostics.push(
+        syntaxWarning(
+          DiagnosticCodes.UnsafeLink,
+          `Image source "${src}" is not allowed.`,
+          { suggestion: "Use a local file, http, https or a #fragment." },
+        ),
+      );
+      return null;
+    }
+    return {
+      kind: InlineKind.Image,
+      src,
+      alt: this.#text.slice(start + 2, close),
+    };
   }
 
   #tryBracket(): InlineNode | null {

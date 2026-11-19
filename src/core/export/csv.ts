@@ -5,6 +5,7 @@ import type { GradeReport } from "../grading/report";
 import type { QuestionModel } from "../model/question";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import { visiblePlan } from "./visible";
 
 export interface CsvOptions {
   readonly delimiter?: string;
@@ -101,6 +102,7 @@ export function questionsCsv(
   meta: QuizMeta,
   options: CsvOptions = {},
 ): string {
+  plan = visiblePlan(plan);
   const delimiter = options.delimiter ?? ",";
   const rows: string[] = [
     row(

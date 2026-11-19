@@ -75,6 +75,10 @@ export function screenFor(
     roundSecret: round?.secret ?? null,
     roundNumber: roundIndex < 0 ? null : roundIndex + 1,
     isRoundStart: round !== null && previous?.round !== question.round,
+    authorsDiverse:
+      new Set(state.plan.questions.flatMap((item) => item.authors)).size > 1,
+    categoriesDiverse:
+      new Set(state.plan.questions.flatMap((item) => item.categories)).size > 1,
   });
 }
 

@@ -16,14 +16,16 @@ const OUT_DIR = join(ROOT, "dist", "v3");
  * The original core budget was 15 KB. Grading, policies, timers, flow control
  * and saved attempts live in core because the CLI and the player both need
  * them. Measured split: parse + model + plan 11 KB, plus session and grading
- * 17 KB, full core 23 KB. The player carries Preact, the unlock screen, Web
- * Crypto, timer sounds and the handout exporter, hence 48.
+ * 17 KB, full core 23 KB. V2's config doors (default timer, secret questions,
+ * a global formatting switch) add a little, hence 25. The player carries
+ * Preact, the unlock screen, Web Crypto, timer sounds and the handout exporter,
+ * hence 48. Theme folders add the picker and the runtime, hence 52.
  */
 const BUDGETS: Readonly<Record<string, number>> = {
   "core.js": 24,
   // Core plus `createQuiz`. Not in the spec budget list, but worth watching.
   "headless.js": 27,
-  "player.js": 48,
+  "player.js": 52,
   "pq-trivia.js": 55,
   "pq-trivia.min.js": 60,
   "pq-trivia.core.min.js": 26,

@@ -39,6 +39,7 @@ export type QuizEventMap = {
   "timer:expire": { readonly id: string };
   "grade:ready": { readonly report: GradeReport };
   "mode:change": { readonly mode: PlayMode };
+  "language:change": { readonly language: string };
   diagnostic: { readonly diagnostic: Diagnostic };
   destroy: Record<string, never>;
 };
@@ -62,9 +63,96 @@ export type ParseHook = (
   options: BuildOptions,
 ) => ParsedQuiz | Promise<ParsedQuiz>;
 
+export interface QuizSettingOption {
+  readonly id: string;
+  readonly label: string;
+  readonly type: "button" | "toggle" | "text";
+  readonly value?: string | boolean;
+  readonly placeholder?: string;
+  readonly onChange?: (quiz: Quiz, value: string | boolean) => void;
+}
+
 export interface QuizConfig {
   readonly seed?: string;
+  /** The language on screen now. `setLanguage` changes it. */
   readonly language?: string | null;
+  /** V2's `languageDefault`: the root language and the one shown first. */
+  readonly languageDefault?: string;
+  /** V2's `languages`: a shortlist, or empty for whatever the files say. */
+  readonly languages?: readonly string[];
+  /** V2's `translations`: extra or replaced UI strings per language. */
+  readonly translations?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** V2's `syncPropertiesWithTranslations`. */
+  readonly syncPropertiesWithTranslations?: boolean;
+  /** V2's `include`: property/value pairs a question must match. */
+  readonly include?: Readonly<Record<string, string | readonly string[]>>;
+  /** V2's `exclude`: property/value pairs that remove a question. */
+  readonly exclude?: Readonly<Record<string, string | readonly string[]>>;
+  /** V2's `groupBy`: keep questions of one property value together. */
+  readonly groupBy?: string;
+  /** V2's `questionTypesAllowed`. */
+  readonly questionTypesAllowed?: readonly string[];
+  readonly minAnswers?: number;
+  readonly maxAnswers?: number;
+  /** V2's `excludeSections`: ignore `#` rounds and play one list. */
+  readonly excludeSections?: boolean;
+  /** V2's `filterSections`: round names to hide. */
+  readonly filterSections?: readonly string[];
+  readonly minScore?: number;
+  readonly maxScore?: number;
+  readonly hideScore?: boolean;
+  readonly hideScoreOnAnswers?: boolean;
+  readonly defaultAuthor?: string;
+  readonly possibleAuthors?: readonly string[];
+  readonly hideAuthor?: boolean;
+  readonly defaultCategory?: string;
+  readonly possibleCategories?: readonly string[];
+  readonly hideCategory?: boolean;
+  readonly showPropertiesWithoutDiversity?: boolean;
+  readonly dateCreation?: number;
+  readonly addMissingSectionScreens?: boolean;
+  readonly hideSecretThemeMessage?: boolean;
+  readonly keepSectionOrder?: boolean;
+  readonly keepQuestionOrder?: boolean;
+  readonly keepAnswerOrder?: boolean;
+  readonly randomizeMedia?: boolean;
+  readonly forbidInlineLists?: boolean;
+  /** V2's `symbols`: swap the syntax characters. */
+  readonly symbols?: Readonly<Record<string, string>>;
+  readonly hideErrors?: boolean;
+  readonly hideDefaultStyles?: boolean;
+  readonly hideDefaultSettings?: boolean;
+  readonly themeDisabled?: boolean;
+  readonly enableSafety?: boolean;
+  readonly enableMouse?: boolean;
+  readonly disableKeys?: boolean;
+  readonly disableUI?: boolean;
+  readonly disableTouch?: boolean;
+  readonly hotkeys?: Readonly<Record<string, string | readonly string[]>>;
+  readonly hotkeysForbidden?: readonly string[];
+  readonly toolbar?: readonly string[];
+  /** V2's `settings`: controls the host adds to the start screen. */
+  readonly settings?: readonly QuizSettingOption[];
+  readonly hideTimerGlobal?: boolean;
+  readonly hideTimerQuestion?: boolean;
+  readonly allowTimerOnSections?: boolean;
+  readonly timerStrategy?: "expire" | "skip" | "continue";
+  readonly mediaAutoPlay?: boolean;
+  readonly loadExternalMediaAsIframe?: boolean;
+  readonly linkPrefixes?: readonly string[];
+  readonly mediaFormats?: readonly string[];
+  readonly filenamePattern?: string;
+  readonly filenames?: readonly string[];
+  readonly fileExtensions?: readonly string[];
+  readonly subFolderQuestions?: string;
+  readonly subFolderMedia?: string;
+  readonly subFolderTheme?: string;
+  readonly url?: string;
+  readonly title?: string;
+  readonly id?: string;
+  /** Shown on the start screen when set. */
+  readonly bannerImage?: string;
+  readonly icon?: string;
   readonly shuffleQuestions?: boolean;
   readonly shuffleRounds?: boolean;
   readonly defaultScore?: number;
@@ -78,10 +166,20 @@ export interface QuizConfig {
   readonly allowScripts?: boolean;
   /** Timer beeps. Off by default; a host opts in. */
   readonly timerSound?: boolean;
+  /** Seconds for questions without their own `Timer`. V2's `defaultTimer`. */
+  readonly defaultTimer?: number;
+  /** V2's `disableTextFormatting`: show every value exactly as written. */
+  readonly disableTextFormatting?: boolean;
+  /** V2's `addSecretThemeQuestions`: ask the secret at the end of its round. */
+  readonly addSecretThemeQuestions?: boolean;
   /** Opens encrypted files. Without it, a locked file stays locked. */
   readonly answersKey?: AnswerKey;
   /** Colour fenced code. Off by default; plain monospace otherwise. */
   readonly codeHighlight?: boolean;
+  /** A theme folder or stylesheet, like V2's `theme`. Page-relative. */
+  readonly theme?: string;
+  /** Show "Load theme folder" on the start screen. Off by default. */
+  readonly themeUpload?: boolean;
 }
 
 export type OrderOptions = Partial<
@@ -108,6 +206,12 @@ export interface Quiz {
   goTo(index: number): NavResult;
   restart(options?: { readonly keepResponses?: boolean }): void;
   setOrder(order: OrderOptions): void;
+  /** UI string for the current language. */
+  t(key: string, params?: Readonly<Record<string, string | number>>): string;
+  /** Languages actually loaded, sorted. Empty on a single-language quiz. */
+  languages(): readonly string[];
+  /** Switch the whole quiz, answers and screen, to another loaded language. */
+  setLanguage(language: string): boolean;
   /** Change one setting without rebuilding the quiz. Content options replan. */
   configure(partial: Partial<QuizConfig>): void;
   setMode(mode: PlayMode): boolean;

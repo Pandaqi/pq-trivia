@@ -19,6 +19,21 @@ export {
 export { PrintSheet } from "../renderers/preact/print/PrintSheet";
 export { PlayMode, SessionStatus } from "../core/session/session";
 export { browserAnswerKey, encryptQuiz } from "../platform/answerKey";
+export {
+  loadTheme,
+  themeFromFiles,
+  setTheme,
+  getTheme,
+  subscribeTheme,
+  resolveThemeFolder,
+  type ThemeRuntime,
+} from "../platform/browser/theme";
+export {
+  parseThemeSettings,
+  backgroundFor,
+  type ThemeSettings,
+  type ThemeFont,
+} from "../core/quiz/theme";
 export { downloadText, fileSlug } from "../platform/browser/download";
 export { QuizApp } from "../renderers/preact/QuizApp";
 export { defineQuizElement, QuizElement } from "../renderers/dom/quizElement";

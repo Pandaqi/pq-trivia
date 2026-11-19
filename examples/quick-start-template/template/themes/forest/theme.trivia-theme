@@ -1,0 +1,19 @@
+Label => Forest
+Stylesheet => style.css
+BackgroundAlpha => 0.55
+BoldHeadings => true
+
+Font => heading | Lora | regular | Lora-Regular.woff2
+Font => heading | Lora | bold | Lora-Bold.woff2
+Font => body | Lora | regular | Lora-Regular.woff2
+Font => body | Lora | italic | Lora-Italic.woff2
+
+--pq-accent => #2f6b4f
+--pq-paper => #eaf0e2
+--pq-paper-deep => #dbe6cf
+--pq-slide => #f7faf2
+--pq-line => #c3d2b4
+
+### Background
+bg-dots.svg
+bg-waves.svg

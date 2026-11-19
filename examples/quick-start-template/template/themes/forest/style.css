@@ -1,0 +1,22 @@
+/*
+ * Forest. A theme is a folder: this stylesheet, a theme.trivia-theme file with
+ * settings, fonts, and background images. No JavaScript.
+ */
+
+.pq-quiz {
+  --pq-r-organic: 0.35rem;
+}
+
+.pq-round-banner {
+  background: color-mix(in srgb, var(--pq-accent) 14%, var(--pq-slide));
+}
+
+.pq-answer {
+  border-radius: 0.3rem;
+  border-left-width: 5px;
+  border-left-color: var(--pq-accent);
+}
+
+.pq-answer[data-pq-selected="true"] {
+  border-left-color: var(--pq-honey);
+}

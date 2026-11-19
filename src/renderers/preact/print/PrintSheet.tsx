@@ -16,12 +16,9 @@ import { PrintForm, type FormRound } from "./PrintForm";
 import { PrintGrade } from "./PrintGrade";
 import { PrintQuestion } from "./PrintQuestion";
 import type { PrintOptions } from "./printTypes";
+import { useT } from "../i18n";
 
 export type { PrintOptions, PrintProblem, PrintVariant } from "./printTypes";
-
-function label(count: number, singular: string): string {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
-}
 
 function pointsOf(questions: readonly QuestionModel[]): number {
   return questions.reduce((total, question) => total + question.score, 0);
@@ -58,25 +55,38 @@ function Cover({
   readonly questions: readonly QuestionModel[];
   readonly rounds: number;
 }): JSX.Element {
+  const t = useT();
   const meta = quiz.meta;
-  const title = meta !== null && meta.title.length > 0 ? meta.title : "Quiz";
+  const title =
+    meta !== null && meta.title.length > 0 ? meta.title : t("quizWord");
   const authors = meta?.authors ?? [];
   const seed = quiz.config.seed ?? "";
   return (
     <Page className="pq-print-cover">
-      <p class="pq-cover-kicker">PQ-Trivia</p>
+      <p class="pq-cover-kicker">{t("startKicker")}</p>
       <h1 class="pq-cover-title">{title}</h1>
       {meta?.description === null || meta?.description === undefined ? null : (
         <p class="pq-cover-description">{meta.description}</p>
       )}
       {authors.length === 0 ? null : (
-        <p class="pq-cover-byline">by {authors.join(", ")}</p>
+        <p class="pq-cover-byline">
+          {t("by", { author: authors.join(", ") })}
+        </p>
       )}
       <p class="pq-cover-banner">
-        {label(questions.length, "question")} ·{" "}
-        {label(pointsOf(questions), "point")} · {label(rounds, "round")}
+        {t("printStats", {
+          questions: `${questions.length} ${t(
+            questions.length === 1 ? "question_one" : "question_other",
+          )}`,
+          points: `${pointsOf(questions)} ${t(
+            pointsOf(questions) === 1 ? "point_one" : "point_other",
+          )}`,
+          rounds: `${rounds} ${t(rounds === 1 ? "round_one" : "round_other")}`,
+        })}
       </p>
-      {seed.length === 0 ? null : <p class="pq-cover-seed">Seed: {seed}</p>}
+      {seed.length === 0 ? null : (
+        <p class="pq-cover-seed">{t("printSeed", { seed })}</p>
+      )}
     </Page>
   );
 }
@@ -90,6 +100,7 @@ export function PrintSheet({
 }): JSX.Element {
   const state = quiz.state;
   const plan = state.plan;
+  const t = useT();
   const variant = options.variant ?? "auto";
   const perPage = options.perPage ?? 1;
   const flash = options.flashCards === true;
@@ -157,7 +168,7 @@ export function PrintSheet({
             questionId={item.id}
             accent={accentFor(item.round)}
           >
-            <p class="pq-card-label">Question</p>
+            <p class="pq-card-label">{t("printQuestion")}</p>
             {question(item, "front")}
           </Page>,
           <Page
@@ -166,7 +177,7 @@ export function PrintSheet({
             questionId={item.id}
             accent={accentFor(item.round)}
           >
-            <p class="pq-card-label">Answer</p>
+            <p class="pq-card-label">{t("printAnswer")}</p>
             {question(item, "back")}
           </Page>,
         ])
@@ -230,14 +241,25 @@ export function PrintSheet({
                       accent={accentFor(round.id)}
                       questionId={round.id}
                     >
-                      <p class="pq-round-number">Round</p>
+                      <p class="pq-round-number">{t("printRound")}</p>
                       <h2 class="pq-round-name">{round.name}</h2>
                       <p class="pq-round-stats">
-                        {label(items.length, "question")} ·{" "}
-                        {label(pointsOf(items), "point")}
+                        {t("printStats", {
+                          questions: `${items.length} ${t(
+                            items.length === 1
+                              ? "question_one"
+                              : "question_other",
+                          )}`,
+                          points: `${pointsOf(items)} ${t(
+                            pointsOf(items) === 1 ? "point_one" : "point_other",
+                          )}`,
+                          rounds: "",
+                        })}
                       </p>
                       {round.secret === null ? null : (
-                        <p class="pq-round-secret">Theme: {round.secret}</p>
+                        <p class="pq-round-secret">
+                          {t("theme", { theme: round.secret })}
+                        </p>
                       )}
                     </Page>
                     {items.map(page)}

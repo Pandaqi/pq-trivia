@@ -4,7 +4,7 @@
 
 [![CI](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml/badge.svg)](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6f4b98)](LICENSE)
-[![Core 24 KB gzip](https://img.shields.io/badge/core-24%20KB%20gzip-839c66)](dist/README.md)
+[![core 24 KB gzip](https://img.shields.io/badge/core-24%20KB%20gzip-839c66)](dist/README.md)
 
 A quiz is a text file. Write questions, open a page, play.
 
@@ -13,14 +13,10 @@ build step for the person hosting the quiz night.
 
 ## Twenty-second start
 
+One bundle. One page. Double-click it.
+
 ```html
-<link rel="stylesheet" href="dist/v3/themes/paper.css" />
-<script type="module" src="dist/v3/player.js"></script>
-
-<pq-quiz src="my-quiz.trivia" seed="quiz-night"></pq-quiz>
-```
-
-```txt
+<script id="quiz-text" type="text/plain">
 Title => Friday Night
 Seed => quiz-night
 
@@ -29,9 +25,21 @@ Answers => Superman | Batman | Spider-Man
 Type => Choice
 Correct => Superman
 Explanation => Clark Kent, mild-mannered reporter.
+</script>
+<script src="pq-trivia.min.js"></script>
 ```
 
-That is a quiz. `bun run preview` serves the repo and opens the player.
+`pq-trivia.min.js` carries the player, Paper and the print sheet. No stylesheet,
+no second file.
+
+Hosting from a server? Use the element instead:
+
+```html
+<link rel="stylesheet" href="dist/v3/themes/paper.css" />
+<script type="module" src="dist/v3/player.js"></script>
+
+<pq-quiz src="my-quiz.trivia" seed="quiz-night"></pq-quiz>
+```
 
 ## What it does
 
@@ -40,7 +48,8 @@ That is a quiz. `bun run preview` serves the repo and opens the player.
 | **Play** | Interactive, graded, results, review, resume. Keyboard first. |
 | **Print** | Whole quiz, answer sheet, answer form, grade table, flash cards. |
 | **Types** | Open, choice, list, range, sort, match, cloze, sections, start/end. |
-| **Looks** | Paper theme, tokens, per-round and per-question styling, animations. |
+| **Languages** | One file per language, shared IDs or order, English/Dutch UI, live switching. |
+| **Looks** | Paper theme, theme folders, fonts, randomized backgrounds, tokens, animations. |
 | **Offline** | One folder on a USB stick. `file://` with no network. |
 | **Live** | Optional phones-in-the-room bundle. Separate. Zero weight by default. |
 | **Exports** | Embedded JSON, standalone HTML, GIFT, QTI, CSV. |
@@ -53,7 +62,7 @@ Gzipped, measured by `bun run size`:
 | File | Budget |
 | --- | --- |
 | `core.js` | 24 KB |
-| `player.js` | 48 KB |
+| `player.js` | 52 KB |
 | `pq-trivia.min.js` (IIFE) | 60 KB |
 | `multiplayer.js` | 22 KB, separate |
 | `browser.js` | 8 KB, optional extras |

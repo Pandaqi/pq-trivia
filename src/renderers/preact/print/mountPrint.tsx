@@ -8,6 +8,7 @@
 import { h, render } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
 import type { MountedQuiz } from "../mounted";
+import { UiContext } from "../i18n";
 import { fitPrintPages, type FitSummary } from "./fit";
 import { PrintSheet, type PrintOptions, type PrintProblem } from "./PrintSheet";
 
@@ -26,7 +27,10 @@ export function mountPrintSheet(
   let summary: FitSummary = { pages: 0, zoomed: 0, problems: [] };
 
   const draw = (): void => {
-    render(h(PrintSheet, { quiz, options }), target);
+    render(
+      h(UiContext.Provider, { value: quiz.t }, h(PrintSheet, { quiz, options })),
+      target,
+    );
     summary = fitPrintPages(target, options.onProblem);
   };
 

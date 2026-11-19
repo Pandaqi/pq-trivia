@@ -89,6 +89,85 @@ describe("parser", () => {
     expect(coerceDuration("banana")).toBeUndefined();
   });
 
+  test("## is still the question shorthand", () => {
+    const quiz = buildQuiz("## Who wrote it?\nAnswers => Queen\n");
+    expect(quiz.questions).toHaveLength(1);
+    expect(quiz.questions[0]?.text[0]?.text).toBe("Who wrote it?");
+    expect(quiz.questions[0]?.answers[0]?.text).toBe("Queen");
+  });
+
+  test("### Key blocks take one value per line", () => {
+    const quiz = buildQuiz(
+      [
+        "## Pick one",
+        "### Answers",
+        "Alpha",
+        "Beta with **bold** and [a link](https://example.com)",
+        "Gamma",
+        "Correct => Alpha",
+        "Type => Choice",
+        "### Media",
+        "one.png",
+        "two.mp3",
+      ].join("\n"),
+    );
+    const question = quiz.questions[0];
+    expect(question?.answers.map((answer) => answer.text)).toEqual([
+      "Alpha",
+      "Beta with **bold** and [a link](https://example.com)",
+      "Gamma",
+    ]);
+    expect(question?.media.map((item) => item.path)).toEqual([
+      "one.png",
+      "two.mp3",
+    ]);
+    expect(question?.correct[0]?.text).toBe("Alpha");
+    expect(quiz.diagnostics.filter((d) => d.severity === "error")).toHaveLength(
+      0,
+    );
+  });
+
+  test("a ### block ends at the next key or heading", () => {
+    const quiz = buildQuiz(
+      [
+        "## First question",
+        "### Answers",
+        "First",
+        "Second",
+        "Question => A later question",
+        "Answers => one | two",
+        "# Round two",
+        "Question => Another",
+      ].join("\n"),
+    );
+    expect(quiz.questions[0]?.text[0]?.text).toBe("First question");
+    expect(quiz.questions[0]?.answers.map((a) => a.text)).toEqual([
+      "First",
+      "Second",
+    ]);
+    expect(quiz.questions[1]?.text[0]?.text).toBe("A later question");
+    expect(quiz.questions[1]?.answers.map((a) => a.text)).toEqual([
+      "one",
+      "two",
+    ]);
+    expect(quiz.rounds.map((round) => round.name)).toContain("Round two");
+  });
+
+  test("lists work on one line and on their own lines", () => {
+    const inline = buildQuiz("Question => Q\nAnswers => A | B | C");
+    const lines = buildQuiz("Question => Q\nAnswers =>\nA\nB\nC");
+    expect(inline.questions[0]?.answers.map((a) => a.text)).toEqual([
+      "A",
+      "B",
+      "C",
+    ]);
+    expect(lines.questions[0]?.answers.map((a) => a.text)).toEqual([
+      "A",
+      "B",
+      "C",
+    ]);
+  });
+
   test("the formatter is idempotent", async () => {
     const text = await fixture("all-types.trivia");
     const once = formatText(text);

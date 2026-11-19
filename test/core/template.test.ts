@@ -11,16 +11,12 @@ const read = (path: string): Promise<string> =>
 
 describe("the shipped template", () => {
   test("parses as a choice question", async () => {
-    const quiz = buildQuiz(
-      await read("template/questions/some-file-with-questions.txt"),
-      {
-        file: "template/questions/some-file-with-questions.txt",
-      },
-    );
+    const file = "examples/quick-start-template/template/quiz.trivia";
+    const quiz = buildQuiz(await read(file), { file });
     expect(
       quiz.diagnostics.filter((d) => d.severity === DiagnosticSeverity.Error),
     ).toHaveLength(0);
-    expect(quiz.questions).toHaveLength(1);
+    expect(quiz.questions).toHaveLength(4);
     const question = quiz.questions[0];
     expect(question?.type).toBe(QuestionType.Choice);
     expect(question?.score).toBe(2);
@@ -28,6 +24,7 @@ describe("the shipped template", () => {
     expect(question?.correct[0]?.text).toBe("Groundbreaking");
     expect(question?.answers).toHaveLength(4);
     expect(question?.media[0]?.kind).toBe(MediaKind.Image);
+    expect(quiz.questions[3]?.type).toBe(QuestionType.Sort);
   });
 });
 

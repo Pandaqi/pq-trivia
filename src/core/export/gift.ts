@@ -9,6 +9,7 @@ import { inlineToPlainText, parseInline } from "../format/inline";
 import { QuestionType, type QuestionModel } from "../model/question";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import { visiblePlan } from "./visible";
 
 function escapeGift(text: string): string {
   return text
@@ -94,6 +95,7 @@ function body(question: QuestionModel): string {
 }
 
 export function toGift(plan: QuizPlan, meta: QuizMeta): string {
+  plan = visiblePlan(plan);
   const head =
     meta.title.length > 0
       ? `// ${meta.title}\n// Exported from PQ-Trivia\n\n`

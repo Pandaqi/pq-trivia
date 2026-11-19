@@ -9,6 +9,29 @@ The rewrite. Same Trivia Syntax, new bones.
 ### For authors
 
 - **Paper theme.** Warm cream, ink, fern. Tokens you can override.
+- **Theme folders.** A folder with `theme.trivia-theme`, a stylesheet, fonts and
+  background images. `theme="themes/forest/"`, or `Theme => forest` in the
+  header. Pick a folder from disk at quiz start with `theme-upload`.
+- **One file.** `pq-trivia.min.js` has the player, Paper and the print sheet
+  inside. Put the quiz in `<script id="quiz-text">` and open the page.
+- **`### Key` blocks.** `### Answers` with one value per line, ending at the next
+  key or heading. `##` stays the question shorthand.
+- **Languages are back.** One file per language, `Language` + shared `ID`,
+  order matching, `SyncAll`, a start-screen picker and `L` to switch mid-quiz.
+  Answers, hints and reveals survive the switch.
+- **English and Dutch interface.** Every screen, button and validation message
+  goes through one dictionary, and hosts can override any key.
+- **Answers keep their formatting.** Markdown, links, `![images](file)` and
+  media-as-answer (V2's behaviour) all render in answer lists.
+- **The rest of the V2 switches.** Filters, `groupBy`, score clamps, timer
+  strategies, `toolbar`, `hotkeys`, `forbidInlineLists`, custom settings,
+  theme colour schemes, filename probing and the media options all do what
+  their names say.
+- **V2 config doors.** `theme`, `defaultTimer`, `addSecretThemeQuestions` and
+  `disableTextFormatting` work from `createQuiz`.
+- **Orders that listen.** `AnswersOrder` and `MediaOrder` finally do something.
+- **V2 keys and marks.** Space, `<` and `>`, `a` and `m` work; `~strike~` is
+  back; `Sources` show under the question.
 - **Interactive play.** Type answers, get graded, see results, review what you
   missed, resume an unfinished attempt.
 - **Real print.** Cover, rounds, one question per page, answer sheet, answer

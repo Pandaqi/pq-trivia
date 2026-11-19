@@ -8,7 +8,7 @@ V2 still ships in `dist/v2/` and still works. Nothing here forces you to move.
   order, comments, masks.
 - `dist/v2/pq-trivia.min.js` stays downloadable.
 - Embedded JSON loads through `load({ type: "inline", data })`, with a warning.
-- CSS variable names from V2 themes stay as aliases.
+- Theme folders still work: stylesheet, fonts, background images, settings.
 
 ## What changed on purpose
 
@@ -17,17 +17,115 @@ V2 still ships in `dist/v2/` and still works. Nothing here forces you to move.
 | Author order is the default | Shuffling by default surprised everyone | Turn on shuffle in Settings, or `shuffleQuestions: true` |
 | Raw HTML is off | A quiz file could run script | Use the syntax, or opt in |
 | `FormatText` / `HiddenAtPlay` need real booleans | `"false"` was truthy | Write `false` |
-| Theme URLs resolve from the base | The old way broke on file pages | Nothing, usually |
+| Theme URLs resolve from the base | The old way broke on file pages | `theme="themes/forest/"`, or `Theme => forest` |
+| Theme settings are a file, not JS | No script to run, no object to import | Move `QuizTheme` values into `theme.trivia-theme` |
 | `rtf` upload is gone | It never worked | Convert to `.txt` |
 | Export does not reshuffle | That was a bug | Nothing |
 
+## V2 options, one by one
+
+Almost every V2 option has a V3 home. The few that do not are named at the end
+of this table, with the reason, rather than left silently missing.
+
+| V2 | V3 |
+| --- | --- |
+| `id` | One quiz per `<pq-quiz>`; no container ID |
+| `title` | `title` config, or the `Quiz` header |
+| `seed`, `keepQuestionOrder`, `keepSectionOrder`, `keepAnswerOrder` | `seed`, `shuffleQuestions`, `shuffleRounds`, `keepQuestionOrder`, `keepSectionOrder`, `keepAnswerOrder` |
+| `url` | `base-url` on the element, used for probing and themes |
+| `builtin` | `load({ type: "inline", data })` and `quiz.export.embedded()` |
+| `filenamePattern`, `filenames`, `fileExtensions`, `subFolderQuestions` | `filename`, `filenames`, `file-extensions`, `questions-folder` element attributes |
+| `subFolderMedia`, `subFolderTheme` | Media and theme paths are page-relative; `base-url` sets the root |
+| `dateCreation` | `dateCreation` config, shown on the start screen |
+| `settings`, `hideDefaultSettings` | `settings` config (`button`, `toggle`, `text`) and `hideDefaultSettings` |
+| `languageDefault`, `languages`, `translations`, `syncPropertiesWithTranslations` | Same names on `QuizConfig`; see the languages guide |
+| `theme`, `themeDisabled` | `theme` config, `<pq-quiz theme>`, `themeDisabled`, `themeUpload` |
+| `icon`, `bannerImage` | `icon` config and `bannerImage` config |
+| `hideDefaultStyles` | The host chooses whether to load `themes/paper.css` |
+| `skipLoadingScreen`, `skipLoadingScreenIfBuiltin` | Loading is a promise; the host decides what to show meanwhile |
+| `allowInput` | `restricted` config |
+| `defaultScore`, `minScore`, `maxScore`, `hideScore`, `hideScoreOnAnswers` | Same options; scores are clamped when the plan is built |
+| `defaultAuthor`, `defaultCategory`, `hideAuthor`, `hideCategory` | Same options |
+| `possibleAuthors`, `possibleCategories` | Same options; an outside value produces a warning, as in V2 |
+| `showPropertiesWithoutDiversity` | Same option |
+| `include`, `exclude`, `groupBy`, `minAnswers`, `maxAnswers`, `questionTypesAllowed`, `excludeSections`, `filterSections` | Same names on `QuizConfig` |
+| `randomizeMedia` | `randomizeMedia`, or `MediaOrder => shuffle` |
+| `addSecretThemeQuestions`, `hideSecretThemeMessage` | Same options; the secret question is translated |
+| `disableTextFormatting` | Same option, or `FormatText => false` per question |
+| `defaultTimer`, `hideTimerGlobal`, `hideTimerQuestion`, `timerStrategy` | Same options (`expire`, `skip`, `continue`) |
+| `allowTimerOnSections` | Rounds have no timer of their own; timers belong to questions |
+| `addMissingSectionScreens` | Every round's first question shows its round banner inline |
+| `dateCreation`, `mediaAutoPlay`, `loadExternalMediaAsIframe` | Same names |
+| `enableSafety`, `enableMouse`, `disableKeys`, `disableUI`, `disableTouch` | Same names |
+| `hotkeys`, `hotkeysForbidden`, `toolbar` | Same names; V2 action names such as `font-size-plus` are accepted |
+| `forbidInlineLists`, `hideErrors` | Same names |
+| `symbols` | `symbols` config |
+| `fileExtensionsUpload` | Uploads are the host's `<input type="file">`, then `load({ type: "files" })` |
+| `linkPrefixes`, `mediaFormats` | Not applied; links and media keep the path you wrote |
+
+## Already there, easy to miss
+
+- `##` question shorthand and `### Key` blocks.
+- `$` keeps a value exactly as written. A bare `photo.jpg`, `song.mp3` or
+  `clip.mp4` in `Answers` becomes media, like V2.
+- `PlaceAt`, `PlaceBefore`, `PlaceAfter` for order constraints.
+- `AnswersOrder` and `MediaOrder` take `keep` or `shuffle`.
+- `When`, `Unlock` and `Continue` control flow. See the syntax guide.
+- `HiddenAtPlay`, `HiddenAtExport`, `Print`, `PrintFallback`, `Buttons`,
+  `Credits`, `Class`, `Layout`, `Background`, `Transition`, `Reveal`,
+  `ColorScheme`, `Variant`, `Alt` and `SyncAll`.
+- `AlsoAccept`, `Reject`, `Grading` and `FuzzyDistance` for text answers.
+- `Script` widgets, sandboxed and off unless `allowScripts` is on.
+- `Include`, manifests, worker parsing and the IndexedDB cache.
+- Embedded JSON, print variants, GIFT, QTI, CSV and standalone HTML.
+- Encryption, resume, retry-wrong and the review screen.
+
+## Themes, languages and switching
+
+- A theme is still a folder with fonts, backgrounds and a stylesheet.
+- `### ColorScheme name` adds `Light`, `Dark`, `Background` and `Text`
+  values, used by `ColorScheme => name`.
+- `Language => NL` in a question, `quiz.nl.trivia` file names, and
+  `Language =>` headers all feed the same language picker.
+- Press `L`, use the start-screen picker, or call `quiz.setLanguage("NL")`.
+  Answers, reveals and hints travel with you.
+
 ## The new page
+
+One file, no server:
+
+```html
+<script id="quiz-text" type="text/plain">
+Question => ...
+</script>
+<script src="pq-trivia.min.js"></script>
+```
+
+Or served, with an element and a theme folder:
 
 ```html
 <link rel="stylesheet" href="dist/v3/themes/paper.css" />
 <script type="module" src="dist/v3/player.js"></script>
-<pq-quiz src="questions/quiz.txt" seed="my-seed"></pq-quiz>
+<pq-quiz src="questions/quiz.txt" theme="themes/forest/" seed="my-seed"></pq-quiz>
 ```
+
+## Your old theme
+
+A V2 `QuizTheme` object maps almost line for line to a folder:
+
+| V2 | V3 `theme.trivia-theme` |
+| --- | --- |
+| `label` | `Label => forest` |
+| `external` | `Stylesheet => style.css` |
+| `fonts.body` / `fonts.heading` | `Font => body \| Lora \| bold \| Lora-Bold.woff2` |
+| `backgroundImages` | `### Background` and one file per line |
+| `backgroundAlpha` | `BackgroundAlpha => 0.5` |
+| `boldHeadings` | `BoldHeadings => true` |
+| `colors` | `--pq-accent => #2f6b4f`, and the other `--pq-*` tokens |
+
+The folder keeps `style.css`, the font files and the images. `inline` CSS can
+move into `style.css`. `QuizTheme` itself is not part of V3; the CSS is the
+contract.
 
 ## The new API
 

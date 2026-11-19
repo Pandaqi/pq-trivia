@@ -122,6 +122,29 @@ describe("createQuiz", () => {
     quiz.destroy();
   });
 
+  test("config filters and score clamps are applied before the plan", async () => {
+    const quiz = createQuiz({
+      config: {
+        include: { category: "history" },
+        minScore: 2,
+        maxScore: 3,
+        possibleAuthors: ["someone"],
+      },
+    });
+    await quiz.load({
+      type: "text",
+      text: `Question => One\nAnswers => A | B\nType => Choice\nCorrect => A\nCategory => history\nAuthor => other\n\nQuestion => Two\nAnswers => C | D\nType => Choice\nCorrect => C\nCategory => sport`,
+    });
+    expect(quiz.state.plan?.questions).toHaveLength(1);
+    expect(quiz.state.plan?.questions[0]?.score).toBe(2);
+    expect(
+      quiz
+        .diagnostics()
+        .some((diagnostic) => diagnostic.message.includes("possibleAuthors")),
+    ).toBe(true);
+    quiz.destroy();
+  });
+
   test("an empty file is an error, not an empty quiz", async () => {
     const quiz = createQuiz();
     await quiz.load({ type: "text", text: "\n\n// nothing here\n" });

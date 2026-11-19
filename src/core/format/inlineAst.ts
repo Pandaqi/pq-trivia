@@ -9,6 +9,7 @@ export enum InlineKind {
   Code = "code",
   CodeBlock = "code-block",
   Link = "link",
+  Image = "image",
   Span = "span",
   Mark = "mark",
   Kbd = "kbd",
@@ -60,6 +61,12 @@ export interface InlineLinkNode {
   readonly children: readonly InlineNode[];
 }
 
+export interface InlineImageNode {
+  readonly kind: InlineKind.Image;
+  readonly src: string;
+  readonly alt: string;
+}
+
 export interface InlineSpanNode {
   readonly kind: InlineKind.Span;
   readonly attributes: Readonly<Record<string, string>>;
@@ -86,6 +93,7 @@ export type InlineNode =
   | InlineCodeBlockNode
   | InlineEmphasisNode
   | InlineLinkNode
+  | InlineImageNode
   | InlineSpanNode
   | InlineAbbrNode
   | InlineBlankNode

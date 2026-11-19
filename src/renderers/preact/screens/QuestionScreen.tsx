@@ -5,7 +5,6 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import { parseInline } from "../../../core/format/inline";
 import type { ResponseIssue } from "../../../core/session/policies";
 import type { Quiz } from "../../../core/session/quiz";
 import type { SessionState } from "../../../core/session/session";
@@ -19,19 +18,32 @@ import { ScriptWidget } from "../components/ScriptWidget";
 import { Timer } from "../components/Timer";
 import { backgroundStyle } from "../components/background";
 import { roundAccent } from "../components/roundAccent";
+import { useT } from "../i18n";
+import { showsAction } from "../toolbar";
 
-function RoundBanner({ screen }: { readonly screen: QuestionViewModel }) {
+function RoundBanner({
+  screen,
+  hideSecret,
+}: {
+  readonly screen: QuestionViewModel;
+  readonly hideSecret: boolean;
+}) {
+  const t = useT();
   if (!screen.isRoundStart || screen.roundName === null) {
     return null;
   }
   return (
-    <section class="pq-round-banner" aria-label="Round">
+    <section class="pq-round-banner" aria-label={t("roundWord")}>
       {screen.roundNumber === null ? null : (
-        <p class="pq-round-number">Round {screen.roundNumber}</p>
+        <p class="pq-round-number">
+          {t("roundNumber", { number: screen.roundNumber })}
+        </p>
       )}
       <h2 class="pq-round-name">{screen.roundName}</h2>
-      {screen.roundSecret === null ? null : (
-        <p class="pq-round-secret">Theme: {screen.roundSecret}</p>
+      {hideSecret || screen.roundSecret === null ? null : (
+        <p class="pq-round-secret">
+          {t("theme", { theme: screen.roundSecret })}
+        </p>
       )}
     </section>
   );
@@ -48,6 +60,7 @@ export function QuestionScreen({
   readonly state: SessionState;
   readonly timerSound?: TimerSound | undefined;
 }): JSX.Element {
+  const t = useT();
   const response = state.responses[screen.id];
   const [issues, setIssues] = useState<readonly ResponseIssue[]>([]);
 
@@ -99,28 +112,49 @@ export function QuestionScreen({
       class={className}
       data-pq-layout={screen.layout ?? "text-only"}
       data-pq-scheme={screen.colorScheme ?? undefined}
+      data-pq-reveal={screen.reveal ?? undefined}
       data-pq-transition={transition === "none" ? undefined : transition}
       data-pq-answered={String(screen.answered)}
+      data-pq-variant={screen.variant ?? undefined}
       data-pq-split={split ? "true" : "false"}
       style={`${backgroundStyle(screen.background) ?? ""};--pq-round-accent:${accent}`}
     >
       <Timer quiz={quiz} sound={timerSound} />
 
       <p class="pq-meta-strip">
-        <span class="pq-meta-round">{screen.roundName ?? "Quiz"}</span>
-        <span class="pq-count">{screen.heading}</span>
-        {screen.authors.map((author) => (
-          <span class="pq-meta-author">{author}</span>
-        ))}
-        {screen.categories.map((category) => (
-          <span class="pq-meta-category">{category}</span>
-        ))}
-        <span class="pq-points">
-          {screen.points} {screen.points === 1 ? "point" : "points"}
+        <span class="pq-meta-round">{screen.roundName ?? t("quizWord")}</span>
+        <span class="pq-count">
+          {t("questionOf", { index: screen.index + 1, total: screen.total })}
         </span>
+        {quiz.config.hideAuthor === true ||
+        (!quiz.config.showPropertiesWithoutDiversity &&
+          !screen.authorsDiverse)
+          ? null
+          : screen.authors.map((author) => (
+              <span class="pq-meta-author">{author}</span>
+            ))}
+        {quiz.config.hideCategory === true ||
+        (!quiz.config.showPropertiesWithoutDiversity &&
+          !screen.categoriesDiverse)
+          ? null
+          : screen.categories.map((category) => (
+              <span class="pq-meta-category">{category}</span>
+            ))}
+        {quiz.config.hideScore === true ||
+        (quiz.config.hideScoreOnAnswers === true && screen.revealed) ? null : (
+          <span class="pq-points">
+            {t("pointsLabel", {
+              points: screen.points,
+              unit: t(screen.points === 1 ? "point_one" : "point_other"),
+            })}
+          </span>
+        )}
       </p>
 
-      <RoundBanner screen={screen} />
+      <RoundBanner
+        screen={screen}
+        hideSecret={quiz.config.hideSecretThemeMessage === true}
+      />
 
       <div class={split ? "pq-split" : "pq-split pq-split-single"}>
         <div class="pq-split-left">
@@ -145,11 +179,11 @@ export function QuestionScreen({
           {answersLeft ? answers : null}
 
           {hintCount === 0 ? null : (
-            <aside class="pq-hints" aria-label="Hints">
+            <aside class="pq-hints" aria-label={t("hints")}>
               <ul>
                 {screen.hints.revealed.map((hint, index) => (
                   <li key={index}>
-                    <Inline nodes={parseInline(hint).nodes} />
+                    <Inline nodes={hint.nodes} />
                   </li>
                 ))}
               </ul>
@@ -162,7 +196,12 @@ export function QuestionScreen({
             {hasMedia ? (
               <div class="pq-media-list">
                 {screen.media.map((item) => (
-                  <Media key={item.path} item={item} />
+                  <Media
+                    key={item.path}
+                    item={item}
+                    autoplay={quiz.config.mediaAutoPlay === true}
+                    asIframe={quiz.config.loadExternalMediaAsIframe === true}
+                  />
                 ))}
               </div>
             ) : null}
@@ -175,34 +214,48 @@ export function QuestionScreen({
         <p class="pq-explanation">{screen.explanation}</p>
       )}
 
-      <footer class="pq-toolbar">
-        <Actions quiz={quiz} />
-        <button
-          type="button"
-          onClick={() => quiz.prev()}
-          disabled={screen.index === 0}
-        >
-          Previous
-        </button>
-        {canHint ? (
-          <button type="button" onClick={() => quiz.revealHint()}>
-            Hint
-          </button>
-        ) : null}
-        {screen.revealable ? (
-          <button type="button" onClick={() => quiz.reveal()}>
-            Show answer
-          </button>
-        ) : null}
-        {screen.expired ? (
-          <p class="pq-timer-note" role="status">
-            Time is up. Answers stay open.
-          </p>
-        ) : null}
-        <button type="button" class="pq-primary" onClick={next}>
-          Next
-        </button>
-      </footer>
+      {screen.sources.length === 0 ? null : (
+        <p class="pq-sources">
+          {screen.sources.map((source, index) => (
+            <span key={index}>{source}</span>
+          ))}
+        </p>
+      )}
+
+      {quiz.config.disableUI === true ? null : (
+        <footer class="pq-toolbar">
+          <Actions quiz={quiz} />
+          {showsAction(quiz, "prev") ? (
+            <button
+              type="button"
+              onClick={() => quiz.prev()}
+              disabled={screen.index === 0}
+            >
+              {t("previous")}
+            </button>
+          ) : null}
+          {canHint && showsAction(quiz, "hint") ? (
+            <button type="button" onClick={() => quiz.revealHint()}>
+              {t("hint")}
+            </button>
+          ) : null}
+          {screen.revealable && showsAction(quiz, "reveal") ? (
+            <button type="button" onClick={() => quiz.reveal()}>
+              {t("showAnswer")}
+            </button>
+          ) : null}
+          {screen.expired ? (
+            <p class="pq-timer-note" role="status">
+              {t("timeUp")}
+            </p>
+          ) : null}
+          {showsAction(quiz, "next") ? (
+            <button type="button" class="pq-primary" onClick={next}>
+              {t("next")}
+            </button>
+          ) : null}
+        </footer>
+      )}
     </main>
   );
 }

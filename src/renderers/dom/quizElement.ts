@@ -15,6 +15,11 @@ import { createQuiz, type Quiz } from "../../core/session/quiz";
 import { browserAnswerKey } from "../../platform/answerKey";
 import { fetchText } from "../../platform/browser/fetchText";
 import { mountQuiz, type MountedQuiz } from "../preact/mount";
+import {
+  loadTheme,
+  resolveThemeFolder,
+  setTheme,
+} from "../../platform/browser/theme";
 
 const ELEMENT_NAME = "pq-quiz";
 
@@ -27,7 +32,20 @@ export class QuizElement extends HTMLElement {
   static parser: ParseHook | null = null;
 
   static get observedAttributes(): readonly string[] {
-    return ["src", "seed", "shuffle-questions", "shuffle-rounds"];
+    return [
+      "src",
+      "filenames",
+      "filename",
+      "file-extensions",
+      "questions-folder",
+      "base-url",
+      "language-default",
+      "seed",
+      "shuffle-questions",
+      "shuffle-rounds",
+      "theme",
+      "theme-upload",
+    ];
   }
 
   #quiz: Quiz | null = null;
@@ -73,6 +91,15 @@ export class QuizElement extends HTMLElement {
         seed: this.getAttribute("seed") ?? "",
         shuffleQuestions: truthy(this.getAttribute("shuffle-questions")),
         shuffleRounds: truthy(this.getAttribute("shuffle-rounds")),
+        ...(this.getAttribute("theme") === null
+          ? {}
+          : { theme: this.getAttribute("theme") as string }),
+        themeUpload: truthy(this.getAttribute("theme-upload")),
+        ...(this.getAttribute("language-default") === null
+          ? {}
+          : {
+              languageDefault: this.getAttribute("language-default") as string,
+            }),
         answersKey: browserAnswerKey,
       },
       ...(parser === null ? {} : { parseText: parser }),
@@ -80,8 +107,17 @@ export class QuizElement extends HTMLElement {
     this.#quiz = quiz;
     this.#mounted = mountQuiz(quiz, host);
 
+    const theme = this.getAttribute("theme");
     const source = this.getAttribute("src");
     if (source === null) {
+      try {
+        await this.#loadProbed(quiz, generation);
+        await this.#headerTheme(theme, generation);
+      } catch (error) {
+        if (generation === this.#generation) {
+          quiz.fail(error instanceof Error ? error.message : String(error));
+        }
+      }
       return;
     }
     try {
@@ -91,6 +127,7 @@ export class QuizElement extends HTMLElement {
       }
       if (!text.trimStart().startsWith("{")) {
         await quiz.load({ type: "text", text, file: source });
+        await this.#headerTheme(theme, generation);
         return;
       }
       const data = JSON.parse(text) as unknown;
@@ -99,10 +136,98 @@ export class QuizElement extends HTMLElement {
           ? { type: "encrypted", data }
           : { type: "inline", data },
       );
+      await this.#headerTheme(theme, generation);
     } catch (error) {
       if (generation === this.#generation) {
         quiz.fail(error instanceof Error ? error.message : String(error));
       }
+    }
+  }
+
+  /**
+   * V2's filename probing: `filenames` exactly, or `questions-0.trivia`,
+   * `questions-1.trivia`, ... until a number is missing.
+   */
+  async #loadProbed(quiz: Quiz, generation: number): Promise<void> {
+    const base = this.getAttribute("base-url") ?? "";
+    const folder = this.getAttribute("questions-folder") ?? "";
+    const resolve = (name: string): string => {
+      const path = `${folder}${name}`;
+      return base.length === 0 ? path : new URL(path, base).href;
+    };
+    const names = (this.getAttribute("filenames") ?? "")
+      .split(",")
+      .map((name) => name.trim())
+      .filter((name) => name.length > 0);
+    const extensions = (
+      this.getAttribute("file-extensions") ?? "trivia,txt,md"
+    )
+      .split(",")
+      .map((extension) => extension.trim().replace(/^\./, ""))
+      .filter((extension) => extension.length > 0);
+    const pattern = this.getAttribute("filename") ?? "questions";
+    const files: Array<{ name: string; text: string }> = [];
+
+    if (names.length > 0) {
+      for (const name of names) {
+        files.push({ name, text: await fetchText(resolve(name)) });
+      }
+    } else {
+      for (let index = 0; index < 100; index += 1) {
+        let found = false;
+        for (const extension of extensions) {
+          const name = `${pattern}-${index}.${extension}`;
+          try {
+            const text = await fetchText(resolve(name));
+            files.push({ name, text });
+            found = true;
+            break;
+          } catch {
+            // Try the next extension, then stop this number.
+          }
+        }
+        if (!found) {
+          break;
+        }
+      }
+    }
+    if (files.length === 0) {
+      throw new Error(`No question files found for "${pattern}".`);
+    }
+    if (generation !== this.#generation) {
+      return;
+    }
+    await quiz.load({ type: "files", files });
+  }
+
+  /** `Theme => forest` in the header, when no attribute says otherwise. */
+  async #headerTheme(
+    attribute: string | null,
+    generation: number,
+  ): Promise<void> {
+    if (attribute !== null && attribute.trim().length > 0) {
+      return;
+    }
+    const name = this.#quiz?.meta?.theme ?? null;
+    if (name === null || name.trim().length === 0) {
+      return;
+    }
+    const path = name.includes("/") ? name : `themes/${name}/`;
+    await this.#applyTheme(path, generation);
+  }
+
+  async #applyTheme(folder: string, generation: number): Promise<void> {
+    try {
+      const theme = await loadTheme(resolveThemeFolder(folder));
+      if (generation !== this.#generation) {
+        theme.destroy();
+        return;
+      }
+      setTheme(theme);
+    } catch (error) {
+      console.warn(
+        `[pq-trivia] Theme ${folder} could not load: ${error instanceof Error ? error.message : String(error)}`,
+      );
     }
   }
 

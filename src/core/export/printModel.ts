@@ -9,6 +9,7 @@ import { answerRefs } from "../model/answers";
 import type { QuizMeta } from "../model/quiz";
 import type { QuestionModel } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
+import { visiblePlan } from "./visible";
 
 export enum PrintPageKind {
   Cover = "cover",
@@ -115,6 +116,7 @@ export function buildPrintModel(
   meta: QuizMeta,
   options: PrintModelOptions = {},
 ): PrintDocument {
+  plan = visiblePlan(plan);
   const perPage = options.perPage ?? 1;
   const pages: PrintPage[] = [];
   let number = 0;

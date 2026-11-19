@@ -11,6 +11,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import { ResponseKind } from "../../../core/session/responses";
 import type { Quiz } from "../../../core/session/quiz";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
+import { useT } from "../i18n";
 
 export function ScriptWidget({
   quiz,
@@ -21,6 +22,7 @@ export function ScriptWidget({
   readonly screen: QuestionViewModel;
   readonly allowed: boolean;
 }): JSX.Element | null {
+  const t = useT();
   const host = useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = useState(screen.script?.height ?? "24em");
   const [note, setNote] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export function ScriptWidget({
       })
       .catch(() => {
         if (!cancelled) {
-          setNote(`Could not load ${script.path}.`);
+          setNote(t("widgetError", { path: script.path }));
         }
       });
 
@@ -108,7 +110,7 @@ export function ScriptWidget({
       <iframe
         ref={host}
         class="pq-widget-frame"
-        title={`Interactive widget for question ${screen.index + 1}`}
+        title={t("widgetTitle", { number: screen.index + 1 })}
         // No same-origin, no forms, no popups, no navigation.
         sandbox="allow-scripts"
         style={`height: ${height}`}

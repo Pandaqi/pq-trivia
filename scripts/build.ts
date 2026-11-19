@@ -127,7 +127,7 @@ async function build(): Promise<boolean> {
 
   // One file in src/entries/ is one artifact. No config edit to add an entry.
   const entryFiles = (await readdir(ENTRIES_DIR))
-    .filter((file) => file.endsWith(".ts"))
+    .filter((file) => file.endsWith(".ts") && !file.endsWith(".d.ts"))
     .sort();
   const entries: Entry[] = entryFiles.map((file) => ({
     name: file.replace(/\.ts$/, ""),

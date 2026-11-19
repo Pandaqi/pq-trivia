@@ -6,21 +6,23 @@
 import type { JSX } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import {
-  bandLabel,
   filterQuestions,
   formatDuration,
+  GradeBand,
   ReportFilter,
   type QuestionReport,
 } from "../../../core/grading/report";
 import type { Quiz } from "../../../core/session/quiz";
 import type { ResultsViewModel } from "../../../core/session/viewModel";
+import { useT } from "../i18n";
 
-function statusOf(question: QuestionReport): string {
-  if (question.correct) {
-    return "Correct";
-  }
-  return question.answered ? "Wrong" : "Skipped";
-}
+const BAND_KEYS: Readonly<Record<string, string>> = {
+  [GradeBand.Excellent]: "bandExcellent",
+  [GradeBand.Good]: "bandGood",
+  [GradeBand.Fair]: "bandFair",
+  [GradeBand.Practice]: "bandPractice",
+  [GradeBand.Empty]: "bandEmpty",
+};
 
 function statusMark(question: QuestionReport): string {
   if (question.correct) {
@@ -36,6 +38,12 @@ function ReviewCard({
   readonly quiz: Quiz;
   readonly question: QuestionReport;
 }): JSX.Element {
+  const t = useT();
+  const status = question.correct
+    ? t("correct")
+    : question.answered
+      ? t("wrong")
+      : t("skipped");
   return (
     <li
       class="pq-review-card"
@@ -43,13 +51,14 @@ function ReviewCard({
       data-pq-answered={String(question.answered)}
     >
       <div class="pq-review-head">
-        <p class="pq-review-number">Question {question.index + 1}</p>
+        <p class="pq-review-number">
+          {t("question_one")} {question.index + 1}
+        </p>
         <p class="pq-review-points">
           {question.points} / {question.maxPoints}
         </p>
         <p class="pq-review-status">
-          <span aria-hidden="true">{statusMark(question)}</span>{" "}
-          {statusOf(question)}
+          <span aria-hidden="true">{statusMark(question)}</span> {status}
         </p>
       </div>
       <p class="pq-review-title">{question.title}</p>
@@ -58,9 +67,9 @@ function ReviewCard({
         <table class="pq-review-parts">
           <thead>
             <tr>
-              <th scope="col">Part</th>
-              <th scope="col">Your answer</th>
-              <th scope="col">Correct answer</th>
+              <th scope="col">{t("part")}</th>
+              <th scope="col">{t("yourAnswer")}</th>
+              <th scope="col">{t("correctAnswer")}</th>
             </tr>
           </thead>
           <tbody>
@@ -95,16 +104,16 @@ function ReviewCard({
           quiz.goTo(question.index);
         }}
       >
-        Open question
+        {t("openQuestion")}
       </button>
     </li>
   );
 }
 
-const FILTERS: ReadonlyArray<readonly [ReportFilter, string]> = [
-  [ReportFilter.All, "All"],
-  [ReportFilter.Wrong, "Wrong"],
-  [ReportFilter.Unanswered, "Skipped"],
+const FILTERS: readonly ReportFilter[] = [
+  ReportFilter.All,
+  ReportFilter.Wrong,
+  ReportFilter.Unanswered,
 ];
 
 export function ResultsScreen({
@@ -114,41 +123,49 @@ export function ResultsScreen({
   readonly quiz: Quiz;
   readonly screen: ResultsViewModel;
 }): JSX.Element {
+  const t = useT();
   const report = screen.report;
   const [filter, setFilter] = useState<ReportFilter>(ReportFilter.All);
   const entries = useMemo(
     () => filterQuestions(report, filter),
     [report, filter],
   );
+  const labels: Readonly<Record<string, string>> = {
+    [ReportFilter.All]: t("filterAll"),
+    [ReportFilter.Wrong]: t("filterWrong"),
+    [ReportFilter.Unanswered]: t("filterSkipped"),
+  };
 
   return (
     <main class="pq-screen pq-screen-results" data-pq-band={report.band}>
       <header class="pq-header">
-        <p class="pq-kicker">Results</p>
+        <p class="pq-kicker">{t("results")}</p>
         <h1 class="pq-title" data-pq-heading tabIndex={-1}>
-          {screen.title}
+          {screen.title || t("untitled")}
         </h1>
-        <p class="pq-score">
-          <strong class="pq-score-points">{report.points}</strong>
-          <span class="pq-score-max"> / {report.maxPoints}</span>
-          <span class="pq-score-percent">{report.percent}%</span>
-        </p>
-        <p class="pq-band">{bandLabel(report.band)}</p>
+        {quiz.config.hideScore === true ? null : (
+          <p class="pq-score">
+            <strong class="pq-score-points">{report.points}</strong>
+            <span class="pq-score-max"> / {report.maxPoints}</span>
+            <span class="pq-score-percent">{report.percent}%</span>
+          </p>
+        )}
+        <p class="pq-band">{t(BAND_KEYS[report.band] ?? "bandEmpty")}</p>
         <dl class="pq-stats">
           <div>
-            <dt>Correct</dt>
+            <dt>{t("correct")}</dt>
             <dd>{report.correct}</dd>
           </div>
           <div>
-            <dt>Wrong</dt>
+            <dt>{t("wrong")}</dt>
             <dd>{report.wrong}</dd>
           </div>
           <div>
-            <dt>Skipped</dt>
+            <dt>{t("skipped")}</dt>
             <dd>{report.unanswered}</dd>
           </div>
           <div>
-            <dt>Time</dt>
+            <dt>{t("time")}</dt>
             <dd>{formatDuration(report.durationMs) || "—"}</dd>
           </div>
         </dl>
@@ -156,19 +173,19 @@ export function ResultsScreen({
 
       {report.rounds.length === 0 ? null : (
         <table class="pq-table pq-round-table">
-          <caption>Per round</caption>
+          <caption>{t("perRound")}</caption>
           <thead>
             <tr>
-              <th scope="col">Round</th>
-              <th scope="col">Correct</th>
-              <th scope="col">Points</th>
-              <th scope="col">Percent</th>
+              <th scope="col">{t("roundWord")}</th>
+              <th scope="col">{t("correct")}</th>
+              <th scope="col">{t("points")}</th>
+              <th scope="col">%</th>
             </tr>
           </thead>
           <tbody>
             {report.rounds.map((round) => (
               <tr key={round.id}>
-                <th scope="row">{round.name || "Unnamed round"}</th>
+                <th scope="row">{round.name || t("unnamedRound")}</th>
                 <td>
                   {round.correct} / {round.questions}
                 </td>
@@ -183,7 +200,7 @@ export function ResultsScreen({
       )}
 
       {report.categories.length === 0 ? null : (
-        <ul class="pq-chip-list" aria-label="Per category">
+        <ul class="pq-chip-list" aria-label={t("perCategory")}>
           {report.categories.map((category) => (
             <li key={category.name} class="pq-chip">
               {category.name} {category.percent}%
@@ -192,8 +209,12 @@ export function ResultsScreen({
         </ul>
       )}
 
-      <div class="pq-filters" role="group" aria-label="Filter questions">
-        {FILTERS.map(([value, label]) => {
+      <div
+        class="pq-filters"
+        role="group"
+        aria-label={t("filterQuestions")}
+      >
+        {FILTERS.map((value) => {
           const count = filterQuestions(report, value).length;
           return (
             <button
@@ -203,14 +224,15 @@ export function ResultsScreen({
               aria-pressed={filter === value}
               onClick={() => setFilter(value)}
             >
-              {label} <span class="pq-filter-count">{count}</span>
+              {labels[value] ?? value}{" "}
+              <span class="pq-filter-count">{count}</span>
             </button>
           );
         })}
       </div>
 
       {entries.length === 0 ? (
-        <p class="pq-empty">Nothing here. That is a good sign.</p>
+        <p class="pq-empty">{t("nothingHere")}</p>
       ) : (
         <ol class="pq-review">
           {entries.map((entry) => (
@@ -219,24 +241,26 @@ export function ResultsScreen({
         </ol>
       )}
 
-      <footer class="pq-toolbar">
-        <button type="button" onClick={() => window.print()}>
-          Print
-        </button>
-        <button type="button" onClick={() => quiz.retryWrong()}>
-          Retry wrong only
-        </button>
-        <button type="button" onClick={() => quiz.restart()}>
-          Play again
-        </button>
-        <button
-          type="button"
-          class="pq-primary"
-          onClick={() => quiz.hideResults()}
-        >
-          Back
-        </button>
-      </footer>
+      {quiz.config.disableUI === true ? null : (
+        <footer class="pq-toolbar">
+          <button type="button" onClick={() => window.print()}>
+            {t("print")}
+          </button>
+          <button type="button" onClick={() => quiz.retryWrong()}>
+            {t("retryWrong")}
+          </button>
+          <button type="button" onClick={() => quiz.restart()}>
+            {t("playAgain")}
+          </button>
+          <button
+            type="button"
+            class="pq-primary"
+            onClick={() => quiz.hideResults()}
+          >
+            {t("back")}
+          </button>
+        </footer>
+      )}
     </main>
   );
 }

@@ -39,14 +39,20 @@ import { ScreenKind, type ScreenViewModel } from "../session/viewModel";
 import { screenFor } from "../session/screens";
 import { gradeAttempt, type GradeReport } from "../grading/report";
 import { InteractivePolicy, nextCheck, RevealMode } from "../session/policies";
-import {
-  saveAttempt,
-  type AttemptJournal,
-  type AttemptRecord,
-} from "../session/attempts";
+import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import { applyFlow } from "../session/flow";
 import { createExtras } from "./extras";
 import { createLoader } from "./load";
+import { persistState } from "./persist";
+import { languagesOf } from "./languages";
+import {
+  findLanguageKey,
+  planOptionsFrom,
+  possibleWarnings,
+  prepareLanguageSwitch,
+  prepareModels,
+} from "./languageOptions";
+import { translate } from "../../i18n/dictionary";
 import type {
   CreateQuizOptions,
   NavResult,
@@ -61,6 +67,7 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
   const version = options.version ?? "3.0.0-dev.0";
   const diagnostics: Diagnostic[] = [];
   let quiz: QuizModel | null = null;
+  let models = new Map<string, QuizModel>();
   let planOrder: PlanOptions = {};
   let state = createSessionState({ language: config.language ?? null });
   let destroyed = false;
@@ -89,22 +96,11 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
   const revealMode = (): RevealMode => config.revealMode ?? RevealMode.Never;
 
   function planOptions(): PlanOptions {
-    return {
-      ...(config.seed !== undefined ? { seed: config.seed } : {}),
-      ...(config.shuffleQuestions !== undefined
-        ? { shuffleQuestions: config.shuffleQuestions }
-        : {}),
-      ...(config.shuffleRounds !== undefined
-        ? { shuffleRounds: config.shuffleRounds }
-        : {}),
-      ...planOrder,
-    };
+    return planOptionsFrom(config, planOrder, t("secretQuestion"));
   }
-
   function screenOf(): ScreenViewModel | null {
     return screenFor(quiz, state, saved);
   }
-
   function buildReport(): GradeReport | null {
     if (state.plan === null) {
       return null;
@@ -116,24 +112,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       ...(config.grading !== undefined ? { grading: config.grading } : {}),
     });
   }
-
   function persist(): void {
-    if (journal === null || quiz === null) {
-      return;
-    }
-    saveAttempt(journal, quiz.meta.title, state, {
-      seed: state.plan?.seed ?? "",
-      shuffleQuestions: config.shuffleQuestions === true,
-      shuffleRounds: config.shuffleRounds === true,
-      mode: state.mode,
-      restricted: config.restricted === true,
-    });
-    // A finished quiz or a results screen is worth writing right now.
-    if (state.status === SessionStatus.Finished || state.showingResults) {
-      journal.flush();
-    }
+    persistState(journal, quiz, state, config);
   }
-
   function notify(previousStatus: SessionStatus): void {
     const screen = screenOf();
     if (screen !== null) {
@@ -153,14 +134,12 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       }
     }
   }
-
   function apply(next: SessionState): void {
     const previousStatus = state.status;
     state = next;
     notify(previousStatus);
     persist();
   }
-
   function autoReveal(): void {
     const question = currentQuestion(state);
     if (question === null || config.restricted === true) {
@@ -181,7 +160,6 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       );
     }
   }
-
   /** `When` conditions can unlock or hide a question. Replan, keep the index. */
   function replan(): void {
     if (quiz === null || state.plan === null) {
@@ -207,11 +185,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       ),
     );
   }
-
   async function refreshSaved(): Promise<void> {
     saved = journal === null ? null : await journal.resumable();
   }
-
   const loader = createLoader({
     destroyed: () => destroyed,
     config: () => config,
@@ -230,16 +206,50 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       emitter.emit("ready", { version, total: state.plan?.total ?? 0 }),
   });
 
-  function finishLoad(model: QuizModel): void {
-    quiz = model;
-    diagnostics.push(...model.diagnostics);
-    for (const diagnostic of model.diagnostics) {
+  function findLanguage(code: string): string | null {
+    return findLanguageKey(models, code);
+  }
+  function uiLanguage(): string {
+    const current = state.language ?? "";
+    return current.length > 0
+      ? current
+      : (config.languageDefault ?? "en");
+  }
+  function t(
+    key: string,
+    params: Readonly<Record<string, string | number>> = {},
+  ): string {
+    return translate(uiLanguage(), key, params, config.translations ?? {});
+  }
+  function finishLoad(loaded: Map<string, QuizModel>): void {
+    const prepared = prepareModels(
+      loaded,
+      config,
+      state.language ?? config.language ?? null,
+    );
+    if (prepared === null) {
+      apply(sessionReducer(state, { type: "load/failure", diagnostics }, 0));
+      return;
+    }
+    models = prepared.models;
+    const language = prepared.language;
+    quiz = models.get(language) ?? null;
+    if (quiz === null) {
+      apply(sessionReducer(state, { type: "load/failure", diagnostics }, 0));
+      return;
+    }
+    state = { ...state, language: language.length > 0 ? language : null };
+    for (const warning of possibleWarnings(quiz, config)) {
+      diagnostics.push(warning);
+      emitter.emit("diagnostic", { diagnostic: warning });
+    }
+    diagnostics.push(...quiz.diagnostics);
+    for (const diagnostic of quiz.diagnostics) {
       emitter.emit("diagnostic", { diagnostic });
     }
-
     // A quiz with nothing to play is an error, not a ready quiz. Loading an
     // empty file used to leave the player sitting on a start screen forever.
-    if (model.questions.length === 0) {
+    if (quiz.questions.length === 0) {
       const diagnostic = syntaxWarning(
         DiagnosticCodes.MissingQuestion,
         "This quiz has no questions.",
@@ -253,11 +263,35 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       apply(sessionReducer(state, { type: "load/failure", diagnostics }, 0));
       return;
     }
-
-    const base = planQuiz(model, planOptions());
+    const base = planQuiz(quiz, planOptions());
     diagnostics.push(...base.diagnostics);
     const flow = applyFlow(base, {});
     apply(sessionReducer(state, { type: "load/success", plan: flow.plan }, 0));
+  }
+  function setLanguage(code: string): boolean {
+    const language = findLanguage(code);
+    if (language === null || models.size === 0) {
+      return false;
+    }
+    if (language === (state.language ?? "")) {
+      return true;
+    }
+    const switched = prepareLanguageSwitch(
+      models,
+      state,
+      language,
+      planOptions(),
+    );
+    if (switched === null) {
+      return false;
+    }
+    config = { ...config, language };
+    quiz = switched.model;
+    state = switched.state;
+    notify(state.status);
+    persist();
+    emitter.emit("language:change", { language });
+    return true;
   }
 
   function applyOrder(order: OrderOptions): void {
@@ -312,12 +346,10 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     get meta() {
       return quiz === null ? null : quiz.meta;
     },
-
     load: loader.load,
     ready: loader.ready,
     locked: loader.locked,
     unlock: loader.unlock,
-
     next(): NavResult {
       if (state.plan === null) {
         return { ok: false, reason: "blocked" };
@@ -336,7 +368,6 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       autoReveal();
       return { ok: true };
     },
-
     prev(): NavResult {
       if (state.plan === null || state.index < 0) {
         return { ok: false, reason: "blocked" };
@@ -348,7 +379,6 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       autoReveal();
       return { ok: true };
     },
-
     goTo(index: number): NavResult {
       if (state.plan === null) {
         return { ok: false, reason: "blocked" };
@@ -363,9 +393,12 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       autoReveal();
       return { ok: true };
     },
-
     setOrder: applyOrder,
-
+    t,
+    languages(): readonly string[] {
+      return languagesOf(models);
+    },
+    setLanguage,
     restart(restartOptions: { readonly keepResponses?: boolean } = {}): void {
       apply(
         sessionReducer(
@@ -380,7 +413,6 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
         ),
       );
     },
-
     setMode(mode: PlayMode): boolean {
       if (config.restricted === true && mode === PlayMode.Answers) {
         return false;
@@ -389,7 +421,6 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       emitter.emit("mode:change", { mode });
       return true;
     },
-
     setResponse(questionId: string, response: Response): void {
       apply(
         sessionReducer(
@@ -402,19 +433,15 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       replan();
       autoReveal();
     },
-
     currentScreen(): ScreenViewModel | null {
       return screenOf();
     },
-
     progress(): Progress {
       return state.plan === null ? EMPTY_PROGRESS : progressOf(state);
     },
-
     diagnostics(): readonly Diagnostic[] {
       return diagnostics;
     },
-
     fail(message: string, suggestion?: string): void {
       const diagnostic = syntaxWarning(DiagnosticCodes.InvalidLine, message, {
         ...(suggestion === undefined ? {} : { suggestion }),
@@ -429,18 +456,15 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
         ),
       );
     },
-
     subscribe(listener): () => void {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
       };
     },
-
     on(event, handler): () => void {
       return emitter.on(event, handler);
     },
-
     export: {
       embedded(embeddedOptions: EmbeddedOptions = {}): EmbeddedQuizV3 {
         if (quiz === null) {
@@ -449,7 +473,15 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
         return toEmbedded(quiz, embeddedOptions);
       },
     },
-
+    configure(partial: Partial<QuizConfig>): void {
+      if (partial.language !== undefined && partial.language !== null) {
+        const { language: _language, ...rest } = partial;
+        setLanguage(partial.language);
+        extras.configure(rest);
+        return;
+      }
+      extras.configure(partial);
+    },
     destroy(): void {
       destroyed = true;
       journal?.flush();

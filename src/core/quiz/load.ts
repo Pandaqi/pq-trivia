@@ -28,6 +28,11 @@ import {
   type Diagnostic,
 } from "../syntax/diagnostics";
 import type { LoadInput, ParseHook, QuizConfig } from "./types";
+import {
+  languageFromFile,
+  mergeModels,
+  splitByLanguage,
+} from "./languages";
 
 export interface LoaderDeps {
   readonly destroyed: () => boolean;
@@ -39,7 +44,7 @@ export interface LoaderDeps {
   readonly apply: (state: SessionState) => void;
   readonly notify: (previousStatus: SessionStatus) => void;
   readonly refreshSaved: () => Promise<void>;
-  readonly finishLoad: (model: QuizModel) => void;
+  readonly finishLoad: (models: Map<string, QuizModel>) => void;
   readonly diagnostics: Diagnostic[];
   readonly emitReady: () => void;
 }
@@ -74,8 +79,8 @@ export function createLoader(deps: LoaderDeps): Loader {
     );
   }
 
-  async function settle(model: QuizModel): Promise<void> {
-    deps.finishLoad(model);
+  async function settle(models: Map<string, QuizModel>): Promise<void> {
+    deps.finishLoad(models);
     await deps.refreshSaved();
     deps.notify(deps.state().status);
     if (
@@ -95,15 +100,49 @@ export function createLoader(deps: LoaderDeps): Loader {
 
   function buildOptions(file?: string): BuildOptions {
     const config = deps.config();
+    const fromName = languageFromFile(file);
+    const language =
+      fromName ?? config.languageDefault ?? config.language ?? null;
     return {
       ...(file !== undefined ? { file } : {}),
       ...(config.defaultScore !== undefined
         ? { defaultScore: config.defaultScore }
         : {}),
-      ...(config.language !== undefined && config.language !== null
-        ? { defaultLanguage: config.language }
-        : {}),
+      ...(language !== null ? { defaultLanguage: language } : {}),
+      ...(config.forbidInlineLists === true ? { forbidInlineLists: true } : {}),
+      ...(config.symbols !== undefined ? { symbols: config.symbols } : {}),
     };
+  }
+
+  /** Parsed inputs, one per file, become one model per language. */
+  function modelsFromParsed(
+    parsed: readonly {
+      readonly parsed: Awaited<ReturnType<ParseHook>>;
+      readonly language: string | null;
+    }[],
+  ): Map<string, QuizModel> {
+    const grouped = new Map<string, QuizModel[]>();
+    for (const entry of parsed) {
+      const options = buildOptions();
+      const model = buildQuizFromParsed(
+        [entry.parsed],
+        entry.language === null
+          ? options
+          : { ...options, defaultLanguage: entry.language },
+      );
+      const fallback = deps.config().languageDefault ?? null;
+      for (const [language, split] of splitByLanguage(model, fallback)) {
+        const list = grouped.get(language) ?? [];
+        list.push(split);
+        grouped.set(language, list);
+      }
+    }
+    return new Map(
+      [...grouped.entries()].map(([language, models]) => [
+        language,
+        mergeModels(models),
+      ]),
+    );
   }
 
   async function load(input: LoadInput): Promise<void> {
@@ -115,24 +154,36 @@ export function createLoader(deps: LoaderDeps): Loader {
       if (input.type === "text") {
         const options = buildOptions(input.file);
         const parsed = await deps.parseText(input.text, options);
-        await settle(buildQuizFromParsed([parsed], options));
+        await settle(
+          modelsFromParsed([
+            { parsed, language: languageFromFile(input.file) },
+          ]),
+        );
         return;
       }
       if (input.type === "files") {
+        // Parse every file with its own language. A name like
+        // `questions.nl.trivia` is a language mark, not decoration.
         const parsed = await Promise.all(
-          input.files.map((file) =>
-            deps.parseText(file.text, buildOptions(file.name)),
-          ),
+          input.files.map(async (file) => ({
+            parsed: await deps.parseText(file.text, buildOptions(file.name)),
+            language: languageFromFile(file.name),
+          })),
         );
-        await settle(buildQuizFromParsed(parsed, buildOptions()));
+        await settle(modelsFromParsed(parsed));
         return;
       }
       if (input.type === "model") {
-        await settle(input.quiz);
+        await settle(splitByLanguage(input.quiz, deps.config().languageDefault ?? null));
         return;
       }
       if (input.type === "inline") {
-        await settle(fromEmbedded(input.data).quiz);
+        await settle(
+          splitByLanguage(
+            fromEmbedded(input.data).quiz,
+            deps.config().languageDefault ?? null,
+          ),
+        );
         return;
       }
       if (!isEncryptedQuiz(input.data)) {
@@ -155,7 +206,12 @@ export function createLoader(deps: LoaderDeps): Loader {
       const plain = await key.unlock(payload, passphrase);
       lockedPayload = null;
       deps.setState(sessionReducer(deps.state(), { type: "load/start" }));
-      await settle(fromEmbedded(plain).quiz);
+      await settle(
+        splitByLanguage(
+          fromEmbedded(plain).quiz,
+          deps.config().languageDefault ?? null,
+        ),
+      );
       return deps.state().status !== SessionStatus.Error;
     } catch {
       // Wrong passphrase. Keep the payload so the next try can work.

@@ -8,6 +8,7 @@
 import type { JSX } from "preact";
 import { answerRefs } from "../../../core/model/answers";
 import { QuestionType, type QuestionModel } from "../../../core/model/question";
+import { useT } from "../i18n";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -15,10 +16,6 @@ export interface FormRound {
   readonly id: string;
   readonly name: string;
   readonly secret: string | null;
-}
-
-function label(count: number, singular: string): string {
-  return `${count} ${count === 1 ? singular : `${singular}s`}`;
 }
 
 export function PrintForm({
@@ -32,6 +29,7 @@ export function PrintForm({
   readonly compact: boolean;
   readonly roundPageBreak: boolean;
 }): JSX.Element {
+  const t = useT();
   return (
     <section
       class={`pq-print-page pq-print-form${compact ? " pq-form-compact" : ""}`}
@@ -54,15 +52,16 @@ export function PrintForm({
               key={round.id}
             >
               <caption>
-                {round.name} · {label(items.length, "question")} ·{" "}
-                {label(points, "point")}
+                {round.name} · {items.length} {t(
+                  items.length === 1 ? "question_one" : "question_other",
+                )} · {points} {t(points === 1 ? "point_one" : "point_other")}
               </caption>
               <thead>
                 <tr>
                   <th scope="col">#</th>
-                  <th scope="col">Question</th>
-                  <th scope="col">Answer</th>
-                  <th scope="col">Points</th>
+                  <th scope="col">{t("printQuestion")}</th>
+                  <th scope="col">{t("printAnswer")}</th>
+                  <th scope="col">{t("printPoints")}</th>
                 </tr>
               </thead>
               <tbody>

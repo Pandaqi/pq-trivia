@@ -3,8 +3,10 @@
 import type { JSX } from "preact";
 import { useState } from "preact/hooks";
 import type { Quiz } from "../../../core/session/quiz";
+import { useT } from "../i18n";
 
 export function LockedScreen({ quiz }: { readonly quiz: Quiz }): JSX.Element {
+  const t = useT();
   const [passphrase, setPassphrase] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -18,16 +20,14 @@ export function LockedScreen({ quiz }: { readonly quiz: Quiz }): JSX.Element {
     const opened = await quiz.unlock(passphrase);
     setBusy(false);
     if (!opened) {
-      setError("That passphrase did not open the file.");
+      setError(t("passphraseError"));
     }
   };
 
   return (
     <main class="pq-screen pq-screen-message">
-      <h1 class="pq-title">Locked quiz</h1>
-      <p class="pq-body">
-        This quiz is encrypted. Enter its passphrase to load the questions.
-      </p>
+      <h1 class="pq-title">{t("lockedTitle")}</h1>
+      <p class="pq-body">{t("lockedBody")}</p>
       <form
         class="pq-settings-body"
         onSubmit={(event) => {
@@ -36,7 +36,7 @@ export function LockedScreen({ quiz }: { readonly quiz: Quiz }): JSX.Element {
         }}
       >
         <label class="pq-field">
-          <span class="pq-field-label">Passphrase</span>
+          <span class="pq-field-label">{t("passphrase")}</span>
           <input
             class="pq-input"
             type="password"
@@ -55,7 +55,7 @@ export function LockedScreen({ quiz }: { readonly quiz: Quiz }): JSX.Element {
           class="pq-primary"
           disabled={busy || passphrase.length === 0}
         >
-          {busy ? "Opening…" : "Unlock"}
+          {busy ? t("opening") : t("unlock")}
         </button>
       </form>
     </main>

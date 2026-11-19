@@ -10,6 +10,12 @@ import { attemptKeyFor } from "../../core/session/attempts";
 import type { Quiz } from "../../core/session/quiz";
 import { browserTimerSound } from "../../platform/browser/sound";
 import { createBrowserJournal } from "../../platform/browser/storage/local";
+import {
+  getTheme,
+  loadTheme,
+  resolveThemeFolder,
+  setTheme,
+} from "../../platform/browser/theme";
 import { QuizApp } from "./QuizApp";
 import { mountPrintSheet, type MountedPrintSheet } from "./print/mountPrint";
 import type { PrintOptions, PrintVariant } from "./print/PrintSheet";
@@ -36,6 +42,30 @@ export function mountQuiz(
 ): MountedQuiz {
   render(h(QuizApp, { quiz, timerSound: browserTimerSound }), target);
 
+  // `createQuiz({ config: { theme: "themes/forest/" } })`, the V2 door.
+  const requested = quiz.config.theme;
+  let loadedTheme = false;
+  if (
+    quiz.config.themeDisabled !== true &&
+    typeof requested === "string" &&
+    requested.trim().length > 0
+  ) {
+    void loadTheme(resolveThemeFolder(requested))
+      .then((theme) => {
+        // A folder picked while this was loading wins. Late fetches must not
+        // snatch the theme back.
+        if (getTheme() !== null) {
+          theme.destroy();
+          return;
+        }
+        loadedTheme = true;
+        setTheme(theme);
+      })
+      .catch((error: unknown) => {
+        console.warn(`[pq-trivia] ${String(error)}`);
+      });
+  }
+
   // Attempts need the quiz key, which needs the title, seed and count. So the
   // journal attaches on the first real state, not at create time.
   let journalAttached = false;
@@ -55,6 +85,18 @@ export function mountQuiz(
   });
 
   const doc = target.ownerDocument;
+  const icon =
+    typeof quiz.config.icon === "string" && quiz.config.icon.trim().length > 0
+      ? doc.createElement("link")
+      : null;
+  if (icon !== null) {
+    icon.rel = "icon";
+    icon.href = new URL(
+      quiz.config.icon as string,
+      doc.baseURI,
+    ).href;
+    doc.head.append(icon);
+  }
   const printHost = doc.createElement("div");
   printHost.className = "pq-print-only";
   doc.body.append(printHost);
@@ -90,7 +132,11 @@ export function mountQuiz(
       sheet?.destroy();
       sheet = null;
       printHost.remove();
+      icon?.remove();
       render(null, target);
+      if (loadedTheme && getTheme() !== null) {
+        setTheme(null);
+      }
     },
   };
 }

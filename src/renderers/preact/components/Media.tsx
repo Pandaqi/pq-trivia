@@ -4,6 +4,7 @@ import type { JSX } from "preact";
 import { useState } from "preact/hooks";
 import { MediaKind } from "../../../core/values/media";
 import type { MediaViewModel } from "../../../core/session/viewModel";
+import { useT } from "../i18n";
 
 function Missing({
   path,
@@ -12,14 +13,15 @@ function Missing({
   readonly path: string;
   readonly onRetry: () => void;
 }): JSX.Element {
+  const t = useT();
   return (
     <figure class="pq-media pq-media-missing" role="status">
-      <p class="pq-media-missing-text">Media not found: {path}</p>
-      <p class="pq-media-missing-hint">
-        Check the path next to the quiz file.
+      <p class="pq-media-missing-text">
+        {t("mediaMissing", { path })}
       </p>
+      <p class="pq-media-missing-hint">{t("mediaHint")}</p>
       <button type="button" class="pq-link" onClick={onRetry}>
-        Try again
+        {t("tryAgain")}
       </button>
     </figure>
   );
@@ -33,8 +35,12 @@ function Credit({ text }: { readonly text: string | null }): JSX.Element | null 
 
 export function Media({
   item,
+  autoplay = false,
+  asIframe = false,
 }: {
   readonly item: MediaViewModel;
+  readonly autoplay?: boolean;
+  readonly asIframe?: boolean;
 }): JSX.Element {
   // A new attempt remounts the tag, which is the only way to make the browser
   // ask for the file again.
@@ -74,6 +80,7 @@ export function Media({
           key={attempt}
           src={item.path}
           controls
+          autoplay={autoplay}
           preload="metadata"
           onError={() => setFailed(true)}
         >
@@ -94,6 +101,7 @@ export function Media({
           src={item.path}
           poster={item.poster ?? undefined}
           controls
+          autoplay={autoplay}
           playsinline
           preload="metadata"
           onError={() => setFailed(true)}
@@ -102,6 +110,21 @@ export function Media({
             <track kind="captions" src={item.captions} default />
           )}
         </video>
+        <Credit text={item.credit} />
+      </figure>
+    );
+  }
+
+  if (asIframe) {
+    return (
+      <figure class="pq-media pq-media-embed">
+        <iframe
+          src={item.path}
+          title={item.alt ?? item.path}
+          loading="lazy"
+          allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-presentation"
+        />
         <Credit text={item.credit} />
       </figure>
     );

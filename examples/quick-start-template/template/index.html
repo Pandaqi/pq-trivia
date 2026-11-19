@@ -1,43 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <script src="pq-trivia.min.js"></script>
-    <script>
-        /*const themeParams = 
-        {
-            label: "some-custom-theme",
-            backgroundImages: ["bg-image-1.webp", "bg-image-2.webp"],
-            fonts:
-            {
-                body:
-                {
-                    name: "Lora",
-                    regular: "Lora-Medium.woff2",
-                    italic: "Lora-Italic.woff2",
-                    bold: "Lora-Bold.woff2",
-                    bold_italic: "Lora-BoldItalic.woff2"
-                },
-    
-                heading:
-                {
-                    name: "SomeOtherFontMaybe",
-                    regular: "OtherFont.woff2"
-                }
-            }
-        }*/
-        
-        window.addEventListener('load', () =>
-        {
-            window.quiz = new window.Quiz({
-                title: "quiz-name",
-                //theme: new window.QuizTheme(themeParams),
-            });
-        });
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Friday Night</title>
+  </head>
+  <body>
+    <!-- The quiz lives in the page, so this opens straight from a folder. -->
+    <script id="quiz-text" type="text/plain">
+Title => Friday Night
+Author => Pandaqi
+Seed => friday
+
+## What do you think about this trivia framework?
+Media => themes/forest/bg-dots.svg
+### Answers
+Amazing
+Wonderful
+Incredible
+Groundbreaking
+Correct => Groundbreaking
+Score => 2
+Explanation => Thank you. It is **one file** and it works offline.
+
+## Which band wrote "Bohemian Rhapsody"?
+Answers => Queen
+
+# Round two
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0.5
+
+Question => Put these in order, oldest first.
+Type => Sort
+### Answers
+The wheel
+The printing press
+The internet
+Correct => The wheel | The printing press | The internet
     </script>
-</head>
 
-<body>
-</body>
-
+    <!-- The only other file. Styles, fonts and print are inside it. -->
+    <script src="pq-trivia.min.js"></script>
+  </body>
 </html>
-

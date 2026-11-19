@@ -11,6 +11,7 @@ import {
   downloadQuizHandout,
   downloadQuizJson,
 } from "../../../platform/browser/exports";
+import { useT } from "../i18n";
 
 export function SettingsPanel({
   quiz,
@@ -19,6 +20,7 @@ export function SettingsPanel({
   readonly quiz: Quiz;
   readonly seed: string;
 }): JSX.Element {
+  const t = useT();
   const [draftSeed, setDraftSeed] = useState(seed);
   const [questions, setQuestions] = useState(
     quiz.config.shuffleQuestions ?? false,
@@ -29,10 +31,10 @@ export function SettingsPanel({
 
   return (
     <details class="pq-settings">
-      <summary>Order and seed</summary>
+      <summary>{t("settingsTitle")}</summary>
       <div class="pq-settings-body">
         <label class="pq-field">
-          <span class="pq-field-label">Seed</span>
+          <span class="pq-field-label">{t("seed")}</span>
           <input
             class="pq-input"
             type="text"
@@ -47,7 +49,7 @@ export function SettingsPanel({
             checked={questions}
             onChange={(event) => setQuestions(event.currentTarget.checked)}
           />
-          Shuffle questions inside a round
+          {t("shuffleQuestions")}
         </label>
         <label class="pq-check">
           <input
@@ -55,7 +57,7 @@ export function SettingsPanel({
             checked={rounds}
             onChange={(event) => setRounds(event.currentTarget.checked)}
           />
-          Shuffle rounds
+          {t("shuffleRounds")}
         </label>
         <button
           type="button"
@@ -67,11 +69,9 @@ export function SettingsPanel({
             })
           }
         >
-          Apply order
+          {t("applyOrder")}
         </button>
-        <p class="pq-settings-note">
-          The same seed gives the same order. Answers stay where you left them.
-        </p>
+        <p class="pq-settings-note">{t("orderNote")}</p>
 
         <label class="pq-check">
           <input
@@ -82,12 +82,12 @@ export function SettingsPanel({
               quiz.configure({ timerSound: event.currentTarget.checked });
             }}
           />
-          Beep in the last five seconds
+          {t("beep")}
         </label>
 
         {actions.length === 0 ? null : (
           <fieldset class="pq-settings-group">
-            <legend>Toolbar</legend>
+            <legend>{t("toolbar")}</legend>
             {actions.map((action) => (
               <label class="pq-check" key={action.id}>
                 <input
@@ -102,26 +102,23 @@ export function SettingsPanel({
                     quiz.configure({});
                   }}
                 />
-                Pin {action.label}
+                {t("pin", { label: action.label })}
               </label>
             ))}
           </fieldset>
         )}
 
         <fieldset class="pq-settings-group">
-          <legend>Download</legend>
+          <legend>{t("download")}</legend>
           <div class="pq-settings-row">
             <button type="button" onClick={() => downloadQuizJson(quiz)}>
-              Save JSON
+              {t("saveJson")}
             </button>
             <button type="button" onClick={() => downloadQuizHandout(quiz)}>
-              Save handout
+              {t("saveHandout")}
             </button>
           </div>
-          <p class="pq-settings-note">
-            JSON opens in any editor. The handout is HTML with no script, so it
-            prints and reads offline.
-          </p>
+          <p class="pq-settings-note">{t("downloadNote")}</p>
         </fieldset>
       </div>
     </details>

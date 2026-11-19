@@ -2,8 +2,13 @@
 
 import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { getTheme, subscribeTheme } from "../../platform/browser/theme";
 import type { ViewRenderer } from "../../core/session/registry";
-import { SessionStatus, type SessionState } from "../../core/session/session";
+import {
+  PlayMode,
+  SessionStatus,
+  type SessionState,
+} from "../../core/session/session";
 import type { TimerSound } from "../../core/session/timers";
 import type { Quiz } from "../../core/session/quiz";
 import {
@@ -12,6 +17,7 @@ import {
   type ScreenViewModel,
 } from "../../core/session/viewModel";
 import { CodeHighlightContext } from "./components/CodeBlock";
+import { UiContext } from "./i18n";
 import { preloadNextQuestion } from "../../platform/browser/preload";
 import { EndScreen } from "./screens/EndScreen";
 import { LockedScreen } from "./screens/LockedScreen";
@@ -34,12 +40,94 @@ function isTyping(target: EventTarget | null): boolean {
   );
 }
 
-const KEY_ACTIONS: Readonly<Record<string, (quiz: Quiz) => void>> = {
-  ArrowRight: (quiz) => quiz.next(),
-  ArrowLeft: (quiz) => quiz.prev(),
-  r: (quiz) => quiz.reveal(),
-  h: (quiz) => quiz.revealHint(),
+type Action = (quiz: Quiz) => void;
+
+/** V2's keys, with `hotkeys` and `hotkeysForbidden` on top. */
+const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
+  next: ["ArrowRight", ">", " "],
+  prev: ["ArrowLeft", "<"],
+  reveal: ["r", "a"],
+  hint: ["h"],
+  mode: ["m"],
+  end: ["Escape"],
+  start: ["Home"],
+  language: ["l"],
+  media: ["Enter"],
+  fontUp: ["+", "="],
+  fontDown: ["-"],
 };
+
+function actionFor(name: string): Action | null {
+  switch (name) {
+    case "next":
+      return (target) => void target.next();
+    case "prev":
+      return (target) => void target.prev();
+    case "reveal":
+      return (target) => void target.reveal();
+    case "hint":
+      return (target) => void target.revealHint();
+    case "mode":
+      return (target) =>
+        void target.setMode(
+          target.state.mode === PlayMode.Answers
+            ? PlayMode.Questions
+            : PlayMode.Answers,
+        );
+    case "end":
+      return (target) => {
+        const plan = target.state.plan;
+        if (plan !== null) {
+          target.goTo(plan.questions.length);
+        }
+      };
+    case "start":
+      return (target) => target.goTo(-1);
+    case "language":
+      return (target) => {
+        const languages = target.languages();
+        if (languages.length < 2) {
+          return;
+        }
+        const index = languages.indexOf(target.state.language ?? "");
+        target.setLanguage(languages[(index + 1) % languages.length] ?? "en");
+      };
+    case "media":
+      return () => undefined;
+    default:
+      return null;
+  }
+}
+
+function keyMap(config: Quiz["config"]): Map<string, string> {
+  const map = new Map<string, string>();
+  const forbidden = new Set(config.hotkeysForbidden ?? []);
+  for (const [name, keys] of Object.entries(DEFAULT_KEYS)) {
+    if (forbidden.has(name)) {
+      continue;
+    }
+    for (const key of keys) {
+      map.set(key, name);
+    }
+  }
+  const aliases: Readonly<Record<string, string>> = {
+    "font-size-plus": "fontUp",
+    "font-size-min": "fontDown",
+    "next-section": "next",
+    "prev-section": "prev",
+    fullscreen: "media",
+  };
+  for (const [raw, keys] of Object.entries(config.hotkeys ?? {})) {
+    const name = aliases[raw] ?? raw;
+    if (forbidden.has(name) || forbidden.has(raw)) {
+      continue;
+    }
+    for (const key of typeof keys === "string" ? [keys] : keys) {
+      map.set(key, name);
+    }
+  }
+  return map;
+}
 
 /** A host view: whatever DOM they return lands in a plain host element. */
 function CustomView({
@@ -112,6 +200,62 @@ export function QuizApp({
     screen: quiz.currentScreen(),
   }));
   const root = useRef<HTMLDivElement>(null);
+  const appliedTheme = useRef<ReturnType<typeof getTheme>>(null);
+  const [themeVersion, setThemeVersion] = useState(0);
+
+  useEffect(() => subscribeTheme(() => setThemeVersion((value) => value + 1)), []);
+
+  // Tokens, fonts and a background per question. The theme is a runtime; this
+  // effect only moves its CSS variables onto the current root.
+  useEffect(() => {
+    const element = root.current;
+    if (element === null) {
+      return;
+    }
+    const previous = appliedTheme.current;
+    const theme = getTheme();
+    // A swap must not leave the old theme's fonts, veil or background behind
+    // just because the new theme does not set them.
+    const themed = [
+      "--pq-theme-image",
+      "--pq-theme-fade",
+      "--pq-font-body",
+      "--pq-font-heading",
+      "--pq-heading-weight",
+      "--pq-scheme-light",
+      "--pq-scheme-dark",
+      "--pq-scheme-bg",
+      "--pq-scheme-text",
+    ];
+    for (const name of themed) {
+      element.style.removeProperty(name);
+    }
+    if (previous !== null) {
+      for (const name of Object.keys(previous.settings.tokens)) {
+        element.style.removeProperty(name);
+      }
+    }
+    if (theme !== null) {
+      for (const name of Object.keys(theme.settings.tokens)) {
+        element.style.removeProperty(name);
+      }
+    }
+    appliedTheme.current = theme;
+    if (theme === null) {
+      return;
+    }
+    const key =
+      snapshot.screen?.kind === ScreenKind.Question
+        ? snapshot.screen.id
+        : (snapshot.screen?.kind ?? "quiz");
+    theme.apply(
+      element,
+      key,
+      snapshot.screen?.kind === ScreenKind.Question
+        ? snapshot.screen.colorScheme
+        : null,
+    );
+  }, [themeVersion, snapshot.screen]);
 
   useEffect(() => {
     const sync = () =>
@@ -129,15 +273,87 @@ export function QuizApp({
       if (event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
-      const action = KEY_ACTIONS[event.key];
-      if (action === undefined) {
+      const config = quiz.config;
+      if (config.disableKeys === true || config.disableUI === true) {
+        return;
+      }
+      // Space on a focused button is that button's click, not a second action.
+      if (
+        event.key === " " &&
+        (event.target as HTMLElement | null)?.closest?.("button, a") !== null
+      ) {
+        return;
+      }
+      const name = keyMap(config).get(event.key);
+      if (name === undefined) {
         return;
       }
       event.preventDefault();
-      action(quiz);
+      if (name === "media") {
+        const media = root.current?.querySelector<
+          HTMLMediaElement
+        >("audio, video");
+        if (media !== null && media !== undefined) {
+          if (media.paused) {
+            void media.play().catch(() => undefined);
+          } else {
+            media.pause();
+          }
+        }
+        return;
+      }
+      if (name === "fontUp" || name === "fontDown") {
+        const current = Number(root.current?.dataset["pqFontScale"] ?? "1");
+        const next = Math.min(
+          1.6,
+          Math.max(0.7, current + (name === "fontUp" ? 0.1 : -0.1)),
+        );
+        if (root.current !== null) {
+          root.current.dataset["pqFontScale"] = String(next);
+          root.current.style.fontSize = `${Math.round(next * 100)}%`;
+        }
+        return;
+      }
+      if (config.enableSafety === true && (name === "mode" || name === "end")) {
+        const message =
+          name === "mode" ? quiz.t("safetyMode") : quiz.t("safetyEnd");
+        if (!window.confirm(message)) {
+          return;
+        }
+      }
+      const action = actionFor(name);
+      action?.(quiz);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [quiz, root]);
+
+  // V2's edge clicks. Off unless the host asks for them.
+  useEffect(() => {
+    if (quiz.config.enableMouse !== true) {
+      return;
+    }
+    const onClick = (event: MouseEvent) => {
+      if (
+        quiz.config.disableTouch === true &&
+        event instanceof PointerEvent &&
+        event.pointerType === "touch"
+      ) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("button, a, input, textarea, select, video, audio")) {
+        return;
+      }
+      const width = window.innerWidth;
+      if (event.clientX < width * 0.15) {
+        quiz.prev();
+      } else if (event.clientX > width * 0.85) {
+        quiz.next();
+      }
+    };
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
   }, [quiz]);
 
   useEffect(() => {
@@ -156,8 +372,8 @@ export function QuizApp({
     }
     const title =
       snapshot.state.status === SessionStatus.Error
-        ? "This quiz could not be loaded"
-        : "No quiz yet";
+        ? quiz.t("loadFailed")
+        : quiz.t("noQuiz");
     return (
       <div class="pq-quiz" ref={root}>
         <MessageScreen title={title} messages={quiz.diagnostics()} />
@@ -167,26 +383,28 @@ export function QuizApp({
 
   const label =
     screen.kind === ScreenKind.Question
-      ? screen.heading
+      ? quiz.t("questionOf", { index: screen.index + 1, total: screen.total })
       : screen.kind === ScreenKind.Start
-        ? screen.title
+        ? screen.title || quiz.t("untitled")
         : screen.kind === ScreenKind.Results
-          ? `Results: ${screen.report.percent} percent`
-          : "End of quiz";
+          ? quiz.t("resultsLabel", { percent: screen.report.percent })
+          : quiz.t("endLabel");
 
   return (
     <div class="pq-quiz" ref={root} data-pq-screen={screen.kind}>
       <p class="pq-live" aria-live="polite">
         {label}
       </p>
-      <CodeHighlightContext.Provider value={quiz.config.codeHighlight === true}>
-        <ScreenView
-          quiz={quiz}
-          screen={screen}
-          state={snapshot.state}
-          timerSound={timerSound}
-        />
-      </CodeHighlightContext.Provider>
+      <UiContext.Provider value={quiz.t}>
+        <CodeHighlightContext.Provider value={quiz.config.codeHighlight === true}>
+          <ScreenView
+            quiz={quiz}
+            screen={screen}
+            state={snapshot.state}
+            timerSound={timerSound}
+          />
+        </CodeHighlightContext.Provider>
+      </UiContext.Provider>
     </div>
   );
 }

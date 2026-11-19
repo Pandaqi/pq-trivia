@@ -10,7 +10,7 @@ import { parseOnce } from "./inlineParser";
 import { InlineKind, type InlineNode } from "./inlineAst";
 
 export * from "./inlineAst";
-export { isSafeHref, sanitizeStyle } from "./inlineParser";
+export { isSafeHref, sanitizeStyle } from "./safe";
 
 export interface InlineParseResult {
   readonly nodes: readonly InlineNode[];
@@ -47,6 +47,9 @@ export function inlineToPlainText(nodes: readonly InlineNode[]): string {
         break;
       case InlineKind.Blank:
         out += "____";
+        break;
+      case InlineKind.Image:
+        out += node.alt.length > 0 ? node.alt : node.src;
         break;
       case InlineKind.Break:
         out += "\n";

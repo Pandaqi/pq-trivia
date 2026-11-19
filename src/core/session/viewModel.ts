@@ -6,8 +6,10 @@
  * That is what makes DOM inspection useless in classroom mode.
  */
 
-import { parseInline, type InlineNode } from "../format/inline";
+import { InlineKind, parseInline, type InlineNode } from "../format/inline";
 import { answerRefs } from "../model/answers";
+import { OrderMode } from "../model/question";
+import { derivedRng, shuffleWith } from "../plan/shuffle";
 import type { QuizMeta } from "../model/quiz";
 import {
   QuestionType,
@@ -17,7 +19,11 @@ import {
 import type { QuizPlan } from "../plan/plan";
 import type { GradeReport } from "../grading/report";
 import { PlayMode, type Progress, type SessionState } from "./session";
-import type { MediaDescriptor, MediaKind } from "../values/media";
+import {
+  MediaKind,
+  parseMediaDescriptor,
+  type MediaDescriptor,
+} from "../values/media";
 
 export enum ScreenKind {
   Start = "start",
@@ -29,6 +35,10 @@ export enum ScreenKind {
 export interface AnswerViewModel {
   readonly id: string;
   readonly text: string;
+  /** The same inline tree the question uses. Links and emphasis work here too. */
+  readonly nodes: readonly InlineNode[];
+  /** Set when the answer is a media file, like V2 allowed. Otherwise null. */
+  readonly media: MediaViewModel | null;
   /** Null in question mode. True or false once answers may be shown. */
   readonly correct: boolean | null;
   /** Points this answer earns, shown in a corner bubble. Null until revealed. */
@@ -49,12 +59,13 @@ export interface MediaViewModel {
 
 export function toMediaViewModel(
   descriptor: MediaDescriptor,
+  fallbackAlt: string | null = null,
 ): MediaViewModel {
   const options = descriptor.options;
   return {
     path: descriptor.path,
     kind: descriptor.kind,
-    alt: options["alt"] ?? null,
+    alt: options["alt"] ?? fallbackAlt,
     credit: options["credit"] ?? null,
     srcset: options["srcset"] ?? null,
     poster: options["poster"] ?? null,
@@ -66,21 +77,28 @@ export interface QuestionViewModel {
   readonly kind: ScreenKind.Question;
   readonly id: string;
   readonly type: QuestionType;
-  readonly heading: string;
   readonly title: readonly InlineNode[];
   readonly body: readonly InlineNode[];
   readonly answers: readonly AnswerViewModel[];
   readonly media: readonly MediaViewModel[];
   readonly hints: {
-    readonly revealed: readonly string[];
+    readonly revealed: readonly {
+      readonly text: string;
+      readonly nodes: readonly InlineNode[];
+    }[];
     readonly total: number;
   };
+  /** False when the question asked for its text to stay exactly as written. */
+  readonly formatText: boolean;
   readonly explanation: string | null;
+  readonly sources: readonly string[];
   readonly timerMs: number | null;
   readonly layout: string | null;
   readonly classes: readonly string[];
   readonly colorScheme: string | null;
   readonly transition: string | null;
+  readonly reveal: string | null;
+  readonly variant: string | null;
   readonly background: string | null;
   readonly index: number;
   readonly total: number;
@@ -91,6 +109,8 @@ export interface QuestionViewModel {
   readonly isRoundStart: boolean;
   readonly authors: readonly string[];
   readonly categories: readonly string[];
+  readonly authorsDiverse: boolean;
+  readonly categoriesDiverse: boolean;
   readonly points: number;
   readonly language: string | null;
   readonly progress: Progress;
@@ -152,8 +172,14 @@ export {
   type ViewRenderer,
 } from "./registry";
 
-function textOf(question: QuestionModel): string[] {
-  return question.text.map((value) => value.text);
+/** `$` and `FormatText => false` both mean: show the characters, nothing else. */
+function inlineValue(
+  value: { readonly text: string; readonly keepAsIs: boolean },
+  formatText: boolean,
+): readonly InlineNode[] {
+  return formatText && !value.keepAsIs
+    ? parseInline(value.text).nodes
+    : [{ kind: InlineKind.Text, text: value.text }];
 }
 
 export interface QuestionScreenView {
@@ -164,6 +190,8 @@ export interface QuestionScreenView {
   readonly roundSecret: string | null;
   readonly roundNumber: number | null;
   readonly isRoundStart: boolean;
+  readonly authorsDiverse: boolean;
+  readonly categoriesDiverse: boolean;
 }
 
 export function questionScreen(
@@ -172,13 +200,19 @@ export function questionScreen(
   view: QuestionScreenView,
 ): QuestionViewModel {
   const { index, total, progress } = view;
-  const texts = textOf(question);
-  const [title = "", ...bodyLines] = texts;
+  const titleValue = question.text[0];
+  const title = titleValue?.text ?? "";
+  const bodyValues = question.text.slice(1);
   const revealed = state.revealed.includes(question.id);
   const showAnswers = state.mode === PlayMode.Answers || revealed;
   const correctTexts = new Set(question.correct.map((value) => value.text));
+  const formatText = question.formatText;
 
-  const refs = answerRefs(question);
+  const declared = answerRefs(question);
+  const refs =
+    question.answersOrder === OrderMode.Shuffle
+      ? shuffleWith(declared, derivedRng(question.id, "answers"))
+      : declared;
   const parts = Math.max(question.correct.length, 1);
   const pointsPerAnswer =
     question.scoring === ScoringMethod.Partial
@@ -186,36 +220,53 @@ export function questionScreen(
       : question.score;
   const answers: AnswerViewModel[] = refs.map((ref) => {
     const correct = showAnswers ? correctTexts.has(ref.value.text) : null;
+    const descriptor = parseMediaDescriptor(ref.value.text);
+    const isMedia = !ref.value.keepAsIs && descriptor.kind !== MediaKind.File;
     return {
       id: ref.id,
       text: ref.value.text,
+      nodes: inlineValue(ref.value, formatText),
+      media: isMedia ? toMediaViewModel(descriptor, question.alt) : null,
       correct,
       points: correct === true ? pointsPerAnswer : null,
     };
   });
 
   const hintCount = state.hints[question.id] ?? 0;
-  const media: MediaViewModel[] = question.media.map(toMediaViewModel);
+  const hints = question.hints.slice(0, hintCount);
+  const declaredMedia = question.media.map((item) =>
+    toMediaViewModel(item, question.alt),
+  );
+  const media =
+    question.mediaOrder === OrderMode.Shuffle
+      ? shuffleWith(declaredMedia, derivedRng(question.id, "media"))
+      : declaredMedia;
 
   return {
     kind: ScreenKind.Question,
     id: question.id,
     type: question.type,
-    heading: `Question ${index + 1} of ${total}`,
-    title: parseInline(title).nodes,
-    body: bodyLines.flatMap((line) => parseInline(line).nodes),
+    title: inlineValue({ text: title, keepAsIs: titleValue?.keepAsIs ?? false }, formatText),
+    body: bodyValues.flatMap((value) => inlineValue(value, formatText)),
     answers,
     media,
     hints: {
-      revealed: question.hints.slice(0, hintCount).map((value) => value.text),
+      revealed: hints.map((value) => ({
+        text: value.text,
+        nodes: inlineValue(value, formatText),
+      })),
       total: question.hints.length,
     },
+    formatText,
     explanation: showAnswers ? question.explanation : null,
+    sources: question.sources,
     timerMs: question.timerMs,
     layout: question.layout,
     classes: question.classes,
     colorScheme: question.colorScheme,
     transition: question.transition,
+    reveal: question.reveal,
+    variant: question.variant,
     background: question.background,
     index,
     total,
@@ -226,6 +277,8 @@ export function questionScreen(
     isRoundStart: view.isRoundStart,
     authors: question.authors,
     categories: question.categories,
+    authorsDiverse: view.authorsDiverse,
+    categoriesDiverse: view.categoriesDiverse,
     points: question.score,
     language: question.language,
     progress,
@@ -244,7 +297,7 @@ function screenMedia(question: QuestionModel | null): MediaViewModel[] {
   if (question === null) {
     return [];
   }
-  return question.media.map(toMediaViewModel);
+  return question.media.map((item) => toMediaViewModel(item, question.alt));
 }
 
 function screenComments(question: QuestionModel | null): InlineNode[] {
@@ -271,7 +324,7 @@ export function startScreen(
 ): StartViewModel {
   return {
     kind: ScreenKind.Start,
-    title: meta.title.length > 0 ? meta.title : "Untitled quiz",
+    title: meta.title,
     description: meta.description,
     author: meta.authors.join(", "),
     questionCount: plan?.total ?? 0,
@@ -296,9 +349,7 @@ export function endScreen(
     title:
       outro !== null && outro.text.length > 0
         ? (outro.text[0]?.text ?? meta.title)
-        : meta.title.length > 0
-          ? meta.title
-          : "Untitled quiz",
+        : meta.title,
     questionCount: progress.total,
     answered: progress.answered,
     progress,
@@ -315,7 +366,7 @@ export function resultsScreen(
 ): ResultsViewModel {
   return {
     kind: ScreenKind.Results,
-    title: meta.title.length > 0 ? meta.title : "Untitled quiz",
+    title: meta.title,
     report,
   };
 }

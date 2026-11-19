@@ -117,6 +117,14 @@
   flex-direction: column;
   min-height: 100dvh;
   background: var(--pq-slide);
+  /* Theme folders put a per-question image here. A theme that sets no image
+   * and no fade leaves the paper as it was. */
+  background-image:
+    linear-gradient(
+      rgb(0 0 0 / var(--pq-theme-fade, 0)),
+      rgb(0 0 0 / var(--pq-theme-fade, 0))
+    ),
+    var(--pq-theme-image, none);
   background-position: center;
   background-size: cover;
 }
@@ -256,7 +264,7 @@
   margin: 0;
   font-family: var(--pq-font-heading);
   font-size: var(--pq-title-size);
-  font-weight: 500;
+  font-weight: var(--pq-heading-weight, 500);
   line-height: 1.12;
   text-wrap: balance;
 }

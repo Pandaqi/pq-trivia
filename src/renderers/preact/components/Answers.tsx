@@ -2,6 +2,7 @@
 
 import type { JSX } from "preact";
 import { useMemo, useState } from "preact/hooks";
+import { parseInline } from "../../../core/format/inline";
 import { QuestionType } from "../../../core/model/question";
 import { derivedRng, shuffleWith } from "../../../core/plan/shuffle";
 import type { Quiz } from "../../../core/session/quiz";
@@ -18,6 +19,9 @@ import {
   type Response,
 } from "../../../core/session/responses";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
+import { Inline } from "./Inline";
+import { Media } from "./Media";
+import { useT } from "../i18n";
 
 interface InputProps {
   readonly quiz: Quiz;
@@ -33,6 +37,13 @@ function messageFor(
   return issues.find((issue) => issue.field === field)?.message ?? null;
 }
 
+function issueFor(
+  issues: readonly ResponseIssue[],
+  field: string,
+): ResponseIssue | null {
+  return issues.find((issue) => issue.field === field) ?? null;
+}
+
 function FieldError({
   issues,
   field,
@@ -40,10 +51,18 @@ function FieldError({
   readonly issues: readonly ResponseIssue[];
   readonly field: string;
 }): JSX.Element | null {
-  const message = messageFor(issues, field);
-  return message === null ? null : (
+  const t = useT();
+  const found = issueFor(issues, field);
+  if (found === null) {
+    return null;
+  }
+  const params =
+    found.key === "needBlank"
+      ? { number: Number(field.replace("blank-", "")) + 1 }
+      : {};
+  return (
     <span class="pq-field-error" role="alert">
-      {message}
+      {t(found.key, params)}
     </span>
   );
 }
@@ -54,6 +73,7 @@ function ChoiceInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const selected =
     response.kind === ResponseKind.Choice ? response.selected : [];
   const invalid = messageFor(issues, "answer") !== null;
@@ -84,11 +104,22 @@ function ChoiceInput({
                 <span class="pq-answer-number" aria-hidden="true">
                   {index + 1}
                 </span>
-                <span class="pq-answer-text">{answer.text}</span>
+                <span class="pq-answer-text">
+                  {answer.media === null ? (
+                    <Inline nodes={answer.nodes} />
+                  ) : (
+                    <Media item={answer.media} />
+                  )}
+                </span>
                 {answer.points === null ? null : (
                   <span
                     class="pq-answer-score"
-                    aria-label={`${answer.points} ${answer.points === 1 ? "point" : "points"}`}
+                    aria-label={t("pointsLabel", {
+                      points: answer.points,
+                      unit: t(
+                        answer.points === 1 ? "point_one" : "point_other",
+                      ),
+                    })}
                   >
                     +{answer.points}
                   </span>
@@ -100,7 +131,7 @@ function ChoiceInput({
                 )}
                 {answer.correct === null ? null : (
                   <span class="pq-visually-hidden">
-                    {answer.correct ? "Correct" : "Not correct"}
+                    {answer.correct ? t("correct") : t("notCorrect")}
                   </span>
                 )}
               </button>
@@ -119,11 +150,12 @@ function OpenInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const value = response.kind === ResponseKind.Open ? response.text : "";
   const invalid = messageFor(issues, "answer") !== null;
   return (
     <label class="pq-field">
-      <span class="pq-field-label">Your answer</span>
+      <span class="pq-field-label">{t("answerPlaceholder")}</span>
       <input
         class="pq-input"
         type="text"
@@ -148,11 +180,12 @@ function RangeInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const value = response.kind === ResponseKind.Range ? response.value : null;
   const invalid = messageFor(issues, "number") !== null;
   return (
     <label class="pq-field">
-      <span class="pq-field-label">Number</span>
+      <span class="pq-field-label">{t("numberPlaceholder")}</span>
       <input
         class="pq-input pq-input-number"
         type="number"
@@ -180,11 +213,12 @@ function ListInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const items = response.kind === ResponseKind.List ? response.items : [];
   const invalid = messageFor(issues, "answer") !== null;
   return (
     <label class="pq-field">
-      <span class="pq-field-label">One answer per line</span>
+      <span class="pq-field-label">{t("listPlaceholder")}</span>
       <textarea
         class="pq-input"
         rows={3}
@@ -208,6 +242,7 @@ function ClozeInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const blanks = response.kind === ResponseKind.Cloze ? response.blanks : [];
   return (
     <div class="pq-cloze">
@@ -215,7 +250,9 @@ function ClozeInput({
         const field = `blank-${index}`;
         return (
           <label key={index} class="pq-field pq-field-inline">
-            <span class="pq-field-label">Blank {index + 1}</span>
+            <span class="pq-field-label">
+              {t("blank", { number: index + 1 })}
+            </span>
             <input
               class="pq-input"
               type="text"
@@ -243,11 +280,15 @@ function SortInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const stored = response.kind === ResponseKind.Sort ? response.order : [];
   const authorOrder = screen.answers.map((answer) => answer.id);
   const order = stored.length === 0 ? authorOrder : stored;
   const textOf = new Map(
     screen.answers.map((answer) => [answer.id, answer.text]),
+  );
+  const nodesOf = new Map(
+    screen.answers.map((answer) => [answer.id, answer.nodes]),
   );
   const invalid = messageFor(issues, "order") !== null;
 
@@ -275,11 +316,17 @@ function SortInput({
             <span class="pq-sort-rank" aria-hidden="true">
               {index + 1}
             </span>
-            <span class="pq-sort-text">{textOf.get(id) ?? id}</span>
+            <span class="pq-sort-text">
+              {nodesOf.has(id) ? (
+                <Inline nodes={nodesOf.get(id) ?? []} />
+              ) : (
+                id
+              )}
+            </span>
             <button
               type="button"
               class="pq-sort-button"
-              aria-label={`Move ${textOf.get(id) ?? id} up`}
+              aria-label={t("moveUp", { text: textOf.get(id) ?? id })}
               disabled={index === 0}
               onClick={() => move(index, -1)}
             >
@@ -288,7 +335,7 @@ function SortInput({
             <button
               type="button"
               class="pq-sort-button"
-              aria-label={`Move ${textOf.get(id) ?? id} down`}
+              aria-label={t("moveDown", { text: textOf.get(id) ?? id })}
               disabled={index === order.length - 1}
               onClick={() => move(index, 1)}
             >
@@ -317,6 +364,7 @@ function MatchInput({
   response,
   issues,
 }: InputProps): JSX.Element {
+  const t = useT();
   const pairs = response.kind === ResponseKind.Match ? response.pairs : [];
   const [active, setActive] = useState<string | null>(null);
   const parsed = useMemo(
@@ -369,7 +417,7 @@ function MatchInput({
   return (
     <>
       <div class="pq-match" aria-invalid={invalid}>
-        <ul class="pq-match-column" aria-label="Left">
+        <ul class="pq-match-column" aria-label={t("left")}>
           {lefts.map((left) => {
             const match = connected.get(left);
             return (
@@ -381,16 +429,20 @@ function MatchInput({
                   data-pq-connected={match === undefined ? "false" : "true"}
                   onClick={() => connect(left)}
                 >
-                  <span>{left}</span>
+                  <span>
+                    <Inline nodes={parseInline(left).nodes} />
+                  </span>
                   {match === undefined ? null : (
-                    <span class="pq-match-pair">→ {match}</span>
+                    <span class="pq-match-pair">
+                      → <Inline nodes={parseInline(match).nodes} />
+                    </span>
                   )}
                 </button>
               </li>
             );
           })}
         </ul>
-        <ul class="pq-match-column" aria-label="Right">
+        <ul class="pq-match-column" aria-label={t("right")}>
           {rights.map((right) => (
             <li key={right}>
               <button
@@ -399,7 +451,7 @@ function MatchInput({
                 data-pq-connected={usedRights.has(right) ? "true" : "false"}
                 onClick={() => rightClick(right)}
               >
-                {right}
+                <Inline nodes={parseInline(right).nodes} />
               </button>
             </li>
           ))}
@@ -407,8 +459,8 @@ function MatchInput({
       </div>
       <p class="pq-match-hint">
         {active === null
-          ? "Pick an item on the left, then its match on the right."
-          : `Now pick the match for "${active}".`}
+          ? t("pickLeft")
+          : t("pickMatch", { text: active })}
       </p>
       <FieldError issues={issues} field="pairs" />
     </>

@@ -11,6 +11,7 @@ import {
   timerUrgency,
   type TimerSound,
 } from "../../../core/session/timers";
+import { useT } from "../i18n";
 
 /** Spoken once each. Below these numbers, ears need the news. */
 const TIMER_MILESTONES: readonly number[] = [30, 10, 0];
@@ -22,6 +23,7 @@ export function Timer({
   readonly quiz: Quiz;
   readonly sound?: TimerSound | undefined;
 }): JSX.Element | null {
+  const t = useT();
   const timer = quiz.state.timer;
   const total = timer?.totalMs ?? null;
   const [remaining, setRemaining] = useState<number | null>(() =>
@@ -60,7 +62,9 @@ export function Timer({
         ) {
           announced.current.add(milestone);
           setAnnouncement(
-            milestone === 0 ? "Time is up." : `${milestone} seconds left.`,
+            milestone === 0
+              ? t("timerUp")
+              : t("secondsLeft", { seconds: milestone }),
           );
         }
       }
@@ -74,6 +78,9 @@ export function Timer({
           sound.done();
         }
         quiz.expireTimer();
+        if (quiz.config.timerStrategy === "skip") {
+          quiz.next();
+        }
       }
     };
     tick();
@@ -81,7 +88,12 @@ export function Timer({
     return () => clearInterval(handle);
   }, [quiz, total, timer?.questionId, sound, totalSeconds]);
 
-  if (remaining === null || total === null) {
+  if (
+    remaining === null ||
+    total === null ||
+    quiz.config.hideTimerGlobal === true ||
+    quiz.config.hideTimerQuestion === true
+  ) {
     return null;
   }
   const urgency = timerUrgency(remaining, total);
@@ -94,7 +106,7 @@ export function Timer({
         class="pq-timer-value"
         role="timer"
         aria-live="off"
-        aria-label={`${formatTimer(remaining)} remaining`}
+        aria-label={t("timerRemaining", { time: formatTimer(remaining) })}
       >
         {formatTimer(remaining)}
       </p>
@@ -106,7 +118,7 @@ export function Timer({
       </span>
       {urgency === "done" ? (
         <p class="pq-timer-note" role="status">
-          Time is up. Answers stay open.
+          {t("timeUp")}
         </p>
       ) : null}
     </div>

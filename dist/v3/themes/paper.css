@@ -117,6 +117,14 @@
   flex-direction: column;
   min-height: 100dvh;
   background: var(--pq-slide);
+  /* Theme folders put a per-question image here. A theme that sets no image
+   * and no fade leaves the paper as it was. */
+  background-image:
+    linear-gradient(
+      rgb(0 0 0 / var(--pq-theme-fade, 0)),
+      rgb(0 0 0 / var(--pq-theme-fade, 0))
+    ),
+    var(--pq-theme-image, none);
   background-position: center;
   background-size: cover;
 }
@@ -256,7 +264,7 @@
   margin: 0;
   font-family: var(--pq-font-heading);
   font-size: var(--pq-title-size);
-  font-weight: 500;
+  font-weight: var(--pq-heading-weight, 500);
   line-height: 1.12;
   text-wrap: balance;
 }
@@ -610,6 +618,43 @@
   font-family: var(--pq-font-heading);
   font-style: italic;
   font-size: 1.05rem;
+}
+
+/* Markdown images, in a question or an answer. Small enough to share a card. */
+.pq-inline-media {
+  max-width: min(100%, 22rem);
+  max-height: 10rem;
+  border-radius: var(--pq-r-sm);
+  object-fit: cover;
+  vertical-align: middle;
+}
+
+/* An answer that *is* a media file, as V2 allowed. */
+.pq-answer .pq-media {
+  margin: 0;
+  pointer-events: none;
+}
+
+.pq-answer .pq-media img,
+.pq-answer .pq-media video {
+  max-height: 5.5rem;
+  max-width: 100%;
+  border-radius: var(--pq-r-sm);
+}
+
+.pq-answer .pq-media audio {
+  max-width: 100%;
+}
+
+/* Sources, quiet, under the explanation. V2 put them in small print too. */
+.pq-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  max-width: 46ch;
+  margin: 0.55rem auto 0;
+  color: var(--pq-muted);
+  font-size: 0.82rem;
 }
 
 
@@ -1657,6 +1702,80 @@
   to {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* --- Theme picker on the start screen ---------------------------------- */
+
+.pq-theme-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+}
+
+.pq-theme-picker .pq-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  border: 1px dashed var(--pq-line-strong);
+  border-radius: var(--pq-r-pill);
+  background: color-mix(in srgb, var(--pq-slide) 70%, transparent);
+  color: var(--pq-ink);
+  font-family: var(--pq-font-label);
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.pq-theme-picker .pq-link:hover {
+  border-color: var(--pq-accent);
+  color: var(--pq-accent);
+}
+
+.pq-theme-picker .pq-link:focus-within {
+  outline: 3px solid var(--pq-accent);
+  outline-offset: 3px;
+}
+
+.pq-theme-note {
+  margin: 0;
+  color: var(--pq-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* --- Per-question colour scheme ---------------------------------------- */
+/* A theme's `### ColorScheme name` block fills these four variables. */
+.pq-screen[data-pq-scheme] {
+  color: var(--pq-scheme-text, inherit);
+  background-color: var(--pq-scheme-bg, transparent);
+}
+.pq-screen[data-pq-scheme] .pq-title,
+.pq-screen[data-pq-scheme] .pq-round-name,
+.pq-screen[data-pq-scheme] .pq-count {
+  color: var(--pq-scheme-text, inherit);
+}
+
+/* --- Answer reveal ------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-pq-reveal] .pq-answer[data-pq-correct] {
+    animation: pq-pop 220ms ease-out both;
+  }
+  [data-pq-reveal="fade"] .pq-answer[data-pq-correct] {
+    animation: pq-fade 240ms ease-out both;
+  }
+  [data-pq-reveal="slide-up"] .pq-answer[data-pq-correct] {
+    animation: pq-slide-up 260ms ease-out both;
+  }
+  [data-pq-reveal="zoom-in"] .pq-answer[data-pq-correct] {
+    animation: pq-zoom-in 260ms ease-out both;
+  }
+  [data-pq-reveal="shake"] .pq-answer[data-pq-correct] {
+    animation: pq-shake 260ms ease-out both;
   }
 }
 

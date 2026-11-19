@@ -3,6 +3,7 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Diagnostic } from "../../../core/syntax/diagnostics";
+import { useT } from "../i18n";
 
 function uniqueProblems(diagnostics: readonly Diagnostic[]): Diagnostic[] {
   const seen = new Set<string>();
@@ -25,6 +26,7 @@ export function Problems({
   readonly diagnostics: readonly Diagnostic[];
   readonly limit?: number;
 }): JSX.Element | null {
+  const t = useT();
   const [open, setOpen] = useState(true);
   const problems = uniqueProblems(diagnostics);
 
@@ -44,19 +46,24 @@ export function Problems({
         class="pq-problems-reopen"
         onClick={() => setOpen(true)}
       >
-        {problems.length} problem{problems.length === 1 ? "" : "s"}
+        {t(problems.length === 1 ? "problemsReopen" : "problemsReopenPlural", {
+          count: problems.length,
+        })}
       </button>
     );
   }
 
   return (
-    <aside class="pq-problems-panel" aria-label="Problems with this quiz">
+    <aside class="pq-problems-panel" aria-label={t("problemsWithQuiz")}>
       <p class="pq-problems-title">
-        {problems.length} problem{problems.length === 1 ? "" : "s"} found
+        {t(
+          problems.length === 1 ? "problemsFound" : "problemsFoundPlural",
+          { count: problems.length },
+        )}
         <button
           type="button"
           class="pq-problems-close"
-          aria-label="Dismiss problems"
+          aria-label={t("problemsDismiss")}
           onClick={() => setOpen(false)}
         >
           ×
@@ -74,7 +81,7 @@ export function Problems({
       </ul>
       {problems.length > limit ? (
         <p class="pq-suggestion">
-          …and {problems.length - limit} more. Fix the first ones, then reload.
+          {t("problemsMore", { count: problems.length - limit })}
         </p>
       ) : null}
     </aside>

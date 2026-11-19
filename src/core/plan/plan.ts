@@ -7,6 +7,9 @@
 
 import type { QuizModel } from "../model/quiz";
 import { questionMaxScore, type QuestionModel } from "../model/question";
+import { createQuestion } from "../model/questionBuilder";
+import { DEFAULT_SYMBOLS } from "../syntax/symbols";
+import type { AstAttribute, AstQuestion } from "../syntax/ast";
 import { applyPlacement } from "./order";
 import { derivedRng, shuffleWith } from "./shuffle";
 import type { Diagnostic } from "../syntax/diagnostics";
@@ -34,6 +37,97 @@ export interface PlanOptions {
   readonly shuffleQuestions?: boolean;
   readonly shuffleRounds?: boolean;
   readonly includeHidden?: boolean;
+  /** Applies to questions without their own `Timer`. Milliseconds. */
+  readonly defaultTimerMs?: number;
+  /** V2's `disableTextFormatting`: every value is shown as written. */
+  readonly disableTextFormatting?: boolean;
+  /** V2's `addSecretThemeQuestions`: one question per secret round. */
+  readonly addSecretThemeQuestions?: boolean;
+  /** Text for the generated secret question, already translated. */
+  readonly secretQuestionText?: string;
+  /** V2's `groupBy`: keep one property value together. */
+  readonly groupBy?: string;
+}
+
+function questionValues(question: QuestionModel, key: string): string[] {
+  const name = key.trim().toLowerCase();
+  if (name === "category" || name === "categories") {
+    return [...question.categories];
+  }
+  if (name === "author" || name === "authors") {
+    return [...question.authors];
+  }
+  if (name === "language") {
+    return question.language === null ? [] : [question.language];
+  }
+  if (name === "type") {
+    return [question.type];
+  }
+  if (name === "round" || name === "section") {
+    return question.round === null ? [] : [question.round];
+  }
+  if (name === "id") {
+    return [question.id];
+  }
+  if (name === "variant") {
+    return question.variant === null ? [] : [question.variant];
+  }
+  if (name === "score") {
+    return [String(question.score)];
+  }
+  return [...(question.extra[name] ?? [])];
+}
+
+function applyDefaults(
+  question: QuestionModel,
+  options: PlanOptions,
+): QuestionModel {
+  const fallbackTimer =
+    options.defaultTimerMs !== undefined && options.defaultTimerMs > 0
+      ? options.defaultTimerMs
+      : null;
+  const formatText =
+    options.disableTextFormatting === true ? false : question.formatText;
+  return {
+    ...question,
+    timerMs: question.timerMs ?? fallbackTimer,
+    formatText,
+  };
+}
+
+/** The round-question V2 added after a round with a `Secret`. */
+function secretQuestion(
+  round: { readonly id: string },
+  secret: string,
+  text: string,
+): QuestionModel {
+  const location = { file: "<secret-question>", line: 1, column: 1 };
+  const attribute = (key: string, value: string): AstAttribute => ({
+    key,
+    rawKey: key,
+    values: [value],
+    location,
+  });
+  const node: AstQuestion = {
+    attributes: [
+      attribute("Question", text),
+      attribute("Answers", secret),
+      attribute("Correct", secret),
+      attribute("Type", "Open"),
+      attribute("Score", "1"),
+    ],
+    location,
+  };
+  return createQuestion(
+    node,
+    {
+      defaultLanguage: null,
+      defaultScore: 1,
+      round: round.id,
+      symbols: DEFAULT_SYMBOLS,
+    },
+    [],
+  );
 }
 
 export const DEFAULT_SEED = "pq";
@@ -57,10 +151,32 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
     const visible = includeHidden
       ? round.questions
       : round.questions.filter((question) => !question.hiddenAtPlay);
-    const shuffled = shuffleQuestions
+    let shuffled = shuffleQuestions
       ? shuffleWith(visible, derivedRng(seed, `round:${round.id}`))
       : [...visible];
-    const items = applyPlacement(shuffled, diagnostics);
+    if (options.groupBy !== undefined && options.groupBy.trim().length > 0) {
+      const groups = [
+        ...new Set(
+          shuffled.map(
+            (question) => questionValues(question, options.groupBy ?? "")[0] ?? "",
+          ),
+        ),
+      ];
+      const order = shuffleWith(groups, derivedRng(seed, `group:${round.id}`));
+      shuffled = shuffled.sort(
+        (a, b) =>
+          order.indexOf(questionValues(a, options.groupBy ?? "")[0] ?? "") -
+          order.indexOf(questionValues(b, options.groupBy ?? "")[0] ?? ""),
+      );
+    }
+    const items = applyPlacement(shuffled, diagnostics).map((question) =>
+      applyDefaults(question, options),
+    );
+    if (options.addSecretThemeQuestions === true && round.secret !== null) {
+      items.push(
+        secretQuestion(round, round.secret, options.secretQuestionText ?? ""),
+      );
+    }
     plannedRounds.push({
       id: round.id,
       name: round.name,

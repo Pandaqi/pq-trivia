@@ -20,7 +20,39 @@ const quiz = createQuiz({
 | `seed` | header or `pq` | same seed, same plan |
 | `shuffleQuestions` | `false` | author order stays |
 | `shuffleRounds` | `false` | same |
-| `language` | header | content language |
+| `language` | header | content language now |
+| `languageDefault` | first language | root language |
+| `languages` | found | shortlist of languages |
+| `translations` | built-in `en`/`nl` | UI strings per language |
+| `syncPropertiesWithTranslations` | `false` | copy layout and scoring from the root |
+| `include` / `exclude` | none | property-value filters |
+| `groupBy` | none | keep one property together |
+| `minAnswers` / `maxAnswers` | none | answer-count filter |
+| `questionTypesAllowed` | all | type filter |
+| `excludeSections` / `filterSections` | `false` / none | ignore or hide rounds |
+| `minScore` / `maxScore` | none | clamp question scores |
+| `hideScore` / `hideScoreOnAnswers` | `false` | hide points |
+| `defaultAuthor` / `defaultCategory` | none | fill empty properties |
+| `possibleAuthors` / `possibleCategories` | none | reserved; not validated |
+| `hideAuthor` / `hideCategory` | `false` | hide the meta strip |
+| `showPropertiesWithoutDiversity` | `false` | show a property with one value |
+| `dateCreation` | none | year on the start screen |
+| `addSecretThemeQuestions` / `hideSecretThemeMessage` | `false` | secret round question and banner |
+| `keepQuestionOrder` / `keepSectionOrder` / `keepAnswerOrder` | `false` | explicit order |
+| `randomizeMedia` | `false` | shuffle media |
+| `defaultTimer` | none | seconds without `Timer` |
+| `timerStrategy` | `continue` | `expire`, `skip` or `continue` |
+| `hideTimerGlobal` / `hideTimerQuestion` | `false` | hide the countdown |
+| `disableTextFormatting` | `false` | every value as written |
+| `forbidInlineLists` | `false` | do not split values on `\|` |
+| `symbols` | default | swap syntax characters |
+| `hideErrors` | `false` | hide the problems panel |
+| `enableSafety` / `enableMouse` / `disableKeys` / `disableUI` / `disableTouch` | `false` | interaction switches |
+| `hotkeys` / `hotkeysForbidden` / `toolbar` | none | keys and visible buttons |
+| `mediaAutoPlay` / `loadExternalMediaAsIframe` | `false` | media behaviour |
+| `settings` / `hideDefaultSettings` | none / `false` | host controls on the start screen |
+| `title` / `icon` / `bannerImage` | header | page details |
+| `themeDisabled` | `false` | ignore `theme` |
 | `defaultScore` | `1` | points for a question without `Points` |
 | `restricted` | `false` | no answers mode, no reveal, no back |
 | `revealMode` | `never` | `always` or `afterAnswer` |
@@ -30,6 +62,11 @@ const quiz = createQuiz({
 | `timerSound` | `false` | beeps in the last five seconds |
 | `codeHighlight` | `false` | colour fenced code |
 | `answersKey` | none | opens encrypted files |
+| `theme` | none | theme folder or `.css`, like V2 |
+| `themeUpload` | `false` | "Load a theme folder" on the start screen |
+| `defaultTimer` | none | seconds for questions without `Timer` |
+| `disableTextFormatting` | `false` | show every value as written |
+| `addSecretThemeQuestions` | `false` | ask each round's secret at its end |
 
 ## Load
 
@@ -58,6 +95,9 @@ quiz.reveal();
 quiz.revealHint();
 quiz.setMode(PlayMode.Answers);
 quiz.showResults();
+quiz.setLanguage("NL"); // answers and hints travel along
+quiz.languages();     // ["EN", "NL"]
+quiz.t("next");       // current UI language
 ```
 
 A blocked `next()` says why: `invalid`, `required`, `blocked` or `end`.
@@ -108,6 +148,18 @@ quiz.views.set(ScreenKind.Results, (screen, quiz) => {
 });
 ```
 
+## Themes
+
+```ts
+import { loadTheme, setTheme, themeFromFiles } from "pq-trivia/player";
+
+setTheme(await loadTheme("themes/forest/"));   // a folder, or a .css file
+setTheme(await themeFromFiles(Array.from(input.files ?? []))); // stays local
+```
+
+`getTheme()` and `subscribeTheme(fn)` read the active theme. A theme applies
+tokens, fonts and one background per question to `.pq-quiz`.
+
 ## Destroy
 
 ```ts
@@ -124,4 +176,6 @@ nothing should grow.
 ```
 
 Light DOM. One quiz per element. `element.quiz` gives you the controller;
-`element.manifest` is filled when a manifest loader is used.
+`element.manifest` is filled when a manifest loader is used. `theme="themes/forest/"`
+loads a theme folder, `theme-upload` adds the folder picker, and `Theme => name`
+in the header works when the attribute is absent.
