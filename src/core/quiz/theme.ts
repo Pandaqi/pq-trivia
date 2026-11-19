@@ -259,7 +259,11 @@ export function fontOptions(font: ThemeFont): {
   readonly style: string;
 } {
   return {
-    weight: font.variant === "bold" || font.variant === "bold-italic" ? "700" : "400",
-    style: font.variant === "italic" || font.variant === "bold-italic" ? "italic" : "normal",
+    weight:
+      font.variant === "bold" || font.variant === "bold-italic" ? "700" : "400",
+    style:
+      font.variant === "italic" || font.variant === "bold-italic"
+        ? "italic"
+        : "normal",
   };
 }

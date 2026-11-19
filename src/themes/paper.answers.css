@@ -70,17 +70,35 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50% 45% 50% 48%;
-  background: var(--pq-honey-soft);
-  color: #3b2e14;
+  background: var(--pq-round-shade, var(--pq-honey-soft));
+  color: var(--pq-accent-ink, #3b2e14);
   font-family: var(--pq-font-label);
+  font-weight: 700;
   font-size: 0.85em;
   font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
 }
 
-@media (prefers-color-scheme: dark) {
-  .pq-answer-number {
-    color: var(--pq-ink);
-  }
+/* Answer mode: cards, not buttons. A room reads them out loud. */
+.pq-answer-static {
+  cursor: default;
+}
+
+.pq-answer-static:hover {
+  transform: none;
+  box-shadow: var(--pq-shadow-1);
+  border-color: var(--pq-line);
+}
+
+.pq-answer-static[data-pq-correct="true"] {
+  border-color: var(--pq-right);
+  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
+  opacity: 1;
+  transform: none;
+}
+
+.pq-answer-static[data-pq-correct="false"] {
+  opacity: 0.55;
 }
 
 .pq-answer-text {
@@ -178,7 +196,10 @@
 }
 
 .pq-split-single {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1 1 auto;
   max-width: 56rem;
   margin-inline: auto;
 }
@@ -212,8 +233,17 @@
   border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
 }
 
-.pq-screen-question .pq-round-banner {
-  border-left: 0.5rem solid var(--pq-round-accent, var(--pq-accent));
+/* Comments read like a note under the question, not another heading. */
+.pq-comments {
+  max-width: 46ch;
+  margin: clamp(0.7rem, 2vh, 1.1rem) auto 0;
+  color: var(--pq-muted);
+  text-align: center;
+  font-size: 1.02rem;
+}
+
+.pq-comments p {
+  margin: 0;
 }
 
 /* Typed answers sit on a line, like a form on paper. */

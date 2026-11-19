@@ -10,7 +10,7 @@
  *   const quiz = createQuiz({ parseText: createWorkerParser() });
  */
 
-import type { Quiz } from "../core/quiz/types";
+import type { QuizApi } from "../core/quiz/types";
 import {
   loadQuizSource,
   loadQuizText,
@@ -45,11 +45,15 @@ export {
   FILE_PROTOCOL_HINT,
   type LoadSourceOptions,
 } from "../platform/browser/source";
-export { parseManifest, isManifest, type QuizManifest } from "../core/quiz/manifest";
+export {
+  parseManifest,
+  isManifest,
+  type QuizManifest,
+} from "../core/quiz/manifest";
 
 /** Manifest, inline JSON and plain text, with the shared cache underneath. */
 export async function loadQuizSourceCached(
-  quiz: Quiz,
+  quiz: QuizApi,
   source: string,
   options: LoadSourceOptions = {},
 ): Promise<QuizManifest | null> {
@@ -59,7 +63,7 @@ export async function loadQuizSourceCached(
 }
 
 export async function loadQuizTextCached(
-  quiz: Quiz,
+  quiz: QuizApi,
   text: string,
   source: string,
   options: LoadSourceOptions = {},
@@ -70,9 +74,9 @@ export async function loadQuizTextCached(
 }
 
 /** `parse.worker.js` sits next to this bundle. */
-export function workerParser(options: WorkerParserOptions = {}): ReturnType<
-  typeof createWorkerParser
-> {
+export function workerParser(
+  options: WorkerParserOptions = {},
+): ReturnType<typeof createWorkerParser> {
   return createWorkerParser({
     url: new URL("parse.worker.js", import.meta.url),
     ...options,

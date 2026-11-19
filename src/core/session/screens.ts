@@ -4,10 +4,12 @@
  */
 
 import type { QuizMeta, QuizModel } from "../model/quiz";
-import { SessionStatus, type SessionState } from "./session";
+import { questionMaxScore } from "../model/question";
+import { SessionStatus, countsAsQuestion, type SessionState } from "./session";
 import { progressOf } from "./session";
 import { isEmptyResponse } from "./responses";
 import type { AttemptRecord } from "./attempts";
+import type { MediaOptions } from "../values/media";
 import {
   endScreen,
   questionScreen,
@@ -35,6 +37,7 @@ export function screenFor(
   quiz: QuizModel | null,
   state: SessionState,
   saved: AttemptRecord | null,
+  media: MediaOptions = {},
 ): ScreenViewModel | null {
   if (
     quiz === null ||
@@ -53,10 +56,11 @@ export function screenFor(
       state.language,
       resumeOf(saved, state.plan?.total ?? 0),
       quiz.start,
+      media,
     );
   }
   if (state.index >= state.plan.questions.length) {
-    return endScreen(quiz.meta, progress, quiz.end);
+    return endScreen(quiz.meta, progress, quiz.end, media);
   }
   const question = state.plan.questions[state.index];
   if (question === undefined) {
@@ -67,23 +71,51 @@ export function screenFor(
   const round = roundIndex < 0 ? null : (rounds[roundIndex] ?? null);
   const previous =
     state.index > 0 ? state.plan.questions[state.index - 1] : null;
-  return questionScreen(question, state, {
-    index: state.index,
-    total: state.plan.questions.length,
-    progress,
-    roundName: round?.name ?? null,
-    roundSecret: round?.secret ?? null,
-    roundNumber: roundIndex < 0 ? null : roundIndex + 1,
-    isRoundStart: round !== null && previous?.round !== question.round,
-    authorsDiverse:
-      new Set(state.plan.questions.flatMap((item) => item.authors)).size > 1,
-    categoriesDiverse:
-      new Set(state.plan.questions.flatMap((item) => item.categories)).size > 1,
-  });
+  const playable = state.plan.questions.filter(countsAsQuestion);
+  const number = countsAsQuestion(question)
+    ? state.plan.questions.slice(0, state.index + 1).filter(countsAsQuestion)
+        .length
+    : 0;
+  // The round's own numbers: what the section page shows and what picks the
+  // colour shade for each question in it.
+  const roundQuestions = countsAsQuestion(question)
+    ? state.plan.questions.filter(
+        (item) => item.round === question.round && countsAsQuestion(item),
+      )
+    : [];
+  const roundPosition = roundQuestions.findIndex(
+    (item) => item.id === question.id,
+  );
+  return questionScreen(
+    question,
+    state,
+    {
+      index: state.index,
+      total: playable.length,
+      number,
+      progress,
+      roundName: round?.name ?? null,
+      roundSecret: round?.secret ?? null,
+      roundNumber: roundIndex < 0 ? null : roundIndex + 1,
+      roundPosition: roundPosition < 0 ? 0 : roundPosition + 1,
+      roundQuestionCount: round?.questionCount ?? roundQuestions.length,
+      roundPoints:
+        round?.points ??
+        roundQuestions.reduce((sum, item) => sum + questionMaxScore(item), 0),
+      seed: state.plan.seed,
+      isRoundStart: round !== null && previous?.round !== question.round,
+      authorsDiverse:
+        new Set(state.plan.questions.flatMap((item) => item.authors)).size > 1,
+      categoriesDiverse:
+        new Set(state.plan.questions.flatMap((item) => item.categories)).size >
+        1,
+    },
+    media,
+  );
 }
 
 export function titleOf(meta: QuizMeta): string {
-  return meta.title.length > 0 ? meta.title : "Untitled quiz";
+  return meta.title;
 }
 
 export { ScreenKind };

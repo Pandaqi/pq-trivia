@@ -5,10 +5,14 @@ export interface Symbols {
   readonly pairing: string;
   /** `A | B | C` */
   readonly inlineList: string;
-  /** `# Round name` */
+  /** `# Quiz title` */
+  readonly title: string;
+  /** `## Round name` */
   readonly section: string;
-  /** `## Question text` */
+  /** `### Question text` */
   readonly question: string;
+  /** `#### Answers` */
+  readonly block: string;
   /** `// note` */
   readonly comment: string;
   /** `?question only` */
@@ -26,8 +30,10 @@ export interface Symbols {
 export const DEFAULT_SYMBOLS: Symbols = {
   pairing: "=>",
   inlineList: "|",
-  section: "#",
-  question: "##",
+  title: "#",
+  section: "##",
+  question: "###",
+  block: "####",
   comment: "//",
   questionMask: "?",
   answerMask: "!",

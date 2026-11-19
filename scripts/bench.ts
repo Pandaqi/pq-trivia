@@ -12,10 +12,7 @@ import { buildQuiz } from "../src/core/model/quiz";
 import { QuestionType } from "../src/core/model/question";
 import { planQuiz } from "../src/core/plan/plan";
 import { createQuiz } from "../src/core/quiz";
-import {
-  ResponseKind,
-  type Response,
-} from "../src/core/session/responses";
+import { ResponseKind, type Response } from "../src/core/session/responses";
 
 const QUESTIONS = 10_000;
 const ROUND_SIZE = 50;

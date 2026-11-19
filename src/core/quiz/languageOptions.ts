@@ -6,7 +6,7 @@ import { OrderMode, type QuestionModel } from "../model/question";
 import { DiagnosticCodes, syntaxWarning } from "../syntax/diagnostics";
 import type { Diagnostic } from "../syntax/diagnostics";
 import type { PlanOptions } from "../plan/plan";
-import type { Response } from "../session/responses";
+import type { Response, ResponseMap } from "../session/responses";
 import type { SessionState } from "../session/session";
 import type { QuizPlan } from "../plan/plan";
 import { planQuiz } from "../plan/plan";
@@ -29,20 +29,26 @@ export function findLanguageKey(
 
 function valuesOf(question: QuestionModel, key: string): string[] {
   const name = key.trim().toLowerCase();
-  if (name === "category" || name === "categories") return [...question.categories];
+  if (name === "category" || name === "categories")
+    return [...question.categories];
   if (name === "author" || name === "authors") return [...question.authors];
-  if (name === "language") return question.language === null ? [] : [question.language];
+  if (name === "language")
+    return question.language === null ? [] : [question.language];
   if (name === "type") return [question.type];
   if (name === "round" || name === "section") {
     return question.round === null ? [] : [question.round];
   }
-  if (name === "variant") return question.variant === null ? [] : [question.variant];
+  if (name === "variant")
+    return question.variant === null ? [] : [question.variant];
   if (name === "id") return [question.id];
   if (name === "score") return [String(question.score)];
   return [...(question.extra[name] ?? [])];
 }
 
-function shapeQuestion(question: QuestionModel, config: QuizConfig): QuestionModel {
+function shapeQuestion(
+  question: QuestionModel,
+  config: QuizConfig,
+): QuestionModel {
   const score =
     config.minScore === undefined && config.maxScore === undefined
       ? question.score
@@ -77,13 +83,22 @@ function keeps(question: QuestionModel, config: QuizConfig): boolean {
     if (own.some((entry) => list.includes(entry))) return false;
   }
   const types = config.questionTypesAllowed ?? [];
-  if (types.length > 0 && !types.map((type) => type.toLowerCase()).includes(question.type)) {
+  if (
+    types.length > 0 &&
+    !types.map((type) => type.toLowerCase()).includes(question.type)
+  ) {
     return false;
   }
-  if (config.minAnswers !== undefined && question.answers.length < config.minAnswers) {
+  if (
+    config.minAnswers !== undefined &&
+    question.answers.length < config.minAnswers
+  ) {
     return false;
   }
-  if (config.maxAnswers !== undefined && question.answers.length > config.maxAnswers) {
+  if (
+    config.maxAnswers !== undefined &&
+    question.answers.length > config.maxAnswers
+  ) {
     return false;
   }
   return true;
@@ -94,7 +109,9 @@ export function shapeModels(
   models: ReadonlyMap<string, QuizModel>,
   config: QuizConfig,
 ): Map<string, QuizModel> {
-  const sections = (config.filterSections ?? []).map((entry) => entry.toLowerCase());
+  const sections = (config.filterSections ?? []).map((entry) =>
+    entry.toLowerCase(),
+  );
   const out = new Map<string, QuizModel>();
   for (const [language, model] of models) {
     const rounds = model.rounds
@@ -106,7 +123,9 @@ export function shapeModels(
       .map((round) => ({
         ...round,
         questions: round.questions
-          .filter((question) => !question.hiddenAtPlay && keeps(question, config))
+          .filter(
+            (question) => !question.hiddenAtPlay && keeps(question, config),
+          )
           .map((question) => shapeQuestion(question, config)),
       }))
       .filter((round) => round.questions.length > 0);
@@ -124,7 +143,14 @@ export function shapeModels(
     out.set(language, {
       ...model,
       rounds: rounds.map((round) =>
-        createRound(round.id, round.name, round.secret, round.questions),
+        createRound(
+          round.id,
+          round.name,
+          round.secret,
+          round.questions,
+          round.source,
+          round.implicit,
+        ),
       ),
       questions: rounds.flatMap((round) => round.questions),
     });
@@ -139,6 +165,12 @@ export function planOptionsFrom(
 ): PlanOptions {
   return {
     ...(config.groupBy !== undefined ? { groupBy: config.groupBy } : {}),
+    ...(config.addMissingSectionScreens !== undefined
+      ? { addMissingSectionScreens: config.addMissingSectionScreens }
+      : {}),
+    ...(config.allowTimerOnSections === true
+      ? { allowTimerOnSections: true }
+      : {}),
     ...(config.addSecretThemeQuestions === true
       ? {
           addSecretThemeQuestions: true,
@@ -203,6 +235,8 @@ export function applyContentDefaults(
           round.name,
           round.secret,
           round.questions.map((question) => byId.get(question.id) ?? question),
+          round.source,
+          round.implicit,
         ),
       ),
     });
@@ -275,7 +309,9 @@ export function possibleWarnings(
   config: QuizConfig,
 ): Diagnostic[] {
   const authors = config.possibleAuthors?.map((entry) => entry.toLowerCase());
-  const categories = config.possibleCategories?.map((entry) => entry.toLowerCase());
+  const categories = config.possibleCategories?.map((entry) =>
+    entry.toLowerCase(),
+  );
   const out: Diagnostic[] = [];
   for (const question of model.questions) {
     for (const author of question.authors) {
@@ -290,7 +326,10 @@ export function possibleWarnings(
       }
     }
     for (const category of question.categories) {
-      if (categories !== undefined && !categories.includes(category.toLowerCase())) {
+      if (
+        categories !== undefined &&
+        !categories.includes(category.toLowerCase())
+      ) {
         out.push(
           syntaxWarning(
             DiagnosticCodes.UnknownAttribute,
@@ -302,6 +341,41 @@ export function possibleWarnings(
     }
   }
   return out;
+}
+
+/**
+ * Rebuild models and plan after a content setting changed. Pure: the caller
+ * applies the result and keeps the index. `null` means nothing to refresh.
+ */
+export interface RefreshedPlan {
+  readonly models: Map<string, QuizModel>;
+  readonly model: QuizModel;
+  readonly language: string;
+  readonly plan: QuizPlan;
+}
+
+export function refreshPlan(
+  loaded: ReadonlyMap<string, QuizModel>,
+  config: QuizConfig,
+  requested: string | null,
+  options: PlanOptions,
+  responses: ResponseMap,
+): RefreshedPlan | null {
+  const prepared = prepareModels(loaded, config, requested);
+  if (prepared === null) {
+    return null;
+  }
+  const model = prepared.models.get(prepared.language) ?? null;
+  if (model === null) {
+    return null;
+  }
+  const flow = applyFlow(planQuiz(model, options), responses);
+  return {
+    models: prepared.models,
+    model,
+    language: prepared.language,
+    plan: flow.plan,
+  };
 }
 
 /** Everything a language switch changes, without notifying anyone. */
@@ -342,11 +416,13 @@ export function carryAcrossLanguages(
   if (old === null) {
     return {};
   }
-  const byId = new Map(old.questions.map((question) => [question.id, question]));
-  const pairs = next.questions.map((question, index) => [
-    byId.get(question.id) ?? old.questions[index],
-    question,
-  ] as const);
+  const byId = new Map(
+    old.questions.map((question) => [question.id, question]),
+  );
+  const pairs = next.questions.map(
+    (question, index) =>
+      [byId.get(question.id) ?? old.questions[index], question] as const,
+  );
   const responses: Record<string, Response> = {};
   const revealed: string[] = [];
   const expired: string[] = [];

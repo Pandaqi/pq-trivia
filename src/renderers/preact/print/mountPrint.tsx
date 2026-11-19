@@ -28,7 +28,11 @@ export function mountPrintSheet(
 
   const draw = (): void => {
     render(
-      h(UiContext.Provider, { value: quiz.t }, h(PrintSheet, { quiz, options })),
+      h(
+        UiContext.Provider,
+        { value: quiz.t },
+        h(PrintSheet, { quiz, options }),
+      ),
       target,
     );
     summary = fitPrintPages(target, options.onProblem);

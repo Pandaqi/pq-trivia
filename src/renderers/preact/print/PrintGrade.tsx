@@ -59,9 +59,9 @@ export function PrintGrade({
               key={round.id}
             >
               <caption>
-                {round.name} · {items.length} {t(
-                  items.length === 1 ? "question_one" : "question_other",
-                )} · {points} {t(points === 1 ? "point_one" : "point_other")}
+                {round.name} · {items.length}{" "}
+                {t(items.length === 1 ? "question_one" : "question_other")} ·{" "}
+                {points} {t(points === 1 ? "point_one" : "point_other")}
               </caption>
               <thead>
                 <tr>

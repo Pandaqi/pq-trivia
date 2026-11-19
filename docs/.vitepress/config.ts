@@ -36,6 +36,7 @@ export default defineConfig({
         items: [
           { text: "Themes", link: "/guides/themes" },
           { text: "Languages", link: "/guides/languages" },
+          { text: "Builds", link: "/guides/builds" },
           { text: "Offline", link: "/guides/offline" },
           { text: "Multiplayer", link: "/guides/multiplayer" },
           { text: "Exporting", link: "/guides/exporting" },

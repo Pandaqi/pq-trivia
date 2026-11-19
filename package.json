@@ -28,6 +28,7 @@
     "fmt": "bun fmt",
     "fmt:check": "bun fmt --check",
     "build": "bun run scripts/build.ts",
+    "build:lang": "bun run scripts/build.ts",
     "dev": "bun run scripts/build.ts --watch",
     "size": "bun run scripts/size.ts",
     "bench": "bun run scripts/bench.ts",

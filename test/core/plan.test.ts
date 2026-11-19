@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { buildQuiz } from "../../src/core/model/quiz";
+import { QuestionType } from "../../src/core/model/question";
 import { planQuiz } from "../../src/core/plan/plan";
 import { Rng } from "../../src/core/plan/rng";
 
 const quiz = (body: string) => buildQuiz(body);
 
 const eight = `
-# Round
+## Round
 Question => One
 Question => Two
 Question => Three
@@ -22,9 +23,30 @@ describe("V2 defaults on the plan", () => {
     const model = quiz("Question => One\nQuestion => Two\nTimer => 10");
     const plan = planQuiz(model, { defaultTimerMs: 30_000 });
     expect(plan.questions.map((question) => question.timerMs)).toEqual([
-      30_000,
-      10_000,
+      30_000, 10_000,
     ]);
+  });
+
+  test("section screens can open a round, with or without a timer", () => {
+    const model = quiz("## First\nQuestion => One\n## Second\nQuestion => Two");
+    const plan = planQuiz(model, {
+      addMissingSectionScreens: true,
+      defaultTimerMs: 30_000,
+    });
+    expect(plan.questions.map((question) => question.type)).toEqual([
+      QuestionType.Section,
+      QuestionType.Open,
+      QuestionType.Section,
+      QuestionType.Open,
+    ]);
+    expect(plan.questions[0]?.text[0]?.text).toBe("First");
+    expect(plan.questions[0]?.timerMs).toBe(0);
+    const timed = planQuiz(model, {
+      addMissingSectionScreens: true,
+      allowTimerOnSections: true,
+      defaultTimerMs: 30_000,
+    });
+    expect(timed.questions[0]?.timerMs).toBe(30_000);
   });
 
   test("disableTextFormatting turns formatting off everywhere", () => {
@@ -36,15 +58,18 @@ describe("V2 defaults on the plan", () => {
 
   test("a secret round can ask its own theme", () => {
     const model = quiz(
-      "# Instruments\nSecret => Instruments\nQuestion => One\nQuestion => Two",
+      "## Instruments\nSecret => Instruments\nQuestion => One\nQuestion => Two",
     );
     const plan = planQuiz(model, {
+      addMissingSectionScreens: false,
       addSecretThemeQuestions: true,
       secretQuestionText: "What was the secret theme of this round?",
     });
     expect(plan.questions).toHaveLength(3);
     const last = plan.questions[2];
-    expect(last?.text[0]?.text).toBe("What was the secret theme of this round?");
+    expect(last?.text[0]?.text).toBe(
+      "What was the secret theme of this round?",
+    );
     expect(last?.correct[0]?.text).toBe("Instruments");
     expect(last?.round).toBe(plan.rounds[0]?.id ?? "missing");
   });
@@ -53,7 +78,7 @@ describe("V2 defaults on the plan", () => {
 describe("plan", () => {
   test("author order is the default", () => {
     const model = quiz(eight);
-    const plan = planQuiz(model);
+    const plan = planQuiz(model, { addMissingSectionScreens: false });
     expect(plan.questions.map((question) => question.text[0]?.text)).toEqual([
       "One",
       "Two",
@@ -81,7 +106,7 @@ describe("plan", () => {
 
   test("placement beats the shuffle", () => {
     const model = quiz(`
-# Round
+## Round
 Question => One
 ID => one
 Question => Two
@@ -97,7 +122,7 @@ PlaceBefore => one
 
   test("PlaceAt is one-based", () => {
     const model = quiz(`
-# Round
+## Round
 Question => One
 ID => one
 Question => Two
@@ -106,7 +131,7 @@ Question => Three
 ID => three
 PlaceAt => 1
 `);
-    const plan = planQuiz(model);
+    const plan = planQuiz(model, { addMissingSectionScreens: false });
     expect(plan.questions[0]?.id).toBe("three");
   });
 

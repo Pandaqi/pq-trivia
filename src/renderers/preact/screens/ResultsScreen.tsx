@@ -101,7 +101,7 @@ function ReviewCard({
         class="pq-link"
         onClick={() => {
           quiz.hideResults();
-          quiz.goTo(question.index);
+          quiz.goTo(question.planIndex);
         }}
       >
         {t("openQuestion")}
@@ -209,11 +209,7 @@ export function ResultsScreen({
         </ul>
       )}
 
-      <div
-        class="pq-filters"
-        role="group"
-        aria-label={t("filterQuestions")}
-      >
+      <div class="pq-filters" role="group" aria-label={t("filterQuestions")}>
         {FILTERS.map((value) => {
           const count = filterQuestions(report, value).length;
           return (

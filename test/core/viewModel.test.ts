@@ -41,6 +41,10 @@ function view(): Parameters<typeof questionScreen>[2] {
     roundName: null,
     roundSecret: null,
     roundNumber: null,
+    roundPosition: 0,
+    roundQuestionCount: plan.questions.length,
+    roundPoints: 0,
+    seed: plan.seed,
     isRoundStart: false,
     authorsDiverse: false,
     categoriesDiverse: false,
@@ -130,9 +134,7 @@ describe("question options", () => {
     }
     const screen = questionScreen(plain, loaded(), view());
     expect(screen.formatText).toBe(false);
-    expect(screen.title.map((node) => node.kind)).toEqual([
-      InlineKind.Text,
-    ]);
+    expect(screen.title.map((node) => node.kind)).toEqual([InlineKind.Text]);
     expect(screen.answers[0]?.nodes[0]?.kind).toBe(InlineKind.Text);
     expect(screen.answers[1]?.media).toBeNull();
   });
@@ -152,12 +154,7 @@ describe("question options", () => {
       screen.answers.map((answer) =>
         answer.media === null ? null : answer.media.kind,
       ),
-    ).toEqual([
-      MediaKind.Audio,
-      MediaKind.Video,
-      MediaKind.Image,
-      null,
-    ]);
+    ).toEqual([MediaKind.Audio, MediaKind.Video, MediaKind.Image, null]);
   });
 });
 
@@ -187,6 +184,48 @@ describe("answer points", () => {
       2,
       null,
       null,
+    ]);
+  });
+
+  test("media folders, formats and link prefixes follow the config", () => {
+    const mediaPlan = planQuiz(
+      buildQuiz(`
+Question => Look
+Media => photo.jpg
+Media => https://example.test/loud.png
+`),
+    );
+    const question = mediaPlan.questions[0];
+    if (question === undefined) {
+      throw new Error("media fixture lost its question");
+    }
+    const screen = questionScreen(
+      question,
+      createSessionState(),
+      {
+        index: 0,
+        total: 1,
+        progress: progressOf(createSessionState()),
+        roundName: null,
+        roundSecret: null,
+        roundNumber: null,
+        roundPosition: 0,
+        roundQuestionCount: 1,
+        roundPoints: 1,
+        seed: "pq",
+        isRoundStart: false,
+        authorsDiverse: false,
+        categoriesDiverse: false,
+      },
+      { subFolderMedia: "media/", mediaFormats: ["png"] },
+    );
+    expect(screen.media.map((item) => item.path)).toEqual([
+      "media/photo.jpg",
+      "https://example.test/loud.png",
+    ]);
+    expect(screen.media.map((item) => item.kind)).toEqual([
+      MediaKind.File,
+      MediaKind.Image,
     ]);
   });
 

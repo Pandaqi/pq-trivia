@@ -21,7 +21,7 @@ Question => In which year did the Berlin Wall fall?
 Answers => 1989
 Type => Range
 
-# Music
+## Music
 
 Question => Which band wrote "Bohemian Rhapsody"?
 Answers => Queen
@@ -46,9 +46,9 @@ that bundle.
   </head>
   <body>
     <script id="quiz-text" type="text/plain">
-Title => Friday Night
-Question => Which superhero is called the Man of Steel?
-Answers => Superman | Batman | Spider-Man
+      Title => Friday Night
+      Question => Which superhero is called the Man of Steel?
+      Answers => Superman | Batman | Spider-Man
     </script>
     <script src="pq-trivia.min.js"></script>
   </body>

@@ -1,10 +1,15 @@
 import { describe, expect, test } from "bun:test";
 import { createQuiz } from "../../src/core/quiz/create";
-import { languageFromFile, mergeModels, splitByLanguage } from "../../src/core/quiz/languages";
+import {
+  languageFromFile,
+  mergeModels,
+  splitByLanguage,
+} from "../../src/core/quiz/languages";
+import { translate } from "../../src/i18n/dictionary";
 import { buildQuiz } from "../../src/core/model/quiz";
 import { ResponseKind } from "../../src/core/session/responses";
 
-const EN = `# Round
+const EN = `## Round
 Question => Which sea flooded in 1953?
 ID => flood
 Answers => North Sea
@@ -13,7 +18,7 @@ ID => capital
 Answers => Amsterdam
 `;
 
-const NL = `# Round
+const NL = `## Round
 Question => Welke zee overstroomde in 1953?
 ID => flood
 Language => NL
@@ -33,7 +38,11 @@ describe("language files", () => {
 
   test("both files load, and switching keeps an answer", async () => {
     const quiz = createQuiz({
-      config: { languageDefault: "EN", seed: "lang" },
+      config: {
+        languageDefault: "EN",
+        seed: "lang",
+        addMissingSectionScreens: false,
+      },
     });
     await quiz.load({
       type: "files",
@@ -73,6 +82,11 @@ describe("language files", () => {
     );
   });
 
+  test("another language does not silently become English", () => {
+    expect(translate("de", "next")).toBe("next");
+    expect(translate("nl", "next")).toBe("Volgende");
+  });
+
   test("a host can replace one UI string", async () => {
     const quiz = createQuiz({
       config: {
@@ -91,18 +105,22 @@ describe("language files", () => {
 
   test("sync copies a score that the translation left alone", async () => {
     const quiz = createQuiz({
-      config: { languageDefault: "EN", syncPropertiesWithTranslations: true },
+      config: {
+        languageDefault: "EN",
+        syncPropertiesWithTranslations: true,
+        addMissingSectionScreens: false,
+      },
     });
     await quiz.load({
       type: "files",
       files: [
         {
           name: "quiz.en.trivia",
-          text: "# R\nQuestion => One\nAnswers => 1\nScore => 3\n",
+          text: "## R\nQuestion => One\nAnswers => 1\nScore => 3\n",
         },
         {
           name: "quiz.nl.trivia",
-          text: "# R\nQuestion => Een\nAnswers => 1\n",
+          text: "## R\nQuestion => Een\nAnswers => 1\n",
         },
       ],
     });
@@ -113,10 +131,10 @@ describe("language files", () => {
   });
 
   test("models merge across files of one language", async () => {
-    const root = buildQuiz(`# R\nQuestion => One\nScore => 3\n`, {
+    const root = buildQuiz(`## R\nQuestion => One\nScore => 3\n`, {
       defaultLanguage: "EN",
     });
-    const child = buildQuiz(`# R\nQuestion => Een\n`, {
+    const child = buildQuiz(`## R\nQuestion => Een\n`, {
       defaultLanguage: "NL",
     });
     const merged = mergeModels([root, child]);

@@ -13,60 +13,88 @@ const quiz = createQuiz({
 });
 ```
 
+## The one-liner
+
+```ts
+import { Quiz } from "pq-trivia";
+
+const quiz = new Quiz({ seed: "quiz-night", shuffleQuestions: false });
+await quiz.load({ type: "text", text });
+```
+
+`new Quiz({ ... })` takes every config key inline, or in `config`. It is the
+same object `createQuiz` returns: the constructor is a thin shell around the
+factory, so the state getters stay live. Nothing is copied eagerly and nothing
+costs extra at runtime. Import the class or the function, whichever reads better.
+
 ## Config
 
-| Option | Default | What it does |
-| --- | --- | --- |
-| `seed` | header or `pq` | same seed, same plan |
-| `shuffleQuestions` | `false` | author order stays |
-| `shuffleRounds` | `false` | same |
-| `language` | header | content language now |
-| `languageDefault` | first language | root language |
-| `languages` | found | shortlist of languages |
-| `translations` | built-in `en`/`nl` | UI strings per language |
-| `syncPropertiesWithTranslations` | `false` | copy layout and scoring from the root |
-| `include` / `exclude` | none | property-value filters |
-| `groupBy` | none | keep one property together |
-| `minAnswers` / `maxAnswers` | none | answer-count filter |
-| `questionTypesAllowed` | all | type filter |
-| `excludeSections` / `filterSections` | `false` / none | ignore or hide rounds |
-| `minScore` / `maxScore` | none | clamp question scores |
-| `hideScore` / `hideScoreOnAnswers` | `false` | hide points |
-| `defaultAuthor` / `defaultCategory` | none | fill empty properties |
-| `possibleAuthors` / `possibleCategories` | none | reserved; not validated |
-| `hideAuthor` / `hideCategory` | `false` | hide the meta strip |
-| `showPropertiesWithoutDiversity` | `false` | show a property with one value |
-| `dateCreation` | none | year on the start screen |
-| `addSecretThemeQuestions` / `hideSecretThemeMessage` | `false` | secret round question and banner |
-| `keepQuestionOrder` / `keepSectionOrder` / `keepAnswerOrder` | `false` | explicit order |
-| `randomizeMedia` | `false` | shuffle media |
-| `defaultTimer` | none | seconds without `Timer` |
-| `timerStrategy` | `continue` | `expire`, `skip` or `continue` |
-| `hideTimerGlobal` / `hideTimerQuestion` | `false` | hide the countdown |
-| `disableTextFormatting` | `false` | every value as written |
-| `forbidInlineLists` | `false` | do not split values on `\|` |
-| `symbols` | default | swap syntax characters |
-| `hideErrors` | `false` | hide the problems panel |
-| `enableSafety` / `enableMouse` / `disableKeys` / `disableUI` / `disableTouch` | `false` | interaction switches |
-| `hotkeys` / `hotkeysForbidden` / `toolbar` | none | keys and visible buttons |
-| `mediaAutoPlay` / `loadExternalMediaAsIframe` | `false` | media behaviour |
-| `settings` / `hideDefaultSettings` | none / `false` | host controls on the start screen |
-| `title` / `icon` / `bannerImage` | header | page details |
-| `themeDisabled` | `false` | ignore `theme` |
-| `defaultScore` | `1` | points for a question without `Points` |
-| `restricted` | `false` | no answers mode, no reveal, no back |
-| `revealMode` | `never` | `always` or `afterAnswer` |
-| `policy` | `required` | what counts as answered |
-| `grading` | question | one mode for the whole quiz |
-| `allowScripts` | `false` | sandboxed `Script` widgets |
-| `timerSound` | `false` | beeps in the last five seconds |
-| `codeHighlight` | `false` | colour fenced code |
-| `answersKey` | none | opens encrypted files |
-| `theme` | none | theme folder or `.css`, like V2 |
-| `themeUpload` | `false` | "Load a theme folder" on the start screen |
-| `defaultTimer` | none | seconds for questions without `Timer` |
-| `disableTextFormatting` | `false` | show every value as written |
-| `addSecretThemeQuestions` | `false` | ask each round's secret at its end |
+| Option                                                                        | Default            | What it does                                                                 |
+| ----------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| `seed`                                                                        | header or `pq`     | same seed, same plan                                                         |
+| `shuffleQuestions`                                                            | `false`            | author order stays                                                           |
+| `shuffleRounds`                                                               | `false`            | same                                                                         |
+| `language`                                                                    | header             | content language now                                                         |
+| `languageDefault`                                                             | first language     | root language                                                                |
+| `languages`                                                                   | found              | shortlist of languages                                                       |
+| `translations`                                                                | built-in `en`/`nl` | UI strings per language                                                      |
+| `syncPropertiesWithTranslations`                                              | `false`            | copy layout and scoring from the root                                        |
+| `include` / `exclude`                                                         | none               | property-value filters                                                       |
+| `groupBy`                                                                     | none               | keep one property together                                                   |
+| `minAnswers` / `maxAnswers`                                                   | none               | answer-count filter                                                          |
+| `questionTypesAllowed`                                                        | all                | type filter                                                                  |
+| `excludeSections` / `filterSections`                                          | `false` / none     | ignore or hide rounds                                                        |
+| `minScore` / `maxScore`                                                       | none               | clamp question scores                                                        |
+| `hideScore` / `hideScoreOnAnswers`                                            | `false`            | hide points                                                                  |
+| `defaultAuthor` / `defaultCategory`                                           | none               | fill empty properties                                                        |
+| `possibleAuthors` / `possibleCategories`                                      | none               | reserved; not validated                                                      |
+| `hideAuthor` / `hideCategory`                                                 | `false`            | hide the meta strip                                                          |
+| `showPropertiesWithoutDiversity`                                              | `false`            | show a property with one value                                               |
+| `dateCreation`                                                                | none               | year on the start screen                                                     |
+| `addSecretThemeQuestions` / `hideSecretThemeMessage`                          | `false`            | secret round question and banner                                             |
+| `keepQuestionOrder` / `keepSectionOrder` / `keepAnswerOrder`                  | `false`            | explicit order                                                               |
+| `randomizeMedia`                                                              | `false`            | shuffle media                                                                |
+| `defaultTimer`                                                                | none               | seconds without `Timer`                                                      |
+| `timerStrategy`                                                               | `continue`         | `expire`, `skip` or `continue`                                               |
+| `hideTimerGlobal` / `hideTimerQuestion`                                       | `false`            | hide the countdown                                                           |
+| `disableTextFormatting`                                                       | `false`            | every value as written                                                       |
+| `forbidInlineLists`                                                           | `false`            | do not split values on `\|`                                                  |
+| `symbols`                                                                     | default            | swap syntax characters                                                       |
+| `hideErrors`                                                                  | `false`            | hide the problems panel                                                      |
+| `enableSafety` / `enableMouse` / `disableKeys` / `disableUI` / `disableTouch` | `false`            | interaction switches                                                         |
+| `hotkeys` / `hotkeysForbidden` / `toolbar`                                    | none               | keys and visible buttons                                                     |
+| `answerLabels`                                                                | `letters`          | `letters`, `lowercase`, `numbers`, `roman` or `none`                         |
+| `metadataIcons`                                                               | `true`             | icons in the question header                                                 |
+| `allowInput`                                                                  | `true`             | offer interactive play on the start screen                                   |
+| `mediaAutoPlay` / `loadExternalMediaAsIframe`                                 | `false`            | media behaviour                                                              |
+| `url` / `subFolderMedia`                                                      | none               | root and folder for relative media                                           |
+| `linkPrefixes` / `mediaFormats`                                               | V2 defaults        | which paths are links, which extensions are media                            |
+| `subFolderTheme`                                                              | `themes/`          | folder for a bare `theme` name                                               |
+| `addMissingSectionScreens`                                                    | `true`             | a section screen before each round                                           |
+| `allowTimerOnSections`                                                        | `false`            | section screens may use the default timer                                    |
+| `settings` / `hideDefaultSettings`                                            | none / `false`     | host controls on the start screen                                            |
+| `title` / `icon` / `bannerImage`                                              | header             | page details                                                                 |
+| `themeDisabled`                                                               | `false`            | ignore `theme`                                                               |
+| `defaultScore`                                                                | `1`                | points for a question without `Points`                                       |
+| `restricted`                                                                  | `false`            | no answers mode, no reveal, no back                                          |
+| `revealMode`                                                                  | `never`            | `always` or `afterAnswer`                                                    |
+| `policy`                                                                      | `required`         | what counts as answered                                                      |
+| `grading`                                                                     | question           | one mode for the whole quiz                                                  |
+| `allowScripts`                                                                | `false`            | sandboxed `Script` widgets                                                   |
+| `timerSound`                                                                  | `false`            | beeps in the last five seconds                                               |
+| `codeHighlight`                                                               | `false`            | colour fenced code                                                           |
+| `answersKey`                                                                  | none               | opens encrypted files                                                        |
+| `theme`                                                                       | none               | theme folder or `.css`, like V2                                              |
+| `themeUpload`                                                                 | `false`            | "Load a theme folder" on the start screen                                    |
+| `layoutMode`                                                                  | `viewport`         | `viewport` fills the window and scrolls inside; `inline` grows with the page |
+| `defaultTimer`                                                                | none               | seconds for questions without `Timer`                                        |
+| `disableTextFormatting`                                                       | `false`            | show every value as written                                                  |
+| `addSecretThemeQuestions`                                                     | `false`            | ask each round's secret at its end                                           |
+
+Every option above can also be set in the `.trivia` header, next to `Title` and
+`Seed`: `MediaFormats => jpg | png`, `FilterSections => Round two`, and so on.
+The syntax reference lists the header spelling of each key. Code wins over the
+file, so a host can always override what the author wrote.
 
 ## Load
 
@@ -87,7 +115,7 @@ const quiz = createQuiz({ parseText: createWorkerParser() });
 ## Play
 
 ```ts
-quiz.next();          // { ok, reason?, issues? }
+quiz.next(); // { ok, reason?, issues? }
 quiz.prev();
 quiz.goTo(3);
 quiz.setResponse(questionId, response);
@@ -96,8 +124,8 @@ quiz.revealHint();
 quiz.setMode(PlayMode.Answers);
 quiz.showResults();
 quiz.setLanguage("NL"); // answers and hints travel along
-quiz.languages();     // ["EN", "NL"]
-quiz.t("next");       // current UI language
+quiz.languages(); // ["EN", "NL"]
+quiz.t("next"); // current UI language
 ```
 
 A blocked `next()` says why: `invalid`, `required`, `blocked` or `end`.
@@ -105,12 +133,12 @@ A blocked `next()` says why: `invalid`, `required`, `blocked` or `end`.
 ## Read
 
 ```ts
-quiz.state;           // the whole session, plain data
+quiz.state; // the whole session, plain data
 quiz.currentScreen(); // the view model
-quiz.progress();      // { index, total, answered, percent }
-quiz.grade();         // GradeReport or null
-quiz.diagnostics();   // every parse and validation problem
-quiz.meta;            // title, authors, seed, language
+quiz.progress(); // { index, total, answered, percent }
+quiz.grade(); // GradeReport or null
+quiz.diagnostics(); // every parse and validation problem
+quiz.meta; // title, authors, seed, language
 ```
 
 In question mode the view model has no correct answers. That is the contract.
@@ -124,19 +152,19 @@ quiz.on("diagnostic", ({ diagnostic }) => {});
 quiz.subscribe((state, screen) => {});
 ```
 
-| Event | When |
-| --- | --- |
-| `ready` | the plan exists |
-| `state:change` | status changed |
-| `screen:change` | new screen view model |
-| `question:enter` | a question is shown |
-| `response:change` | an answer changed |
-| `hint:reveal` | a hint was used |
-| `timer:tick` / `timer:expire` | countdown |
-| `grade:ready` | results calculated |
-| `mode:change` | questions ↔ answers |
-| `diagnostic` | a problem was found |
-| `destroy` | teardown |
+| Event                         | When                  |
+| ----------------------------- | --------------------- |
+| `ready`                       | the plan exists       |
+| `state:change`                | status changed        |
+| `screen:change`               | new screen view model |
+| `question:enter`              | a question is shown   |
+| `response:change`             | an answer changed     |
+| `hint:reveal`                 | a hint was used       |
+| `timer:tick` / `timer:expire` | countdown             |
+| `grade:ready`                 | results calculated    |
+| `mode:change`                 | questions ↔ answers   |
+| `diagnostic`                  | a problem was found   |
+| `destroy`                     | teardown              |
 
 ## Override a screen
 
@@ -153,7 +181,7 @@ quiz.views.set(ScreenKind.Results, (screen, quiz) => {
 ```ts
 import { loadTheme, setTheme, themeFromFiles } from "pq-trivia/player";
 
-setTheme(await loadTheme("themes/forest/"));   // a folder, or a .css file
+setTheme(await loadTheme("themes/forest/")); // a folder, or a .css file
 setTheme(await themeFromFiles(Array.from(input.files ?? []))); // stays local
 ```
 

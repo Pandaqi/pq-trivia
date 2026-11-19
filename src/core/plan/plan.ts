@@ -6,7 +6,12 @@
  */
 
 import type { QuizModel } from "../model/quiz";
-import { questionMaxScore, type QuestionModel } from "../model/question";
+import type { RoundModel } from "../model/round";
+import {
+  QuestionType,
+  questionMaxScore,
+  type QuestionModel,
+} from "../model/question";
 import { createQuestion } from "../model/questionBuilder";
 import { DEFAULT_SYMBOLS } from "../syntax/symbols";
 import type { AstAttribute, AstQuestion } from "../syntax/ast";
@@ -18,13 +23,19 @@ export interface PlannedRound {
   readonly id: string;
   readonly name: string;
   readonly secret: string | null;
-  /** Index of this round's first question in `plan.questions`. */
+  /** Index of this round's first item in `plan.questions`. */
   readonly index: number;
+  /** Items in the plan, section screen included. */
   readonly count: number;
+  /** Real questions in this round, section screens left out. */
+  readonly questionCount: number;
+  readonly points: number;
 }
 
 export interface QuizPlan {
   readonly seed: string;
+  /** The Start block's `Buttons`, so any screen can honour the gate. */
+  readonly buttons: readonly string[];
   readonly questions: readonly QuestionModel[];
   readonly rounds: readonly PlannedRound[];
   readonly maxScore: number;
@@ -47,6 +58,10 @@ export interface PlanOptions {
   readonly secretQuestionText?: string;
   /** V2's `groupBy`: keep one property value together. */
   readonly groupBy?: string;
+  /** V2's `addMissingSectionScreens`: a screen before each round. */
+  readonly addMissingSectionScreens?: boolean;
+  /** V2's `allowTimerOnSections`: section screens may count down too. */
+  readonly allowTimerOnSections?: boolean;
 }
 
 function questionValues(question: QuestionModel, key: string): string[] {
@@ -93,6 +108,55 @@ function applyDefaults(
     timerMs: question.timerMs ?? fallbackTimer,
     formatText,
   };
+}
+
+/**
+ * The section screen V2 puts before a round. A real page, not a header: the
+ * round's own block gives it comments and media, and the player adds stats.
+ */
+function sectionQuestion(
+  round: RoundModel,
+  allowTimer: boolean,
+): QuestionModel {
+  if (round.source !== null) {
+    return {
+      ...round.source,
+      type: QuestionType.Section,
+      round: round.id,
+      score: 0,
+      hiddenAtPlay: false,
+      hiddenAtExport: true,
+      timerMs: allowTimer ? round.source.timerMs : 0,
+    };
+  }
+  const location = { file: "<section-screen>", line: 1, column: 1 };
+  const attribute = (key: string, value: string): AstAttribute => ({
+    key,
+    rawKey: key,
+    values: [value],
+    location,
+  });
+  const attributes = [
+    attribute("Question", round.name),
+    attribute("Type", "Section"),
+    attribute("ID", `section-${round.id}`),
+    attribute("Score", "0"),
+    attribute("HiddenAtExport", "true"),
+  ];
+  if (!allowTimer) {
+    attributes.push(attribute("Timer", "0"));
+  }
+  const node: AstQuestion = { attributes, location };
+  return createQuestion(
+    node,
+    {
+      defaultLanguage: null,
+      defaultScore: 0,
+      round: round.id,
+      symbols: DEFAULT_SYMBOLS,
+    },
+    [],
+  );
 }
 
 /** The round-question V2 added after a round with a `Secret`. */
@@ -158,7 +222,8 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
       const groups = [
         ...new Set(
           shuffled.map(
-            (question) => questionValues(question, options.groupBy ?? "")[0] ?? "",
+            (question) =>
+              questionValues(question, options.groupBy ?? "")[0] ?? "",
           ),
         ),
       ];
@@ -172,17 +237,37 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
     const items = applyPlacement(shuffled, diagnostics).map((question) =>
       applyDefaults(question, options),
     );
+    if (
+      options.addMissingSectionScreens !== false &&
+      !round.implicit &&
+      round.name.trim().length > 0
+    ) {
+      items.unshift(
+        applyDefaults(
+          sectionQuestion(round, options.allowTimerOnSections === true),
+          options,
+        ),
+      );
+    }
     if (options.addSecretThemeQuestions === true && round.secret !== null) {
       items.push(
         secretQuestion(round, round.secret, options.secretQuestionText ?? ""),
       );
     }
+    const playable = items.filter(
+      (question) => question.type !== QuestionType.Section,
+    );
     plannedRounds.push({
       id: round.id,
       name: round.name,
       secret: round.secret,
       index: questions.length,
       count: items.length,
+      questionCount: playable.length,
+      points: playable.reduce(
+        (total, question) => total + questionMaxScore(question),
+        0,
+      ),
     });
     questions.push(...items);
   }
@@ -194,10 +279,14 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
 
   return {
     seed,
+    buttons: quiz.start?.buttons ?? [],
     questions,
     rounds: plannedRounds,
     maxScore,
-    total: questions.length,
+    // Sections are pages, not questions. Counts follow V2.
+    total: questions.filter(
+      (question) => question.type !== QuestionType.Section,
+    ).length,
     diagnostics,
   };
 }

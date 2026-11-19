@@ -4,6 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PQ-Trivia player</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
     <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
     <link rel="stylesheet" href="../dist/v3/themes/print.css" media="print" />
   </head>
@@ -14,7 +21,8 @@
       import { createQuiz, mountQuiz } from "../dist/v3/player.js";
 
       const text = `
-Title => The Wayward Melody Demo
+# The Wayward Melody Demo
+
 Description => Three questions, one winner.
 Seed => music-night
 Author => Pandaqi

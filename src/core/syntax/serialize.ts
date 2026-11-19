@@ -171,9 +171,18 @@ export function format(doc: AstDocument, options: FormatOptions = {}): string {
     const headerGroups = groupAttributes(doc.header).sort(
       (a, b) => headerOrder(a.key) - headerOrder(b.key),
     );
-    const headerLines = headerGroups.flatMap((group) =>
-      emitGroup(group, symbols),
-    );
+    const title = headerGroups.find((group) => group.key === "Title");
+    const headerLines: string[] = [];
+    const titleText = title?.values[0]?.trim() ?? "";
+    if (titleText.length > 0) {
+      headerLines.push(`${symbols.title} ${titleText}`);
+    }
+    for (const group of headerGroups) {
+      if (group.key === "Title") {
+        continue;
+      }
+      headerLines.push(...emitGroup(group, symbols));
+    }
     if (headerLines.length > 0) {
       sections.push(headerLines.join("\n"));
     }

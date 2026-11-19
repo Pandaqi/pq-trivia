@@ -4,7 +4,6 @@
  * Same reducer, same events, no DOM. A headless frontend, a CLI or a test all
  * use this. The Preact player is one consumer of it.
  */
-
 import { parseQuiz, type QuizModel } from "../model/quiz";
 import { planQuiz, type PlanOptions } from "../plan/plan";
 import {
@@ -19,16 +18,11 @@ import {
 } from "../syntax/diagnostics";
 import { Emitter } from "../session/events";
 import { ActionRegistry, ViewRegistry } from "../session/registry";
-import {
-  defaultResponse,
-  isEmptyResponse,
-  type Response,
-} from "../session/responses";
+import { defaultResponse, isEmptyResponse } from "../session/responses";
 import {
   createSessionState,
   currentQuestion,
   EMPTY_PROGRESS,
-  PlayMode,
   progressOf,
   sessionReducer,
   SessionStatus,
@@ -38,10 +32,11 @@ import {
 import { ScreenKind, type ScreenViewModel } from "../session/viewModel";
 import { screenFor } from "../session/screens";
 import { gradeAttempt, type GradeReport } from "../grading/report";
-import { InteractivePolicy, nextCheck, RevealMode } from "../session/policies";
+import { RevealMode } from "../session/policies";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import { applyFlow } from "../session/flow";
 import { createExtras } from "./extras";
+import { createNavigation } from "./navigation";
 import { createLoader } from "./load";
 import { persistState } from "./persist";
 import { languagesOf } from "./languages";
@@ -51,23 +46,32 @@ import {
   possibleWarnings,
   prepareLanguageSwitch,
   prepareModels,
+  refreshPlan,
 } from "./languageOptions";
-import { translate } from "../../i18n/dictionary";
+import { builtinLanguages, translate } from "../../i18n/dictionary";
 import type {
   CreateQuizOptions,
-  NavResult,
   OrderOptions,
-  Quiz,
+  QuizApi,
   QuizConfig,
   QuizEventMap,
+  QuizRoundInfo,
 } from "./types";
 
-export function createQuiz(options: CreateQuizOptions = {}): Quiz {
-  let config: QuizConfig = { ...options.config };
+export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
+  // Three layers: the file's header, the host's options, then live changes.
+  // Later layers win, so code always overrules a `.trivia` file.
+  const baseConfig: QuizConfig = { ...options.config };
+  let fileConfig: QuizConfig = {};
+  let liveConfig: QuizConfig = {};
+  let config: QuizConfig = { ...baseConfig };
   const version = options.version ?? "3.0.0-dev.0";
   const diagnostics: Diagnostic[] = [];
   let quiz: QuizModel | null = null;
   let models = new Map<string, QuizModel>();
+  /** The models as loaded, before filters. Refreshing uses these again. */
+  let loadedModels = new Map<string, QuizModel>();
+  let source: string | null = null;
   let planOrder: PlanOptions = {};
   let state = createSessionState({ language: config.language ?? null });
   let destroyed = false;
@@ -91,15 +95,16 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     (state: SessionState, screen: ScreenViewModel | null) => void
   >();
 
-  const policy = (): InteractivePolicy =>
-    config.policy ?? InteractivePolicy.Required;
   const revealMode = (): RevealMode => config.revealMode ?? RevealMode.Never;
 
+  function mergedConfig(): QuizConfig {
+    return { ...fileConfig, ...baseConfig, ...liveConfig };
+  }
   function planOptions(): PlanOptions {
     return planOptionsFrom(config, planOrder, t("secretQuestion"));
   }
   function screenOf(): ScreenViewModel | null {
-    return screenFor(quiz, state, saved);
+    return screenFor(quiz, state, saved, config);
   }
   function buildReport(): GradeReport | null {
     if (state.plan === null) {
@@ -160,6 +165,38 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       );
     }
   }
+  /**
+   * A content setting changed: filters, scores, rounds. Rebuild from the raw
+   * models, then replace the plan. Answers survive by question ID.
+   */
+  function refreshContent(): void {
+    if (loadedModels.size === 0 || state.plan === null) {
+      return;
+    }
+    const next = refreshPlan(
+      loadedModels,
+      config,
+      state.language ?? config.language ?? null,
+      planOptions(),
+      state.responses,
+    );
+    if (next === null) {
+      return;
+    }
+    models = next.models;
+    quiz = next.model;
+    state = {
+      ...state,
+      language: next.language.length > 0 ? next.language : null,
+    };
+    apply(
+      sessionReducer(
+        state,
+        { type: "plan/replace", plan: next.plan },
+        Date.now(),
+      ),
+    );
+  }
   /** `When` conditions can unlock or hide a question. Replan, keep the index. */
   function replan(): void {
     if (quiz === null || state.plan === null) {
@@ -197,6 +234,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     setState: (next) => {
       state = next;
     },
+    setSource: (text) => {
+      source = text;
+    },
     apply,
     notify,
     refreshSaved,
@@ -211,9 +251,12 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
   }
   function uiLanguage(): string {
     const current = state.language ?? "";
-    return current.length > 0
-      ? current
-      : (config.languageDefault ?? "en");
+    if (current.length > 0) {
+      return current;
+    }
+    // No language gets a special place. If the quiz does not name one, use the
+    // first language this build carries, or none at all.
+    return config.languageDefault ?? builtinLanguages()[0] ?? "";
   }
   function t(
     key: string,
@@ -222,6 +265,10 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     return translate(uiLanguage(), key, params, config.translations ?? {});
   }
   function finishLoad(loaded: Map<string, QuizModel>): void {
+    const first = [...loaded.values()][0];
+    fileConfig = (first?.meta.config ?? {}) as QuizConfig;
+    config = mergedConfig();
+    loadedModels = loaded;
     const prepared = prepareModels(
       loaded,
       config,
@@ -247,19 +294,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     for (const diagnostic of quiz.diagnostics) {
       emitter.emit("diagnostic", { diagnostic });
     }
-    // A quiz with nothing to play is an error, not a ready quiz. Loading an
-    // empty file used to leave the player sitting on a start screen forever.
+    // A quiz with nothing to play is an error, not a ready quiz. The message
+    // came from `validateQuiz` above, so every path says "Quiz is empty."
     if (quiz.questions.length === 0) {
-      const diagnostic = syntaxWarning(
-        DiagnosticCodes.MissingQuestion,
-        "This quiz has no questions.",
-        {
-          suggestion:
-            "Add a Question block, or check the file loaded correctly.",
-        },
-      );
-      diagnostics.push(diagnostic);
-      emitter.emit("diagnostic", { diagnostic });
       apply(sessionReducer(state, { type: "load/failure", diagnostics }, 0));
       return;
     }
@@ -285,7 +322,8 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     if (switched === null) {
       return false;
     }
-    config = { ...config, language };
+    liveConfig = { ...liveConfig, language };
+    config = mergedConfig();
     quiz = switched.model;
     state = switched.state;
     notify(state.status);
@@ -293,9 +331,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     emitter.emit("language:change", { language });
     return true;
   }
-
   function applyOrder(order: OrderOptions): void {
-    config = { ...config, ...order };
+    liveConfig = { ...liveConfig, ...order };
+    config = mergedConfig();
     planOrder = { ...planOrder, ...order };
     if (quiz === null || state.plan === null) {
       return;
@@ -309,7 +347,14 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       ),
     );
   }
-
+  const navigation = createNavigation({
+    state: () => state,
+    config: () => config,
+    apply: (next) => apply(next),
+    emitter,
+    autoReveal,
+    replan,
+  });
   const extras = createExtras({
     state: () => state,
     plan: () => state.plan,
@@ -327,14 +372,17 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     },
     isRestricted: () => config.restricted === true,
     config: () => config,
-    setConfig: (next) => {
-      config = next;
+    setConfig: (partial) => {
+      liveConfig = { ...liveConfig, ...partial };
+      config = mergedConfig();
     },
     applyOrder,
+    refresh: refreshContent,
   });
 
   return {
     ...extras,
+    ...navigation,
     get state() {
       return state;
     },
@@ -350,89 +398,29 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
     ready: loader.ready,
     locked: loader.locked,
     unlock: loader.unlock,
-    next(): NavResult {
-      if (state.plan === null) {
-        return { ok: false, reason: "blocked" };
-      }
-      if (state.index >= state.plan.questions.length) {
-        return { ok: false, reason: "end" };
-      }
-      const check = nextCheck(state, policy());
-      if (check.issues.length > 0) {
-        return { ok: false, reason: "invalid", issues: check.issues };
-      }
-      if (check.blocked) {
-        return { ok: false, reason: "blocked" };
-      }
-      apply(sessionReducer(state, { type: "nav/next" }, Date.now()));
-      autoReveal();
-      return { ok: true };
-    },
-    prev(): NavResult {
-      if (state.plan === null || state.index < 0) {
-        return { ok: false, reason: "blocked" };
-      }
-      if (config.restricted === true) {
-        return { ok: false, reason: "blocked" };
-      }
-      apply(sessionReducer(state, { type: "nav/prev" }, Date.now()));
-      autoReveal();
-      return { ok: true };
-    },
-    goTo(index: number): NavResult {
-      if (state.plan === null) {
-        return { ok: false, reason: "blocked" };
-      }
-      if (index < 0 || index > state.plan.questions.length) {
-        return { ok: false, reason: "blocked" };
-      }
-      if (config.restricted === true && index < state.index) {
-        return { ok: false, reason: "blocked" };
-      }
-      apply(sessionReducer(state, { type: "nav/goTo", index }, Date.now()));
-      autoReveal();
-      return { ok: true };
-    },
     setOrder: applyOrder,
     t,
     languages(): readonly string[] {
       return languagesOf(models);
     },
+    rounds(): readonly QuizRoundInfo[] {
+      const key =
+        state.language === null
+          ? ([...loadedModels.keys()][0] ?? "")
+          : (findLanguageKey(loadedModels, state.language) ?? "");
+      const model = loadedModels.get(key) ?? quiz;
+      return model === null
+        ? []
+        : model.rounds.map((round) => ({
+            id: round.id,
+            name: round.name,
+            secret: round.secret,
+          }));
+    },
+    sourceText(): string | null {
+      return source;
+    },
     setLanguage,
-    restart(restartOptions: { readonly keepResponses?: boolean } = {}): void {
-      apply(
-        sessionReducer(
-          state,
-          {
-            type: "nav/restart",
-            ...(restartOptions.keepResponses === true
-              ? { keepResponses: true }
-              : {}),
-          },
-          Date.now(),
-        ),
-      );
-    },
-    setMode(mode: PlayMode): boolean {
-      if (config.restricted === true && mode === PlayMode.Answers) {
-        return false;
-      }
-      apply(sessionReducer(state, { type: "mode/set", mode }, Date.now()));
-      emitter.emit("mode:change", { mode });
-      return true;
-    },
-    setResponse(questionId: string, response: Response): void {
-      apply(
-        sessionReducer(
-          state,
-          { type: "response/set", questionId, response },
-          Date.now(),
-        ),
-      );
-      emitter.emit("response:change", { id: questionId, response });
-      replan();
-      autoReveal();
-    },
     currentScreen(): ScreenViewModel | null {
       return screenOf();
     },
@@ -477,7 +465,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       if (partial.language !== undefined && partial.language !== null) {
         const { language: _language, ...rest } = partial;
         setLanguage(partial.language);
-        extras.configure(rest);
+        if (Object.keys(rest).length > 0) {
+          extras.configure(rest);
+        }
         return;
       }
       extras.configure(partial);
@@ -491,6 +481,9 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
       emitter.emit("destroy", {});
       emitter.clear();
       quiz = null;
+      models = new Map();
+      loadedModels = new Map();
+      source = null;
       journal = null;
       saved = null;
       state = createSessionState();

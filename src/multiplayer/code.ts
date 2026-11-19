@@ -25,10 +25,7 @@ export function isRoomCode(value: string): boolean {
 }
 
 /** `?pq-live=ABCD` is enough to join. Nothing else is in the URL. */
-export function joinUrl(
-  code: string,
-  base?: string,
-): string {
+export function joinUrl(code: string, base?: string): string {
   const root =
     base ??
     (typeof location === "undefined"

@@ -82,15 +82,17 @@ export function splitByLanguage(
           round.id,
           round.name,
           round.secret,
-          round.questions.filter((question) =>
-            ids.has(question.id) &&
-            questionLanguage(question, fallback) === language,
+          round.questions.filter(
+            (question) =>
+              ids.has(question.id) &&
+              questionLanguage(question, fallback) === language,
           ),
         ),
       )
       .filter((round) => round.questions.length > 0);
     const start =
-      model.start !== null && questionLanguage(model.start, fallback) === language
+      model.start !== null &&
+      questionLanguage(model.start, fallback) === language
         ? model.start
         : null;
     const end =
@@ -158,7 +160,9 @@ export function mergeModels(models: readonly QuizModel[]): QuizModel {
     }
     for (const question of model.questions) {
       const roundId =
-        question.round === null ? null : (oldToNew.get(question.round) ?? question.round);
+        question.round === null
+          ? null
+          : (oldToNew.get(question.round) ?? question.round);
       questions.push({ ...question, round: roundId });
       if (roundId !== null) {
         const target =
@@ -191,11 +195,7 @@ export function mergeModels(models: readonly QuizModel[]): QuizModel {
 
 const DEFAULT_TIMER = null;
 
-function takeIfUnset<T>(
-  target: T,
-  root: T,
-  unset: (value: T) => boolean,
-): T {
+function takeIfUnset<T>(target: T, root: T, unset: (value: T) => boolean): T {
   return unset(target) ? root : target;
 }
 
@@ -210,14 +210,22 @@ export function syncTranslation(
   return {
     ...target,
     score: takeIfUnset(target.score, root.score, (value) => value === 1),
-    timerMs: takeIfUnset(target.timerMs, root.timerMs, (value) => value === DEFAULT_TIMER),
+    timerMs: takeIfUnset(
+      target.timerMs,
+      root.timerMs,
+      (value) => value === DEFAULT_TIMER,
+    ),
     media: takeIfUnset(target.media, root.media, (value) => value.length === 0),
     categories: takeIfUnset(
       target.categories,
       root.categories,
       (value) => value.length === 0,
     ),
-    authors: takeIfUnset(target.authors, root.authors, (value) => value.length === 0),
+    authors: takeIfUnset(
+      target.authors,
+      root.authors,
+      (value) => value.length === 0,
+    ),
     layout: takeIfUnset(target.layout, root.layout, (value) => value === null),
     background: takeIfUnset(
       target.background,
@@ -235,14 +243,26 @@ export function syncTranslation(
       (value) => value === null,
     ),
     reveal: takeIfUnset(target.reveal, root.reveal, (value) => value === null),
-    classes: takeIfUnset(target.classes, root.classes, (value) => value.length === 0),
+    classes: takeIfUnset(
+      target.classes,
+      root.classes,
+      (value) => value.length === 0,
+    ),
     printFlags: takeIfUnset(
       target.printFlags,
       root.printFlags,
       (value) => value.length === 0,
     ),
-    buttons: takeIfUnset(target.buttons, root.buttons, (value) => value.length === 0),
-    credits: takeIfUnset(target.credits, root.credits, (value) => value.length === 0),
+    buttons: takeIfUnset(
+      target.buttons,
+      root.buttons,
+      (value) => value.length === 0,
+    ),
+    credits: takeIfUnset(
+      target.credits,
+      root.credits,
+      (value) => value.length === 0,
+    ),
     height: takeIfUnset(target.height, root.height, (value) => value === null),
     script: takeIfUnset(target.script, root.script, (value) => value === null),
     range: takeIfUnset(target.range, root.range, (value) => value === null),
@@ -271,7 +291,11 @@ export function syncTranslation(
       root.mediaOrder,
       (value) => value === OrderMode.Keep,
     ),
-    placeAt: takeIfUnset(target.placeAt, root.placeAt, (value) => value === null),
+    placeAt: takeIfUnset(
+      target.placeAt,
+      root.placeAt,
+      (value) => value === null,
+    ),
     placeBefore: takeIfUnset(
       target.placeBefore,
       root.placeBefore,
@@ -299,7 +323,11 @@ export function syncTranslation(
       root.formatText,
       (value) => value === true,
     ),
-    sources: takeIfUnset(target.sources, root.sources, (value) => value.length === 0),
+    sources: takeIfUnset(
+      target.sources,
+      root.sources,
+      (value) => value.length === 0,
+    ),
   };
 }
 
@@ -313,7 +341,9 @@ export function syncModels(
   if (root === undefined) {
     return models;
   }
-  const rootById = new Map(root.questions.map((question) => [question.id, question]));
+  const rootById = new Map(
+    root.questions.map((question) => [question.id, question]),
+  );
   const out = new Map<string, QuizModel>();
   for (const [language, model] of models) {
     if (language === rootLanguage) {

@@ -65,7 +65,9 @@ for (const step of STEPS) {
 }
 
 // Checksums, so a download can be checked against the release.
-const files = (await readdir(DIST)).filter((file) => file.endsWith(".js")).sort();
+const files = (await readdir(DIST))
+  .filter((file) => file.endsWith(".js"))
+  .sort();
 const lines: string[] = [];
 for (const file of files) {
   const bytes = await Bun.file(join(DIST, file)).arrayBuffer();
@@ -80,7 +82,9 @@ console.log(`\nRelease dry run done: v${version}.`);
 console.log(`Checksums: dist/v3/SHA256SUMS (${files.length} files).`);
 console.log("");
 console.log("Left for a human:");
-console.log(`  1. ${pkg.private === true ? "Set \"private\": false in package.json." : "package.json is publishable."}`);
+console.log(
+  `  1. ${pkg.private === true ? 'Set "private": false in package.json.' : "package.json is publishable."}`,
+);
 console.log(`  2. git tag v${version} && git push --tags`);
 console.log("  3. npm publish --provenance --access public");
 console.log("  4. bun run docs:build, then deploy docs/.vitepress/dist");

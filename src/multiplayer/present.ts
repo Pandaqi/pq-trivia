@@ -62,7 +62,9 @@ export function describeResponse(
     case ResponseKind.Sort:
       return response.order.map((id) => byId.get(id) ?? id).join(" > ");
     case ResponseKind.Match:
-      return response.pairs.map((pair) => `${pair[0]} ~ ${pair[1]}`).join(" | ");
+      return response.pairs
+        .map((pair) => `${pair[0]} ~ ${pair[1]}`)
+        .join(" | ");
     case ResponseKind.Cloze:
       return response.blanks.join(" | ");
     case ResponseKind.Open:

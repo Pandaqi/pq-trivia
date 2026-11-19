@@ -3,4 +3,5 @@ node_modules/
 dist/pack/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+.pq-build/
 .DS_Store

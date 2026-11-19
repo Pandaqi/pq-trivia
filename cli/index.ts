@@ -14,6 +14,11 @@ import { planQuiz } from "../src/core/plan/plan";
 import { gradeAttempt } from "../src/core/grading/report";
 import type { ResponseMap } from "../src/core/session/responses";
 import { formatText } from "../src/core/syntax/serialize";
+import {
+  detectHeadingStyle,
+  looksLikeQuiz,
+  migrateHeadings,
+} from "../src/core/syntax/headings";
 import { listAttributes } from "../src/core/syntax/attributeRegistry";
 import { ATTRIBUTE_DESCRIPTIONS } from "../src/core/syntax/attributeDocs";
 import { gradesCsv, questionsCsv } from "../src/core/export/csv";
@@ -23,6 +28,7 @@ import { toEmbedded } from "../src/core/export/embedded";
 import { toQuizJson } from "../src/core/export/json";
 import { encryptQuiz } from "../src/platform/answerKey";
 import { toStandaloneHtml } from "../src/core/export/standalone";
+import { mediaOptionsFrom } from "../src/core/values/media";
 
 import {
   backup,
@@ -42,8 +48,11 @@ import {
 const USAGE = `PQ-Trivia CLI
 
   validate <path...> [--strict]        parse and report
-  format <path...> [--write]           rewrite to canonical form
-  migrate <path...> [--write|--check]  canonicalise, keep a .bak
+  format <path...> [--write] [--from-v2|--from-v3]
+                                       rewrite to canonical form
+  migrate <path...> [--write|--check] [--headings] [--from-v2]
+                                       canonicalise, keep a .bak
+                                       --headings shifts heading levels only
   build <file> [--format json|html|gift|qti|csv] [--out file] [--answers]
   pack <file> [--out dir] [--seed text]   an offline folder that plays
   encrypt <file> [--passphrase text] [--out file]
@@ -86,8 +95,15 @@ let warnings = 0;
 if (command === "validate") {
   const strict = flags["strict"] === true;
   for (const file of files) {
+    const text = await readFile(file, "utf8");
+    const style = detectHeadingStyle(text);
     const quiz = await readQuiz(file);
     const name = relativeName(file);
+    if (style === "legacy") {
+      console.log(
+        `${name}: V2 headings. Run migrate ${relativeName(file)} --headings --write.`,
+      );
+    }
     const counted = reportDiagnostics(quiz.diagnostics);
     errors += counted.errors;
     warnings += counted.warnings;
@@ -106,9 +122,33 @@ if (command === "validate") {
 }
 
 if (command === "format") {
+  const fromV2 = flags["from-v2"] === true;
+  const fromV3 = flags["from-v3"] === true || flags["current"] === true;
+  if (fromV2 && fromV3) {
+    console.error("Use --from-v2 or --from-v3, not both.");
+    process.exit(2);
+  }
   for (const file of files) {
+    const name = relativeName(file);
     const text = await readFile(file, "utf8");
-    const formatted = formatText(text, {});
+    if (!looksLikeQuiz(text)) {
+      console.error(`${name}: not a quiz, skipped`);
+      continue;
+    }
+    const style = fromV2
+      ? "legacy"
+      : fromV3
+        ? "current"
+        : detectHeadingStyle(text);
+    if (style === "ambiguous") {
+      console.error(
+        `${name}: headings are ambiguous. Add --from-v2 for old content. Add --from-v3 or --current for a title-only V3 quiz.`,
+      );
+      continue;
+    }
+    const source =
+      style === "legacy" ? migrateHeadings(text, { force: true }) : text;
+    const formatted = formatText(source, {});
     if (flags["write"] === true) {
       await writeText(file, formatted);
       console.log(`${relativeName(file)}: formatted`);
@@ -120,21 +160,39 @@ if (command === "format") {
 }
 
 if (command === "migrate") {
+  const headingsOnly = flags["headings"] === true;
+  const forceLegacy = flags["from-v2"] === true;
   let changed = 0;
   for (const file of files) {
+    const name = relativeName(file);
     const text = await readFile(file, "utf8");
-    const formatted = formatText(text, {});
-    if (formatted === text) {
-      console.log(`${relativeName(file)}: already canonical`);
+    if (!looksLikeQuiz(text)) {
+      console.log(`${name}: not a quiz, skipped`);
+      continue;
+    }
+    const style = forceLegacy ? "legacy" : detectHeadingStyle(text);
+    if (style === "ambiguous") {
+      console.log(
+        `${name}: headings are ambiguous. Add --from-v2 if this is old content.`,
+      );
+    }
+    const source = migrateHeadings(text, forceLegacy ? { force: true } : {});
+    const migrated = headingsOnly ? source : formatText(source, {});
+    if (migrated === text) {
+      console.log(
+        `${name}: ${headingsOnly ? "headings already current" : "already canonical"}`,
+      );
       continue;
     }
     changed += 1;
     if (flags["write"] === true) {
       await backup(file);
-      await writeText(file, formatted);
-      console.log(`${relativeName(file)}: migrated (backup kept)`);
+      await writeText(file, migrated);
+      console.log(
+        `${name}: ${headingsOnly ? "headings migrated" : "migrated"} (backup kept)`,
+      );
     } else {
-      console.log(`${relativeName(file)}: needs migration`);
+      console.log(`${name}: needs ${headingsOnly ? "heading " : ""}migration`);
     }
   }
   if (changed > 0 && flags["check"] === true) {
@@ -157,8 +215,10 @@ if (command === "build") {
   let output: string;
   switch (format) {
     case "html":
+      // The header may set a media folder and formats. The handout obeys them.
       output = toStandaloneHtml(plan, quiz.meta, {
         answers: flags["answers"] === true,
+        media: mediaOptionsFrom(quiz.meta.config),
       });
       break;
     case "gift":
@@ -209,16 +269,9 @@ if (command === "pack") {
     ROOT,
     typeof outFlag === "string" ? outFlag : `dist/pack/${slug}`,
   );
-  const escaper = (text: string): string =>
-    text
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;");
   // Includes are already written out, so the pack is one self-contained file.
   const text = formatText(expanded, {}).replaceAll("</script", "<\\/script");
   const seed = typeof flags["seed"] === "string" ? flags["seed"] : "";
-  const title = escaper(quiz.meta.title);
   const packFiles = [
     "index.html",
     "quiz.trivia",
@@ -229,11 +282,9 @@ if (command === "pack") {
     "sw.js",
   ];
   const html = `<!doctype html>
-<html lang="en">
+<html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${title}</title>
+<style>html,body{margin:0;height:100%}</style>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="print.css" media="print">
 <script src="pq-trivia.min.js" defer></script>
@@ -247,7 +298,7 @@ ${text}
 window.addEventListener("load", function () {
   var host = document.getElementById("app");
   var source = document.getElementById("quiz-text").textContent;
-  var quiz = PQTrivia.createQuiz({ config: { seed: ${JSON.stringify(seed)} } });
+  var quiz = new PQTrivia.Quiz({ seed: ${JSON.stringify(seed)} });
   PQTrivia.mountQuiz(quiz, host);
   quiz.load({ type: "text", text: source });
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {

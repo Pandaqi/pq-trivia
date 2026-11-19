@@ -5,8 +5,8 @@ V2's localization is back, including switching while people are playing.
 Two things are translated, and they are separate:
 
 - **Questions**: `Language`, `Translation` and `SyncAll` in the quiz file.
-- **Interface**: every label, button and status line, in English and Dutch,
-  with your own strings on top.
+- **Interface**: every label, button and status line, in the languages your
+  build carries, with your own strings on top.
 
 ## One file per language
 
@@ -98,8 +98,10 @@ asks for the same for one question even when the global option is off;
 
 ## The interface
 
-English and Dutch ship in the bundle. Pick the language with `languageDefault`
-or switch with `setLanguage`; the interface follows.
+The default build carries English and Dutch. Pick the language with
+`languageDefault` or switch with `setLanguage`; the interface follows. Build
+with `--languages` to ship only the ones you need, including none. See
+[builds](builds.md).
 
 Override any string:
 
@@ -110,15 +112,15 @@ createQuiz({
     translations: {
       nl: {
         next: "Verder",
-        "startKicker": "Quizavond",
+        startKicker: "Quizavond",
       },
     },
   },
 });
 ```
 
-A missing key falls back to the built-in Dutch, then English. Hosts can also
-read one string directly:
+A missing key shows the key itself. No language silently fills in for another,
+not even English. Hosts can read one string directly:
 
 ```ts
 quiz.t("next"); // "Volgende"
@@ -127,20 +129,20 @@ quiz.t("pointsLabel", { points: 2, unit: quiz.t("point_other") });
 
 ### Keys worth knowing
 
-| Key | English | Dutch |
-| --- | --- | --- |
-| `next` / `previous` | Next / Previous | Volgende / Vorige |
-| `play` | Play the questions! | Speel de quiz! |
-| `settings` | Settings | Instellingen |
-| `results` | Results | Resultaten |
-| `correct` / `wrong` / `skipped` | Correct / Wrong / Skipped | Juist / Fout / Overgeslagen |
-| `questionOf` | Question {index} of {total} | Vraag {index} van {total} |
-| `roundNumber` | Round {number} | Ronde {number} |
-| `theme` | Theme: {theme} | Thema: {theme} |
-| `timeUp` | Time is up. Answers stay open. | De tijd is om. Antwoorden blijven open. |
-| `resumeTitle` | You have an unfinished attempt | Je hebt een onafgemaakte poging |
-| `bandExcellent` | Excellent | Uitstekend |
-| `lockedTitle` | Locked quiz | Beveiligde quiz |
+| Key                             | English                        | Dutch                                   |
+| ------------------------------- | ------------------------------ | --------------------------------------- |
+| `next` / `previous`             | Next / Previous                | Volgende / Vorige                       |
+| `play`                          | Play the questions!            | Speel de quiz!                          |
+| `settings`                      | Settings                       | Instellingen                            |
+| `results`                       | Results                        | Resultaten                              |
+| `correct` / `wrong` / `skipped` | Correct / Wrong / Skipped      | Juist / Fout / Overgeslagen             |
+| `questionOf`                    | Question {index} of {total}    | Vraag {index} van {total}               |
+| `roundNumber`                   | Round {number}                 | Ronde {number}                          |
+| `theme`                         | Theme: {theme}                 | Thema: {theme}                          |
+| `timeUp`                        | Time is up. Answers stay open. | De tijd is om. Antwoorden blijven open. |
+| `resumeTitle`                   | You have an unfinished attempt | Je hebt een onafgemaakte poging         |
+| `bandExcellent`                 | Excellent                      | Uitstekend                              |
+| `lockedTitle`                   | Locked quiz                    | Beveiligde quiz                         |
 
 The full table is in `src/i18n/dictionary.ts`. Keys are stable; hosts may use
 them in `translations`.

@@ -7,6 +7,7 @@
 
 import { inlineToPlainText, parseInline } from "../format/inline";
 import type { QuestionModel } from "../model/question";
+import { QuestionType } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
 import { defaultResponse, type ResponseMap } from "../session/responses";
 import {
@@ -26,7 +27,10 @@ export enum GradeBand {
 
 export interface QuestionReport {
   readonly id: string;
+  /** Position among the questions that count. A section screen is skipped. */
   readonly index: number;
+  /** Position in the plan, for jumping back to the question. */
+  readonly planIndex: number;
   readonly round: string | null;
   readonly roundName: string | null;
   readonly type: string;
@@ -129,8 +133,13 @@ export function gradeAttempt(
   const questions: QuestionReport[] = [];
   const rounds = new Map<string, { name: string; items: QuestionReport[] }>();
   const categories = new Map<string, QuestionReport[]>();
+  let number = 0;
 
-  plan.questions.forEach((question, index) => {
+  plan.questions.forEach((question, planIndex) => {
+    // A section screen has no answer. It must not appear as a skipped question.
+    if (question.type === QuestionType.Section) {
+      return;
+    }
     const response = responses[question.id] ?? defaultResponse(question);
     const result = gradeQuestion(question, response, options);
     const roundId = question.round ?? "";
@@ -138,7 +147,8 @@ export function gradeAttempt(
       plan.rounds.find((round) => round.id === question.round)?.name ?? null;
     const report: QuestionReport = {
       id: question.id,
-      index,
+      index: number,
+      planIndex,
       round: question.round,
       roundName,
       type: question.type,
@@ -154,6 +164,7 @@ export function gradeAttempt(
       parts: result.parts,
     };
     questions.push(report);
+    number += 1;
 
     const bucket = rounds.get(roundId) ?? {
       name: roundName ?? "",
@@ -267,20 +278,4 @@ export function formatDuration(durationMs: number | null): string {
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
-}
-
-export function bandLabel(band: GradeBand): string {
-  switch (band) {
-    case GradeBand.Excellent:
-      return "Excellent";
-    case GradeBand.Good:
-      return "Good";
-    case GradeBand.Fair:
-      return "Fair";
-    case GradeBand.Practice:
-      return "Keep practising";
-    case GradeBand.Empty:
-    default:
-      return "No points";
-  }
 }

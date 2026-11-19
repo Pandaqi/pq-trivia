@@ -93,9 +93,7 @@ export function PlayerView({
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
           Room {state.code}
         </h1>
-        <p class="pq-body">
-          {state.error ?? "Connecting to the host…"}
-        </p>
+        <p class="pq-body">{state.error ?? "Connecting to the host…"}</p>
       </main>
     );
   }

@@ -8,7 +8,12 @@
 import { fetchText } from "../fetchText";
 import type { TextCache } from "./textCache";
 
-function revalidate(url: string, text: string, etag: string | null, cache: TextCache): void {
+function revalidate(
+  url: string,
+  text: string,
+  etag: string | null,
+  cache: TextCache,
+): void {
   const headers: Record<string, string> = {};
   if (etag !== null) {
     headers["If-None-Match"] = etag;

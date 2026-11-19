@@ -176,6 +176,17 @@ export function validateQuiz(quiz: QuizModel): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   const seen = new Set<string>();
 
+  // One message, whatever made it empty: a blank file, a filter, a mistake.
+  if (quiz.questions.length === 0) {
+    diagnostics.push(
+      syntaxWarning(DiagnosticCodes.MissingQuestion, "Quiz is empty.", {
+        suggestion:
+          "Add a Question block, or check that settings do not hide every round.",
+      }),
+    );
+    return diagnostics;
+  }
+
   for (const question of quiz.questions) {
     if (seen.has(question.id)) {
       diagnostics.push(

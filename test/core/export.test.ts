@@ -24,7 +24,7 @@ Title => Export Test
 Description => One of each.
 Seed => export-seed
 
-# Round one
+## Round one
 
 Question => Which <script>alert(1)</script> is safe?
 Answers => A | B | C
@@ -52,11 +52,11 @@ describe("includes", () => {
   const files = new Map([
     [
       "parts/music.trivia",
-      `# Music\n\nQuestion => First band?\nAnswers => The Beatles`,
+      `## Music\n\nQuestion => First band?\nAnswers => The Beatles`,
     ],
     [
       "parts/shared.trivia",
-      `Quiz => Should not win\n\n# Bonus\n\nQuestion => Bonus question?\nAnswers => Yes`,
+      `Quiz => Should not win\n\n## Bonus\n\nQuestion => Bonus question?\nAnswers => Yes`,
     ],
   ]);
 
@@ -77,7 +77,7 @@ describe("includes", () => {
     );
     expect(result.text).toContain("Question => Bonus question?");
     expect(result.text).not.toContain("Should not win");
-    expect(result.text).not.toContain("# Music");
+    expect(result.text).not.toContain("## Music");
   });
 
   test("a missing file is a problem, not a crash", () => {
@@ -138,7 +138,7 @@ describe("other exporters", () => {
     expect(csv).toContain("Question,Number,Round");
     expect(csv).toContain("Total");
     expect(questionsCsv(plan, quiz.meta).split("\r\n").length).toBe(
-      plan.questions.length + 2,
+      plan.total + 2,
     );
   });
 
@@ -153,14 +153,14 @@ describe("other exporters", () => {
   test("qti is xml with one item per question", () => {
     const qti = toQti(plan, quiz.meta);
     expect(qti.startsWith("<?xml")).toBe(true);
-    expect(qti.match(/<assessmentItem /g)?.length).toBe(plan.questions.length);
+    expect(qti.match(/<assessmentItem /g)?.length).toBe(plan.total);
   });
 
   test("print model has a page per stage and every question", () => {
     const document = buildPrintModel(plan, quiz.meta);
     expect(document.pages[0]?.kind).toBe(PrintPageKind.Cover);
     const questions = document.pages.flatMap((page) => page.questions);
-    expect(questions.length).toBe(plan.questions.length);
+    expect(questions.length).toBe(plan.total);
     expect(document.maxScore).toBe(plan.maxScore);
   });
 

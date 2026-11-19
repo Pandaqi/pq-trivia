@@ -31,7 +31,9 @@ export function visibleModel(model: QuizModel): QuizModel {
 }
 
 export function visiblePlan(plan: QuizPlan): QuizPlan {
-  const questions = plan.questions.filter((question) => !question.hiddenAtExport);
+  const questions = plan.questions.filter(
+    (question) => !question.hiddenAtExport,
+  );
   const rounds = plan.rounds
     .map((round) => ({
       ...round,

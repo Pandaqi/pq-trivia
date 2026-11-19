@@ -14,7 +14,7 @@ import type { QuizModel } from "../src/core/model/quiz";
 import { buildQuiz } from "../src/core/model/quiz";
 import { expandIncludes } from "../src/core/content/include";
 import type { GradeReport } from "../src/core/grading/report";
-import { bandLabel, formatDuration } from "../src/core/grading/report";
+import { GradeBand, formatDuration } from "../src/core/grading/report";
 
 export const ROOT = join(import.meta.dir, "..");
 export const EXTENSIONS = /\.(trivia|txt|md)$/;
@@ -162,6 +162,22 @@ export function requireCleanQuiz(
   if (problems.length > 0 || counted.errors > 0) {
     console.error("Fix the errors first. Nothing was written.");
     process.exit(1);
+  }
+}
+
+function bandLabel(band: GradeBand): string {
+  switch (band) {
+    case GradeBand.Excellent:
+      return "Excellent";
+    case GradeBand.Good:
+      return "Good";
+    case GradeBand.Fair:
+      return "Fair";
+    case GradeBand.Practice:
+      return "Keep practising";
+    case GradeBand.Empty:
+    default:
+      return "No points";
   }
 }
 

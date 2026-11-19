@@ -9,6 +9,7 @@ import { answerRefs } from "../model/answers";
 import type { QuizMeta } from "../model/quiz";
 import type { QuestionModel } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
+import { MediaKind, mediaForConfig, type MediaOptions } from "../values/media";
 import { visiblePlan } from "./visible";
 
 export enum PrintPageKind {
@@ -60,6 +61,8 @@ export interface PrintModelOptions {
   readonly perPage?: 1 | 2 | 4;
   readonly includeHints?: boolean;
   readonly includeExplanations?: boolean;
+  /** Same folder, link prefixes and formats the player uses. */
+  readonly media?: MediaOptions;
 }
 
 function printsOnPaper(question: QuestionModel): boolean {
@@ -92,10 +95,13 @@ function questionFor(
       correct: showCorrect ? correct.has(ref.value.text) : false,
       points: showCorrect && correct.has(ref.value.text) ? perAnswer : null,
     })),
-    media: question.media.map((descriptor) => ({
-      path: descriptor.path,
-      kind: descriptor.kind,
-    })),
+    media: question.media
+      .map((descriptor) => mediaForConfig(descriptor, options.media ?? {}))
+      .filter((descriptor) => descriptor.kind !== MediaKind.File)
+      .map((descriptor) => ({
+        path: descriptor.path,
+        kind: descriptor.kind,
+      })),
     hints:
       options.includeHints === true
         ? question.hints.map((value) => value.text)
@@ -139,13 +145,7 @@ export function buildPrintModel(
     });
   };
 
-  push(
-    PrintPageKind.Cover,
-    meta.title.length > 0 ? meta.title : "Untitled quiz",
-    meta.description,
-    null,
-    [],
-  );
+  push(PrintPageKind.Cover, meta.title, meta.description, null, []);
 
   for (const round of plan.rounds) {
     push(PrintPageKind.Round, round.name, round.secret, round.name, []);
@@ -169,7 +169,7 @@ export function buildPrintModel(
   }
 
   return {
-    title: meta.title.length > 0 ? meta.title : "Untitled quiz",
+    title: meta.title,
     subtitle: meta.description,
     seed: plan.seed,
     maxScore: plan.maxScore,

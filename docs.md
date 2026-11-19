@@ -2,8 +2,8 @@
 
 The trivia system has two different parts.
 
-* INPUT: The syntax for writing your questions and answers.
-* OUTPUT: The code that automatically reads the input and transforms that into the final quiz.
+- INPUT: The syntax for writing your questions and answers.
+- OUTPUT: The code that automatically reads the input and transforms that into the final quiz.
 
 This documentation explains them both, in that order.
 
@@ -11,9 +11,9 @@ But first, the crucial part that most documentation skips: the **philosophy!**
 
 The idea behind this system was as follows.
 
-* It allows anyone to add questions to a quiz. This way, you can create a quiz together ("everyone sends in 10 questions") and still all play.
-* The actual content (questions and answers) is contained in small and simple text files, completely separated from everything else. This makes it easy and lightweight to store, transfer, edit, etcetera.
-* The system simply _reads_ that content and completely transforms it into a fully functioning quiz. (If it finds mistakes or has trouble parsing, it will inform you.) Ideally, after making the content of the quiz ... you are done and can enjoy it!
+- It allows anyone to add questions to a quiz. This way, you can create a quiz together ("everyone sends in 10 questions") and still all play.
+- The actual content (questions and answers) is contained in small and simple text files, completely separated from everything else. This makes it easy and lightweight to store, transfer, edit, etcetera.
+- The system simply _reads_ that content and completely transforms it into a fully functioning quiz. (If it finds mistakes or has trouble parsing, it will inform you.) Ideally, after making the content of the quiz ... you are done and can enjoy it!
 
 When surprised by how something works, or looking for how to achieve something, keep this general philosophy in mind and you'll probably figure it out quickly.
 
@@ -23,7 +23,7 @@ When surprised by how something works, or looking for how to achieve something, 
 
 ### What you DON'T need to do
 
-When I created this system, many people defaulted to doing extra work that wasn't needed (or even broke the system). 
+When I created this system, many people defaulted to doing extra work that wasn't needed (or even broke the system).
 
 The idea behind the Trivia system is that it _takes care of everything for you_!
 
@@ -31,11 +31,11 @@ You don't need to do any numbering, or formatting, or labeling yourself. Nothing
 
 Below are some common examples of things I see often, but which you **shouldn't do**.
 
-* Number your own questions
-* Add a title (or _any_ other data that isn't related to the quiz) to your text file. (If you really want to add more info, use the comment syntax explained below.)
-* Add returns ("line breaks") to make the text wrap or look nicer on your screen. (It assumes each individual line is a _new_ entry in a list.)
-* Add weird characters or spaces to your file names. (For maximum compatibility, only use _letters_ and _numbers_, and replace spaces by something like `-`.) 
-* Include your media _in the file itself_. (If you use simple text files, this is literally impossible.) For example: just throw it all in the folder called `media`, then type the name of the image/video/audio to show with the question.
+- Number your own questions
+- Add a title (or _any_ other data that isn't related to the quiz) to your text file. (If you really want to add more info, use the comment syntax explained below.)
+- Add returns ("line breaks") to make the text wrap or look nicer on your screen. (It assumes each individual line is a _new_ entry in a list.)
+- Add weird characters or spaces to your file names. (For maximum compatibility, only use _letters_ and _numbers_, and replace spaces by something like `-`.)
+- Include your media _in the file itself_. (If you use simple text files, this is literally impossible.) For example: just throw it all in the folder called `media`, then type the name of the image/video/audio to show with the question.
 
 ### File Name & Type
 
@@ -53,11 +53,11 @@ There is no limit to the content inside one text file, or the total number of te
 
 The general parsing rules are as follows.
 
-* Whitespace doesn't matter. You can leave as much space as you want between questions, or even properties of the same question, or accidentally place tabs before random things, it's all fine.
-* If the system doesn't recognize something, it's thrown out. If possible, it just continues parsing and displays an error message.
-* All attributes are optional and order doesn't matter ... with two exceptions. (This is further explained below.)
-  * The `Question` property must always be included and always be first, as it marks the _start_ of a new question.
-  * The `Answers` property must be present.
+- Whitespace doesn't matter. You can leave as much space as you want between questions, or even properties of the same question, or accidentally place tabs before random things, it's all fine.
+- If the system doesn't recognize something, it's thrown out. If possible, it just continues parsing and displays an error message.
+- All attributes are optional and order doesn't matter ... with two exceptions. (This is further explained below.)
+  - The `Question` property must always be included and always be first, as it marks the _start_ of a new question.
+  - The `Answers` property must be present.
 
 Everything in the questions syntax is, well, a question. If you want to add some other information, such as some comments to your future self, use the comment syntax: `// comment here` Every line that starts this way is simply ignored when the quiz is parsed.
 
@@ -65,7 +65,7 @@ Note that all parsing rules can be completely customized to your liking when ini
 
 ### Questions
 
-A question is nothing more than a list of attributes. Every attribute is formatted with an arrow (`=>`) between its _name_ and its _value_. 
+A question is nothing more than a list of attributes. Every attribute is formatted with an arrow (`=>`) between its _name_ and its _value_.
 
 For example, `Question => What is 2+2?`
 
@@ -116,30 +116,30 @@ The next section explains all possible attributes in more detail.
 
 `Answers`: one or multiple answers.
 
-* If a single answer, it defaults to an `Open` question.
-* If multiple answers, it defaults to a `Choice` question.
-* You can override these defaults with the `Type` attribute.
-* The order of these answers is _randomly shuffled_ when the quiz is played, so you don't have to do it. (Except for question types where this doesn't make sense because the order of answers might matter; see `List` and `Sort`.)
+- If a single answer, it defaults to an `Open` question.
+- If multiple answers, it defaults to a `Choice` question.
+- You can override these defaults with the `Type` attribute.
+- The order of these answers is _randomly shuffled_ when the quiz is played, so you don't have to do it. (Except for question types where this doesn't make sense because the order of answers might matter; see `List` and `Sort`.)
 
 `AnswersOrder`: if set to "keep", it will keep the answers in the order in which you input them (no matter your other settings/randomization).
 
 `Correct`: its value should be the correct answer(s) to the question.
 
-* If left out, the _first_ answer listed is assumed to be the correct one.
-* It accepts _multiple_ correct answers, in which case it defaults to a `Choice` question.
-* The system checks if your correct answer is actually an option (if multiple choice). It doesn't care about letter case or whitespace, but if you actually misspell or put in something wrong it will throw an error.
+- If left out, the _first_ answer listed is assumed to be the correct one.
+- It accepts _multiple_ correct answers, in which case it defaults to a `Choice` question.
+- The system checks if your correct answer is actually an option (if multiple choice). It doesn't care about letter case or whitespace, but if you actually misspell or put in something wrong it will throw an error.
 
 `Type`: force the question to be a specific type. It tries to follow this command, but it's not always possible. Possible types are ...
 
-* `Open`: only the question is displayed, nothing else. People are free to fill in whatever answer they want.
-* `Choice` ("Multiple Choice"): several options are displayed (labeled A, B, C, ...). People must pick the correct one. (Or multiple, if there are multiple correct answers.)
-* `List` ("Multiple Answer"): no options are displayed. People are expected to give multiple answers.
-* `Range`: an open question where people must give a number. If it falls within the error margin ("range") set by the question, it's deemed correct.
-* `Sort`: provide multiple answers, they're all shown (in a random order) and people have to sort them into the correct order.
-* `Custom`: a completely custom question that does nothing for you by default, so you can fill it in however you like
-* `Section`: this is not a question, but an intermediate screen with some other purpose. Mostly used to split questions into smaller "rounds".
+- `Open`: only the question is displayed, nothing else. People are free to fill in whatever answer they want.
+- `Choice` ("Multiple Choice"): several options are displayed (labeled A, B, C, ...). People must pick the correct one. (Or multiple, if there are multiple correct answers.)
+- `List` ("Multiple Answer"): no options are displayed. People are expected to give multiple answers.
+- `Range`: an open question where people must give a number. If it falls within the error margin ("range") set by the question, it's deemed correct.
+- `Sort`: provide multiple answers, they're all shown (in a random order) and people have to sort them into the correct order.
+- `Custom`: a completely custom question that does nothing for you by default, so you can fill it in however you like
+- `Section`: this is not a question, but an intermediate screen with some other purpose. Mostly used to split questions into smaller "rounds".
 
-`Range` (_Only applies to `Range` questions_): this property sets an "error margin" around the correct (numeric) answer. Any answer within the margin is still correct. If included, it defaults to a _Range_ question. (For example, you ask, "How many people lived in the Netherlands in 2024?" and allow people to be off by 500,000 at most.) 
+`Range` (_Only applies to `Range` questions_): this property sets an "error margin" around the correct (numeric) answer. Any answer within the margin is still correct. If included, it defaults to a _Range_ question. (For example, you ask, "How many people lived in the Netherlands in 2024?" and allow people to be off by 500,000 at most.)
 
 `Media`: one or multiple media files to be displayed with the question. These can be images, audio, or videos. (See below. Also note that media can be inserted as an answer too; this attribute is for standalone media that relates to the question as a whole.)
 
@@ -151,24 +151,24 @@ The next section explains all possible attributes in more detail.
 
 `Score`: the maximum number of points to score here.
 
-* By default, questions simply score 1 point, and you get them all for being right.
-* Use `ScoreMethod` to dictate some different, custom way of (partial) scoring. This is just a piece of text that you need to write yourself; the system can't "automatically" execute your creative custom scoring idea.
+- By default, questions simply score 1 point, and you get them all for being right.
+- Use `ScoreMethod` to dictate some different, custom way of (partial) scoring. This is just a piece of text that you need to write yourself; the system can't "automatically" execute your creative custom scoring idea.
 
 `Comment`: any comment(s) or remark(s) about this question.
 
 `Secret` (_Only applies to Sections_): A secret common "theme" for this section/round. It reveals this theme when the section starts on _answer mode_.
 
-* You can also use the `addSecretThemeQuestions` parameter on Quiz to automatically insert a question at the end of each round asking what the theme was (for 1 point).
-* I created this "quick" way to support secrets for individual rounds, because that's most common and would be more annoying to do manually each time. But if you want a single "secret theme" for _the entire quiz_ ... just invent one behind the scenes (and manually add a question about the secret at the very end) :)
+- You can also use the `addSecretThemeQuestions` parameter on Quiz to automatically insert a question at the end of each round asking what the theme was (for 1 point).
+- I created this "quick" way to support secrets for individual rounds, because that's most common and would be more annoying to do manually each time. But if you want a single "secret theme" for _the entire quiz_ ... just invent one behind the scenes (and manually add a question about the secret at the very end) :)
 
-`Hints`: One or more "hints". These are hidden by default, but can be revealed in the moment if desired.  
+`Hints`: One or more "hints". These are hidden by default, but can be revealed in the moment if desired.
 
 `Sources`: one or more "sources". This is meant for sourcing the info in your questions, or the media used, and perhaps provide a way to "learn more". These appear in a small font below all the other information. (Be mindful of not giving away the answer to your question by listing your sources.)
 
 `Timer`: how much time is available for this question (in _seconds_).
 
-* If excluded, it defaults to the global timer duration you set in the system configuration.
-* If that is excluded too, there simply is no timer.
+- If excluded, it defaults to the global timer duration you set in the system configuration.
+- If that is excluded too, there simply is no timer.
 
 `ID`: a _unique_ identifier/name for this question. You'd only need this if you intend to reference this specific question from another question, or if you want to support multiple languages. For example, you might want to say "question A must appear _before_ question B in the order". Speaking of that ...
 
@@ -186,7 +186,7 @@ The next section explains all possible attributes in more detail.
 
 As seen in the examples, there are _two ways_ to input a _list of values_. This works for any attribute, but you'll likely only use it for multiple choice questions.
 
-**Inline List:** Keep all values on the same line, and split them with a `|`. 
+**Inline List:** Keep all values on the same line, and split them with a `|`.
 
 **Block List**: Put every value on a _new line_. (If you want, the invisible "line break" that does this is now your split character.)
 
@@ -210,8 +210,8 @@ By default, all information that belongs to a question is displayed all the time
 
 To do this, prepend your value with a "display symbol".
 
-* `?` before a value means it's ONLY displayed in question mode.
-* `!` before a value means it's ONLY displayed in answer mode.
+- `?` before a value means it's ONLY displayed in question mode.
+- `!` before a value means it's ONLY displayed in answer mode.
 
 Below is an example of how you write a question where you display some vague media first (that people need to guess or recognize), but display the full picture upon reveal of the answer
 
@@ -222,7 +222,7 @@ Media => ?image_blurred.png | !image_revealed.png
 
 ### Links & Media
 
-Anything with a **recognizable extension** (e.g. `.mp3`, `.png`, ...) is treated as media to load. 
+Anything with a **recognizable extension** (e.g. `.mp3`, `.png`, ...) is treated as media to load.
 
 This means that media can be inserted anywhere. In a comment, in the answers to a multiple choice question, etcetera. Most likely, you'll only use it as values for the `Media` attribute.
 
@@ -264,15 +264,15 @@ Answers => Another color
 
 For more **advanced sections**, the section divider is simply a **special type of question** that follows the same syntax.
 
-* Set `Type` to `Section`
-* Use the `Question` to give a name/label to that round.
-* Use the `Comment` for some unique description of the round.
+- Set `Type` to `Section`
+- Use the `Question` to give a name/label to that round.
+- Use the `Comment` for some unique description of the round.
 
 The system automatically calculates the metadata of a round (number of questions, total number of points, etc) and displays them in these section overviews.
 
 It also shuffles questions inside the same section.
 
-Please note that location inside the text file matters. Everything _after_ this section declaration will be put inside that section, until a new one is declared. 
+Please note that location inside the text file matters. Everything _after_ this section declaration will be put inside that section, until a new one is declared.
 
 You _can_ ignore all this. You can assign no sections at all, or give a custom `Section => blabla` to questions, and type them in the text file in a random order. The system will figure it out for you and group questions by section, without duplicate sections. (It will _not_ insert an actual "new section screen", unless you add `addMissingSectionScreens: true` to the quiz parameters.)
 
@@ -288,12 +288,12 @@ If you're looking to dive into the _code_ behind it all, please note the followi
 
 The quiz can be in the following states, in the following order.
 
-* START: The start screen. It displays buttons to continue with a preloaded quiz or upload your own files.
-* ACTIVITY: Here you choose how you want to show the quiz.
-  * Show Questions (which is the main quiz activity)
-  * Show Answers
-* QUIZ: All the specific questions/sections it parsed from your input.
-* END: The end screen. A simple final message, and some useful buttons (like checking answers).
+- START: The start screen. It displays buttons to continue with a preloaded quiz or upload your own files.
+- ACTIVITY: Here you choose how you want to show the quiz.
+  - Show Questions (which is the main quiz activity)
+  - Show Answers
+- QUIZ: All the specific questions/sections it parsed from your input.
+- END: The end screen. A simple final message, and some useful buttons (like checking answers).
 
 You can freely move back and forth between these screens.
 
@@ -303,9 +303,9 @@ You can move **backward** using `<` (arrow key left).
 
 You can move **forward** using
 
-* `>` (arrow key right)
-* spacebar
-* clicking near the left/right edge of the screen (as long as `enableMouse` is true)
+- `>` (arrow key right)
+- spacebar
+- clicking near the left/right edge of the screen (as long as `enableMouse` is true)
 
 Press **A** to toggle show/hide answers. This _only_ changes the current question.
 
@@ -325,17 +325,17 @@ Press **+** or **-** to change font size. This is a very easy way to _resize_ th
 
 Like with the other parts of the system, we stole our formatting syntax from _Markdown_. It's supported basically anywhere in the system where text could be shown.
 
-* Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as `___` by default. (You can use your own symbols for blanks if you want. This is simply a nice thing we decided to support. Because, as you see below, actually typing `___` would be interpreted as _italic text_ instead.)
-* Use `**texthere**` for **bold text**.
-* Use `_texthere_` for _italic text_.
-* Use ``codehere`` for `code`.
-* Use `__texthere__` for <u>underlined text</u>.
-* Use `~texthere~` for ~~~struck-through text~~~
-* Use `[Name](Url)` to insert a [link](#).
-* Use `[color=COLOR]texthere[/color]` to recolor text to COLOR. Common color names will work (_orange, red, ..._). Otherwise, learn about CSS Hex Colors and put one of those in.
-* Use `[size=SIZE]texthere[/size]` to change font size to SIZE. Please note that you need to provide a _unit_, and the most common one is `px` for pixels, or `%` for a percentage of the default font size. So, to increase the font, you might say `[size=150%]BIG TEXT[/size]`
-* Use `^[texthere]` for a superscript, like E=mc<sup>2</sup>
-* Use `_[texthere]` for a subscript, like x<sub>2</sub>.
+- Use `[blank]` to insert a "blank" in the question (the answer is the thing to fill in), which is displayed as `___` by default. (You can use your own symbols for blanks if you want. This is simply a nice thing we decided to support. Because, as you see below, actually typing `___` would be interpreted as _italic text_ instead.)
+- Use `**texthere**` for **bold text**.
+- Use `_texthere_` for _italic text_.
+- Use `codehere` for `code`.
+- Use `__texthere__` for <u>underlined text</u>.
+- Use `~texthere~` for ~~~struck-through text~~~
+- Use `[Name](Url)` to insert a [link](#).
+- Use `[color=COLOR]texthere[/color]` to recolor text to COLOR. Common color names will work (_orange, red, ..._). Otherwise, learn about CSS Hex Colors and put one of those in.
+- Use `[size=SIZE]texthere[/size]` to change font size to SIZE. Please note that you need to provide a _unit_, and the most common one is `px` for pixels, or `%` for a percentage of the default font size. So, to increase the font, you might say `[size=150%]BIG TEXT[/size]`
+- Use `^[texthere]` for a superscript, like E=mc<sup>2</sup>
+- Use `_[texthere]` for a subscript, like x<sub>2</sub>.
 
 If these don't suit you, then you can also directly write HTML tags. Do note, however, this isn't guaranteed to work or look like you wanted, due to the constraints and general styling/node hierarchy of the system.
 
@@ -394,15 +394,15 @@ Supporting multiple languages is a multi-step process. See [Multi-Language](#mul
 
 `languages` (string[]): if set, it will automatically trigger an error if you add any question that isn't marked as one of these languages. (If not set, it populates this array with all unique languages it finds in your input data.)
 
-`syncPropertiesWithTranslations` (boolean): if true, questions in other languages will look at the "root language" and copy their properties _if they didn't set anything themselves_. Useful if you only want to set properties once on the main translation (e.g. score, media to show) and have everything else automatically use the same stuff. As soon as a question has its own value for a property, it will just keep that and ignore the root language. 
+`syncPropertiesWithTranslations` (boolean): if true, questions in other languages will look at the "root language" and copy their properties _if they didn't set anything themselves_. Useful if you only want to set properties once on the main translation (e.g. score, media to show) and have everything else automatically use the same stuff. As soon as a question has its own value for a property, it will just keep that and ignore the root language.
 
 > _Remark_: This is off by default because it's very powerful but not that necessary for most people.
 
 #### Interactivity
 
-`allowInput` (boolean): if true, people can directly enter their answers into the quiz itself. This can then be used to automatically grade the answers, if desired. 
+`allowInput` (boolean): if true, people can directly enter their answers into the quiz itself. This can then be used to automatically grade the answers, if desired.
 
-If turned on, the quiz is very _restricted_ (can't toggle on answer mode, for example). This allows letting everyone play on their own device, unsupervised, without cheating. 
+If turned on, the quiz is very _restricted_ (can't toggle on answer mode, for example). This allows letting everyone play on their own device, unsupervised, without cheating.
 
 Or, well, without _too much_ cheating ;) You can never completely prevent it. If anyone wants to desperately find a way to ruin a fun night together, they will. Just don't invite them again.
 
@@ -420,7 +420,7 @@ This mode is also useful when the quiz is used educationally / collaboratively, 
 
 #### Questions & Answers
 
-`exclude` (object): any questions that have a matching _attribute-value pair_ are removed. 
+`exclude` (object): any questions that have a matching _attribute-value pair_ are removed.
 
 For example, the code below would exclude all questions with category Music, as well as all questions with author Tiamo.
 
@@ -440,9 +440,9 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `excludeSections` (boolean): if true, all section declarations are simply ignored.
 
-`keepQuestionOrder` (boolean): if true, no randomization at all will take place. 
+`keepQuestionOrder` (boolean): if true, no randomization at all will take place.
 
-`keepSectionOrder` (boolean): if true, sections stay in the order that you input them. 
+`keepSectionOrder` (boolean): if true, sections stay in the order that you input them.
 
 `keepAnswerOrder` (boolean): if true, answers stay in the order that you input them.
 
@@ -472,7 +472,7 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `hideAuthor` (boolean): if set, doesn't show the author.
 
-`showPropertiesWithoutDiversity` (boolean): if false, properties that only have the same (default) values are not shown to minimize the interface clutter. (Example: all questions have the same author or no author.) 
+`showPropertiesWithoutDiversity` (boolean): if false, properties that only have the same (default) values are not shown to minimize the interface clutter. (Example: all questions have the same author or no author.)
 
 `addSecretThemeQuestions` (boolean): if a section has a `secret` theme attached, this will automatically inject a question at the _end_ of that round. An open question that asks what the theme was, for 1 point.
 
@@ -516,33 +516,32 @@ exclude: { category: "Music", author: "Tiamo" }
 
 `timerStrategy` (TimerStrategy): what to do when a timer runs out.
 
-* `nothing`: do nothing. Use when the timer is only meant as a subtle pressure but you want things to stay relaxed/manual otherwise.
-* `stayButHide`: you stay on the same question, but its content is hidden.
-* `autoContinue`: the quiz automatically skips to the next question. (And its timer instantly starts too.)
+- `nothing`: do nothing. Use when the timer is only meant as a subtle pressure but you want things to stay relaxed/manual otherwise.
+- `stayButHide`: you stay on the same question, but its content is hidden.
+- `autoContinue`: the quiz automatically skips to the next question. (And its timer instantly starts too.)
 
 `allowTimersOnSections` (boolean): if true, section dividers can be timed as well. (This is disabled by default as sections are natural moments to take a breather/break.)
 
-
 ### Exporting
 
-I wanted to have a single syntax and a single base system for all quizzes. This simple digital system makes it really easy to build and host quizzes, while opening many doors. 
+I wanted to have a single syntax and a single base system for all quizzes. This simple digital system makes it really easy to build and host quizzes, while opening many doors.
 
-At the same time, I actually prefer playing quizzes without any screens. I know the same is true for many others. That's why I added the ability to _export_ your quiz to other formats. 
+At the same time, I actually prefer playing quizzes without any screens. I know the same is true for many others. That's why I added the ability to _export_ your quiz to other formats.
 
 By default, buttons are added to the _settings_ screen for all these exports. You can also simply grab your quiz object and call the functions manually after loading the quiz, as follows.
 
-* Once a quiz is loaded, open the Inspector Console of your browser (usually `F12`).
-* (Make sure you have access to your quiz object, such as by saving it on the `window`)
-* Then,
-  * Use `quiz.export.toEmbedded()` to get all questions as a JSON object. (Using the `builtin` property, you can embed it directly into the quiz and don't need to load the text files anymore.)
-  * Use `quiz.export.toPrintQuestions()` to get all questions on one page (and nothing else), styled in such a way that you can print it. 
-    * You'll see all questions overlapping on your screen. This may look funny, but this is necessary such that when you _print_ it, everything is where it should be.
-    * One question = One full page. By default, backgrounds are removed to save ink and reduce file size.
-    * On large quizzes, wait a few seconds until everything has loaded.
-  * Use `quiz.export.toPrintAnswers()` for the same thing, but now you have a PDF where all ANSWERS are revealed for each question.
-  * Use `quiz.export.toAnswerSheet()` to get a table with the answers to all questions filled-in. 
-  * Use `quiz.export.toAnswerForm()` to get an _empty_ table, for others to write their answers.
-* Also, you can use the shortcut `quiz.export.toGrade()` to immediately get the graded results of the quiz (even if not playing interactively).
+- Once a quiz is loaded, open the Inspector Console of your browser (usually `F12`).
+- (Make sure you have access to your quiz object, such as by saving it on the `window`)
+- Then,
+  - Use `quiz.export.toEmbedded()` to get all questions as a JSON object. (Using the `builtin` property, you can embed it directly into the quiz and don't need to load the text files anymore.)
+  - Use `quiz.export.toPrintQuestions()` to get all questions on one page (and nothing else), styled in such a way that you can print it.
+    - You'll see all questions overlapping on your screen. This may look funny, but this is necessary such that when you _print_ it, everything is where it should be.
+    - One question = One full page. By default, backgrounds are removed to save ink and reduce file size.
+    - On large quizzes, wait a few seconds until everything has loaded.
+  - Use `quiz.export.toPrintAnswers()` for the same thing, but now you have a PDF where all ANSWERS are revealed for each question.
+  - Use `quiz.export.toAnswerSheet()` to get a table with the answers to all questions filled-in.
+  - Use `quiz.export.toAnswerForm()` to get an _empty_ table, for others to write their answers.
+- Also, you can use the shortcut `quiz.export.toGrade()` to immediately get the graded results of the quiz (even if not playing interactively).
 
 When you have your result, and want it as a PDF, use the browser's Print functionality. You can also simply click the button on the page that does this for you.
 
@@ -554,32 +553,32 @@ When you have your result, and want it as a PDF, use the browser's Print functio
 
 The Quiz styles itself according to `QuizTheme` objects you put in.
 
-* The system automatically loads some core styles and CSS properties. These are very minimal, but _not_ optional, as they're needed to make all other theming work.
-* On top of that, it loads the `default` theme, which actually contains most style rules.
-* If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ loads yours instead.
+- The system automatically loads some core styles and CSS properties. These are very minimal, but _not_ optional, as they're needed to make all other theming work.
+- On top of that, it loads the `default` theme, which actually contains most style rules.
+- If you give the Quiz any other theme, however, or turn off `loadDefaultStyles`, it _only_ loads yours instead.
 
 Creating a new theme has the following steps.
 
-* Create a folder (`yourthemename`) inside the `theme` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images. (NOTE: You can change this root folder where it will look with the `subFolderTheme` Quiz parameter.)
-* When creating the Quiz, insert the parameters for your theme at the `theme` property. 
-* To connect that theme with the folder where it can find its files, set its `label` to the right name.
+- Create a folder (`yourthemename`) inside the `theme` folder. This folder will hold all custom _assets_ for your theme, such as font files and background images. (NOTE: You can change this root folder where it will look with the `subFolderTheme` Quiz parameter.)
+- When creating the Quiz, insert the parameters for your theme at the `theme` property.
+- To connect that theme with the folder where it can find its files, set its `label` to the right name.
 
 The following properties are available for configuration in your theme. As usual, all are optional.
 
-* `label` (string): name of your theme; folder to look for assets by default. (Defaults to "unnamed-theme".)
-* `folder` (string): a custom folder where it should look for assets. Overrides the label if set.
-* `inline` (string): a flat string with CSS code, which gets inserted first (if set).
-* `external` (string): the filename of an external CSS stylesheet, which is inserted second (if set).
-* `fonts`: custom font files you want to load and how it should name them.
-  * You can set the `body` or `heading` font.
-  * These accept an object like `{ name: FONTNAME, regular: FONTFILE, bold: FONTFILE, italic: FONTFILE, bold_italic: FONTFILE }`.
-  * If a variant isn't set, it just defaults to the _regular_ version. Don't forget extensions of font files.
-* `backgroundImages` (string[]): a list of image files that it should randomly select as backgrounds for questions.
-* `backgroundAlpha` (number): Between 0.0 and 1.0, the alpha/opacity of those background images. Defaults to 1 = fully visible.
-* `colors`: an object with colorschemes. These are evenly (but randomly) distributed over the questions.
-  * A color scheme has the shape `name: { light: COLOR, dark: COLOR, text: COLOR, dark: COLOR }`
-  * When a value isn't set, it just falls back on the default of the core styles (e.g. text = black, bg = white)
-* `boldHeadings` (boolean): a very common way to make the questions big and stand out is to make them bold by default. If you want that, set this to true. (Otherwise, all "headings"---questions, sections, etcetera---will just use regular weight of the "heading" font.)
+- `label` (string): name of your theme; folder to look for assets by default. (Defaults to "unnamed-theme".)
+- `folder` (string): a custom folder where it should look for assets. Overrides the label if set.
+- `inline` (string): a flat string with CSS code, which gets inserted first (if set).
+- `external` (string): the filename of an external CSS stylesheet, which is inserted second (if set).
+- `fonts`: custom font files you want to load and how it should name them.
+  - You can set the `body` or `heading` font.
+  - These accept an object like `{ name: FONTNAME, regular: FONTFILE, bold: FONTFILE, italic: FONTFILE, bold_italic: FONTFILE }`.
+  - If a variant isn't set, it just defaults to the _regular_ version. Don't forget extensions of font files.
+- `backgroundImages` (string[]): a list of image files that it should randomly select as backgrounds for questions.
+- `backgroundAlpha` (number): Between 0.0 and 1.0, the alpha/opacity of those background images. Defaults to 1 = fully visible.
+- `colors`: an object with colorschemes. These are evenly (but randomly) distributed over the questions.
+  - A color scheme has the shape `name: { light: COLOR, dark: COLOR, text: COLOR, dark: COLOR }`
+  - When a value isn't set, it just falls back on the default of the core styles (e.g. text = black, bg = white)
+- `boldHeadings` (boolean): a very common way to make the questions big and stand out is to make them bold by default. If you want that, set this to true. (Otherwise, all "headings"---questions, sections, etcetera---will just use regular weight of the "heading" font.)
 
 For an example, see the quick start file in `templates`.
 
@@ -587,15 +586,15 @@ For an example, see the quick start file in `templates`.
 
 ### Custom Settings
 
-Like the custom themes, you can define custom settings through parameters in an object. By adding a list of these to the `settings:` parameter (of Quiz), you can add your own custom settings that players can access and modify. 
+Like the custom themes, you can define custom settings through parameters in an object. By adding a list of these to the `settings:` parameter (of Quiz), you can add your own custom settings that players can access and modify.
 
 The possible parameters are ...
 
-* `type`: "button", "text" or "checkbox"
-* `label`: the name displayed next to it, identifying what it is
-* `input`: a _function_ that is triggered when the input is changed / the button is clicked. It gives you two arguments to do with as you please: `elem` (the element that was changed/clicked), and `quiz`.
-* `placeholder`: what to display when nothing has been input yet.
-* `value`: the default value to fill in
+- `type`: "button", "text" or "checkbox"
+- `label`: the name displayed next to it, identifying what it is
+- `input`: a _function_ that is triggered when the input is changed / the button is clicked. It gives you two arguments to do with as you please: `elem` (the element that was changed/clicked), and `quiz`.
+- `placeholder`: what to display when nothing has been input yet.
+- `value`: the default value to fill in
 
 Each parameter can also accept a _function_ (taking the `quiz` as parameter), instead of a fixed string, for even more custom settings.
 
@@ -629,15 +628,15 @@ In many cases, however, it's cleaner to _split_ translations. Put each different
 
 For example, the file `questions.en.md` and `questions.nl.md` will have the separate EN and NL versions of the quiz.
 
-The system will look at the filename and see "oh, these questions belong to language `languageCode`". Then, assuming the order of questions is identical, it can match every question with its translations in the other files. 
+The system will look at the filename and see "oh, these questions belong to language `languageCode`". Then, assuming the order of questions is identical, it can match every question with its translations in the other files.
 
 If you use this, the system allows you to pick your language at the start. You can also press `L` to cycle through all the different languages loaded on demand.
 
-You can also **translate the system/UI**. To do so, 
+You can also **translate the system/UI**. To do so,
 
-* Supply a dictionary with your translations to the `translations` parameter on Quiz.
-* Set the `languageDefault` to the language code you chose.
-* (Optional: set the questions to the same language code too.)
+- Supply a dictionary with your translations to the `translations` parameter on Quiz.
+- Set the `languageDefault` to the language code you chose.
+- (Optional: set the questions to the same language code too.)
 
 For example,
 

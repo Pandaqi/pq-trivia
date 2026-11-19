@@ -6,7 +6,11 @@
  * on a huge quiz, never broken.
  */
 
-import { parseQuiz, type BuildOptions, type ParsedQuiz } from "../../core/model/quiz";
+import {
+  parseQuiz,
+  type BuildOptions,
+  type ParsedQuiz,
+} from "../../core/model/quiz";
 import type { ParseHook } from "../../core/quiz/types";
 
 export interface WorkerParserOptions {

@@ -2,7 +2,7 @@ Title => Every Type Once
 Syntax => 3
 Languages => en | nl
 
-# Masks and media
+## Masks and media
 
 Question => Which photo shows the **moon**?
 Media => moon.jpg { alt="The moon, up close", credit="NASA", fit=cover }

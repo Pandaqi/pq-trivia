@@ -5,13 +5,13 @@ Correct => Groundbreaking
 Score => 2
 Author => Pandaqi
 
-## Old shorthand question
+### Old shorthand question
 
 Answers => Yes | No
 Correct => Yes
 ScoreMethod => partial
 
-# A round with a secret
+## A round with a secret
 Secret => Instruments
 
 Question => Which instrument has 88 keys?

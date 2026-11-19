@@ -15,7 +15,7 @@ sake.
 ## Hard limits
 
 - **Three levels of nesting, maximum.** Four means extract a function and give
-  it a name. 
+  it a name.
   - **No nested ternary statements** or if statements with more than 3 parts.
   - **Don't write loops within loops** unless absolutely necessary.
 - **No magic numbers.** No magic numbers (use named `const`s), no hardcoded strings (use Enums), no `type = "a" | "b"` (use Enums), no hacky workarounds when a more declarative/verbose style would make the code much more intuitive.
@@ -38,9 +38,12 @@ Prefer a table or a function call to a long `if`/`else` chain or a `switch`.
 ```ts
 // No.
 switch (screen.kind) {
-  case ScreenKind.Start: return h(StartScreen, props);
-  case ScreenKind.Question: return h(QuestionScreen, props);
-  case ScreenKind.End: return h(EndScreen, props);
+  case ScreenKind.Start:
+    return h(StartScreen, props);
+  case ScreenKind.Question:
+    return h(QuestionScreen, props);
+  case ScreenKind.End:
+    return h(EndScreen, props);
 }
 
 // Yes.
@@ -61,23 +64,22 @@ Use guard clauses to exit functions as early as possible.
 
 ```ts
 // No
-function login()
-{
-  if(isUsernameValid()) { 
-    doStuff(); 
+function login() {
+  if (isUsernameValid()) {
+    doStuff();
   } else {
-    doOtherSuff()
+    doOtherSuff();
   }
 }
 
 // Yes
-function login()
-{
-  if(!isUserNameValid()) { doStuff(); return; }
+function login() {
+  if (!isUserNameValid()) {
+    doStuff();
+    return;
+  }
   doOtherStuff();
 }
-
-
 ```
 
 ## Braces
@@ -85,8 +87,7 @@ function login()
 Wanted style:
 
 ```ts
-export function someFunction(): number
-{
+export function someFunction(): number {
   return 1;
 }
 ```

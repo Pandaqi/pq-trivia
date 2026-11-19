@@ -150,6 +150,129 @@ export function parseMediaDescriptor(raw: string): MediaDescriptor {
   return { path: text, kind: detectMediaKind(text), options };
 }
 
+export interface MediaOptions {
+  /** V2's `url`: the root every relative media path starts from. */
+  readonly url?: string;
+  /** V2's `subFolderMedia`, for example `media/`. */
+  readonly subFolderMedia?: string;
+  /** Paths that already point somewhere. V2's `linkPrefixes`. */
+  readonly linkPrefixes?: readonly string[];
+  /** Extensions that count as media. V2's `mediaFormats`. */
+  readonly mediaFormats?: readonly string[];
+}
+
+/**
+ * The media bits of a config object, from a host or from a file header.
+ * Extra keys are ignored, so `QuizConfig` and `meta.config` both fit.
+ */
+export function mediaOptionsFrom(
+  source: Readonly<Record<string, unknown>>,
+): MediaOptions {
+  const text = (key: string): string | undefined => {
+    const value = source[key];
+    return typeof value === "string" && value.trim().length > 0
+      ? value
+      : undefined;
+  };
+  const list = (key: string): readonly string[] | undefined => {
+    const value = source[key];
+    if (!Array.isArray(value)) {
+      return undefined;
+    }
+    const items = value
+      .filter((entry): entry is string => typeof entry === "string")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+    return items.length === 0 ? undefined : items;
+  };
+  const url = text("url");
+  const subFolderMedia = text("subFolderMedia");
+  const linkPrefixes = list("linkPrefixes");
+  const mediaFormats = list("mediaFormats");
+  return {
+    ...(url === undefined ? {} : { url }),
+    ...(subFolderMedia === undefined ? {} : { subFolderMedia }),
+    ...(linkPrefixes === undefined ? {} : { linkPrefixes }),
+    ...(mediaFormats === undefined ? {} : { mediaFormats }),
+  };
+}
+
+export const DEFAULT_LINK_PREFIXES = [
+  "http://",
+  "https://",
+  "www.",
+  ".com",
+] as const;
+
+export function isExternalPath(
+  path: string,
+  prefixes: readonly string[] = DEFAULT_LINK_PREFIXES,
+): boolean {
+  return prefixes.some((prefix) => path.includes(prefix));
+}
+
+/** Relative files live under `subFolderMedia`; links and absolute paths do not. */
+export function resolveMediaPath(
+  path: string,
+  options: MediaOptions = {},
+): string {
+  const folder = options.subFolderMedia ?? "";
+  if (folder.length === 0 || path.length === 0) {
+    return path;
+  }
+  if (
+    isExternalPath(path, options.linkPrefixes) ||
+    /^(\/|\.{1,2}\/|[a-z][a-z0-9+.-]*:|#)/i.test(path)
+  ) {
+    return path;
+  }
+  return `${options.url ?? ""}${folder}${path}`;
+}
+
+function resolveSrcset(value: string, options: MediaOptions): string {
+  return value
+    .split(",")
+    .map((entry) => {
+      const [path = "", ...rest] = entry.trim().split(/\s+/);
+      return [resolveMediaPath(path, options), ...rest].join(" ").trim();
+    })
+    .filter((entry) => entry.length > 0)
+    .join(", ");
+}
+
+/** Applies `mediaFormats` and the media folder to one descriptor. */
+export function mediaForConfig(
+  descriptor: MediaDescriptor,
+  options: MediaOptions = {},
+): MediaDescriptor {
+  const formats = options.mediaFormats?.map((entry) => entry.toLowerCase());
+  const extension = mediaExtension(descriptor.path);
+  const kind =
+    formats !== undefined &&
+    formats.length > 0 &&
+    extension.length > 0 &&
+    !formats.includes(extension) &&
+    descriptor.kind !== MediaKind.Link
+      ? MediaKind.File
+      : descriptor.kind;
+  const extra: Record<string, string> = {};
+  const srcset = descriptor.options["srcset"];
+  if (srcset !== undefined) {
+    extra["srcset"] = resolveSrcset(srcset, options);
+  }
+  for (const key of ["poster", "captions"]) {
+    const value = descriptor.options[key];
+    if (value !== undefined) {
+      extra[key] = resolveMediaPath(value, options);
+    }
+  }
+  return {
+    path: resolveMediaPath(descriptor.path, options),
+    kind,
+    options: { ...descriptor.options, ...extra },
+  };
+}
+
 export function formatMediaDescriptor(descriptor: MediaDescriptor): string {
   const entries = Object.entries(descriptor.options);
   if (entries.length === 0) {

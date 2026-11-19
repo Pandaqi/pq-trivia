@@ -11,11 +11,7 @@ import type { QuestionModel } from "../core/model/question";
 import type { QuizPlan } from "../core/plan/plan";
 import type { Quiz } from "../core/session/quiz";
 import type { Response } from "../core/session/responses";
-import {
-  describeResponse,
-  liveQuestion,
-  roundNameOf,
-} from "./present";
+import { describeResponse, liveQuestion, roundNameOf } from "./present";
 import {
   createEnvelope,
   createRateLimiter,
@@ -81,7 +77,6 @@ interface PlayerRecord {
   readonly answered: Set<string>;
   readonly late: Set<string>;
 }
-
 
 export async function createHost(options: HostOptions): Promise<HostRoom> {
   const quiz = options.quiz;
@@ -230,11 +225,7 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     publishState();
   }
 
-  function reconnect(
-    player: PlayerRecord,
-    peer: string,
-    name: string,
-  ): void {
+  function reconnect(player: PlayerRecord, peer: string, name: string): void {
     if (player.peer !== null) {
       byPeer.delete(player.peer);
     }

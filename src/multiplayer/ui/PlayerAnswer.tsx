@@ -22,13 +22,22 @@ function SubmitButton({
   readonly onClick: () => void;
 }): JSX.Element {
   return (
-    <button type="button" class="pq-primary pq-live-submit" disabled={disabled} onClick={onClick}>
+    <button
+      type="button"
+      class="pq-primary pq-live-submit"
+      disabled={disabled}
+      onClick={onClick}
+    >
       {label}
     </button>
   );
 }
 
-function ChoiceInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+function ChoiceInput({
+  question,
+  disabled,
+  onSubmit,
+}: InputProps): JSX.Element {
   const [selected, setSelected] = useState<readonly string[]>([]);
   useEffect(() => setSelected([]), [question.id]);
 
@@ -67,9 +76,7 @@ function ChoiceInput({ question, disabled, onSubmit }: InputProps): JSX.Element 
       <SubmitButton
         label="Lock it in"
         disabled={disabled || selected.length === 0}
-        onClick={() =>
-          onSubmit({ kind: ResponseKind.Choice, selected })
-        }
+        onClick={() => onSubmit({ kind: ResponseKind.Choice, selected })}
       />
     </>
   );
@@ -119,7 +126,9 @@ function RangeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
       </label>
       <SubmitButton
         label="Lock it in"
-        disabled={disabled || value.trim().length === 0 || !Number.isFinite(parsed)}
+        disabled={
+          disabled || value.trim().length === 0 || !Number.isFinite(parsed)
+        }
         onClick={() => onSubmit({ kind: ResponseKind.Range, value: parsed })}
       />
     </>
@@ -181,7 +190,9 @@ function ClozeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
       ))}
       <SubmitButton
         label="Lock it in"
-        disabled={disabled || blanks.every((blank) => blank.trim().length === 0)}
+        disabled={
+          disabled || blanks.every((blank) => blank.trim().length === 0)
+        }
         onClick={() => onSubmit({ kind: ResponseKind.Cloze, blanks })}
       />
     </>

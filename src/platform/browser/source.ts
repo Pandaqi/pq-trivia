@@ -58,6 +58,80 @@ export function resolvePath(base: string, path: string): string {
   return `${base}${path.replace(/^\.\//, "")}`;
 }
 
+export interface QuizSourceFile {
+  readonly name: string;
+  readonly text: string;
+}
+
+export interface QuizFileSearch {
+  /** Base URL. Relative paths get joined to it. */
+  readonly base?: string;
+  /** Folder inside the base, for example `questions/`. */
+  readonly folder?: string;
+  /** Exact file names. The search stops at the first missing one. */
+  readonly filenames?: readonly string[];
+  /** Extensions to try, without the dot. */
+  readonly extensions?: readonly string[];
+  /** Prefix for the numbered probe: `questions-0.trivia`. */
+  readonly pattern?: string;
+  /** Stop probing after this many files. */
+  readonly limit?: number;
+}
+
+/**
+ * V2's auto-search: exact names, or `questions-0.trivia`, `questions-1` …
+ * until a number is missing. Nothing is parsed here; a miss is just a miss.
+ */
+export async function findQuizFiles(
+  search: QuizFileSearch,
+  read: (url: string) => Promise<string> = fetchText,
+): Promise<QuizSourceFile[]> {
+  const base = search.base ?? "";
+  const folder = search.folder ?? "";
+  const resolve = (name: string): string => {
+    const path = `${folder}${name}`;
+    return base.length === 0 ? path : new URL(path, base).href;
+  };
+  const files: QuizSourceFile[] = [];
+  const names = (search.filenames ?? [])
+    .map((name) => name.trim())
+    .filter((name) => name.length > 0);
+
+  if (names.length > 0) {
+    for (const name of names) {
+      try {
+        files.push({ name, text: await read(resolve(name)) });
+      } catch {
+        break;
+      }
+    }
+    return files;
+  }
+
+  const extensions = (search.extensions ?? ["trivia", "txt", "md"])
+    .map((extension) => extension.trim().replace(/^\./, ""))
+    .filter((extension) => extension.length > 0);
+  const pattern = search.pattern ?? "questions";
+  const limit = search.limit ?? 50;
+  for (let index = 0; index < limit; index += 1) {
+    let found: QuizSourceFile | null = null;
+    for (const extension of extensions) {
+      const name = `${pattern}-${index}.${extension}`;
+      try {
+        found = { name, text: await read(resolve(name)) };
+        break;
+      } catch {
+        // Try the next extension, then stop this number.
+      }
+    }
+    if (found === null) {
+      break;
+    }
+    files.push(found);
+  }
+  return files;
+}
+
 async function read(
   url: string,
   cache: TextCache | undefined,
@@ -111,7 +185,9 @@ export async function loadQuizText(
     return await loadManifest(quiz, text, source, options);
   }
   await quiz.load(
-    isEncryptedQuiz(data) ? { type: "encrypted", data } : { type: "inline", data },
+    isEncryptedQuiz(data)
+      ? { type: "encrypted", data }
+      : { type: "inline", data },
   );
   return null;
 }

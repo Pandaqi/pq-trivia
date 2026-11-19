@@ -11,6 +11,7 @@ import {
   AttributeType,
   type AttributeSpec,
 } from "./attributes";
+import { CONFIG_HEADER_NAMES } from "./configAttributes";
 
 type Row = readonly [
   key: string,
@@ -94,7 +95,7 @@ export const ATTRIBUTES: readonly AttributeSpec[] = ROWS.map(
   ([key, aliases, type, group]) => ({ key, aliases, type, group }),
 );
 
-export const HEADER_KEYS: readonly string[] = [
+const META_HEADER_KEYS: readonly string[] = [
   "Quiz",
   "Syntax",
   "Language",
@@ -109,6 +110,16 @@ export const HEADER_KEYS: readonly string[] = [
   "License",
   "Homepage",
   "Image",
+];
+
+/**
+ * Header keys, plus every global setting a file may set for itself. The config
+ * names are registered here so a `Grading =>` or `Include =>` line at the top
+ * stays a setting instead of opening a question block.
+ */
+export const HEADER_KEYS: readonly string[] = [
+  ...META_HEADER_KEYS,
+  ...CONFIG_HEADER_NAMES.filter((name) => !META_HEADER_KEYS.includes(name)),
 ];
 
 const BY_NAME = new Map<string, AttributeSpec>();

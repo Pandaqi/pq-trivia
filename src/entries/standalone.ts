@@ -12,21 +12,17 @@
 import paperBase from "../themes/paper.base.css" with { type: "text" };
 import paperAnswers from "../themes/paper.answers.css" with { type: "text" };
 import paperControls from "../themes/paper.controls.css" with { type: "text" };
-import paperInteractive from "../themes/paper.interactive.css" with {
-  type: "text",
-};
+import paperInteractive from "../themes/paper.interactive.css" with { type: "text" };
 import paperLive from "../themes/paper.live.css" with { type: "text" };
 import printForms from "../themes/print.forms.css" with { type: "text" };
 import printPages from "../themes/print.pages.css" with { type: "text" };
-import printQuestions from "../themes/print.questions.css" with {
-  type: "text",
-};
+import printQuestions from "../themes/print.questions.css" with { type: "text" };
 
 import { buildQuiz } from "../core/model/quiz";
 import { planQuiz } from "../core/plan/plan";
 import { parse } from "../core/syntax/parser";
 import { format } from "../core/syntax/serialize";
-import { createQuiz } from "../core/session/quiz";
+import { Quiz, createQuiz } from "../core/session/quiz";
 import { VERSION } from "../core/version";
 import { browserAnswerKey } from "../platform/answerKey";
 import {
@@ -50,7 +46,17 @@ const PRINT = [printPages, printQuestions, printForms].join("\n\n");
 
 /** The one place the bundle writes to the page before mounting. */
 function injectStyles(): void {
-  if (typeof document === "undefined" || document.getElementById("pq-theme")) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  // A one-file quiz owns the page. No body margin, or 100dvh grows a scrollbar.
+  if (document.getElementById("pq-page") === null) {
+    const page = document.createElement("style");
+    page.id = "pq-page";
+    page.textContent = "html, body { margin: 0; height: 100%; }";
+    document.head.append(page);
+  }
+  if (document.getElementById("pq-theme")) {
     return;
   }
   const screen = document.createElement("style");
@@ -96,6 +102,7 @@ function boot(): void {
 
 const api = {
   VERSION,
+  Quiz,
   createQuiz,
   mountQuiz,
   defineQuizElement,

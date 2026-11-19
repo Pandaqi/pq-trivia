@@ -19,11 +19,14 @@ import {
 import { CodeHighlightContext } from "./components/CodeBlock";
 import { UiContext } from "./i18n";
 import { preloadNextQuestion } from "../../platform/browser/preload";
+import { storedLayoutMode } from "../../platform/browser/storage/layoutMode";
 import { EndScreen } from "./screens/EndScreen";
 import { LockedScreen } from "./screens/LockedScreen";
 import { MessageScreen } from "./screens/MessageScreen";
 import { QuestionScreen } from "./screens/QuestionScreen";
 import { ResultsScreen } from "./screens/ResultsScreen";
+import { changeFontScale, showsButton } from "./toolbar";
+import { SettingsOverlay } from "./screens/SettingsPanel";
 import { StartScreen } from "./screens/StartScreen";
 
 const TYPING_TAGS: ReadonlySet<string> = new Set([
@@ -44,17 +47,19 @@ type Action = (quiz: Quiz) => void;
 
 /** V2's keys, with `hotkeys` and `hotkeysForbidden` on top. */
 const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
-  next: ["ArrowRight", ">", " "],
-  prev: ["ArrowLeft", "<"],
+  next: ["ArrowRight", "ArrowDown"],
+  prev: ["ArrowLeft", "ArrowUp"],
+  nextRound: [".", ">"],
+  prevRound: [",", "<"],
   reveal: ["r", "a"],
   hint: ["h"],
   mode: ["m"],
   end: ["Escape"],
   start: ["Home"],
   language: ["l"],
-  media: ["Enter"],
+  media: ["Enter", " "],
   fontUp: ["+", "="],
-  fontDown: ["-"],
+  fontDown: ["-", "_"],
 };
 
 function actionFor(name: string): Action | null {
@@ -63,6 +68,10 @@ function actionFor(name: string): Action | null {
       return (target) => void target.next();
     case "prev":
       return (target) => void target.prev();
+    case "nextRound":
+      return (target) => void target.nextRound();
+    case "prevRound":
+      return (target) => void target.prevRound();
     case "reveal":
       return (target) => void target.reveal();
     case "hint":
@@ -90,7 +99,7 @@ function actionFor(name: string): Action | null {
           return;
         }
         const index = languages.indexOf(target.state.language ?? "");
-        target.setLanguage(languages[(index + 1) % languages.length] ?? "en");
+        target.setLanguage(languages[(index + 1) % languages.length] ?? "");
       };
     case "media":
       return () => undefined;
@@ -113,8 +122,8 @@ function keyMap(config: Quiz["config"]): Map<string, string> {
   const aliases: Readonly<Record<string, string>> = {
     "font-size-plus": "fontUp",
     "font-size-min": "fontDown",
-    "next-section": "next",
-    "prev-section": "prev",
+    "next-section": "nextRound",
+    "prev-section": "prevRound",
     fullscreen: "media",
   };
   for (const [raw, keys] of Object.entries(config.hotkeys ?? {})) {
@@ -202,8 +211,12 @@ export function QuizApp({
   const root = useRef<HTMLDivElement>(null);
   const appliedTheme = useRef<ReturnType<typeof getTheme>>(null);
   const [themeVersion, setThemeVersion] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  useEffect(() => subscribeTheme(() => setThemeVersion((value) => value + 1)), []);
+  useEffect(
+    () => subscribeTheme(() => setThemeVersion((value) => value + 1)),
+    [],
+  );
 
   // Tokens, fonts and a background per question. The theme is a runtime; this
   // effect only moves its CSS variables onto the current root.
@@ -267,7 +280,8 @@ export function QuizApp({
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || isTyping(event.target)) {
+      // The settings panel is modal. Escape has its own handler there.
+      if (settingsOpen || event.defaultPrevented || isTyping(event.target)) {
         return;
       }
       if (event.metaKey || event.ctrlKey || event.altKey) {
@@ -290,9 +304,8 @@ export function QuizApp({
       }
       event.preventDefault();
       if (name === "media") {
-        const media = root.current?.querySelector<
-          HTMLMediaElement
-        >("audio, video");
+        const media =
+          root.current?.querySelector<HTMLMediaElement>("audio, video");
         if (media !== null && media !== undefined) {
           if (media.paused) {
             void media.play().catch(() => undefined);
@@ -303,15 +316,7 @@ export function QuizApp({
         return;
       }
       if (name === "fontUp" || name === "fontDown") {
-        const current = Number(root.current?.dataset["pqFontScale"] ?? "1");
-        const next = Math.min(
-          1.6,
-          Math.max(0.7, current + (name === "fontUp" ? 0.1 : -0.1)),
-        );
-        if (root.current !== null) {
-          root.current.dataset["pqFontScale"] = String(next);
-          root.current.style.fontSize = `${Math.round(next * 100)}%`;
-        }
+        changeFontScale(root.current, name === "fontUp" ? 0.1 : -0.1);
         return;
       }
       if (config.enableSafety === true && (name === "mode" || name === "end")) {
@@ -326,7 +331,7 @@ export function QuizApp({
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [quiz, root]);
+  }, [quiz, root, settingsOpen]);
 
   // V2's edge clicks. Off unless the host asks for them.
   useEffect(() => {
@@ -334,6 +339,9 @@ export function QuizApp({
       return;
     }
     const onClick = (event: MouseEvent) => {
+      if (settingsOpen) {
+        return;
+      }
       if (
         quiz.config.disableTouch === true &&
         event instanceof PointerEvent &&
@@ -354,7 +362,7 @@ export function QuizApp({
     };
     window.addEventListener("click", onClick);
     return () => window.removeEventListener("click", onClick);
-  }, [quiz]);
+  }, [quiz, settingsOpen]);
 
   useEffect(() => {
     root.current?.querySelector<HTMLElement>("[data-pq-heading]")?.focus();
@@ -362,10 +370,18 @@ export function QuizApp({
   }, [quiz, snapshot.screen]);
 
   const screen = snapshot.screen;
+  const layoutMode =
+    storedLayoutMode() ??
+    (quiz.config.layoutMode === "inline" ? "inline" : "viewport");
   if (screen === null) {
     if (quiz.locked()) {
       return (
-        <div class="pq-quiz" ref={root} data-pq-screen="locked">
+        <div
+          class="pq-quiz"
+          ref={root}
+          data-pq-screen="locked"
+          data-pq-layout={layoutMode}
+        >
           <LockedScreen quiz={quiz} />
         </div>
       );
@@ -375,15 +391,30 @@ export function QuizApp({
         ? quiz.t("loadFailed")
         : quiz.t("noQuiz");
     return (
-      <div class="pq-quiz" ref={root}>
+      <div class="pq-quiz" ref={root} data-pq-layout={layoutMode}>
         <MessageScreen title={title} messages={quiz.diagnostics()} />
       </div>
     );
   }
 
+  // The Start block's `Buttons` gates the panel on every screen, like V2.
+  const startButtons = quiz.state.plan?.buttons ?? [];
+  const settingsAllowed =
+    showsButton(startButtons, "settings") &&
+    quiz.config.disableUI !== true &&
+    quiz.config.hideDefaultSettings !== true;
+  const quizIsEmpty =
+    screen.kind !== ScreenKind.Results &&
+    quiz.state.plan !== null &&
+    quiz.state.plan.total === 0;
   const label =
     screen.kind === ScreenKind.Question
-      ? quiz.t("questionOf", { index: screen.index + 1, total: screen.total })
+      ? screen.number > 0
+        ? quiz.t("questionOf", {
+            index: screen.number,
+            total: screen.total,
+          })
+        : quiz.t("roundWord")
       : screen.kind === ScreenKind.Start
         ? screen.title || quiz.t("untitled")
         : screen.kind === ScreenKind.Results
@@ -391,18 +422,48 @@ export function QuizApp({
           : quiz.t("endLabel");
 
   return (
-    <div class="pq-quiz" ref={root} data-pq-screen={screen.kind}>
+    <div
+      class="pq-quiz"
+      ref={root}
+      data-pq-screen={screen.kind}
+      data-pq-layout={layoutMode}
+    >
       <p class="pq-live" aria-live="polite">
         {label}
       </p>
+      {quizIsEmpty ? (
+        <p class="pq-warning" role="status">
+          {quiz.t("emptyQuiz")}
+        </p>
+      ) : null}
+      {settingsAllowed ? (
+        <button
+          type="button"
+          class="pq-settings-toggle"
+          aria-expanded={settingsOpen}
+          onClick={() => setSettingsOpen((value) => !value)}
+        >
+          {quiz.t("settings")}
+        </button>
+      ) : null}
+
       <UiContext.Provider value={quiz.t}>
-        <CodeHighlightContext.Provider value={quiz.config.codeHighlight === true}>
+        <CodeHighlightContext.Provider
+          value={quiz.config.codeHighlight === true}
+        >
           <ScreenView
             quiz={quiz}
             screen={screen}
             state={snapshot.state}
             timerSound={timerSound}
           />
+          {settingsOpen ? (
+            <SettingsOverlay
+              quiz={quiz}
+              seed={quiz.state.plan?.seed ?? ""}
+              onClose={() => setSettingsOpen(false)}
+            />
+          ) : null}
         </CodeHighlightContext.Provider>
       </UiContext.Provider>
     </div>

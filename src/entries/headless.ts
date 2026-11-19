@@ -3,9 +3,11 @@
 export * from "./core";
 export {
   createQuiz,
-  type Quiz,
+  Quiz,
+  type QuizOptions,
   type QuizConfig,
   type LoadInput,
   type QuizEventMap,
+  ThemeMode,
 } from "../core/quiz";
 export { Emitter, type Unsubscribe } from "../core/session/events";

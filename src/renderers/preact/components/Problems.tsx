@@ -56,10 +56,9 @@ export function Problems({
   return (
     <aside class="pq-problems-panel" aria-label={t("problemsWithQuiz")}>
       <p class="pq-problems-title">
-        {t(
-          problems.length === 1 ? "problemsFound" : "problemsFoundPlural",
-          { count: problems.length },
-        )}
+        {t(problems.length === 1 ? "problemsFound" : "problemsFoundPlural", {
+          count: problems.length,
+        })}
         <button
           type="button"
           class="pq-problems-close"

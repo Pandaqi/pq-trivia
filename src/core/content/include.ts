@@ -51,21 +51,16 @@ function selectRound(text: string, selector: string): string | null {
     return null;
   }
   const lines = text.split(/\r?\n/);
+  const sectionName = /^##(?!#)\s*(.*)$/;
   const start = lines.findIndex((line) => {
-    const trimmed = line.trim();
-    return (
-      trimmed.startsWith("#") &&
-      trimmed.slice(1).trim().toLowerCase() === wanted
-    );
+    const match = sectionName.exec(line.trim());
+    return match !== null && (match[1] ?? "").trim().toLowerCase() === wanted;
   });
   if (start < 0) {
     return null;
   }
   const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => {
-    const trimmed = line.trim();
-    return trimmed.startsWith("#") && !trimmed.startsWith("##");
-  });
+  const end = rest.findIndex((line) => /^#{1,2}(?!#)/.test(line.trim()));
   return (end < 0 ? rest : rest.slice(0, end)).join("\n");
 }
 
@@ -75,7 +70,7 @@ function stripHeader(text: string): string {
   const start = lines.findIndex((line) => {
     const trimmed = line.trim();
     return (
-      (trimmed.startsWith("#") && !trimmed.startsWith("##")) ||
+      trimmed.startsWith("##") ||
       /^(?:Question|Q|Type|Section|Round|Answers|Answer|A)\s*=>/.test(trimmed)
     );
   });

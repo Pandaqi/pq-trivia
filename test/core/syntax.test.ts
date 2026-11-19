@@ -89,24 +89,24 @@ describe("parser", () => {
     expect(coerceDuration("banana")).toBeUndefined();
   });
 
-  test("## is still the question shorthand", () => {
-    const quiz = buildQuiz("## Who wrote it?\nAnswers => Queen\n");
+  test("### is the question shorthand", () => {
+    const quiz = buildQuiz("### Who wrote it?\nAnswers => Queen\n");
     expect(quiz.questions).toHaveLength(1);
     expect(quiz.questions[0]?.text[0]?.text).toBe("Who wrote it?");
     expect(quiz.questions[0]?.answers[0]?.text).toBe("Queen");
   });
 
-  test("### Key blocks take one value per line", () => {
+  test("#### Key blocks take one value per line", () => {
     const quiz = buildQuiz(
       [
-        "## Pick one",
-        "### Answers",
+        "### Pick one",
+        "#### Answers",
         "Alpha",
         "Beta with **bold** and [a link](https://example.com)",
         "Gamma",
         "Correct => Alpha",
         "Type => Choice",
-        "### Media",
+        "#### Media",
         "one.png",
         "two.mp3",
       ].join("\n"),
@@ -127,16 +127,16 @@ describe("parser", () => {
     );
   });
 
-  test("a ### block ends at the next key or heading", () => {
+  test("a #### block ends at the next key or heading", () => {
     const quiz = buildQuiz(
       [
-        "## First question",
-        "### Answers",
+        "### First question",
+        "#### Answers",
         "First",
         "Second",
         "Question => A later question",
         "Answers => one | two",
-        "# Round two",
+        "## Round two",
         "Question => Another",
       ].join("\n"),
     );

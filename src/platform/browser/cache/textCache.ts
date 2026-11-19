@@ -120,7 +120,10 @@ function readAll(database: IDBDatabase): Promise<TextEntry[]> {
   });
 }
 
-function readOne(database: IDBDatabase, key: string): Promise<TextEntry | null> {
+function readOne(
+  database: IDBDatabase,
+  key: string,
+): Promise<TextEntry | null> {
   return new Promise((resolve, reject) => {
     const request = database
       .transaction(STORE, "readonly")
@@ -155,10 +158,7 @@ function writeOne(
 }
 
 /** Oldest first, until the budget fits. */
-async function trim(
-  database: IDBDatabase,
-  maxBytes: number,
-): Promise<void> {
+async function trim(database: IDBDatabase, maxBytes: number): Promise<void> {
   const entries = await readAll(database);
   let total = entries.reduce((sum, entry) => sum + bytesOf(entry), 0);
   if (total <= maxBytes) {

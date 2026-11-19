@@ -2,12 +2,12 @@
 
 import type { JSX } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
+import { PlayMode } from "../../../core/session/session";
 import type { EndViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { useT } from "../i18n";
-import { showsAction } from "../toolbar";
 
 function allowed(buttons: readonly string[], id: string): boolean {
   return buttons.length === 0 || buttons.includes(id);
@@ -60,22 +60,37 @@ export function EndScreen({
       {quiz.config.disableUI === true ? null : (
         <footer class="pq-toolbar">
           <Actions quiz={quiz} />
-          {showsAction(quiz, "prev") ? (
-            <button type="button" onClick={() => quiz.prev()}>
-              {t("backToQuestion")}
+          {allowed(screen.buttons, "start") ? (
+            <button type="button" onClick={() => quiz.goToStart()}>
+              {t("backToStart")}
+            </button>
+          ) : null}
+          {allowed(screen.buttons, "answers") ? (
+            <button
+              type="button"
+              class="pq-primary"
+              onClick={() => {
+                quiz.setMode(PlayMode.Answers);
+                quiz.restart();
+                quiz.next();
+              }}
+            >
+              {t("throughAnswers")}
             </button>
           ) : null}
           {allowed(screen.buttons, "restart") ? (
-            <button type="button" onClick={() => quiz.restart()}>
+            <button
+              type="button"
+              onClick={() => {
+                quiz.restart();
+                quiz.next();
+              }}
+            >
               {t("playAgain")}
             </button>
           ) : null}
           {allowed(screen.buttons, "grade") ? (
-            <button
-              type="button"
-              class="pq-primary"
-              onClick={() => quiz.showResults()}
-            >
+            <button type="button" onClick={() => quiz.showResults()}>
               {t("seeResults")}
             </button>
           ) : null}

@@ -28,11 +28,7 @@ import {
   type Diagnostic,
 } from "../syntax/diagnostics";
 import type { LoadInput, ParseHook, QuizConfig } from "./types";
-import {
-  languageFromFile,
-  mergeModels,
-  splitByLanguage,
-} from "./languages";
+import { languageFromFile, mergeModels, splitByLanguage } from "./languages";
 
 export interface LoaderDeps {
   readonly destroyed: () => boolean;
@@ -41,6 +37,8 @@ export interface LoaderDeps {
   readonly revealMode: () => RevealMode;
   readonly state: () => SessionState;
   readonly setState: (state: SessionState) => void;
+  /** The text this quiz came from, for a `.trivia` export. Null when inline. */
+  readonly setSource: (text: string | null) => void;
   readonly apply: (state: SessionState) => void;
   readonly notify: (previousStatus: SessionStatus) => void;
   readonly refreshSaved: () => Promise<void>;
@@ -150,9 +148,11 @@ export function createLoader(deps: LoaderDeps): Loader {
       return;
     }
     deps.setState(sessionReducer(deps.state(), { type: "load/start" }));
+    deps.setSource(null);
     try {
       if (input.type === "text") {
         const options = buildOptions(input.file);
+        deps.setSource(input.text);
         const parsed = await deps.parseText(input.text, options);
         await settle(
           modelsFromParsed([
@@ -162,6 +162,7 @@ export function createLoader(deps: LoaderDeps): Loader {
         return;
       }
       if (input.type === "files") {
+        deps.setSource(input.files.map((file) => file.text).join("\n\n"));
         // Parse every file with its own language. A name like
         // `questions.nl.trivia` is a language mark, not decoration.
         const parsed = await Promise.all(
@@ -174,7 +175,9 @@ export function createLoader(deps: LoaderDeps): Loader {
         return;
       }
       if (input.type === "model") {
-        await settle(splitByLanguage(input.quiz, deps.config().languageDefault ?? null));
+        await settle(
+          splitByLanguage(input.quiz, deps.config().languageDefault ?? null),
+        );
         return;
       }
       if (input.type === "inline") {

@@ -134,7 +134,10 @@ export function toEmbedded(
       languages: quiz.meta.languages,
       seed: quiz.meta.seed,
     },
-    config: quiz.meta.seed === null ? {} : { seed: quiz.meta.seed },
+    config: {
+      ...quiz.meta.config,
+      ...(quiz.meta.seed === null ? {} : { seed: quiz.meta.seed }),
+    },
     rounds,
     questions,
   };
@@ -307,6 +310,8 @@ export function fromEmbedded(input: unknown): ImportResult {
     questions: round.questions
       .map((id) => byId.get(id))
       .filter((question): question is QuestionModel => question !== undefined),
+    source: null,
+    implicit: false,
   }));
 
   const meta: QuizMeta = {
@@ -314,6 +319,10 @@ export function fromEmbedded(input: unknown): ImportResult {
     title: data.meta?.title ?? "",
     languages: data.meta?.languages ?? [],
     seed: data.meta?.seed ?? null,
+    config:
+      data.config === undefined || data.config === null
+        ? {}
+        : (data.config as Readonly<Record<string, unknown>>),
   };
 
   return {
@@ -338,6 +347,7 @@ function emptyMeta(): QuizMeta {
     homepage: null,
     image: null,
     extra: {},
+    config: {},
   };
 }
 

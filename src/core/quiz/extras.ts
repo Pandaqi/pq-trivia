@@ -15,7 +15,7 @@ import {
 } from "../session/session";
 import { remainingOf } from "../session/timers";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
-import type { OrderOptions, Quiz, QuizConfig, QuizEventMap } from "./types";
+import type { OrderOptions, QuizApi, QuizConfig, QuizEventMap } from "./types";
 
 export interface ExtrasContext {
   readonly state: () => SessionState;
@@ -30,12 +30,14 @@ export interface ExtrasContext {
   readonly setSaved: (record: AttemptRecord | null) => void;
   readonly isRestricted: () => boolean;
   readonly config: () => QuizConfig;
-  readonly setConfig: (config: QuizConfig) => void;
+  readonly setConfig: (partial: Partial<QuizConfig>) => void;
   readonly applyOrder: (order: OrderOptions) => void;
+  /** Rebuild models and plan after a content setting changed. */
+  readonly refresh?: () => void;
 }
 
 type Extras = Pick<
-  Quiz,
+  QuizApi,
   | "reveal"
   | "revealHint"
   | "expireTimer"
@@ -50,6 +52,31 @@ type Extras = Pick<
   | "attachAttempts"
   | "configure"
 >;
+
+/** Settings that change which questions exist, or how they look on paper. */
+const CONTENT_KEYS: ReadonlySet<string> = new Set([
+  "include",
+  "exclude",
+  "groupBy",
+  "questionTypesAllowed",
+  "minAnswers",
+  "maxAnswers",
+  "minScore",
+  "maxScore",
+  "defaultScore",
+  "defaultAuthor",
+  "defaultCategory",
+  "title",
+  "filterSections",
+  "excludeSections",
+  "keepAnswerOrder",
+  "randomizeMedia",
+  "syncPropertiesWithTranslations",
+  "addMissingSectionScreens",
+  "allowTimerOnSections",
+  "addSecretThemeQuestions",
+  "disableTextFormatting",
+]);
 
 export function createExtras(ctx: ExtrasContext): Extras {
   const reveal = (): boolean => {
@@ -206,9 +233,9 @@ export function createExtras(ctx: ExtrasContext): Extras {
   };
 
   const configure = (partial: Partial<QuizConfig>): void => {
-    const mutable: Record<string, unknown> = { ...ctx.config() };
     const order: Record<string, unknown> = {};
     let orderChanged = false;
+    let contentChanged = false;
     for (const [key, value] of Object.entries(partial)) {
       if (value === undefined) {
         continue;
@@ -220,14 +247,20 @@ export function createExtras(ctx: ExtrasContext): Extras {
       ) {
         order[key] = value;
         orderChanged = true;
-        continue;
       }
-      mutable[key] = value;
+      if (CONTENT_KEYS.has(key)) {
+        contentChanged = true;
+      }
     }
-    ctx.setConfig(mutable as QuizConfig);
+    ctx.setConfig(partial);
     if (orderChanged) {
       ctx.applyOrder(order as OrderOptions);
     } else {
+      // Filters and section lists change the plan. A colour mode does not, and
+      // must not restart the question timer.
+      if (contentChanged) {
+        ctx.refresh?.();
+      }
       ctx.notify();
     }
   };

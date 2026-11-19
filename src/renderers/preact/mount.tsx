@@ -8,6 +8,12 @@
 import { h, render } from "preact";
 import { attemptKeyFor } from "../../core/session/attempts";
 import type { Quiz } from "../../core/session/quiz";
+import {
+  applyThemeMode,
+  storedThemeMode,
+} from "../../platform/browser/colorMode";
+import { applyHeadFromQuiz } from "../../platform/browser/head";
+import { consumePrintKind, type PrintKind } from "../../platform/browser/print";
 import { browserTimerSound } from "../../platform/browser/sound";
 import { createBrowserJournal } from "../../platform/browser/storage/local";
 import {
@@ -35,12 +41,31 @@ export interface MountOptions {
   readonly attempts?: boolean;
 }
 
+const PRINT_VARIANTS: Readonly<Record<PrintKind, PrintVariant>> = {
+  questions: "questions",
+  answers: "answers",
+  sheet: "grade",
+  form: "form",
+  media: "media",
+};
+
 export function mountQuiz(
   quiz: Quiz,
   target: Element,
   options: MountOptions = {},
 ): MountedQuiz {
   render(h(QuizApp, { quiz, timerSound: browserTimerSound }), target);
+
+  // The title, language, charset and viewport come from the quiz, not the page.
+  applyHeadFromQuiz(quiz);
+
+  // A saved choice wins over the author's default. The switch writes both.
+  const syncChrome = (): void => {
+    applyHeadFromQuiz(quiz);
+    applyThemeMode(storedThemeMode() ?? quiz.config.themeMode);
+  };
+  syncChrome();
+  const unsubscribeHead = quiz.subscribe(syncChrome);
 
   // `createQuiz({ config: { theme: "themes/forest/" } })`, the V2 door.
   const requested = quiz.config.theme;
@@ -50,7 +75,10 @@ export function mountQuiz(
     typeof requested === "string" &&
     requested.trim().length > 0
   ) {
-    void loadTheme(resolveThemeFolder(requested))
+    // V2's `subFolderTheme`: a bare name lives under that folder.
+    const root = quiz.config.subFolderTheme ?? "themes/";
+    const path = requested.includes("/") ? requested : `${root}${requested}/`;
+    void loadTheme(resolveThemeFolder(`${quiz.config.url ?? ""}${path}`))
       .then((theme) => {
         // A folder picked while this was loading wins. Late fetches must not
         // snatch the theme back.
@@ -91,10 +119,7 @@ export function mountQuiz(
       : null;
   if (icon !== null) {
     icon.rel = "icon";
-    icon.href = new URL(
-      quiz.config.icon as string,
-      doc.baseURI,
-    ).href;
+    icon.href = new URL(quiz.config.icon as string, doc.baseURI).href;
     doc.head.append(icon);
   }
   const printHost = doc.createElement("div");
@@ -106,9 +131,13 @@ export function mountQuiz(
 
   const onBeforePrint = (): void => {
     sheet?.destroy();
+    const requested = consumePrintKind();
     sheet = mountPrintSheet(quiz, printHost, {
       ...options.printOptions,
-      variant: options.printOptions?.variant ?? options.printVariant ?? "auto",
+      variant:
+        requested === null
+          ? (options.printOptions?.variant ?? options.printVariant ?? "auto")
+          : PRINT_VARIANTS[requested],
     });
     for (const problem of sheet.problems) {
       console.warn(`[pq-trivia] ${problem.message}`);
@@ -129,6 +158,7 @@ export function mountQuiz(
       window.removeEventListener("beforeprint", onBeforePrint);
       window.removeEventListener("afterprint", onAfterPrint);
       unsubscribeAttempts();
+      unsubscribeHead();
       sheet?.destroy();
       sheet = null;
       printHost.remove();

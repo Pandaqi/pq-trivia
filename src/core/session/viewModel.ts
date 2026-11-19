@@ -20,9 +20,11 @@ import type { QuizPlan } from "../plan/plan";
 import type { GradeReport } from "../grading/report";
 import { PlayMode, type Progress, type SessionState } from "./session";
 import {
+  mediaForConfig,
   MediaKind,
   parseMediaDescriptor,
   type MediaDescriptor,
+  type MediaOptions,
 } from "../values/media";
 
 export enum ScreenKind {
@@ -60,11 +62,13 @@ export interface MediaViewModel {
 export function toMediaViewModel(
   descriptor: MediaDescriptor,
   fallbackAlt: string | null = null,
+  media: MediaOptions = {},
 ): MediaViewModel {
-  const options = descriptor.options;
+  const resolved = mediaForConfig(descriptor, media);
+  const options = resolved.options;
   return {
-    path: descriptor.path,
-    kind: descriptor.kind,
+    path: resolved.path,
+    kind: resolved.kind,
     alt: options["alt"] ?? fallbackAlt,
     credit: options["credit"] ?? null,
     srcset: options["srcset"] ?? null,
@@ -90,7 +94,9 @@ export interface QuestionViewModel {
   };
   /** False when the question asked for its text to stay exactly as written. */
   readonly formatText: boolean;
-  readonly explanation: string | null;
+  /** Parsed like every other value, so `**bold**` actually turns bold. */
+  readonly explanation: readonly InlineNode[] | null;
+  readonly comments: readonly InlineNode[];
   readonly sources: readonly string[];
   readonly timerMs: number | null;
   readonly layout: string | null;
@@ -101,12 +107,20 @@ export interface QuestionViewModel {
   readonly variant: string | null;
   readonly background: string | null;
   readonly index: number;
+  /** Number among the questions that count, starting at one. Zero for a section. */
+  readonly number: number;
   readonly total: number;
   readonly round: string | null;
   readonly roundName: string | null;
   readonly roundSecret: string | null;
   readonly roundNumber: number | null;
+  /** Where this question sits in its round, used for the colour shade. */
+  readonly roundPosition: number;
+  readonly roundQuestionCount: number;
+  readonly roundPoints: number;
+  readonly seed: string;
   readonly isRoundStart: boolean;
+  readonly interactive: boolean;
   readonly authors: readonly string[];
   readonly categories: readonly string[];
   readonly authorsDiverse: boolean;
@@ -132,6 +146,7 @@ export interface StartViewModel {
   readonly kind: ScreenKind.Start;
   readonly title: string;
   readonly description: string | null;
+  readonly descriptionNodes: readonly InlineNode[];
   readonly author: string;
   readonly questionCount: number;
   readonly roundCount: number;
@@ -184,11 +199,17 @@ function inlineValue(
 
 export interface QuestionScreenView {
   readonly index: number;
+  /** Playable number. Defaults to `index + 1`. */
+  readonly number?: number;
   readonly total: number;
   readonly progress: Progress;
   readonly roundName: string | null;
   readonly roundSecret: string | null;
   readonly roundNumber: number | null;
+  readonly roundPosition: number;
+  readonly roundQuestionCount: number;
+  readonly roundPoints: number;
+  readonly seed: string;
   readonly isRoundStart: boolean;
   readonly authorsDiverse: boolean;
   readonly categoriesDiverse: boolean;
@@ -198,6 +219,7 @@ export function questionScreen(
   question: QuestionModel,
   state: SessionState,
   view: QuestionScreenView,
+  mediaOptions: MediaOptions = {},
 ): QuestionViewModel {
   const { index, total, progress } = view;
   const titleValue = question.text[0];
@@ -221,12 +243,15 @@ export function questionScreen(
   const answers: AnswerViewModel[] = refs.map((ref) => {
     const correct = showAnswers ? correctTexts.has(ref.value.text) : null;
     const descriptor = parseMediaDescriptor(ref.value.text);
-    const isMedia = !ref.value.keepAsIs && descriptor.kind !== MediaKind.File;
+    const resolved = mediaForConfig(descriptor, mediaOptions);
+    const isMedia = !ref.value.keepAsIs && resolved.kind !== MediaKind.File;
     return {
       id: ref.id,
       text: ref.value.text,
       nodes: inlineValue(ref.value, formatText),
-      media: isMedia ? toMediaViewModel(descriptor, question.alt) : null,
+      media: isMedia
+        ? toMediaViewModel(descriptor, question.alt, mediaOptions)
+        : null,
       correct,
       points: correct === true ? pointsPerAnswer : null,
     };
@@ -235,7 +260,7 @@ export function questionScreen(
   const hintCount = state.hints[question.id] ?? 0;
   const hints = question.hints.slice(0, hintCount);
   const declaredMedia = question.media.map((item) =>
-    toMediaViewModel(item, question.alt),
+    toMediaViewModel(item, question.alt, mediaOptions),
   );
   const media =
     question.mediaOrder === OrderMode.Shuffle
@@ -246,7 +271,10 @@ export function questionScreen(
     kind: ScreenKind.Question,
     id: question.id,
     type: question.type,
-    title: inlineValue({ text: title, keepAsIs: titleValue?.keepAsIs ?? false }, formatText),
+    title: inlineValue(
+      { text: title, keepAsIs: titleValue?.keepAsIs ?? false },
+      formatText,
+    ),
     body: bodyValues.flatMap((value) => inlineValue(value, formatText)),
     answers,
     media,
@@ -258,7 +286,14 @@ export function questionScreen(
       total: question.hints.length,
     },
     formatText,
-    explanation: showAnswers ? question.explanation : null,
+    explanation:
+      showAnswers && question.explanation !== null
+        ? inlineValue(
+            { text: question.explanation, keepAsIs: false },
+            formatText,
+          )
+        : null,
+    comments: screenComments(question),
     sources: question.sources,
     timerMs: question.timerMs,
     layout: question.layout,
@@ -269,12 +304,18 @@ export function questionScreen(
     variant: question.variant,
     background: question.background,
     index,
+    number: view.number ?? index + 1,
     total,
     round: question.round,
     roundName: view.roundName,
     roundSecret: view.isRoundStart ? view.roundSecret : null,
     roundNumber: view.roundNumber,
+    roundPosition: view.roundPosition,
+    roundQuestionCount: view.roundQuestionCount,
+    roundPoints: view.roundPoints,
+    seed: view.seed,
     isRoundStart: view.isRoundStart,
+    interactive: state.interactive,
     authors: question.authors,
     categories: question.categories,
     authorsDiverse: view.authorsDiverse,
@@ -293,11 +334,16 @@ export function questionScreen(
   };
 }
 
-function screenMedia(question: QuestionModel | null): MediaViewModel[] {
+function screenMedia(
+  question: QuestionModel | null,
+  media: MediaOptions = {},
+): MediaViewModel[] {
   if (question === null) {
     return [];
   }
-  return question.media.map((item) => toMediaViewModel(item, question.alt));
+  return question.media.map((item) =>
+    toMediaViewModel(item, question.alt, media),
+  );
 }
 
 function screenComments(question: QuestionModel | null): InlineNode[] {
@@ -321,6 +367,7 @@ export function startScreen(
   language: string | null,
   resume: ResumeViewModel | null = null,
   intro: QuestionModel | null = null,
+  mediaOptions: MediaOptions = {},
 ): StartViewModel {
   return {
     kind: ScreenKind.Start,
@@ -332,8 +379,10 @@ export function startScreen(
     seed: plan?.seed ?? "",
     language: language ?? meta.language,
     resume,
+    descriptionNodes:
+      meta.description === null ? [] : parseInline(meta.description).nodes,
     comments: screenComments(intro),
-    media: screenMedia(intro),
+    media: screenMedia(intro, mediaOptions),
     buttons: screenButtons(intro),
     credits: screenCredits(intro),
   };
@@ -343,6 +392,7 @@ export function endScreen(
   meta: QuizMeta,
   progress: Progress,
   outro: QuestionModel | null = null,
+  mediaOptions: MediaOptions = {},
 ): EndViewModel {
   return {
     kind: ScreenKind.End,
@@ -354,7 +404,7 @@ export function endScreen(
     answered: progress.answered,
     progress,
     comments: screenComments(outro),
-    media: screenMedia(outro),
+    media: screenMedia(outro, mediaOptions),
     buttons: screenButtons(outro),
     credits: screenCredits(outro),
   };

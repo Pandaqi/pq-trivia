@@ -27,12 +27,12 @@ the honest one.
 
 ## Keyboard
 
-| Key | Action |
-| --- | --- |
-| `Tab` / `Shift+Tab` | move |
-| `→` / `←` | next / previous |
-| `r` | reveal |
-| `h` | hint |
+| Key                 | Action          |
+| ------------------- | --------------- |
+| `Tab` / `Shift+Tab` | move            |
+| `→` / `←`           | next / previous |
+| `r`                 | reveal          |
+| `h`                 | hint            |
 
 The timer is announced, not just drawn. A countdown that only exists visually
 is a countdown half the room cannot hear.

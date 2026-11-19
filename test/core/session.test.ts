@@ -25,7 +25,7 @@ import {
 import { QuestionType } from "../../src/core/model/question";
 
 const model = buildQuiz(`
-# Round
+## Round
 Question => Pick one
 Answers => A | B | C
 Type => Choice
@@ -39,7 +39,7 @@ Answers => one | two
 Type => Cloze
 `);
 
-const plan = planQuiz(model);
+const plan = planQuiz(model, { addMissingSectionScreens: false });
 
 describe("session", () => {
   test("loads a plan and seeds responses", () => {

@@ -88,7 +88,14 @@ export function responseIssues(
   const empty = isEmptyResponse(response);
 
   if (empty) {
-    issues.push(issue(question, "answer", messageFor(question)[0], messageFor(question)[1]));
+    issues.push(
+      issue(
+        question,
+        "answer",
+        messageFor(question)[0],
+        messageFor(question)[1],
+      ),
+    );
     if (policy === InteractivePolicy.Strict) {
       issues.push(...completenessIssues(question, response));
     }
@@ -149,7 +156,12 @@ function completenessIssues(
       const order = response.kind === ResponseKind.Sort ? response.order : [];
       if (order.length !== answerRefs(question).length) {
         issues.push(
-          issue(question, "order", "Use every answer exactly once.", "needAllOnce"),
+          issue(
+            question,
+            "order",
+            "Use every answer exactly once.",
+            "needAllOnce",
+          ),
         );
       }
       break;
@@ -159,7 +171,12 @@ function completenessIssues(
       const expected = question.answers.length;
       if (pairs.length !== expected) {
         issues.push(
-          issue(question, "pairs", `Connect all ${expected} pairs.`, "needPairs"),
+          issue(
+            question,
+            "pairs",
+            `Connect all ${expected} pairs.`,
+            "needPairs",
+          ),
         );
       }
       break;
@@ -168,9 +185,7 @@ function completenessIssues(
       const value =
         response.kind === ResponseKind.Range ? response.value : null;
       if (value === null) {
-        issues.push(
-          issue(question, "number", "Enter a number.", "needNumber"),
-        );
+        issues.push(issue(question, "number", "Enter a number.", "needNumber"));
       }
       break;
     }
@@ -221,7 +236,8 @@ export function nextCheck(
   policy: InteractivePolicy,
 ): NextCheck {
   const question = currentQuestion(state);
-  if (question === null) {
+  // A section screen has no answer. It never blocks.
+  if (question === null || question.type === QuestionType.Section) {
     return { issues: [], blocked: false };
   }
   const response = state.responses[question.id] ?? defaultResponse(question);

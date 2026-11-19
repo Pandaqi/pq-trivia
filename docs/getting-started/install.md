@@ -9,9 +9,9 @@ Copy `dist/v3/pq-trivia.min.js` next to your `index.html`:
 
 ```html
 <script id="quiz-text" type="text/plain">
-Title => Friday Night
-Question => Which band wrote "Bohemian Rhapsody"?
-Answers => Queen
+  Title => Friday Night
+  Question => Which band wrote "Bohemian Rhapsody"?
+  Answers => Queen
 </script>
 <script src="pq-trivia.min.js"></script>
 ```
@@ -27,13 +27,13 @@ bun run build
 
 Then copy what you need from `dist/v3/`:
 
-| File                  | Use                                            |
-| --------------------- | ---------------------------------------------- |
-| `pq-trivia.min.js`    | One `<script>` tag, theme and print inlined.   |
-| `player.js`           | ES module, core plus the Preact player.        |
-| `core.js`             | Parser, model, plan, session, grading. No DOM. |
-| `themes/paper.css`    | The default theme.                             |
-| `themes/print.css`    | Print layout. Link it with `media="print"`.    |
+| File               | Use                                            |
+| ------------------ | ---------------------------------------------- |
+| `pq-trivia.min.js` | One `<script>` tag, theme and print inlined.   |
+| `player.js`        | ES module, core plus the Preact player.        |
+| `core.js`          | Parser, model, plan, session, grading. No DOM. |
+| `themes/paper.css` | The default theme.                             |
+| `themes/print.css` | Print layout. Link it with `media="print"`.    |
 
 ## Served, with an element
 
@@ -41,7 +41,11 @@ Then copy what you need from `dist/v3/`:
 <link rel="stylesheet" href="themes/paper.css" />
 <script type="module" src="player.js"></script>
 
-<pq-quiz src="my-quiz.trivia" theme="themes/forest/" seed="quiz-night"></pq-quiz>
+<pq-quiz
+  src="my-quiz.trivia"
+  theme="themes/forest/"
+  seed="quiz-night"
+></pq-quiz>
 ```
 
 A theme folder is optional. Without `theme`, Paper is what you see.
@@ -63,11 +67,11 @@ import "pq-trivia/themes/paper.css";
 
 Nothing here is in the default build. Load it when you need it.
 
-| Bundle            | What it adds                                              |
-| ----------------- | --------------------------------------------------------- |
-| `browser.js`      | Worker parsing, IndexedDB cache, manifest loading.        |
-| `multiplayer.js`  | Live rooms over BroadcastChannel or Trystero.             |
-| `animations.js`   | The full preset list.                                     |
+| Bundle           | What it adds                                       |
+| ---------------- | -------------------------------------------------- |
+| `browser.js`     | Worker parsing, IndexedDB cache, manifest loading. |
+| `multiplayer.js` | Live rooms over BroadcastChannel or Trystero.      |
+| `animations.js`  | The full preset list.                              |
 
 Big quiz in an element? Hand it the worker parser:
 

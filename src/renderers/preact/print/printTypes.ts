@@ -1,6 +1,7 @@
 /** Print shapes. Plain data, so a host can log or display them. */
 
-export type PrintVariant = "auto" | "quiz" | "answers" | "form" | "grade";
+export type PrintVariant =
+  "auto" | "quiz" | "questions" | "answers" | "form" | "grade" | "media";
 
 export interface PrintProblem {
   /** Overflow would clip. Readability fits, but the type got small. */

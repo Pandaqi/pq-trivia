@@ -5,10 +5,7 @@
  * `unknown` into something typed, or into `null`.
  */
 
-import {
-  ResponseKind,
-  type Response,
-} from "../core/session/responses";
+import { ResponseKind, type Response } from "../core/session/responses";
 import {
   MAX_NAME_LENGTH,
   MessageType,
@@ -21,9 +18,7 @@ export const RATE_LIMIT_MS = 250;
 export const MAX_RESPONSE_TEXT = 2000;
 export const MAX_RESPONSE_ITEMS = 100;
 
-const MESSAGE_TYPES: ReadonlySet<string> = new Set(
-  Object.values(MessageType),
-);
+const MESSAGE_TYPES: ReadonlySet<string> = new Set(Object.values(MessageType));
 
 export function makeId(random: () => number = Math.random): string {
   return `${random().toString(36).slice(2, 10)}${random().toString(36).slice(2, 10)}`;
@@ -92,7 +87,9 @@ function stringList(value: unknown): value is readonly string[] {
   );
 }
 
-function pairList(value: unknown): value is readonly (readonly [string, string])[] {
+function pairList(
+  value: unknown,
+): value is readonly (readonly [string, string])[] {
   return (
     Array.isArray(value) &&
     value.length <= MAX_RESPONSE_ITEMS &&

@@ -2,3 +2,4 @@
 
 export * from "./types";
 export { createQuiz } from "./create";
+export { Quiz, type QuizOptions } from "./class";

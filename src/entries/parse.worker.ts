@@ -5,7 +5,11 @@
  * That was the point of keeping core DOM-free.
  */
 
-import { parseQuiz, type BuildOptions, type ParsedQuiz } from "../core/model/quiz";
+import {
+  parseQuiz,
+  type BuildOptions,
+  type ParsedQuiz,
+} from "../core/model/quiz";
 
 export interface ParseRequest {
   readonly id: number;

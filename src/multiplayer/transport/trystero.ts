@@ -7,12 +7,7 @@
 
 import { parseEnvelope } from "../protocol";
 import type { Envelope } from "../types";
-import type {
-  Room,
-  RoomMessage,
-  RoomTransport,
-  Unsubscribe,
-} from "./types";
+import type { Room, RoomMessage, RoomTransport, Unsubscribe } from "./types";
 
 export interface TrysteroOptions {
   /** Namespace for the room. Two quizzes with one appId still do not mix. */
@@ -30,9 +25,7 @@ interface TrysteroRoom {
 
 type JoinRoom = (config: unknown, roomId: string) => TrysteroRoom;
 type SendAction = (data: unknown, to?: string | readonly string[]) => void;
-type ReceiveAction = (
-  callback: (data: unknown, from: string) => void,
-) => void;
+type ReceiveAction = (callback: (data: unknown, from: string) => void) => void;
 
 interface TrysteroModule {
   readonly joinRoom: JoinRoom;
@@ -51,9 +44,7 @@ function isJoinRoom(value: unknown): value is JoinRoom {
   return typeof value === "function";
 }
 
-function actionPair(
-  value: unknown,
-): [SendAction, ReceiveAction] | null {
+function actionPair(value: unknown): [SendAction, ReceiveAction] | null {
   if (!Array.isArray(value)) {
     return null;
   }

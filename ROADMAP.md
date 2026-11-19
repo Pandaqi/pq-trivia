@@ -72,7 +72,7 @@ Also: a better default look, working interactive mode, optional multiplayer, rea
 
 ### 2.1 Keep this
 
-- **The input philosophy.** `Question => ...`, `Answers => ...`, block lists, `#` rounds, comments. Opens in Notepad. Diffs in Git.
+- **The input philosophy.** `Question => ...`, `Answers => ...`, block lists, `##` rounds, comments. Opens in Notepad. Diffs in Git.
 - **Attribute masks.** `?` question-only, `!` answer-only, `$` keep-as-is. Weird. Useful. Keep.
 - **Seeded determinism.** Same content + same seed = same quiz.
 - **Sections as questions.** With computed stats and secret themes.
@@ -301,17 +301,17 @@ pq-trivia/
 
 Only two real dependencies. `trystero` is optional and only imported by the multiplayer entry. `typescript` is **not** listed: `bun check` does the type checking, and declarations are emitted at release with `bunx tsc` (cache only, no manifest entry).
 
-| Artifact                        | Format                                    | Contents                                                   | Budget (gzip)     |
-| ------------------------------- | ----------------------------------------- | ---------------------------------------------------------- | ----------------- |
-| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export | **≤ 24 KB**       |**       |
-| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + theme folders + 3 animations | **≤ 52 KB**     |
-| `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                    | ≤ 55 KB           |
-| `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                           | ≤ 60 KB           |
-| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                  | ≤ 26 KB           |
-| `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                    | full + ≤ 12 KB    |
-| `dist/v3/animations.js`         | ESM                                       | full animation set                                         | ≤ 6 KB            |
-| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                  | ≤ 45 KB, separate |
-| `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`             | —                 |
+| Artifact                        | Format                                    | Contents                                                     | Budget (gzip)     |
+| ------------------------------- | ----------------------------------------- | ------------------------------------------------------------ | ----------------- |
+| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export   | **≤ 24 KB**       | **  |
+| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + theme folders + 3 animations | **≤ 52 KB**       |
+| `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                      | ≤ 55 KB           |
+| `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                             | ≤ 60 KB           |
+| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                    | ≤ 26 KB           |
+| `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                      | full + ≤ 12 KB    |
+| `dist/v3/animations.js`         | ESM                                       | full animation set                                           | ≤ 6 KB            |
+| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 45 KB, separate |
+| `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`               | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.
 
@@ -1748,12 +1748,6 @@ migration guide, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, README with
 badges and sizes, `bun run release:dry`, checksums, and the release and docs
 workflows.
 
-- [ ]  `npm publish --provenance --access public`.
-- [ ] Tag `3.0.0`, push the tag, check the GitHub Release.
-- [ ] Deploy the docs and the examples to GitHub Pages.
-- [ ] GIF and screenshots in the README. A gallery, starting with The Wayward Melody.
-- [ ] Announcement. Store update. `v2.5.0` archive stays frozen.
-
 ### Phase 9 — QuizWizard (stretch, M–L, after 3.0)
 
 **Only if Phases 0–8 land.** The plan makes it cheap. It is still a product.
@@ -1764,7 +1758,7 @@ workflows.
 - Parse-on-blur and serialize-on-edit. One buffer.
 - Basic edits to questions can be done through this wizard/UI. For example (the UI should do much more than these few examples):
   - Click part of the slide/question and type what text should be there instead ("edit a textbox")
-  - Add/remove multiple choice answers, change the correct answer 
+  - Add/remove multiple choice answers, change the correct answer
   - Add/remove media in place
   - The "Trivia Syntax" edit box is per-slide too, so you can (for example) design the overall quiz structure with the UI/automatically, but then update a few individual slides by hand through changing the Trivia Syntax for it.
 - Undo/redo over text snapshots.
@@ -1858,6 +1852,14 @@ end, tick it. Nothing here is promised for 3.0.
 ```
 
 Phase 10 can start any time after Phase 5. Its items do not depend on 8 or 9.
+
+### Phase 11: Publish
+
+- [ ] `npm publish --provenance --access public`.
+- [ ] Tag `3.0.0`, push the tag, check the GitHub Release.
+- [ ] Deploy the docs and the examples to GitHub Pages.
+- [ ] GIF and screenshots in the README. A gallery, starting with The Wayward Melody.
+- [ ] Announcement. Store update. `v2.5.0` archive stays frozen.
 
 ---
 
@@ -2059,4 +2061,3 @@ chore: set up bun toolchain and make the source buildable
 Then freeze the AST and the question model. Every later feature sits on those types.
 
 And if the whole thing starts to feel enormous: remember that V2 already ships, already works, and is already in `dist/v2`. This is an upgrade, not a rescue mission.
-

@@ -14,7 +14,7 @@ import {
   type Response,
   type ResponseMap,
 } from "./responses";
-import type { QuestionModel } from "../model/question";
+import { QuestionType, type QuestionModel } from "../model/question";
 import { timerFor, type TimerState } from "./timers";
 
 export enum SessionStatus {
@@ -35,6 +35,8 @@ export interface SessionState {
   readonly status: SessionStatus;
   readonly plan: QuizPlan | null;
   readonly mode: PlayMode;
+  /** Interactive play asks for answers in the page. Off means read-aloud. */
+  readonly interactive: boolean;
   /** -1 start screen, 0..n-1 questions, n end screen. */
   readonly index: number;
   readonly responses: ResponseMap;
@@ -67,6 +69,7 @@ export type SessionAction =
   | { readonly type: "nav/goTo"; readonly index: number }
   | { readonly type: "nav/restart"; readonly keepResponses?: boolean }
   | { readonly type: "mode/set"; readonly mode: PlayMode }
+  | { readonly type: "interactive/set"; readonly interactive: boolean }
   | {
       readonly type: "response/set";
       readonly questionId: string;
@@ -109,6 +112,7 @@ export function createSessionState(options: SessionOptions = {}): SessionState {
     status: SessionStatus.Idle,
     plan: null,
     mode: PlayMode.Questions,
+    interactive: false,
     index: -1,
     responses: {},
     revealed: [],
@@ -243,6 +247,9 @@ export function sessionReducer(
     case "mode/set":
       return { ...state, mode: action.mode };
 
+    case "interactive/set":
+      return { ...state, interactive: action.interactive };
+
     case "response/set":
       return {
         ...state,
@@ -352,10 +359,16 @@ export interface Progress {
   readonly percent: number;
 }
 
+/** A section screen opens a round. It is not a question, so it never counts. */
+export function countsAsQuestion(question: QuestionModel): boolean {
+  return question.type !== QuestionType.Section;
+}
+
 export function progressOf(state: SessionState): Progress {
-  const total = state.plan?.questions.length ?? 0;
+  const questions = (state.plan?.questions ?? []).filter(countsAsQuestion);
+  const total = questions.length;
   let answered = 0;
-  for (const question of state.plan?.questions ?? []) {
+  for (const question of questions) {
     const response = state.responses[question.id];
     if (response !== undefined && !isEmptyResponse(response)) {
       answered += 1;

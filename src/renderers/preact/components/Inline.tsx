@@ -47,7 +47,11 @@ function NodeView({
       return <CodeBlock code={node.code} language={node.language} />;
     case InlineKind.Blank:
       return (
-        <span class="pq-blank" role="img" aria-label={t("blank", { number: 1 })}>
+        <span
+          class="pq-blank"
+          role="img"
+          aria-label={t("blank", { number: 1 })}
+        >
           ____
         </span>
       );

@@ -1,19 +1,32 @@
 # Syntax
 
-A quiz is text. `Key => Value` lines, blank lines between blocks, `#` for
-rounds. That is the whole grammar.
+A quiz is text. `Key => Value` lines, blank lines between blocks, and a heading
+ladder: `#` for the quiz, `##` for rounds, `###` for questions. That is the whole
+grammar.
 
 ## Header
 
 ```txt
-Title => The Big Music Quiz
+# The Big Music Quiz
+
 Author => Pandaqi
 Language => en
 Seed => vinyl-night
 Syntax => 3
 ```
 
-The header is everything before the first question.
+`# Title` names the quiz. `Title => ...` does the same. The header is everything
+above the first block.
+
+Any global setting can live here too: `MediaFormats => jpg | png`,
+`ShuffleQuestions => true`, `FilterSections => Round two`. `Title` (or `Quiz`),
+`Seed`, `Language`, `Languages` and `Theme` keep their own rows. The reference
+lists every header attribute, its config key, and the few settings that only
+exist in code. Code still wins: pass the same key to `new Quiz({ ... })` and the
+file's value is overridden.
+
+Anything written after a round or question starts belongs to that block, not to
+the header.
 
 ## A question
 
@@ -29,45 +42,47 @@ Explanation => Clark Kent, mild-mannered reporter.
 - `Question` is the title. A second `Question` line is body text.
 - `Answers` is a list. One answer is open, many is choice, unless `Type` says
   otherwise. Write it as `a | b | c`, one value per line after `Answers =>`, or
-  a `### Answers` block.
+  a `#### Answers` block.
 - `Correct` marks the right answers. For lists and sorts, order matters.
 - `Explanation` shows on the reveal and in results.
 
 ## Rounds
 
 ```txt
-# Warm-up
+## Warm-up
 
 Question => ...
 ```
 
-`# Name` starts a round. `Section => Warm-up` moves one question into a round
-without starting a new one there.
+`## Name` starts a round. `# Name` is the quiz title, never a round.
+`Section => Warm-up` moves one question into a round without starting a new one
+there. All of it is optional: questions before the first `##` go into a round
+called `General`.
 
-## `##` shorthand
+## `###` shorthand
 
 Like Markdown headings, and just as optional:
 
 ```txt
-## Which band wrote "Bohemian Rhapsody"?
+### Which band wrote "Bohemian Rhapsody"?
 Answers => Queen
 ```
 
-`##` opens a question block with the question text. Every other key works as
+`###` opens a question block with the question text. Every other key works as
 usual.
 
-## `### Key` blocks
+## `#### Key` blocks
 
 For a long list, put the key in a heading and one value per line:
 
 ```txt
-## Put these in order
+### Put these in order
 Type => Sort
-### Answers
+#### Answers
 The wheel
 The printing press
 The internet
-### Media
+#### Media
 poster.png
 photo.jpg
 Correct => The wheel | The printing press | The internet
@@ -82,17 +97,17 @@ line is not a separator there.
 
 ## Types
 
-| Type | You write | They do |
-| --- | --- | --- |
-| `Open` | one answer | type it |
-| `Choice` | several answers | pick one |
-| `List` | several answers | list them |
-| `Sort` | answers in order | reorder |
-| `Match` | `left ~ right` | connect them |
-| `Range` | one number, `Range => 2` | type a number within the margin |
-| `Cloze` | `[blank]` in the text | fill the blanks |
-| `Section` | a round heading | turns the page |
-| `Start` / `End` | a slide | bookends |
+| Type            | You write                | They do                         |
+| --------------- | ------------------------ | ------------------------------- |
+| `Open`          | one answer               | type it                         |
+| `Choice`        | several answers          | pick one                        |
+| `List`          | several answers          | list them                       |
+| `Sort`          | answers in order         | reorder                         |
+| `Match`         | `left ~ right`           | connect them                    |
+| `Range`         | one number, `Range => 2` | type a number within the margin |
+| `Cloze`         | `[blank]` in the text    | fill the blanks                 |
+| `Section`       | a round heading          | turns the page                  |
+| `Start` / `End` | a slide                  | bookends                        |
 
 ## Inline formatting
 

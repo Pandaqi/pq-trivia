@@ -85,8 +85,7 @@ function createRuntime(
       for (const [name, value] of Object.entries(settings.tokens)) {
         root.style.setProperty(name, value);
       }
-      const colors =
-        scheme === null ? undefined : settings.schemes[scheme];
+      const colors = scheme === null ? undefined : settings.schemes[scheme];
       for (const [name, value] of [
         ["--pq-scheme-light", colors?.light],
         ["--pq-scheme-dark", colors?.dark],

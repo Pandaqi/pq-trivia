@@ -14,6 +14,7 @@ import type { QuizManifest } from "../../core/quiz/manifest";
 import { createQuiz, type Quiz } from "../../core/session/quiz";
 import { browserAnswerKey } from "../../platform/answerKey";
 import { fetchText } from "../../platform/browser/fetchText";
+import { findQuizFiles } from "../../platform/browser/source";
 import { mountQuiz, type MountedQuiz } from "../preact/mount";
 import {
   loadTheme,
@@ -39,6 +40,9 @@ export class QuizElement extends HTMLElement {
       "file-extensions",
       "questions-folder",
       "base-url",
+      "subfolder-media",
+      "subfolder-theme",
+      "media-formats",
       "language-default",
       "seed",
       "shuffle-questions",
@@ -95,6 +99,23 @@ export class QuizElement extends HTMLElement {
           ? {}
           : { theme: this.getAttribute("theme") as string }),
         themeUpload: truthy(this.getAttribute("theme-upload")),
+        ...(this.getAttribute("base-url") === null
+          ? {}
+          : { url: this.getAttribute("base-url") as string }),
+        ...(this.getAttribute("subfolder-media") === null
+          ? {}
+          : { subFolderMedia: this.getAttribute("subfolder-media") as string }),
+        ...(this.getAttribute("subfolder-theme") === null
+          ? {}
+          : { subFolderTheme: this.getAttribute("subfolder-theme") as string }),
+        ...(this.getAttribute("media-formats") === null
+          ? {}
+          : {
+              mediaFormats: (this.getAttribute("media-formats") as string)
+                .split(",")
+                .map((entry) => entry.trim())
+                .filter((entry) => entry.length > 0),
+            }),
         ...(this.getAttribute("language-default") === null
           ? {}
           : {
@@ -149,48 +170,22 @@ export class QuizElement extends HTMLElement {
    * `questions-1.trivia`, ... until a number is missing.
    */
   async #loadProbed(quiz: Quiz, generation: number): Promise<void> {
-    const base = this.getAttribute("base-url") ?? "";
-    const folder = this.getAttribute("questions-folder") ?? "";
-    const resolve = (name: string): string => {
-      const path = `${folder}${name}`;
-      return base.length === 0 ? path : new URL(path, base).href;
-    };
     const names = (this.getAttribute("filenames") ?? "")
       .split(",")
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
-    const extensions = (
-      this.getAttribute("file-extensions") ?? "trivia,txt,md"
-    )
+    const extensions = (this.getAttribute("file-extensions") ?? "trivia,txt,md")
       .split(",")
       .map((extension) => extension.trim().replace(/^\./, ""))
       .filter((extension) => extension.length > 0);
     const pattern = this.getAttribute("filename") ?? "questions";
-    const files: Array<{ name: string; text: string }> = [];
-
-    if (names.length > 0) {
-      for (const name of names) {
-        files.push({ name, text: await fetchText(resolve(name)) });
-      }
-    } else {
-      for (let index = 0; index < 100; index += 1) {
-        let found = false;
-        for (const extension of extensions) {
-          const name = `${pattern}-${index}.${extension}`;
-          try {
-            const text = await fetchText(resolve(name));
-            files.push({ name, text });
-            found = true;
-            break;
-          } catch {
-            // Try the next extension, then stop this number.
-          }
-        }
-        if (!found) {
-          break;
-        }
-      }
-    }
+    const files = await findQuizFiles({
+      base: this.getAttribute("base-url") ?? "",
+      folder: this.getAttribute("questions-folder") ?? "",
+      ...(names.length === 0 ? {} : { filenames: names }),
+      extensions,
+      pattern,
+    });
     if (files.length === 0) {
       throw new Error(`No question files found for "${pattern}".`);
     }
@@ -212,13 +207,16 @@ export class QuizElement extends HTMLElement {
     if (name === null || name.trim().length === 0) {
       return;
     }
-    const path = name.includes("/") ? name : `themes/${name}/`;
+    const root = this.getAttribute("subfolder-theme") ?? "themes/";
+    const path = name.includes("/") ? name : `${root}${name}/`;
     await this.#applyTheme(path, generation);
   }
 
   async #applyTheme(folder: string, generation: number): Promise<void> {
     try {
-      const theme = await loadTheme(resolveThemeFolder(folder));
+      const base = this.getAttribute("base-url") ?? "";
+      const path = base.length === 0 ? folder : new URL(folder, base).href;
+      const theme = await loadTheme(resolveThemeFolder(path));
       if (generation !== this.#generation) {
         theme.destroy();
         return;

@@ -39,6 +39,12 @@ that one stylesheet and nothing else.
 Theme URLs resolve against the page, so `file://` cannot fetch the settings
 file; serve the folder, or let the author pick it (below).
 
+## Theme folders
+
+`theme: "forest"` loads `themes/forest/` by default. Set `subFolderTheme` to
+change the root, for example `theme: "forest", subFolderTheme: "theme/"`.
+`<pq-quiz subfolder-theme="theme/">` does the same on the element.
+
 ## Colour schemes
 
 A question can ask for a named scheme with `ColorScheme => night`. The theme
@@ -80,15 +86,15 @@ bg-dots.svg
 bg-waves.svg
 ```
 
-| Key | Job |
-| --- | --- |
-| `Label` | Name shown to the author. |
-| `Stylesheet` | File to load. Defaults to `style.css`. |
-| `Font` | `slot \| family \| variant \| file`. Variants: `regular`, `italic`, `bold`, `bold-italic`. |
-| `Background` | Images to choose from per question. Both `a \| b` and one per line work. |
-| `BackgroundAlpha` | 0 to 1. Lower fades the image behind the paper. |
-| `BoldHeadings` | `true` makes headings use the bold face. |
-| `--pq-*` | Any CSS custom property. Applied on the quiz root. |
+| Key               | Job                                                                                        |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `Label`           | Name shown to the author.                                                                  |
+| `Stylesheet`      | File to load. Defaults to `style.css`.                                                     |
+| `Font`            | `slot \| family \| variant \| file`. Variants: `regular`, `italic`, `bold`, `bold-italic`. |
+| `Background`      | Images to choose from per question. Both `a \| b` and one per line work.                   |
+| `BackgroundAlpha` | 0 to 1. Lower fades the image behind the paper.                                            |
+| `BoldHeadings`    | `true` makes headings use the bold face.                                                   |
+| `--pq-*`          | Any CSS custom property. Applied on the quiz root.                                         |
 
 `### Background` is the same block syntax the quiz uses: one value per line,
 ending at the next `Key =>` or heading. The settings parser accepts it too, so a
@@ -122,15 +128,15 @@ the settings are resolved inside the picked folder.
 
 Everything in Paper is a token, so a theme can be one stylesheet with ten lines.
 
-| Token | Job |
-| --- | --- |
-| `--pq-ink`, `--pq-muted` | text |
-| `--pq-paper`, `--pq-slide` | background and card |
-| `--pq-accent`, `--pq-honey`, `--pq-fern` | emphasis |
-| `--pq-font-heading`, `--pq-font-body` | type |
-| `--pq-heading-weight` | heading weight, set by `BoldHeadings` |
-| `--pq-r-sm` … `--pq-r-lg` | corners |
-| `--pq-space` | page rhythm |
+| Token                                    | Job                                   |
+| ---------------------------------------- | ------------------------------------- |
+| `--pq-ink`, `--pq-muted`                 | text                                  |
+| `--pq-paper`, `--pq-slide`               | background and card                   |
+| `--pq-accent`, `--pq-honey`, `--pq-fern` | emphasis                              |
+| `--pq-font-heading`, `--pq-font-body`    | type                                  |
+| `--pq-heading-weight`                    | heading weight, set by `BoldHeadings` |
+| `--pq-r-sm` … `--pq-r-lg`                | corners                               |
+| `--pq-space`                             | page rhythm                           |
 
 ## Per-question styling
 

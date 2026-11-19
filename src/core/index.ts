@@ -16,6 +16,7 @@ export * from "./syntax/diagnostics";
 export * from "./syntax/lexer";
 export * from "./syntax/parser";
 export * from "./syntax/serialize";
+export * from "./syntax/headings";
 
 // values
 export * from "./values/coerce";

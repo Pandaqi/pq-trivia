@@ -6,11 +6,98 @@
 
 import { mkdir, readdir, readFile, watch } from "node:fs/promises";
 import { join } from "node:path";
+type BuildPlugin = NonNullable<
+  NonNullable<Parameters<typeof Bun.build>[0]>["plugins"]
+>[number];
 
 const ROOT = join(import.meta.dir, "..");
 const OUT_DIR = join(ROOT, "dist", "v3");
 const ENTRIES_DIR = join(ROOT, "src", "entries");
+const LOCALES_DIR = join(ROOT, "src", "i18n", "locales");
+const GENERATED_DIR = join(ROOT, ".pq-build");
 const WATCH = process.argv.includes("--watch");
+
+/**
+ * `--languages nl`, `--languages=nl,en`, or `--languages none`.
+ *
+ * No flag means every language in `locales/`. A filtered build leaves the
+ * others out of the bundle completely, and `none` ships no interface strings.
+ */
+function requestedLanguages(args: readonly string[]): string[] | null {
+  let raw: string | null = null;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index] ?? "";
+    if (arg === "--no-languages" || arg === "--languages=none") {
+      return [];
+    }
+    if (arg.startsWith("--languages=")) {
+      raw = arg.slice("--languages=".length);
+      continue;
+    }
+    if (arg === "--languages") {
+      raw = args[index + 1] ?? "";
+      index += 1;
+    }
+  }
+  if (raw === null) {
+    return null;
+  }
+  return raw
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0 && entry !== "none");
+}
+
+async function selectLanguages(): Promise<string[]> {
+  const available = (await readdir(LOCALES_DIR))
+    .filter((file) => file.endsWith(".ts") && file !== "index.ts")
+    .map((file) => file.replace(/\.ts$/, ""))
+    .sort();
+  const requested = requestedLanguages(process.argv.slice(2));
+  if (requested === null) {
+    return available;
+  }
+  const missing = requested.filter((code) => !available.includes(code));
+  if (missing.length > 0) {
+    console.error(
+      `Unknown language(s): ${missing.join(", ")}. Available: ${available.join(", ")}.`,
+    );
+    process.exit(1);
+  }
+  return requested;
+}
+
+async function writeLocales(languages: readonly string[]): Promise<string> {
+  await mkdir(GENERATED_DIR, { recursive: true });
+  const imports = languages
+    .map(
+      (code, index) =>
+        `import { ${code.replaceAll("-", "_")} as locale${index} } from "../src/i18n/locales/${code}";`,
+    )
+    .join("\n");
+  const entries = languages
+    .map((code, index) => `${JSON.stringify(code)}: locale${index}`)
+    .join(", ");
+  const path = join(GENERATED_DIR, "locales.ts");
+  await Bun.write(
+    path,
+    `${imports}\n\nexport const LOCALES = { ${entries} };\n`,
+  );
+  return path;
+}
+
+let localeFile = "";
+const LOCALE_PLUGIN: BuildPlugin = {
+  name: "pq-locales",
+  setup(build) {
+    build.onResolve({ filter: /^\.\/locales$/ }, (args) => {
+      const importer = args.importer.replaceAll("\\", "/");
+      return importer.endsWith("/src/i18n/dictionary.ts")
+        ? { path: localeFile }
+        : undefined;
+    });
+  },
+};
 
 interface Entry {
   readonly name: string;
@@ -122,8 +209,9 @@ async function copyThemes(): Promise<void> {
   await Bun.write(join(outThemes, "print.proof.css"), proof);
 }
 
-async function build(): Promise<boolean> {
+async function build(languages: readonly string[]): Promise<boolean> {
   await mkdir(OUT_DIR, { recursive: true });
+  localeFile = await writeLocales(languages);
 
   // One file in src/entries/ is one artifact. No config edit to add an entry.
   const entryFiles = (await readdir(ENTRIES_DIR))
@@ -147,6 +235,7 @@ async function build(): Promise<boolean> {
       sourcemap: "external",
       naming: `[dir]/${iifeName ?? `${entry.name}.[ext]`}`,
       banner: banner(entry.name),
+      plugins: [LOCALE_PLUGIN],
     });
 
     if (!result.success) {
@@ -169,7 +258,13 @@ async function build(): Promise<boolean> {
   return ok;
 }
 
-const built = await build();
+const languages = await selectLanguages();
+console.log(
+  languages.length === 0
+    ? "Languages: none (interface keys only)"
+    : `Languages: ${languages.join(", ")}`,
+);
+const built = await build(languages);
 if (!built) {
   process.exit(1);
 }
@@ -187,7 +282,7 @@ if (WATCH) {
     }
     timer = setTimeout(() => {
       console.log(`\n${event.filename} changed. Rebuilding.`);
-      void build();
+      void build(languages);
     }, 100);
   }
 }

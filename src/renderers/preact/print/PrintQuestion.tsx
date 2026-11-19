@@ -12,6 +12,7 @@ import {
   type QuestionModel,
 } from "../../../core/model/question";
 import type { SessionState } from "../../../core/session/session";
+import type { MediaOptions } from "../../../core/values/media";
 import { toMediaViewModel } from "../../../core/session/viewModel";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
@@ -27,6 +28,7 @@ export function PrintQuestion({
   roundName,
   showAnswers,
   face = null,
+  media = {},
 }: {
   readonly question: QuestionModel;
   readonly index: number;
@@ -35,6 +37,7 @@ export function PrintQuestion({
   readonly roundName: string | null;
   readonly showAnswers: boolean;
   readonly face?: "front" | "back" | null;
+  readonly media?: MediaOptions;
 }): JSX.Element {
   const t = useT();
   const [title = "", ...body] = question.text.map((value) => value.text);
@@ -159,7 +162,7 @@ export function PrintQuestion({
                 {question.media.map((item) => (
                   <Media
                     key={item.path}
-                    item={toMediaViewModel(item, question.alt)}
+                    item={toMediaViewModel(item, question.alt, media)}
                   />
                 ))}
               </div>

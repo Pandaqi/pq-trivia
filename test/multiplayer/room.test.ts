@@ -70,7 +70,9 @@ describe("protocol", () => {
   test("custom widget responses never cross the wire", () => {
     expect(isResponse({ kind: ResponseKind.Custom, value: 1 })).toBe(false);
     expect(isResponse({ kind: ResponseKind.Open, text: "hi" })).toBe(true);
-    expect(isResponse({ kind: ResponseKind.Choice, selected: [1] })).toBe(false);
+    expect(isResponse({ kind: ResponseKind.Choice, selected: [1] })).toBe(
+      false,
+    );
   });
 
   test("the rate limiter drops a burst", () => {

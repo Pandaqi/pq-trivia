@@ -13,6 +13,7 @@ import {
 } from "../format/inline";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import type { MediaOptions } from "../values/media";
 import {
   buildPrintModel,
   PrintPageKind,
@@ -23,6 +24,8 @@ import {
 export interface StandaloneOptions {
   readonly answers?: boolean;
   readonly explanations?: boolean;
+  /** Media folder, link prefixes and formats. The same rules as the player. */
+  readonly media?: MediaOptions;
 }
 
 function escapeHtml(text: string): string {
@@ -196,6 +199,7 @@ export function toStandaloneHtml(
   const doc = buildPrintModel(plan, meta, {
     variant: answers ? "answers" : "questions",
     includeExplanations: answers || options.explanations === true,
+    ...(options.media === undefined ? {} : { media: options.media }),
   });
   const title = escapeHtml(doc.title);
   return `<!doctype html>

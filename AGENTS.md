@@ -42,18 +42,18 @@ Adds replay protection to the multiplayer lobby
 
 ## Where things are
 
-| Need | Look at |
-|---|---|
-| Plan, phases, API, syntax | `ROADMAP.md` |
-| V2 documentation | `docs.md` |
-| Requirements list | `todo.md` |
-| V3 code | `src/core/`, `src/entries/`, `cli/` |
-| Renderers and platform | `src/renderers/`, `src/platform/` |
-| Live mode | `src/multiplayer/` |
-| Docs site | `docs/` (VitePress) |
-| Runnable examples | `examples/` (`player`, `element`, `print`, `custom`, `multiplayer`) |
-| V2 code, frozen | `src/v2/`, `template/`, `dist/v2/` |
-| User-facing intro | `README.md` |
+| Need                      | Look at                                                             |
+| ------------------------- | ------------------------------------------------------------------- |
+| Plan, phases, API, syntax | `ROADMAP.md`                                                        |
+| V2 documentation          | `docs.md`                                                           |
+| Requirements list         | `todo.md`                                                           |
+| V3 code                   | `src/core/`, `src/entries/`, `cli/`                                 |
+| Renderers and platform    | `src/renderers/`, `src/platform/`                                   |
+| Live mode                 | `src/multiplayer/`                                                  |
+| Docs site                 | `docs/` (VitePress)                                                 |
+| Runnable examples         | `examples/` (`player`, `element`, `print`, `custom`, `multiplayer`) |
+| V2 code, frozen           | `src/v2/`, `template/`, `dist/v2/`                                  |
+| User-facing intro         | `README.md`                                                         |
 
 ## Commands
 

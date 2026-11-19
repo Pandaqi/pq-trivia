@@ -14,6 +14,7 @@ import type { QuestionModel } from "../../../core/model/question";
 import { roundAccent } from "../components/roundAccent";
 import { PrintForm, type FormRound } from "./PrintForm";
 import { PrintGrade } from "./PrintGrade";
+import { PrintMedia } from "./PrintMedia";
 import { PrintQuestion } from "./PrintQuestion";
 import type { PrintOptions } from "./printTypes";
 import { useT } from "../i18n";
@@ -69,9 +70,7 @@ function Cover({
         <p class="pq-cover-description">{meta.description}</p>
       )}
       {authors.length === 0 ? null : (
-        <p class="pq-cover-byline">
-          {t("by", { author: authors.join(", ") })}
-        </p>
+        <p class="pq-cover-byline">{t("by", { author: authors.join(", ") })}</p>
       )}
       <p class="pq-cover-banner">
         {t("printStats", {
@@ -115,12 +114,14 @@ export function PrintSheet({
   };
   const roundName = (roundId: string | null): string | null =>
     plan.rounds.find((round) => round.id === roundId)?.name ?? null;
+  // `HiddenAtExport` means the paper stays clean too. Section screens are in.
+  const questions = plan.questions.filter((item) => !item.hiddenAtExport);
   const rounds: readonly FormRound[] = plan.rounds;
   const showAnswers =
     variant === "answers" ||
     (variant === "auto" && state.mode === PlayMode.Answers);
   const indexOf = (question: QuestionModel): number =>
-    plan.questions.indexOf(question);
+    questions.indexOf(question);
 
   const question = (
     item: QuestionModel,
@@ -129,11 +130,12 @@ export function PrintSheet({
     <PrintQuestion
       question={item}
       index={indexOf(item)}
-      total={plan.questions.length}
+      total={questions.length}
       state={state}
       roundName={roundName(item.round)}
       showAnswers={showAnswers || state.revealed.includes(item.id)}
       face={face}
+      media={quiz.config}
     />
   );
 
@@ -149,8 +151,8 @@ export function PrintSheet({
   );
 
   const chunks: QuestionModel[][] = [];
-  for (let index = 0; index < plan.questions.length; index += perPage) {
-    chunks.push(plan.questions.slice(index, index + perPage));
+  for (let index = 0; index < questions.length; index += perPage) {
+    chunks.push(questions.slice(index, index + perPage));
   }
 
   return (
@@ -160,8 +162,21 @@ export function PrintSheet({
       data-pq-per-page={String(perPage)}
       data-pq-flash={flash ? "true" : "false"}
     >
-      {flash ? (
-        plan.questions.flatMap((item) => [
+      {variant === "media" ? (
+        <>
+          <Cover
+            quiz={quiz}
+            questions={questions}
+            rounds={plan.rounds.length}
+          />
+          <PrintMedia
+            questions={questions}
+            roundName={roundName}
+            media={quiz.config}
+          />
+        </>
+      ) : flash ? (
+        questions.flatMap((item) => [
           <Page
             className="pq-print-card"
             key={`${item.id}-front`}
@@ -185,19 +200,19 @@ export function PrintSheet({
         <>
           <Cover
             quiz={quiz}
-            questions={plan.questions}
+            questions={questions}
             rounds={plan.rounds.length}
           />
           {variant === "form" ? (
             <PrintForm
-              questions={plan.questions}
+              questions={questions}
               rounds={rounds}
               compact={options.formStyle === "compact"}
               roundPageBreak={options.roundPageBreak === true}
             />
           ) : (
             <PrintGrade
-              questions={plan.questions}
+              questions={questions}
               rounds={rounds}
               compact={options.formStyle === "compact"}
               roundPageBreak={options.roundPageBreak === true}
@@ -208,7 +223,7 @@ export function PrintSheet({
         <>
           <Cover
             quiz={quiz}
-            questions={plan.questions}
+            questions={questions}
             rounds={plan.rounds.length}
           />
           {perPage > 1
@@ -228,7 +243,7 @@ export function PrintSheet({
                 </Page>
               ))
             : plan.rounds.map((round) => {
-                const items = plan.questions.filter(
+                const items = questions.filter(
                   (item) => item.round === round.id,
                 );
                 if (items.length === 0) {

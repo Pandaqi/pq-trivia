@@ -10,6 +10,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { listAttributes } from "../src/core/syntax/attributeRegistry";
 import { ATTRIBUTE_DESCRIPTIONS } from "../src/core/syntax/attributeDocs";
+import {
+  CONFIG_CODE_ONLY,
+  CONFIG_HEADER_ROWS,
+} from "../src/core/syntax/configAttributes";
 
 const ROOT = join(import.meta.dir, "..");
 const OUT = join(ROOT, "docs", "syntax", "reference.md");
@@ -36,6 +40,38 @@ lines.push("");
 lines.push(
   "Unknown attributes are kept and warned about, not dropped. A typo never loses text.",
 );
+lines.push("");
+lines.push("## Global settings in the header");
+lines.push("");
+lines.push(
+  "Put these under the top header, next to `Title` and `Seed`. The same keys work in `createQuiz({ config })` and `new Quiz({ ... })`. Code wins over the file.",
+);
+lines.push("");
+lines.push("| Header attribute | Config key | Value |");
+lines.push("| --- | --- | --- |");
+for (const row of CONFIG_HEADER_ROWS) {
+  lines.push(`| \`${row.attribute}\` | \`${row.key}\` | ${row.kind} |`);
+}
+lines.push("");
+lines.push(
+  "`pairs` reads `Key = value` entries: `Include => Author = Pandaqi | Type = Choice`.",
+);
+lines.push("");
+lines.push(
+  "`Seed`, `Title` (or `Quiz`), `Language`, `Languages` and `Theme` keep their own header rows.",
+);
+lines.push("");
+lines.push("## Code-only settings");
+lines.push("");
+lines.push(
+  "These have no honest text form. Set them in `createQuiz({ config })` or `new Quiz({ ... })`.",
+);
+lines.push("");
+lines.push("| Config key | Why it stays in code |");
+lines.push("| --- | --- |");
+for (const row of CONFIG_CODE_ONLY) {
+  lines.push(`| \`${row.key}\` | ${row.why} |`);
+}
 
 await mkdir(join(ROOT, "docs", "syntax"), { recursive: true });
 await writeFile(OUT, lines.join("\n"), "utf8");

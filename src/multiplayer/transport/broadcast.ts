@@ -7,12 +7,7 @@
 
 import { makeId } from "../protocol";
 import type { Envelope } from "../types";
-import type {
-  Room,
-  RoomMessage,
-  RoomTransport,
-  Unsubscribe,
-} from "./types";
+import type { Room, RoomMessage, RoomTransport, Unsubscribe } from "./types";
 
 interface Wire {
   readonly kind: "hello" | "bye" | "data";

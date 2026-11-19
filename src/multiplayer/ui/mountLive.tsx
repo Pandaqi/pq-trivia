@@ -190,10 +190,7 @@ function LiveShell({
   if (options.role === LiveRole.Host) {
     if (host !== null) {
       return (
-        <HostView
-          host={host}
-          joinLink={options.joinLink ?? joinUrl(code)}
-        />
+        <HostView host={host} joinLink={options.joinLink ?? joinUrl(code)} />
       );
     }
     return (

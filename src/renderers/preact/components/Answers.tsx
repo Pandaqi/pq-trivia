@@ -21,6 +21,7 @@ import {
 import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { Inline } from "./Inline";
 import { Media } from "./Media";
+import { answerLabel } from "./answerLabels";
 import { useT } from "../i18n";
 
 interface InputProps {
@@ -101,9 +102,11 @@ function ChoiceInput({
                   }
                 }}
               >
-                <span class="pq-answer-number" aria-hidden="true">
-                  {index + 1}
-                </span>
+                {answerLabel(index, quiz.config.answerLabels) === "" ? null : (
+                  <span class="pq-answer-number" aria-hidden="true">
+                    {answerLabel(index, quiz.config.answerLabels)}
+                  </span>
+                )}
                 <span class="pq-answer-text">
                   {answer.media === null ? (
                     <Inline nodes={answer.nodes} />
@@ -317,11 +320,7 @@ function SortInput({
               {index + 1}
             </span>
             <span class="pq-sort-text">
-              {nodesOf.has(id) ? (
-                <Inline nodes={nodesOf.get(id) ?? []} />
-              ) : (
-                id
-              )}
+              {nodesOf.has(id) ? <Inline nodes={nodesOf.get(id) ?? []} /> : id}
             </span>
             <button
               type="button"
@@ -458,9 +457,7 @@ function MatchInput({
         </ul>
       </div>
       <p class="pq-match-hint">
-        {active === null
-          ? t("pickLeft")
-          : t("pickMatch", { text: active })}
+        {active === null ? t("pickLeft") : t("pickMatch", { text: active })}
       </p>
       <FieldError issues={issues} field="pairs" />
     </>

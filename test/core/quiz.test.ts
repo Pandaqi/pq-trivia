@@ -3,9 +3,10 @@ import { createQuiz } from "../../src/core/session/quiz";
 import { PlayMode, SessionStatus } from "../../src/core/session/session";
 import { ScreenKind } from "../../src/core/session/viewModel";
 import { ResponseKind } from "../../src/core/session/responses";
+import { QuestionType } from "../../src/core/model/question";
 
 const text = `
-# Round
+## Round
 Question => Pick one
 Answers => A | B | C
 Type => Choice
@@ -31,10 +32,17 @@ describe("createQuiz", () => {
       }
     });
 
+    // A round opens with its own page, like V2.
     expect(quiz.next().ok).toBe(true);
     expect(quiz.currentScreen()?.kind).toBe(ScreenKind.Question);
+    const section = quiz.currentScreen();
+    if (section?.kind !== ScreenKind.Question) {
+      throw new Error("expected the section page");
+    }
+    expect(section.type).toBe(QuestionType.Section);
     expect(screens).toContain(ScreenKind.Question);
 
+    expect(quiz.next().ok).toBe(true);
     expect(quiz.next().ok).toBe(true);
     expect(quiz.next().ok).toBe(true);
     expect(quiz.currentScreen()?.kind).toBe(ScreenKind.End);
@@ -45,6 +53,7 @@ describe("createQuiz", () => {
   test("question mode carries no correct answers", async () => {
     const quiz = createQuiz();
     await quiz.load({ type: "text", text });
+    quiz.next();
     quiz.next();
     const screen = quiz.currentScreen();
     if (screen?.kind !== ScreenKind.Question) {
@@ -72,7 +81,11 @@ describe("createQuiz", () => {
     const quiz = createQuiz();
     await quiz.load({ type: "text", text });
     quiz.next();
-    const questionId = quiz.state.plan?.questions[0]?.id ?? "";
+    quiz.next();
+    const questionId =
+      quiz.state.plan?.questions.find(
+        (question) => question.type !== QuestionType.Section,
+      )?.id ?? "";
     let seen = false;
     quiz.on("response:change", (payload) => {
       seen = payload.id === questionId;
@@ -122,6 +135,19 @@ describe("createQuiz", () => {
     quiz.destroy();
   });
 
+  test("a section screen opens a round and never blocks next", async () => {
+    const quiz = createQuiz({ config: { addMissingSectionScreens: true } });
+    await quiz.load({
+      type: "text",
+      text: "## First\nQuestion => One\n## Second\nQuestion => Two",
+    });
+    expect(quiz.state.plan?.questions[0]?.type).toBe(QuestionType.Section);
+    quiz.setMode(PlayMode.Answers);
+    expect(quiz.next().ok).toBe(true);
+    expect(quiz.currentScreen()?.kind).toBe(ScreenKind.Question);
+    quiz.destroy();
+  });
+
   test("config filters and score clamps are applied before the plan", async () => {
     const quiz = createQuiz({
       config: {
@@ -153,7 +179,7 @@ describe("createQuiz", () => {
     expect(
       quiz
         .diagnostics()
-        .some((diagnostic) => diagnostic.message.includes("no questions")),
+        .some((diagnostic) => diagnostic.message === "Quiz is empty."),
     ).toBe(true);
     quiz.destroy();
   });

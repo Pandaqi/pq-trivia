@@ -113,9 +113,9 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
       continue;
     }
 
-    // `### Answers` starts a block where every line is one value for the key.
-    // Checked before `##`, which would otherwise read it as a question.
-    const groupHeading = symbols.question + symbols.section;
+    // `#### Answers` starts a block where every line is one value for the key.
+    // Longest marker first: `####`, then `###`, then `##`, then `#`.
+    const groupHeading = symbols.block;
     if (trimmed.startsWith(groupHeading)) {
       const name = trimmed.slice(groupHeading.length).trim();
       const column = raw.indexOf(trimmed) + 1;
@@ -127,7 +127,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
             "A block heading has no key.",
             {
               location,
-              suggestion: "Write `### Answers`, then one value per line.",
+              suggestion: "Write `#### Answers`, then one value per line.",
             },
           ),
         );
@@ -173,7 +173,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
             {
               location,
               suggestion:
-                "Write the question after the ## shorthand, or use Question => text.",
+                "Write the question after the ### shorthand, or use Question => text.",
             },
           ),
         );
@@ -201,7 +201,7 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
             "A round header has no name.",
             {
               location,
-              suggestion: "Write `# Round name`.",
+              suggestion: "Write `## Round name`.",
             },
           ),
         );
@@ -223,9 +223,33 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
       continue;
     }
 
+    if (trimmed.startsWith(symbols.title)) {
+      const name = trimmed.slice(symbols.title.length).trim();
+      const column = raw.indexOf(trimmed) + 1;
+      const location = at(line.number, column);
+      if (name.length === 0) {
+        diagnostics.push(
+          syntaxError(
+            DiagnosticCodes.MissingQuestion,
+            "A quiz title heading has no text.",
+            {
+              location,
+              suggestion: "Write `# Quiz title`.",
+            },
+          ),
+        );
+        continue;
+      }
+      // The title belongs to the whole quiz, wherever the line sits. First wins.
+      if (!header.some((attribute) => attribute.key === "Title")) {
+        header.push(makeAttribute("Title", "Title", [name], location));
+      }
+      continue;
+    }
+
     const pair = splitPair(trimmed, symbols.pairing);
     if (!pair) {
-      // Inside a `### Key` block every line is a value, verbatim.
+      // Inside a `#### Key` block every line is a value, verbatim.
       if (state.group !== null) {
         state.group.values.push(trimmed);
         continue;
@@ -278,7 +302,11 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
 
     if (value.length > 0) {
       const isList = spec !== undefined && isListAttribute(spec.key);
-      if (isList && options.forbidInlineLists !== true && !value.startsWith("$")) {
+      if (
+        isList &&
+        options.forbidInlineLists !== true &&
+        !value.startsWith("$")
+      ) {
         for (const part of splitUnescaped(value, symbols.inlineList)) {
           const item = part.trim();
           if (item.length > 0) {

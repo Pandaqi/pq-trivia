@@ -7,10 +7,10 @@ The live code lives in its own bundle. The default player does not contain it.
 
 ## Two transports
 
-| Transport | Reach | Setup |
-| --- | --- | --- |
-| `BroadcastChannel` | Same browser, two tabs | None |
-| `Trystero` | Real devices over WebRTC | `bun add trystero`, one `appId` |
+| Transport          | Reach                    | Setup                           |
+| ------------------ | ------------------------ | ------------------------------- |
+| `BroadcastChannel` | Same browser, two tabs   | None                            |
+| `Trystero`         | Real devices over WebRTC | `bun add trystero`, one `appId` |
 
 ```js
 import {
@@ -35,7 +35,11 @@ On a phone:
 ```html
 <link rel="stylesheet" href="themes/paper.css" />
 <script type="module">
-  import { LiveRole, mountLive, createTrysteroTransport } from "./multiplayer.js";
+  import {
+    LiveRole,
+    mountLive,
+    createTrysteroTransport,
+  } from "./multiplayer.js";
   const transport = await createTrysteroTransport({ appId: "my-quiz-app" });
   mountLive({ target: document.body, role: LiveRole.Player, transport });
 </script>
@@ -64,7 +68,9 @@ That is enforced in `present.ts`, not in the renderer.
 ## Protocol v1
 
 ```ts
-{ v: 1, type, id, ts, from, payload }
+{
+  v: (1, type, id, ts, from, payload);
+}
 ```
 
 Host to players: `room:state`, `question:show`, `question:close`,

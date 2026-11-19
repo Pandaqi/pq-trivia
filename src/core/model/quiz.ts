@@ -25,6 +25,10 @@ import { createQuestion } from "./questionBuilder";
 import { createRound, type RoundModel } from "./round";
 import { validateQuiz } from "./validate";
 import type { AstAttribute, AstDocument } from "../syntax/ast";
+import {
+  CONFIG_HEADER_NAMES,
+  parseHeaderConfig,
+} from "../syntax/configAttributes";
 
 export interface QuizMeta {
   readonly title: string;
@@ -41,6 +45,8 @@ export interface QuizMeta {
   readonly homepage: string | null;
   readonly image: string | null;
   readonly extra: Readonly<Record<string, readonly string[]>>;
+  /** Global settings written as header attributes. `createQuiz` merges these. */
+  readonly config: Readonly<Record<string, unknown>>;
 }
 
 export interface QuizModel {
@@ -76,6 +82,7 @@ const HEADER_KNOWN: ReadonlySet<string> = new Set([
   "License",
   "Homepage",
   "Image",
+  ...CONFIG_HEADER_NAMES,
 ]);
 
 function headerValue(
@@ -131,6 +138,7 @@ function buildMeta(header: readonly AstAttribute[]): QuizMeta {
     homepage: headerValue(header, "Homepage") ?? null,
     image: headerValue(header, "Image") ?? null,
     extra,
+    config: parseHeaderConfig(header),
   };
 }
 
@@ -155,9 +163,7 @@ export function parseQuiz(
     ...(options.strictness !== undefined
       ? { strictness: options.strictness }
       : {}),
-    ...(options.forbidInlineLists === true
-      ? { forbidInlineLists: true }
-      : {}),
+    ...(options.forbidInlineLists === true ? { forbidInlineLists: true } : {}),
   });
   return {
     document: parsed.document,
@@ -195,6 +201,8 @@ export function buildQuizFromParsed(
     name: string;
     secret: string | null;
     questions: QuestionModel[];
+    source: QuestionModel | null;
+    implicit: boolean;
   }> = [];
   const roundByName = new Map<string, number>();
   const questions: QuestionModel[] = [];
@@ -212,6 +220,8 @@ export function buildQuizFromParsed(
         name: "General",
         secret: null,
         questions: [],
+        source: null,
+        implicit: true,
       }) - 1;
     roundByName.set("general", index);
     currentRound = index;
@@ -241,13 +251,23 @@ export function buildQuizFromParsed(
       if (existing !== undefined) {
         currentRound = existing;
         const round = rounds[existing];
-        if (round && round.secret === null && built.secret !== null) {
-          round.secret = built.secret;
+        if (round) {
+          if (round.secret === null && built.secret !== null) {
+            round.secret = built.secret;
+          }
+          round.source = built;
         }
         continue;
       }
       const index =
-        rounds.push({ id, name, secret: built.secret, questions: [] }) - 1;
+        rounds.push({
+          id,
+          name,
+          secret: built.secret,
+          questions: [],
+          source: built,
+          implicit: false,
+        }) - 1;
       roundByName.set(name.toLowerCase(), index);
       roundByName.set(id.toLowerCase(), index);
       currentRound = index;
@@ -297,7 +317,7 @@ export function buildQuizFromParsed(
             {
               location: node.location,
               suggestion:
-                "Start a round with `# Round name`, or fix the Section value.",
+                "Start a round with `## Round name`, or fix the Section value.",
             },
           ),
         );
@@ -320,7 +340,14 @@ export function buildQuizFromParsed(
   }
 
   const roundModels: RoundModel[] = rounds.map((round) =>
-    createRound(round.id, round.name, round.secret, round.questions),
+    createRound(
+      round.id,
+      round.name,
+      round.secret,
+      round.questions,
+      round.source,
+      round.implicit,
+    ),
   );
 
   const quiz: QuizModel = {
@@ -337,9 +364,6 @@ export function buildQuizFromParsed(
 }
 
 /** One file in, one model out. The path everyone already uses. */
-export function buildQuiz(
-  text: string,
-  options: BuildOptions = {},
-): QuizModel {
+export function buildQuiz(text: string, options: BuildOptions = {}): QuizModel {
   return buildQuizFromParsed([parseQuiz(text, options)], options);
 }

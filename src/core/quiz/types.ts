@@ -1,5 +1,36 @@
 /** Public quiz types. The API is a promise; these are its words. */
 
+import {
+  CONFIG_CODE_ONLY,
+  CONFIG_HEADER_ROWS,
+} from "../syntax/configAttributes";
+
+/** Light, dark, high contrast, or whatever the system prefers. */
+export enum ThemeMode {
+  Auto = "auto",
+  Light = "light",
+  Dark = "dark",
+  HighContrast = "high-contrast",
+}
+
+/** How the quiz fills its host page. */
+export type LayoutMode = "viewport" | "inline";
+
+/** Letters by default, because A B C beats 1 2 3 in a pub quiz. */
+export enum AnswerLabels {
+  Letters = "letters",
+  Lowercase = "lowercase",
+  Numbers = "numbers",
+  Roman = "roman",
+  None = "none",
+}
+
+export interface QuizRoundInfo {
+  readonly id: string;
+  readonly name: string;
+  readonly secret: string | null;
+}
+
 import type { Diagnostic } from "../syntax/diagnostics";
 import type { SessionState, PlayMode, Progress } from "../session/session";
 import type { SessionStatus } from "../session/session";
@@ -48,7 +79,10 @@ export type LoadInput =
   | { readonly type: "text"; readonly text: string; readonly file?: string }
   | {
       readonly type: "files";
-      readonly files: readonly { readonly name: string; readonly text: string }[];
+      readonly files: readonly {
+        readonly name: string;
+        readonly text: string;
+      }[];
     }
   | { readonly type: "inline"; readonly data: unknown }
   | { readonly type: "encrypted"; readonly data: unknown }
@@ -69,7 +103,7 @@ export interface QuizSettingOption {
   readonly type: "button" | "toggle" | "text";
   readonly value?: string | boolean;
   readonly placeholder?: string;
-  readonly onChange?: (quiz: Quiz, value: string | boolean) => void;
+  readonly onChange?: (quiz: QuizApi, value: string | boolean) => void;
 }
 
 export interface QuizConfig {
@@ -81,7 +115,9 @@ export interface QuizConfig {
   /** V2's `languages`: a shortlist, or empty for whatever the files say. */
   readonly languages?: readonly string[];
   /** V2's `translations`: extra or replaced UI strings per language. */
-  readonly translations?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  readonly translations?: Readonly<
+    Record<string, Readonly<Record<string, string>>>
+  >;
   /** V2's `syncPropertiesWithTranslations`. */
   readonly syncPropertiesWithTranslations?: boolean;
   /** V2's `include`: property/value pairs a question must match. */
@@ -131,6 +167,12 @@ export interface QuizConfig {
   readonly hotkeys?: Readonly<Record<string, string | readonly string[]>>;
   readonly hotkeysForbidden?: readonly string[];
   readonly toolbar?: readonly string[];
+  /** A, B, C (default), 1, 2, 3, i, ii, iii, or nothing. */
+  readonly answerLabels?: AnswerLabels;
+  /** Small icons in the metadata strip: points, author, category, round. */
+  readonly metadataIcons?: boolean;
+  /** Let the home screen offer interactive play. */
+  readonly allowInput?: boolean;
   /** V2's `settings`: controls the host adds to the start screen. */
   readonly settings?: readonly QuizSettingOption[];
   readonly hideTimerGlobal?: boolean;
@@ -180,7 +222,34 @@ export interface QuizConfig {
   readonly theme?: string;
   /** Show "Load theme folder" on the start screen. Off by default. */
   readonly themeUpload?: boolean;
+  /** Light, dark or high contrast. `auto` follows the system. */
+  readonly themeMode?: ThemeMode;
+  /**
+   * `viewport` fills the window and scrolls inside the slide. `inline` lets
+   * the quiz grow with the page, with a sensible minimum height.
+   */
+  readonly layoutMode?: LayoutMode;
+  /**
+   * A prepared embedded quiz, like V2's `builtin`. When set, the start screen
+   * offers "Play the built-in questions" and loads it without a fetch.
+   */
+  readonly builtin?: unknown;
 }
+
+type HeaderConfigKey = (typeof CONFIG_HEADER_ROWS)[number]["key"];
+type CodeOnlyConfigKey = (typeof CONFIG_CODE_ONLY)[number]["key"];
+type UncoveredConfigKey = Exclude<
+  keyof QuizConfig,
+  HeaderConfigKey | CodeOnlyConfigKey
+>;
+
+/**
+ * Compile-time audit. A new config key without a header row or a code-only
+ * reason makes this constant fail to typecheck with the missing names.
+ */
+export const CONFIG_COVERAGE: UncoveredConfigKey extends never
+  ? true
+  : UncoveredConfigKey = true;
 
 export type OrderOptions = Partial<
   Pick<QuizConfig, "seed" | "shuffleQuestions" | "shuffleRounds">
@@ -193,7 +262,7 @@ export interface NavResult {
   readonly issues?: readonly ResponseIssue[];
 }
 
-export interface Quiz {
+export interface QuizApi {
   readonly state: Readonly<SessionState>;
   readonly config: Readonly<QuizConfig>;
   load(input: LoadInput): Promise<void>;
@@ -203,13 +272,23 @@ export interface Quiz {
   unlock(passphrase: string): Promise<boolean>;
   next(): NavResult;
   prev(): NavResult;
+  nextRound(): NavResult;
+  prevRound(): NavResult;
   goTo(index: number): NavResult;
+  goToStart(): NavResult;
+  goToEnd(): NavResult;
+  /** Interactive play asks for answers in the page. */
+  setInteractive(interactive: boolean): void;
   restart(options?: { readonly keepResponses?: boolean }): void;
   setOrder(order: OrderOptions): void;
   /** UI string for the current language. */
   t(key: string, params?: Readonly<Record<string, string | number>>): string;
   /** Languages actually loaded, sorted. Empty on a single-language quiz. */
   languages(): readonly string[];
+  /** Every round in the loaded file, including ones the settings hide. */
+  rounds(): readonly QuizRoundInfo[];
+  /** The Trivia Syntax text this quiz was loaded from, when there was one. */
+  sourceText(): string | null;
   /** Switch the whole quiz, answers and screen, to another loaded language. */
   setLanguage(language: string): boolean;
   /** Change one setting without rebuilding the quiz. Content options replan. */

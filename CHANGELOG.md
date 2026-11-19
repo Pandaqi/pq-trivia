@@ -21,6 +21,14 @@ The rewrite. Same Trivia Syntax, new bones.
   Answers, hints and reveals survive the switch.
 - **English and Dutch interface.** Every screen, button and validation message
   goes through one dictionary, and hosts can override any key.
+- **Filtered builds.** `bun run build --languages nl` ships one language,
+  `--languages none` ships no interface strings at all. English is not a
+  fallback; a missing key stays a key.
+- **Section screens and timers.** `addMissingSectionScreens` opens each round
+  with its name, and `allowTimerOnSections` lets that screen count down.
+- **Paths follow the config.** `subFolderMedia`, `subFolderTheme`,
+  `linkPrefixes` and `mediaFormats` now resolve and classify media instead of
+  sitting in the type as decoration.
 - **Answers keep their formatting.** Markdown, links, `![images](file)` and
   media-as-answer (V2's behaviour) all render in answer lists.
 - **The rest of the V2 switches.** Filters, `groupBy`, score clamps, timer

@@ -3,7 +3,7 @@ Description => Three questions, one winner, one element.
 Seed => music-night
 Author => Pandaqi
 
-# Warm-up
+## Warm-up
 
 Question => Which superhero is called the Man of Steel?
 Answers => Superman | Batman | Spider-Man
@@ -18,7 +18,7 @@ Type => Range
 Range => 0
 Hints => It was a year ending in nine.
 
-# Odd one out
+## Odd one out
 
 Question => The first moon landing was in [blank].
 Answers => 1969

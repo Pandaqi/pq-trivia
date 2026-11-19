@@ -16,9 +16,7 @@ function Missing({
   const t = useT();
   return (
     <figure class="pq-media pq-media-missing" role="status">
-      <p class="pq-media-missing-text">
-        {t("mediaMissing", { path })}
-      </p>
+      <p class="pq-media-missing-text">{t("mediaMissing", { path })}</p>
       <p class="pq-media-missing-hint">{t("mediaHint")}</p>
       <button type="button" class="pq-link" onClick={onRetry}>
         {t("tryAgain")}
@@ -27,7 +25,11 @@ function Missing({
   );
 }
 
-function Credit({ text }: { readonly text: string | null }): JSX.Element | null {
+function Credit({
+  text,
+}: {
+  readonly text: string | null;
+}): JSX.Element | null {
   return text === null ? null : (
     <figcaption class="pq-media-credit">{text}</figcaption>
   );

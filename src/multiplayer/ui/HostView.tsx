@@ -36,9 +36,7 @@ export function HostView({
       <header class="pq-live-head">
         <p class="pq-live-kicker">Live quiz</p>
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          {lobby
-            ? "Waiting for players"
-            : (question?.title ?? "Live quiz")}
+          {lobby ? "Waiting for players" : (question?.title ?? "Live quiz")}
         </h1>
         {lobby ? <CodeCard code={state.code} link={joinLink} /> : null}
         <p class="pq-live-meta">
@@ -100,7 +98,11 @@ export function HostView({
             <button type="button" onClick={() => host.close()}>
               Close answers
             </button>
-            <button type="button" class="pq-primary" onClick={() => host.reveal()}>
+            <button
+              type="button"
+              class="pq-primary"
+              onClick={() => host.reveal()}
+            >
               Reveal
             </button>
           </>
@@ -129,4 +131,3 @@ export function HostView({
     </main>
   );
 }
-
