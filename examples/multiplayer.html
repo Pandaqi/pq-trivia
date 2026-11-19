@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia live</title>
+    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <link rel="stylesheet" href="../dist/v3/themes/print.css" media="print" />
+    <style>
+      body {
+        margin: 0;
+        background: #f2e9d9;
+        font-family: system-ui, sans-serif;
+      }
+      .demo {
+        display: grid;
+        grid-template-columns: minmax(0, 3fr) minmax(18rem, 2fr);
+        gap: 1rem;
+        align-items: start;
+      }
+      .demo > section {
+        background: #fffdf7;
+        border-radius: 1rem;
+        min-height: 30rem;
+      }
+      @media (max-width: 60rem) {
+        .demo {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo">
+      <section id="host" aria-label="Host"></section>
+      <section id="player" aria-label="Player"></section>
+    </div>
+
+    <script type="module">
+      import { createQuiz } from "../dist/v3/player.js";
+      import {
+        LiveRole,
+        createBroadcastTransport,
+        mountLive,
+      } from "../dist/v3/multiplayer.js";
+
+      // One code, two tabs. BroadcastChannel works in one browser without a
+      // server; swap in createTrysteroTransport for two real devices.
+      const code = "DEMO";
+      const transport = createBroadcastTransport();
+
+      const text = `
+Title => Live demo
+Description => Host on the left, player on the right.
+Seed => live
+
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Explanation => Clark Kent, mild-mannered reporter.
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0
+`;
+
+      const quiz = createQuiz({ config: { seed: "live" } });
+      await quiz.load({ type: "text", text });
+
+      const link = `${location.origin}${location.pathname}?pq-live=${code}`;
+
+      mountLive({
+        target: document.querySelector("#host"),
+        role: LiveRole.Host,
+        code,
+        quiz,
+        transport,
+        joinLink: link,
+      });
+
+      mountLive({
+        target: document.querySelector("#player"),
+        role: LiveRole.Player,
+        code,
+        name: "Ada",
+        transport,
+      });
+    </script>
+  </body>
+</html>

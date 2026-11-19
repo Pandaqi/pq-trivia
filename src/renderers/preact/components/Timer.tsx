@@ -12,6 +12,9 @@ import {
   type TimerSound,
 } from "../../../core/session/timers";
 
+/** Spoken once each. Below these numbers, ears need the news. */
+const TIMER_MILESTONES: readonly number[] = [30, 10, 0];
+
 export function Timer({
   quiz,
   sound,
@@ -24,12 +27,17 @@ export function Timer({
   const [remaining, setRemaining] = useState<number | null>(() =>
     quiz.timerRemaining(),
   );
+  const [announcement, setAnnouncement] = useState("");
   const expired = useRef(false);
   const lastSecond = useRef<number | null>(null);
+  const announced = useRef(new Set<number>());
+  const totalSeconds = total === null ? 0 : Math.ceil(total / 1000);
 
   useEffect(() => {
     expired.current = false;
     lastSecond.current = null;
+    announced.current.clear();
+    setAnnouncement("");
     setRemaining(quiz.timerRemaining());
     if (total === null) {
       return;
@@ -42,6 +50,20 @@ export function Timer({
         return;
       }
       const seconds = Math.ceil(left / 1000);
+      // 30, 10 and 0, once each. A screen reader should hear the clock, not
+      // read it in a race with the beeps.
+      for (const milestone of TIMER_MILESTONES) {
+        if (
+          seconds <= milestone &&
+          totalSeconds >= milestone &&
+          !announced.current.has(milestone)
+        ) {
+          announced.current.add(milestone);
+          setAnnouncement(
+            milestone === 0 ? "Time is up." : `${milestone} seconds left.`,
+          );
+        }
+      }
       if (beeps && left > 0 && seconds <= 5 && seconds !== lastSecond.current) {
         lastSecond.current = seconds;
         sound.warning();
@@ -57,7 +79,7 @@ export function Timer({
     tick();
     const handle = setInterval(tick, 250);
     return () => clearInterval(handle);
-  }, [quiz, total, timer?.questionId, sound]);
+  }, [quiz, total, timer?.questionId, sound, totalSeconds]);
 
   if (remaining === null || total === null) {
     return null;
@@ -68,8 +90,16 @@ export function Timer({
 
   return (
     <div class="pq-timer" data-pq-urgency={urgency}>
-      <p class="pq-timer-value" role="timer" aria-live="off">
+      <p
+        class="pq-timer-value"
+        role="timer"
+        aria-live="off"
+        aria-label={`${formatTimer(remaining)} remaining`}
+      >
         {formatTimer(remaining)}
+      </p>
+      <p class="pq-visually-hidden" aria-live="assertive" aria-atomic="true">
+        {announcement}
       </p>
       <span class="pq-timer-bar" aria-hidden="true">
         <span style={`width: ${percent}%`} />

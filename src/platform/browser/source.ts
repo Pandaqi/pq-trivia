@@ -1,0 +1,138 @@
+/**
+ * Where a quiz comes from. One URL, an optional manifest, no guessing.
+ *
+ * The old loader asked the server about every possible file name. This one
+ * fetches exactly what it was told to fetch, once.
+ */
+
+import { isEncryptedQuiz } from "../../core/export/embedded";
+import {
+  isManifest,
+  parseManifest,
+  type QuizManifest,
+} from "../../core/quiz/manifest";
+import type { Quiz } from "../../core/session/quiz";
+import { fetchTextCached } from "./cache/fetchCached";
+import type { TextCache } from "./cache/textCache";
+import { fetchText } from "./fetchText";
+
+export const FILE_PROTOCOL_HINT =
+  "Browsers block reading quiz files from file://. Inline the quiz text in the page, or serve the folder over http (bun run preview).";
+
+export interface LoadSourceOptions {
+  readonly cache?: TextCache;
+}
+
+export function isFileProtocol(url?: string): boolean {
+  if (url !== undefined) {
+    return url.startsWith("file:");
+  }
+  return typeof location !== "undefined" && location.protocol === "file:";
+}
+
+function isAbsolute(path: string): boolean {
+  return /^[a-z][a-z0-9+.-]*:/i.test(path) || path.startsWith("/");
+}
+
+function absolute(url: string): string {
+  if (typeof location === "undefined" || isAbsolute(url)) {
+    return url;
+  }
+  try {
+    return new URL(url, location.href).href;
+  } catch {
+    return url;
+  }
+}
+
+function baseOf(url: string): string {
+  const full = absolute(url);
+  const cut = full.lastIndexOf("/");
+  return cut < 0 ? "" : full.slice(0, cut + 1);
+}
+
+export function resolvePath(base: string, path: string): string {
+  if (isAbsolute(path)) {
+    return path;
+  }
+  return `${base}${path.replace(/^\.\//, "")}`;
+}
+
+async function read(
+  url: string,
+  cache: TextCache | undefined,
+): Promise<string> {
+  return cache === undefined ? fetchText(url) : fetchTextCached(url, cache);
+}
+
+async function loadManifest(
+  quiz: Quiz,
+  text: string,
+  source: string,
+  options: LoadSourceOptions,
+): Promise<QuizManifest> {
+  let data: unknown;
+  try {
+    data = JSON.parse(text) as unknown;
+  } catch {
+    throw new Error(`${source} looks like JSON, but it does not parse.`);
+  }
+  const manifest = parseManifest(data);
+  const base = baseOf(source);
+  const files = await Promise.all(
+    manifest.files.map(async (file) => ({
+      name: file.path,
+      text: await read(resolvePath(base, file.path), options.cache),
+    })),
+  );
+  await quiz.load({ type: "files", files });
+  return manifest;
+}
+
+/** Text already in hand: a file, an editor pane, a paste. */
+export async function loadQuizText(
+  quiz: Quiz,
+  raw: string,
+  source: string,
+  options: LoadSourceOptions = {},
+): Promise<QuizManifest | null> {
+  const text = raw.replace(/^\uFEFF/, "");
+  if (!text.trimStart().startsWith("{")) {
+    await quiz.load({ type: "text", text, file: source });
+    return null;
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(text) as unknown;
+  } catch {
+    throw new Error(`${source} looks like JSON, but it does not parse.`);
+  }
+  if (isManifest(data)) {
+    return await loadManifest(quiz, text, source, options);
+  }
+  await quiz.load(
+    isEncryptedQuiz(data) ? { type: "encrypted", data } : { type: "inline", data },
+  );
+  return null;
+}
+
+/** The one door for `<pq-quiz src>` and every host that loads from a URL. */
+export async function loadQuizSource(
+  quiz: Quiz,
+  source: string,
+  options: LoadSourceOptions = {},
+): Promise<QuizManifest | null> {
+  if (isFileProtocol(source) || (isFileProtocol() && !isAbsolute(source))) {
+    throw new Error(FILE_PROTOCOL_HINT);
+  }
+  let text: string;
+  try {
+    text = await read(absolute(source), options.cache);
+  } catch (error) {
+    if (isFileProtocol()) {
+      throw new Error(FILE_PROTOCOL_HINT);
+    }
+    throw error;
+  }
+  return loadQuizText(quiz, text, source, options);
+}

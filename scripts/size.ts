@@ -21,12 +21,18 @@ const OUT_DIR = join(ROOT, "dist", "v3");
  */
 const BUDGETS: Readonly<Record<string, number>> = {
   "core.js": 24,
-  "headless.js": 26,
+  // Core plus `createQuiz`. Not in the spec budget list, but worth watching.
+  "headless.js": 27,
   "player.js": 48,
   "pq-trivia.js": 55,
   "pq-trivia.min.js": 60,
   "pq-trivia.core.min.js": 26,
-  "multiplayer.js": 12,
+  // The separate live bundle. Preact is already in the player, but a host page
+  // that only runs a lobby should not need the whole player.
+  "multiplayer.js": 22,
+  // Optional extras: worker parser, IndexedDB cache, manifest loading.
+  "browser.js": 8,
+  "parse.worker.js": 5,
   "animations.js": 6,
   "editor.js": 45,
 };

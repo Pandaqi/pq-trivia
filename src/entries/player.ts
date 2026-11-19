@@ -3,10 +3,12 @@
 export * from "./core";
 export {
   createQuiz,
+  type CreateQuizOptions,
   type Quiz,
   type QuizConfig,
   type LoadInput,
   type QuizEventMap,
+  type ParseHook,
 } from "../core/quiz";
 export {
   mountQuiz,

@@ -2,42 +2,114 @@
 
 ![Example screenshot of a quiz.](pq-trivia-header.webp)
 
-An easy system to generate digital or analog (pub) quiz experiences. 
+[![CI](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml/badge.svg)](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-6f4b98)](LICENSE)
+[![Core 24 KB gzip](https://img.shields.io/badge/core-24%20KB%20gzip-839c66)](dist/README.md)
 
-* Write your questions in simple text (or Markdown) files.
-* Gather all the media for your quiz (image/audio/video) as separate files too.
-* Then create an empty HTML page, include this library, and create a new `Quiz` with your preferred settings.
+A quiz is a text file. Write questions, open a page, play.
 
-Tada! All your work is transformed into an interactive trivia experience. You can even let every player bring their own 5 questions, because you never need to see inside the text files.
+Plain text in. Playable, printable, gradable out. No account, no backend, no
+build step for the person hosting the quiz night.
 
-Read the [docs](https://github.com/Pandaqi/pq-trivia/blob/main/docs.md) for a more detailed explanation. This includes the very simple "syntax" for inputting questions (answers, score, media to include, etc), as well as the _many_ settings you can change and modify to your liking.
+## Twenty-second start
 
-## Quick Start
+```html
+<link rel="stylesheet" href="dist/v3/themes/paper.css" />
+<script type="module" src="dist/v3/player.js"></script>
 
-Check out the barebones `template` folder for the simplest setup for a new quiz.
+<pq-quiz src="my-quiz.trivia" seed="quiz-night"></pq-quiz>
+```
 
-* A very simple `index.html` file that includes the library and starts a new Quiz.
-* The library (`pq-trivia.min.js`) itself, of course. (Replace with latest version if needed.)
-* Add your questions in the `questions` folder.
-* Add all your media in the `media` folder.
-* Open `index.html` in any browser, point it to your questions, and you're good to go.
+```txt
+Title => Friday Night
+Seed => quiz-night
 
-## Features
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Explanation => Clark Kent, mild-mannered reporter.
+```
 
-This powerful (pub) quiz system was designed to support my own quizzes. I've created many (_many_) professional quizzes and sell them at [The Wayward Melody](https://thewaywardmelody.com). As such, the system is maintained regularly as I create new quizzes for that online store and want new features (or find mistakes).
+That is a quiz. `bun run preview` serves the repo and opens the player.
 
-The system currently supports,
+## What it does
 
-* Playing the quiz completely digitally or physically (print as PDF)
-* Printing tailored answer forms and answer sheets.
-* Different question types (open, multiple choice, list, sort, numeric range, etc)
-* Splitting questions into rounds, as well as some simple round properties (such as a "secret theme")
-* Powerful tools for randomly sorting and ordering your questions and rounds.
-* Media (image/audio/video) attached to questions or answers.
-* Powerful custom theming (fonts, colors, background, etcetera)
-* Translations / multiple languages
-* Playing interactively by inputting answers on the screen itself (which also allows automatic grading)
-* Exporting / saving the quiz as a JSON object
-* Custom question properties, such as score, hints, author, category, a timer, etcetera
-* Playing from the embedded JSON data, or from local files (offline), or from files hosted on a server (online).
-* ... and much more.
+| | |
+| --- | --- |
+| **Play** | Interactive, graded, results, review, resume. Keyboard first. |
+| **Print** | Whole quiz, answer sheet, answer form, grade table, flash cards. |
+| **Types** | Open, choice, list, range, sort, match, cloze, sections, start/end. |
+| **Looks** | Paper theme, tokens, per-round and per-question styling, animations. |
+| **Offline** | One folder on a USB stick. `file://` with no network. |
+| **Live** | Optional phones-in-the-room bundle. Separate. Zero weight by default. |
+| **Exports** | Embedded JSON, standalone HTML, GIFT, QTI, CSV. |
+| **Tools** | Validate, format, migrate, pack, encrypt, grade. Bun only. |
+
+## Sizes
+
+Gzipped, measured by `bun run size`:
+
+| File | Budget |
+| --- | --- |
+| `core.js` | 24 KB |
+| `player.js` | 48 KB |
+| `pq-trivia.min.js` (IIFE) | 60 KB |
+| `multiplayer.js` | 22 KB, separate |
+| `browser.js` | 8 KB, optional extras |
+
+## Install
+
+```bash
+bun install
+bun run build
+```
+
+Copy from `dist/v3/`. The [install guide](docs/getting-started/install.md) has
+the three paths: one script tag, an ES module, or a package.
+
+## Documentation
+
+- [Five-minute quiz](docs/getting-started/quick-start.md)
+- [Trivia Syntax](docs/syntax/overview.md) and the [attribute reference](docs/syntax/reference.md)
+- [API](docs/api/create-quiz.md)
+- [Multiplayer](docs/guides/multiplayer.md)
+- [Offline](docs/guides/offline.md)
+- [Migrating from V2](docs/getting-started/migrating-from-v2.md)
+
+The docs are a VitePress site: `bun run docs:dev`.
+
+## Older versions
+
+| Folder | What |
+| --- | --- |
+| `dist/v3/` | Current. |
+| `dist/v2/` | Frozen V2. `pq-trivia.min.js`, 108 KB. Works, unchanged. |
+| `dist/v1-final/` | Older still. |
+| `template/` | The V2 starter folder. Still works, still points at V2. |
+
+V3 demos live in `examples/`: player, element, print, custom, multiplayer.
+V2 files parse unchanged. See [migrating from V2](docs/getting-started/migrating-from-v2.md).
+
+## Working on it
+
+```bash
+bun run check     # types
+bun run lint      # layers and hygiene
+bun test          # under a second
+bun run build
+bun run size      # budgets
+bun run bench     # 10k questions
+bun run release:dry
+```
+
+Read `ROADMAP.md` before changing anything. Read `CODING_STYLE.md` too.
+
+## Built with
+
+Preact for the renderer. Trystero, only in the multiplayer bundle. VitePress
+for these docs. Nothing else.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

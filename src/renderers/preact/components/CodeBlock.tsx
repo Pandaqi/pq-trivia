@@ -84,6 +84,7 @@ const HASH_COMMENTS: ReadonlySet<string> = new Set([
   "zsh",
 ]);
 
+const BLOCK_COMMENT = /^\/\*[\s\S]*?\*\//;
 const SLASH_COMMENT = /^(\/\/[^\n]*|\/\*[\s\S]*?\*\/)/;
 const HASH_COMMENT = /^(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/;
 const HEX_COLOUR = /^#[0-9a-fA-F]{3,8}\b/;
@@ -101,7 +102,13 @@ interface Token {
  */
 export function tokenize(code: string, language = ""): readonly Token[] {
   const lang = language.trim().toLowerCase();
-  const comments = HASH_COMMENTS.has(lang) ? HASH_COMMENT : SLASH_COMMENT;
+  // Plain CSS has one comment form. `//` in `url(https://…)` is not one.
+  const comments =
+    lang === "css"
+      ? BLOCK_COMMENT
+      : HASH_COMMENTS.has(lang)
+        ? HASH_COMMENT
+        : SLASH_COMMENT;
   // A CSS colour is not a comment, and not a keyword either.
   const colour = lang === "css" || lang === "less" || lang === "scss";
   const tokens: Token[] = [];

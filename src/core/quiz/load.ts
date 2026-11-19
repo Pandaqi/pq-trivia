@@ -10,7 +10,11 @@ import {
   isEncryptedQuiz,
   type EncryptedQuizPayload,
 } from "../export/embedded";
-import { buildQuiz, type QuizModel } from "../model/quiz";
+import {
+  buildQuizFromParsed,
+  type BuildOptions,
+  type QuizModel,
+} from "../model/quiz";
 import { RevealMode } from "../session/policies";
 import {
   PlayMode,
@@ -23,11 +27,12 @@ import {
   syntaxWarning,
   type Diagnostic,
 } from "../syntax/diagnostics";
-import type { LoadInput, QuizConfig } from "./types";
+import type { LoadInput, ParseHook, QuizConfig } from "./types";
 
 export interface LoaderDeps {
   readonly destroyed: () => boolean;
   readonly config: () => QuizConfig;
+  readonly parseText: ParseHook;
   readonly revealMode: () => RevealMode;
   readonly state: () => SessionState;
   readonly setState: (state: SessionState) => void;
@@ -88,6 +93,19 @@ export function createLoader(deps: LoaderDeps): Loader {
     }
   }
 
+  function buildOptions(file?: string): BuildOptions {
+    const config = deps.config();
+    return {
+      ...(file !== undefined ? { file } : {}),
+      ...(config.defaultScore !== undefined
+        ? { defaultScore: config.defaultScore }
+        : {}),
+      ...(config.language !== undefined && config.language !== null
+        ? { defaultLanguage: config.language }
+        : {}),
+    };
+  }
+
   async function load(input: LoadInput): Promise<void> {
     if (deps.destroyed()) {
       return;
@@ -95,18 +113,18 @@ export function createLoader(deps: LoaderDeps): Loader {
     deps.setState(sessionReducer(deps.state(), { type: "load/start" }));
     try {
       if (input.type === "text") {
-        const config = deps.config();
-        await settle(
-          buildQuiz(input.text, {
-            ...(input.file !== undefined ? { file: input.file } : {}),
-            ...(config.defaultScore !== undefined
-              ? { defaultScore: config.defaultScore }
-              : {}),
-            ...(config.language !== undefined && config.language !== null
-              ? { defaultLanguage: config.language }
-              : {}),
-          }),
+        const options = buildOptions(input.file);
+        const parsed = await deps.parseText(input.text, options);
+        await settle(buildQuizFromParsed([parsed], options));
+        return;
+      }
+      if (input.type === "files") {
+        const parsed = await Promise.all(
+          input.files.map((file) =>
+            deps.parseText(file.text, buildOptions(file.name)),
+          ),
         );
+        await settle(buildQuizFromParsed(parsed, buildOptions()));
         return;
       }
       if (input.type === "model") {

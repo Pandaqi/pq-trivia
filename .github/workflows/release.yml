@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+
+      # The tag and package.json must agree. No release from a wrong number.
+      - name: Tag matches package.json
+        run: |
+          VERSION=$(bun -e "console.log((await Bun.file('package.json').json()).version)")
+          test "v$VERSION" = "${GITHUB_REF_NAME}"
+
+      # Checks, build, budgets, checksums. It never publishes by itself.
+      - run: bun run release:dry
+
+      - name: GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/v3/*.js dist/v3/SHA256SUMS dist/v3/themes/*.css \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file CHANGELOG.md
+
+      # Needs "private": false in package.json and an NPM_TOKEN secret.
+      - name: npm publish
+        if: env.NODE_AUTH_TOKEN != ''
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public

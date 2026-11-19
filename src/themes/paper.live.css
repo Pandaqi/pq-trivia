@@ -1,0 +1,192 @@
+/* Live mode. Paper, part five: a code you can read from the back row, and
+ * phone buttons a thumb can hit without aiming.
+ */
+
+.pq-live-screen {
+  display: grid;
+  gap: var(--pq-space);
+  align-content: start;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: var(--pq-space);
+}
+
+.pq-live-kicker {
+  margin: 0;
+  font-family: var(--pq-font-label);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--pq-muted);
+}
+
+.pq-live-heading {
+  margin: 0;
+  font-family: var(--pq-font-heading);
+  font-size: clamp(1.6rem, 4.4vw, 2.6rem);
+  line-height: 1.15;
+  color: var(--pq-ink);
+}
+
+.pq-live-heading:focus-visible {
+  outline: 3px solid var(--pq-accent);
+  outline-offset: 4px;
+}
+
+.pq-live-meta {
+  margin: 0;
+  font-family: var(--pq-font-label);
+  color: var(--pq-muted);
+}
+
+.pq-live-hint {
+  margin: 0;
+  color: var(--pq-muted);
+}
+
+.pq-live-code {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 1.2rem 1rem;
+  border-radius: var(--pq-r-organic);
+  background: var(--pq-slide);
+  box-shadow: var(--pq-shadow-2);
+  text-align: center;
+}
+
+.pq-live-code-value {
+  margin: 0;
+  font-family: var(--pq-font-mono);
+  font-size: clamp(3rem, 14vw, 7rem);
+  letter-spacing: 0.22em;
+  line-height: 1;
+  color: var(--pq-accent);
+}
+
+.pq-live-link {
+  margin: 0;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.pq-live-roster,
+.pq-live-progress,
+.pq-live-board,
+.pq-live-reveal,
+.pq-live-join,
+.pq-live-question {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.pq-live-title {
+  margin: 0;
+  font-family: var(--pq-font-heading);
+  font-size: 1.25rem;
+}
+
+.pq-live-count {
+  font-family: var(--pq-font-label);
+  color: var(--pq-muted);
+}
+
+.pq-live-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.pq-live-players li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.7rem;
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+}
+
+.pq-live-players li[data-pq-ready="true"] {
+  background: var(--pq-fern-soft);
+}
+
+.pq-live-score {
+  margin-left: auto;
+  font-family: var(--pq-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-live-offline {
+  font-size: 0.8rem;
+  color: var(--pq-berry);
+}
+
+.pq-live-answers {
+  gap: 0.6rem;
+}
+
+.pq-live-answers .pq-answer {
+  min-height: 3.2rem;
+  font-size: 1.05rem;
+}
+
+.pq-live-submit {
+  min-height: 3.4rem;
+  font-size: 1.1rem;
+}
+
+.pq-live-board ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.pq-live-board li {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+  padding: 0.45rem 0.7rem;
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+}
+
+.pq-live-board li[data-pq-self="true"] {
+  outline: 2px solid var(--pq-accent);
+  outline-offset: -2px;
+}
+
+.pq-live-rank {
+  width: 1.6rem;
+  font-family: var(--pq-font-mono);
+  color: var(--pq-muted);
+}
+
+.pq-live-name {
+  flex: 1;
+}
+
+.pq-live-answer {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: var(--pq-r-md);
+  background: var(--pq-fern-soft);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.pq-live-result[data-pq-correct="true"] {
+  color: var(--pq-right);
+}
+
+.pq-live-result[data-pq-correct="false"] {
+  color: var(--pq-wrong);
+}
+
+.pq-live-join form {
+  display: grid;
+  gap: 0.8rem;
+}

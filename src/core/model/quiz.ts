@@ -24,7 +24,7 @@ import {
 import { createQuestion } from "./questionBuilder";
 import { createRound, type RoundModel } from "./round";
 import { validateQuiz } from "./validate";
-import type { AstAttribute } from "../syntax/ast";
+import type { AstAttribute, AstDocument } from "../syntax/ast";
 
 export interface QuizMeta {
   readonly title: string;
@@ -133,7 +133,20 @@ function buildMeta(header: readonly AstAttribute[]): QuizMeta {
   };
 }
 
-export function buildQuiz(text: string, options: BuildOptions = {}): QuizModel {
+export interface ParsedQuiz {
+  readonly document: AstDocument;
+  readonly diagnostics: readonly Diagnostic[];
+  readonly symbols: Symbols;
+}
+
+/**
+ * Text to AST. Its own function because a Worker can do this half off the main
+ * thread, and the result is plain data that survives `postMessage`.
+ */
+export function parseQuiz(
+  text: string,
+  options: BuildOptions = {},
+): ParsedQuiz {
   const symbols = resolveSymbols(options.symbols ?? {});
   const parsed = parse(text, {
     ...(options.file !== undefined ? { file: options.file } : {}),
@@ -142,8 +155,33 @@ export function buildQuiz(text: string, options: BuildOptions = {}): QuizModel {
       ? { strictness: options.strictness }
       : {}),
   });
+  return {
+    document: parsed.document,
+    diagnostics: parsed.diagnostics,
+    symbols,
+  };
+}
 
-  const diagnostics: Diagnostic[] = [...parsed.diagnostics];
+/** First file's header wins. Questions from every file join the same quiz. */
+function mergeDocuments(documents: readonly AstDocument[]): AstDocument {
+  const first = documents[0];
+  return {
+    header: first?.header ?? [],
+    questions: documents.flatMap((entry) => entry.questions),
+  };
+}
+
+export function buildQuizFromParsed(
+  inputs: readonly ParsedQuiz[],
+  options: BuildOptions = {},
+): QuizModel {
+  const symbols = resolveSymbols(options.symbols ?? inputs[0]?.symbols ?? {});
+  const parsed = {
+    document: mergeDocuments(inputs.map((input) => input.document)),
+  };
+  const diagnostics: Diagnostic[] = inputs.flatMap((input) => [
+    ...input.diagnostics,
+  ]);
   const meta = buildMeta(parsed.document.header);
   const defaultLanguage = options.defaultLanguage ?? meta.language;
   const defaultScore = options.defaultScore ?? 1;
@@ -292,4 +330,12 @@ export function buildQuiz(text: string, options: BuildOptions = {}): QuizModel {
 
   const validation = validateQuiz(quiz);
   return { ...quiz, diagnostics: [...diagnostics, ...validation] };
+}
+
+/** One file in, one model out. The path everyone already uses. */
+export function buildQuiz(
+  text: string,
+  options: BuildOptions = {},
+): QuizModel {
+  return buildQuizFromParsed([parseQuiz(text, options)], options);
 }

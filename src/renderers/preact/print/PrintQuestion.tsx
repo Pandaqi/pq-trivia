@@ -12,6 +12,7 @@ import {
   type QuestionModel,
 } from "../../../core/model/question";
 import type { SessionState } from "../../../core/session/session";
+import { toMediaViewModel } from "../../../core/session/viewModel";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 
@@ -148,14 +149,7 @@ export function PrintQuestion({
             {hasMedia ? (
               <div class="pq-media-list">
                 {question.media.map((item) => (
-                  <Media
-                    key={item.path}
-                    item={{
-                      path: item.path,
-                      kind: item.kind,
-                      alt: item.options["alt"] ?? null,
-                    }}
-                  />
+                  <Media key={item.path} item={toMediaViewModel(item)} />
                 ))}
               </div>
             ) : null}

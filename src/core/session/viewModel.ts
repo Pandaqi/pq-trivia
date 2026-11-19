@@ -17,7 +17,7 @@ import {
 import type { QuizPlan } from "../plan/plan";
 import type { GradeReport } from "../grading/report";
 import { PlayMode, type Progress, type SessionState } from "./session";
-import type { MediaKind } from "../values/media";
+import type { MediaDescriptor, MediaKind } from "../values/media";
 
 export enum ScreenKind {
   Start = "start",
@@ -39,6 +39,27 @@ export interface MediaViewModel {
   readonly path: string;
   readonly kind: MediaKind;
   readonly alt: string | null;
+  readonly credit: string | null;
+  /** `name-640.jpg 640w, name-1280.jpg 1280w`, straight from the descriptor. */
+  readonly srcset: string | null;
+  readonly poster: string | null;
+  /** A WebVTT file. Audio without captions excludes people. */
+  readonly captions: string | null;
+}
+
+export function toMediaViewModel(
+  descriptor: MediaDescriptor,
+): MediaViewModel {
+  const options = descriptor.options;
+  return {
+    path: descriptor.path,
+    kind: descriptor.kind,
+    alt: options["alt"] ?? null,
+    credit: options["credit"] ?? null,
+    srcset: options["srcset"] ?? null,
+    poster: options["poster"] ?? null,
+    captions: options["captions"] ?? null,
+  };
 }
 
 export interface QuestionViewModel {
@@ -174,11 +195,7 @@ export function questionScreen(
   });
 
   const hintCount = state.hints[question.id] ?? 0;
-  const media: MediaViewModel[] = question.media.map((descriptor) => ({
-    path: descriptor.path,
-    kind: descriptor.kind,
-    alt: descriptor.options["alt"] ?? null,
-  }));
+  const media: MediaViewModel[] = question.media.map(toMediaViewModel);
 
   return {
     kind: ScreenKind.Question,
@@ -227,11 +244,7 @@ function screenMedia(question: QuestionModel | null): MediaViewModel[] {
   if (question === null) {
     return [];
   }
-  return question.media.map((descriptor) => ({
-    path: descriptor.path,
-    kind: descriptor.kind,
-    alt: descriptor.options["alt"] ?? null,
-  }));
+  return question.media.map(toMediaViewModel);
 }
 
 function screenComments(question: QuestionModel | null): InlineNode[] {

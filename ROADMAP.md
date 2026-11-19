@@ -1,7 +1,7 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
 > **Working title:** _PQ-Trivia V3 — Trivia Syntax_
-> **Status:** Phases 0–5 shipped. The player, the Paper theme, `<pq-quiz>`,
+> **Status:** Phases 0–7 shipped. The player, the Paper theme, `<pq-quiz>`,
 > grading with results and resume, flow control, includes, sandboxed scripts,
 > timers, animations, the exporters and the CLI are all in the tree.
 > Interactive mode also encrypts answers (AES-GCM behind an injected key),
@@ -9,7 +9,9 @@
 > on request, pins host buttons from Settings, downloads JSON or a handout,
 > and packs a folder that plays offline (`bun run pack`, plus a service
 > worker when hosted).
-> Phase 6 is performance and polish.
+> Phases 6–7 shipped: worker parsing, the IndexedDB cache, live rooms, and a
+> VitePress docs site with a generated attribute reference. Phase 8 is down to
+> the parts a person must do: publish, tag, deploy, announce.
 > **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
@@ -1712,37 +1714,45 @@ docs/
 
 Sizes are for one focused developer. Not deadlines.
 
-Phases 0–5 are shipped. The specification above describes what exists; this list starts at what is left.
+Phases 0–7 are shipped. The specification above describes what exists; this list starts at what is left.
 
-### Phase 6 — Performance and polish (M, 2–3 weeks)
+### Phase 6 — Performance and polish — shipped
 
-- Worker parsing, streaming, plan cache.
-- Lazy media, preload, responsive images, object URL cleanup.
-- Kill sync XHR and HEAD probing. `file://` detection.
-- IndexedDB cache with quota handling.
-- Benchmark script. Run it once. Fix what is slow.
-- Mount/destroy 100×. No leaks.
-- Final accessibility pass. Keyboard and screen reader.
+- Worker parser in `browser.js` plus `parse.worker.js`: 1 MB threshold, sync fallback, timeout.
+- Lazy media, retry placeholder, captions, poster, `srcset`, credit, next-image preload.
+- No sync XHR, no `HEAD` probing. Explicit files, optional manifest, `file://` detection with a useful sentence.
+- IndexedDB text cache: ETag revalidation, 200 MB LRU, quota eviction, memory fallback.
+- `bun run bench`: 10k questions parse and build in 439 ms, plan 15 ms, grade 141 ms on the old laptop.
+- Timer milestones announced to screen readers at 30, 10 and 0 seconds.
 
-**Done when:** budgets hold. 10k questions navigate smoothly. Offline works in three browsers. No memory climb.
+What is left for a person: mount/destroy 100× in a real browser, and the
+three-browser offline and manual accessibility passes. Both need eyes, not CI.
 
-### Phase 7 — Multiplayer (L, 4–6 weeks, after 3.0)
+### Phase 7 — Multiplayer — shipped
 
-- Transport abstraction, Trystero adapter, BroadcastChannel adapter.
-- Lobby, join URL/QR, roster, host controls, player view, leaderboard, reconnect.
-- Protocol tests with two clients.
-- Separate entry. Default build unchanged.
-- Docs, example, privacy note.
+- Transport abstraction, BroadcastChannel adapter, optional Trystero adapter, in-memory network for tests.
+- Lobby, room code, join link, roster, host controls, phone view, leaderboard, reconnect token.
+- Protocol v1: allowlisted question payloads, host-owned state, message ids, late flags, 250 ms rate limit.
+- Two-client tests: join, show, submit, reveal, stranger, late answer, reconnect.
+- Separate entry. The default player build contains none of it.
+- Guide, privacy note, `examples/multiplayer.html`.
 
-**Done when:** two devices play a full round. Reconnect restores state. Strangers cannot submit. Only the multiplayer bundle grew.
+What is left for a person: two real devices over Trystero on a real network,
+and a look at the lobby UI on a phone. No QR code; the link and the four-letter
+code do the job without another dependency.
 
-### Phase 8 — Launch (S, 1–2 weeks)
+### Phase 8 — Launch — tooling done, publishing is human
 
-- Docs complete and versioned.
-- Examples deployed. README, badges, GIF, gallery.
-- Migration guide. `v2.5.0` archive. Changelog.
-- Release dry run. npm provenance.
-- 3.0.0 tag. Announcement. Store update.
+Done: the VitePress site in `docs/` with a generated attribute reference, the
+migration guide, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, README with
+badges and sizes, `bun run release:dry`, checksums, and the release and docs
+workflows.
+
+- [ ] Set `"private": false`, then `npm publish --provenance --access public`.
+- [ ] Tag `3.0.0`, push the tag, check the GitHub Release.
+- [ ] Deploy the docs and the examples to GitHub Pages.
+- [ ] GIF and screenshots in the README. A gallery, starting with The Wayward Melody.
+- [ ] Announcement. Store update. `v2.5.0` archive stays frozen.
 
 ### Phase 9 — QuizWizard (stretch, M–L, after 3.0)
 
@@ -1759,6 +1769,81 @@ Phases 0–5 are shipped. The specification above describes what exists; this li
 
 **Done when:** you can write a full quiz without opening Notepad. The output is a normal `.trivia` file that plays in the default build. The wizard's bundle never appears in a normal build.
 
+### Phase 10 — Ideas, made concrete (M–L, after 3.0)
+
+The old ideas list, with one owner-sized task per line. Pick one, ship it end to
+end, tick it. Nothing here is promised for 3.0.
+
+**Where a new question type lands:** §5 syntax, `src/core/model/question.ts`,
+`src/core/model/validate.ts`, `src/core/grading/grading.ts`,
+`src/core/session/viewModel.ts`, `src/renderers/preact/components/Answers.tsx`,
+`src/themes/paper.*.css`, `test/core/grading.test.ts`, and one new file in
+`test/fixtures/`.
+
+**Question types**
+
+- [ ] **Ranking (S).** New `Type => Rank`. `Answers` are written in the correct order. Click-to-place UI with arrow-key support. Score is the fraction of adjacent pairs in order. Tests: full, partial, empty, duplicate item.
+- [ ] **Estimate (S).** `Type => Estimate` with `Answer => 42`, `Tolerance => 2`, `Unit => km`. Slider plus a number field. Correct when the value is inside the tolerance. Tests at the edges.
+- [ ] **Negation (S).** `Negate => true` on a Choice question. Grading marks the one wrong option correct. Add `negated` to the answer view model so the UI can say "Pick the false one".
+- [ ] **Odd one out (S).** Choice plus a required reason. Two score parts: the pick, then the reason graded like an open answer.
+- [ ] **Hotspot (M).** `Media => map.png` plus `Answer => 120,80` regions. Click layer over the image, keyboard fallback as a region list, distance check in grading. Needs an authoring helper to read coordinates.
+- [ ] **Matrix (M).** Rows of statements against one shared scale. `Rows =>` block. One score per row, partial credit, checkbox and radio variants.
+- [ ] **Multi-part (M).** One stem, several inputs, one total. `Parts =>` with a type and points per part. Reuse the existing grading parts rather than inventing a second scorer.
+- [ ] **Classification (M).** Items dropped into named buckets. Click-to-place first, drag later. Score per item.
+- [ ] **Audio and video clips (S).** No new type: give `Media` a `PlayLimit` and controls. Count plays in the attempt.
+- [ ] **Wager (M).** `Wager => true`. Bet 0 to max before the reveal, store it in the session, show risk on the report.
+- [ ] **Diagram labels (M).** Drag labels onto targets. Shares the Hotspot click layer, so build Hotspot first.
+- [ ] **Buzzer (L).** First correct answer wins. Needs Phase 7 transport. Do not fake it with timers.
+
+**Answer interfaces**
+
+- [ ] **Click on image (M).** Pairs with Hotspot. Include a visible list of regions for keyboard and screen readers.
+- [ ] **Slider (S).** Drag, arrow keys and a live value. Reuse the Range field's parser.
+- [ ] **Drag and drop (M).** Sort and Match work by click today. Add drag, keep the click path, and test both.
+- [ ] **Number pad (S).** Large keys for phones. Sits next to Range and Estimate inputs.
+- [ ] **Autocomplete (S).** Suggest from `Aliases` or a `Suggest =>` list. Forgive spelling without accepting nonsense.
+- [ ] **"No idea" button (S).** Records a deliberate blank, keeps it out of the wrong count, shows it in the report.
+- [ ] **Confidence (M).** Low, medium, high per response. Store it, export it in CSV, leave scoring alone for now.
+- [ ] **Per-option feedback (S).** `Feedback =>` under an answer, shown after the reveal. One line per option.
+- [ ] **Speech input (M).** Optional Web Speech adapter in `platform/`. Say plainly which browsers support it; the field still works by typing.
+
+**Play and host**
+
+- [ ] **Team mode (M).** Team name before Start, responses per team, a scoreboard between rounds. Keep solo mode the default.
+- [ ] **Host view (M).** Two windows on one machine via `BroadcastChannel` first, then Phase 7 for real devices. The host sees answers; the player view never does.
+- [ ] **Streaks and multipliers (S).** Three in a row, cap at 2×. Report shows the multiplier. Tests for the cap.
+- [ ] **Lifelines (M).** 50/50, extra time, ask the room. Each costs points. Restricted mode disables them.
+- [ ] **Round timer (S).** A timer for the whole round, not one question. Reuses `timers.ts`.
+- [ ] **Presenter notes (S).** `Notes =>` on a question. Host-only, never in the view model or print.
+- [ ] **Undo answer (S).** One step back, written to the attempt journal.
+- [ ] **Leaderboard (M).** Show it between rounds, never during a question.
+- [ ] **Spectator mode (M).** Watch without answering. Same transport as the host view.
+
+**Authoring**
+
+- [ ] **Question pools (M).** `Pool => 10` per round, seeded selection, and the report says which questions were drawn.
+- [ ] **Variants (L).** One template with placeholders, different values per play. Print the chosen values so a handout matches the screen.
+- [ ] **Difficulty tags (M).** Tag questions, then balance a round by score instead of trusting vibes.
+- [ ] **Scoring presets (S).** Negative marking, all-or-nothing, partial. One enum in config, no new maths.
+- [ ] **Translations (M).** Per question, not per file. Falls back to the file language.
+- [ ] **CSV and Markdown import (M).** Teachers already have spreadsheets. One importer, diagnostics per row.
+- [ ] **Near-duplicate detector (S).** Same answer with different wording. Part of `check:content`, warning only.
+- [ ] **Media in packs (S).** `pack` copies local media next to the HTML instead of leaving a path that needs a network.
+
+**Technical and distribution**
+
+- [ ] **Worker parsing (M).** Phase 6. Keeps 10k questions off the main thread.
+- [ ] **IndexedDB media cache (M).** Phase 6. Survives a refresh and respects quota.
+- [ ] **Service worker update prompt (S).** The pack has a cache; add "new version, reload".
+- [ ] **Transcripts and captions (S).** Audio rounds without captions exclude people. Plain text under the player.
+- [ ] **Screen-reader timer announcements (S).** 30, 10 and 0 seconds, once each.
+- [ ] **Share by seed (S).** A URL carries the seed and order, never answers.
+- [ ] **Signed packs (M).** Hash plus signature, so a downloaded quiz is the one you shipped.
+- [ ] **Attempt analytics export (M).** Per-question stats across a class, as CSV.
+- [ ] **Plugin API (L).** Register a question type from outside core. Only after two new types prove the seams.
+
+**Order I would pick:** the S items in Question types and Answer interfaces first (a week of small wins), then Hotspot and Matrix, then team mode and host view once Phase 7 exists.
+
 ### Dependencies
 
 ```
@@ -1766,6 +1851,8 @@ Phases 0–5 are shipped. The specification above describes what exists; this li
                   └────────▶ 7        (after 3)
                                     8 ─▶ 9   (stretch)
 ```
+
+Phase 10 can start any time after Phase 5. Its items do not depend on 8 or 9.
 
 ---
 
@@ -1934,11 +2021,11 @@ All settled. Nothing left open for 3.0.
 - [ ] Every V2 fixture, including a real sold quiz, plays through compat. Differences documented.
 - [x] Core ≤ 24 KB gzip. Player ≤ 48 KB. Full ≤ 55 KB. IIFE ≤ 60 KB.
 - [ ] Public API documented and typed. Every event, selector, exporter and hook has an example.
-- [ ] Syntax reference complete and generated from `attributes.ts`.
+- [x] Syntax reference complete and generated from `attributes.ts`.
 - [x] Interactive mode grades every built-in type. Results, review, resume, print.
 - [ ] Default theme passes a manual WCAG AA pass on every screen.
 - [ ] Errors dedupe, auto-dismiss, announce, and are available via API.
-- [ ] No `innerHTML` from untrusted content. Raw HTML and scripts opt-in and sandboxed.
+- [x] No `innerHTML` from untrusted content. Raw HTML and scripts opt-in and sandboxed.
 - [ ] `destroy()` leaves nothing behind. 100× mount/destroy, no growth.
 - [ ] Print gives clean pages and answer sheets in Chrome, Firefox and Safari.
 - [ ] Offline pack plays from `file://` with no network. PWA works when hosted.
@@ -1967,93 +2054,3 @@ Then freeze the AST and the question model. Every later feature sits on those ty
 
 And if the whole thing starts to feel enormous: remember that V2 already ships, already works, and is already in `dist/v2`. This is an upgrade, not a rescue mission.
 
----
-
-## 25. Ideas not yet built
-
-Nothing here is scheduled. Each line is a real quiz need, not a feature for its own sake.
-
-Already shipped: choice, open, range, list, cloze, sort, match, Start and End screens, media, timers, hints, reveal, results and resume, print, JSON/HTML/GIFT/QTI/CSV, includes, `When` flow, sandboxed scripts, animations, offline pack.
-
-### 25.1 Question types
-
-| Type | What it does | Where it earns its keep | Effort |
-|---|---|---|---|
-| Hotspot | Click the right region of an image | Maps, diagrams, "which country is this" | M |
-| Matrix | Rows of statements against one scale | Opinion rounds, "who said it" | M |
-| Multi-part | One stem, several inputs, one score | Case studies, reading comprehension | M |
-| Classification | Drop items into named buckets | Grouping rounds, no order inside a bucket | M |
-| Ranking | Put N items in order by year, size or price | Timeline rounds; partial credit per pair | S |
-| Estimate | Number with tolerance and unit | Distances, dates, prices; slider plus keypad | S |
-| Sequence | What comes next in a series | Patterns, story order, code output | S |
-| Odd one out | Choice plus a required reason | Explain-it rounds, tie-breaker | S |
-| Negation | "Which is NOT…" on a choice question | Cheap variant, one flag | S |
-| Wager | Risk points before the reveal | Pub quiz staple; needs a score model | M |
-| Audio clip | Play, pause, replay-limit | Music and sound rounds; uses existing media | S |
-| Buzzer | First correct answer wins, others lock out | Needs Phase 7 transport | L |
-| Diagram label | Drag labels onto targets | Anatomy, maps, circuits | M |
-
-### 25.2 Answer interfaces
-
-| Interface | Notes | Effort |
-|---|---|---|
-| Click on image | Pairs with Hotspot; keyboard fallback is a list of regions | M |
-| Slider | Range exists as a field; add drag, arrow keys and a live value | S |
-| Drag and drop | Sort and Match work by click; add drag with the click path kept | M |
-| Number pad | Big keys for phones and tablets | S |
-| Autocomplete | Suggest from an answer bank to forgive spelling | S |
-| "No idea" button | Records a blank on purpose, counts honesty in stats | S |
-| Confidence | Low, medium, high; feeds scoring and analytics | M |
-| Per-option feedback | Show why each wrong option is wrong after reveal | S |
-| Speech input | Optional Web Speech; say plainly which browsers work | M |
-
-### 25.3 Play and host
-
-| Feature | Notes | Effort |
-|---|---|---|
-| Team mode | Team names, team answers, team scores | M |
-| Host view | Big screen for the room, private view for players | M |
-| Streaks and multipliers | Reward three in a row; cap it so a bad start is recoverable | S |
-| Lifelines | 50/50, extra time, ask the room; costs points | M |
-| Per-round timers | Global timer exists; add a round-level one | S |
-| Pause all timers | Timers keep running when a tab hides; decide whether that is right | S |
-| Presenter notes | Host-only text, never in the player view | S |
-| Undo answer | One step back, logged in the attempt | S |
-| Live leaderboard | Between rounds, not during a question | M |
-| Spectator mode | Watch without answering | M |
-
-### 25.4 Authoring
-
-| Feature | Notes | Effort |
-|---|---|---|
-| Question pools | Pick N of M per round | M |
-| Variants | One template, different numbers or names per play | L |
-| Difficulty tags | Balance a round instead of trusting vibes | M |
-| Scoring presets | Negative marking, all-or-nothing, partial | S |
-| Translations | Per question, not per file | M |
-| CSV and Markdown import | Teachers already have spreadsheets | M |
-| Near-duplicate detector | Same answer twice with different wording | S |
-| Media in packs | Copy local media next to the pack instead of linking out | S |
-
-### 25.5 Technical and distribution
-
-| Feature | Notes | Effort |
-|---|---|---|
-| Worker parsing | Phase 6. Keeps 10k questions off the main thread | M |
-| IndexedDB media cache | Phase 6. Survives a refresh, respects quota | M |
-| Service worker update prompt | Cache is there; add "new version, reload" | S |
-| Transcripts and captions | Audio rounds without captions exclude people | S |
-| Screen-reader timer announcements | 30, 10 and 0 seconds | S |
-| Share by seed | URL carries seed and order, not answers | S |
-| Signed packs | Hash plus signature, so a downloaded quiz is the one you shipped | M |
-| Attempt analytics export | Per-question stats across a class | M |
-| Plugin API | Register a question type from outside core | L |
-
-### 25.6 Order I would pick
-
-1. The cheap ones: negation, ranking, estimate, "No idea", per-option feedback.
-2. Hotspot and matrix, because real quizzes ask for them.
-3. Team mode and the host view, once Phase 7 exists.
-4. Everything else only when a quiz in hand needs it.
-
-The rule from §1 still holds: a feature starts with a quiz that cannot be written today.

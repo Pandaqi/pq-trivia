@@ -48,7 +48,10 @@ Adds replay protection to the multiplayer lobby
 | V2 documentation | `docs.md` |
 | Requirements list | `todo.md` |
 | V3 code | `src/core/`, `src/entries/`, `cli/` |
-| Runnable examples | `examples/` (`player`, `element`, `print`, `custom`) |
+| Renderers and platform | `src/renderers/`, `src/platform/` |
+| Live mode | `src/multiplayer/` |
+| Docs site | `docs/` (VitePress) |
+| Runnable examples | `examples/` (`player`, `element`, `print`, `custom`, `multiplayer`) |
 | V2 code, frozen | `src/v2/`, `template/`, `dist/v2/` |
 | User-facing intro | `README.md` |
 
@@ -62,8 +65,12 @@ bun run fmt
 bun run test
 bun run build
 bun run size
+bun run bench           # 10k questions through parse, plan and grade
 bun run check:content   # parse, validate and count the real quiz files
 bun run docs            # print the attribute reference as a Markdown table
+bun run docs:dev        # VitePress, local
+bun run docs:reference  # regenerate docs/syntax/reference.md
+bun run release:dry     # every check, then the human checklist
 bun run preview         # serve the repo and open examples/player.html
 ```
 

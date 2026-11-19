@@ -16,8 +16,8 @@ sake.
 
 - **Three levels of nesting, maximum.** Four means extract a function and give
   it a name. 
-  - No nested ternaries or if statements with more than 3 parts.
-  - Don't write loops within loops unless absolutely necessary.
+  - **No nested ternary statements** or if statements with more than 3 parts.
+  - **Don't write loops within loops** unless absolutely necessary.
 - **No magic numbers.** No magic numbers (use named `const`s), no hardcoded strings (use Enums), no `type = "a" | "b"` (use Enums), no hacky workarounds when a more declarative/verbose style would make the code much more intuitive.
 - **500 lines per file, maximum.** One file, one job.
 - **12 entries per folder, maximum.** Files and folders count the same. That is

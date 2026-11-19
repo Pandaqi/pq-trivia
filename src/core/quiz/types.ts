@@ -8,7 +8,12 @@ import type { Response } from "../session/responses";
 import type { GradeReport } from "../grading/report";
 import type { ResponseIssue } from "../session/policies";
 import type { GradingMode } from "../model/question";
-import type { QuizMeta, QuizModel } from "../model/quiz";
+import type {
+  BuildOptions,
+  ParsedQuiz,
+  QuizMeta,
+  QuizModel,
+} from "../model/quiz";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import type { ActionRegistry, ViewRegistry } from "../session/registry";
 import type { Emitter, Unsubscribe } from "../session/events";
@@ -40,9 +45,22 @@ export type QuizEventMap = {
 
 export type LoadInput =
   | { readonly type: "text"; readonly text: string; readonly file?: string }
+  | {
+      readonly type: "files";
+      readonly files: readonly { readonly name: string; readonly text: string }[];
+    }
   | { readonly type: "inline"; readonly data: unknown }
   | { readonly type: "encrypted"; readonly data: unknown }
   | { readonly type: "model"; readonly quiz: QuizModel };
+
+/**
+ * Text to AST. The default is synchronous. A Worker parser returns a promise
+ * and only the `parse` half moves off the main thread.
+ */
+export type ParseHook = (
+  text: string,
+  options: BuildOptions,
+) => ParsedQuiz | Promise<ParsedQuiz>;
 
 export interface QuizConfig {
   readonly seed?: string;
@@ -131,6 +149,8 @@ export interface Quiz {
 export interface CreateQuizOptions {
   readonly config?: QuizConfig;
   readonly version?: string;
+  /** Swap the parser, for example for `createWorkerParser()`. */
+  readonly parseText?: ParseHook;
 }
 
 export interface QuizInternals {

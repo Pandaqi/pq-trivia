@@ -5,47 +5,105 @@ import { useState } from "preact/hooks";
 import { MediaKind } from "../../../core/values/media";
 import type { MediaViewModel } from "../../../core/session/viewModel";
 
+function Missing({
+  path,
+  onRetry,
+}: {
+  readonly path: string;
+  readonly onRetry: () => void;
+}): JSX.Element {
+  return (
+    <figure class="pq-media pq-media-missing" role="status">
+      <p class="pq-media-missing-text">Media not found: {path}</p>
+      <p class="pq-media-missing-hint">
+        Check the path next to the quiz file.
+      </p>
+      <button type="button" class="pq-link" onClick={onRetry}>
+        Try again
+      </button>
+    </figure>
+  );
+}
+
+function Credit({ text }: { readonly text: string | null }): JSX.Element | null {
+  return text === null ? null : (
+    <figcaption class="pq-media-credit">{text}</figcaption>
+  );
+}
+
 export function Media({
   item,
 }: {
   readonly item: MediaViewModel;
 }): JSX.Element {
-  // A missing file must not print as a broken-image box or push a page over.
+  // A new attempt remounts the tag, which is the only way to make the browser
+  // ask for the file again.
+  const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+
+  const retry = (): void => {
+    setFailed(false);
+    setAttempt((value) => value + 1);
+  };
+
   if (failed) {
-    return <span class="pq-media pq-media-missing" hidden />;
+    return <Missing path={item.path} onRetry={retry} />;
   }
 
   if (item.kind === MediaKind.Image) {
     return (
       <figure class="pq-media">
         <img
+          key={attempt}
           src={item.path}
+          srcset={item.srcset ?? undefined}
           alt={item.alt ?? ""}
           loading="lazy"
           decoding="async"
           onError={() => setFailed(true)}
         />
+        <Credit text={item.credit} />
       </figure>
     );
   }
 
   if (item.kind === MediaKind.Audio) {
     return (
-      <audio class="pq-media" src={item.path} controls preload="metadata" />
+      <figure class="pq-media">
+        <audio
+          key={attempt}
+          src={item.path}
+          controls
+          preload="metadata"
+          onError={() => setFailed(true)}
+        >
+          {item.captions === null ? null : (
+            <track kind="captions" src={item.captions} default />
+          )}
+        </audio>
+        <Credit text={item.credit} />
+      </figure>
     );
   }
 
   if (item.kind === MediaKind.Video) {
     return (
-      <video
-        class="pq-media"
-        src={item.path}
-        controls
-        playsinline
-        preload="metadata"
-        onError={() => setFailed(true)}
-      />
+      <figure class="pq-media">
+        <video
+          key={attempt}
+          src={item.path}
+          poster={item.poster ?? undefined}
+          controls
+          playsinline
+          preload="metadata"
+          onError={() => setFailed(true)}
+        >
+          {item.captions === null ? null : (
+            <track kind="captions" src={item.captions} default />
+          )}
+        </video>
+        <Credit text={item.credit} />
+      </figure>
     );
   }
 

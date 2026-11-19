@@ -4,8 +4,10 @@ import { readFile, writeFile, copyFile } from "node:fs/promises";
 import { dirname, join, relative } from "node:path";
 import {
   countBySeverity,
+  DiagnosticCodes,
   DiagnosticSeverity,
   formatDiagnostic,
+  syntaxWarning,
   type Diagnostic,
 } from "../src/core/syntax/diagnostics";
 import type { QuizModel } from "../src/core/model/quiz";
@@ -140,6 +142,27 @@ export function reportDiagnostics(diagnostics: readonly Diagnostic[]): {
     errors: countBySeverity(diagnostics, DiagnosticSeverity.Error),
     warnings: countBySeverity(diagnostics, DiagnosticSeverity.Warning),
   };
+}
+
+/**
+ * The one gate for commands that write. Parse errors or missing includes mean
+ * no output: a half-parsed quiz on disk is worse than an error message.
+ *
+ * Exits the process, so it belongs at the edge, not in a library.
+ */
+export function requireCleanQuiz(
+  quiz: QuizModel,
+  problems: readonly string[],
+): void {
+  for (const problem of problems) {
+    const diagnostic = syntaxWarning(DiagnosticCodes.InvalidLine, problem);
+    console.log(`${diagnostic.code} ${diagnostic.message}`);
+  }
+  const counted = reportDiagnostics(quiz.diagnostics);
+  if (problems.length > 0 || counted.errors > 0) {
+    console.error("Fix the errors first. Nothing was written.");
+    process.exit(1);
+  }
 }
 
 export function reportText(report: GradeReport): string {

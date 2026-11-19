@@ -23,13 +23,14 @@ import { toEmbedded } from "../src/core/export/embedded";
 import { toQuizJson } from "../src/core/export/json";
 import { encryptQuiz } from "../src/platform/answerKey";
 import { toStandaloneHtml } from "../src/core/export/standalone";
-import { DiagnosticCodes, syntaxWarning } from "../src/core/syntax/diagnostics";
+
 import {
   backup,
   buildWithIncludes,
   parseArgs,
   readExpanded,
   readQuiz,
+  requireCleanQuiz,
   relativeName,
   reportDiagnostics,
   reportText,
@@ -150,11 +151,7 @@ if (command === "build") {
     process.exit(2);
   }
   const { quiz, problems, files: used } = await buildWithIncludes(file);
-  for (const problem of problems) {
-    const diagnostic = syntaxWarning(DiagnosticCodes.InvalidLine, problem);
-    console.log(`${diagnostic.code} ${diagnostic.message}`);
-  }
-  reportDiagnostics(quiz.diagnostics);
+  requireCleanQuiz(quiz, problems);
   const plan = planQuiz(quiz);
   const format = typeof flags["format"] === "string" ? flags["format"] : "json";
   let output: string;
@@ -197,10 +194,7 @@ if (command === "pack") {
     process.exit(2);
   }
   const { text: expanded, quiz, problems } = await readExpanded(file);
-  for (const problem of problems) {
-    const diagnostic = syntaxWarning(DiagnosticCodes.InvalidLine, problem);
-    console.log(`${diagnostic.code} ${diagnostic.message}`);
-  }
+  requireCleanQuiz(quiz, problems);
   if (quiz.questions.length === 0) {
     console.error("Nothing to pack: this quiz has no questions.");
     process.exit(1);
@@ -344,11 +338,7 @@ if (command === "encrypt") {
     );
   }
   const { quiz, problems } = await readExpanded(file);
-  for (const problem of problems) {
-    const diagnostic = syntaxWarning(DiagnosticCodes.InvalidLine, problem);
-    console.log(`${diagnostic.code} ${diagnostic.message}`);
-  }
-  reportDiagnostics(quiz.diagnostics);
+  requireCleanQuiz(quiz, problems);
   if (quiz.questions.length === 0) {
     console.error("Nothing to encrypt: this quiz has no questions.");
     process.exit(1);

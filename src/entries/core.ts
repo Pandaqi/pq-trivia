@@ -59,7 +59,8 @@ export * from "../core/session/timers";
 export * from "../core/session/flow";
 export * from "../core/session/viewModel";
 
-// The save format. `content/include` is a CLI preprocessor and stays out of
-// this artifact; exporters live behind their own modules.
+// The save format and the manifest. `content/include` is a CLI preprocessor
+// and stays out of this artifact; exporters live behind their own modules.
 export * from "../core/export/embedded";
 export * from "../core/export/json";
+export * from "../core/quiz/manifest";

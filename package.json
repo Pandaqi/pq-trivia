@@ -13,6 +13,14 @@
     "education",
     "plain-text"
   ],
+  "homepage": "https://pandaqi.github.io/pq-trivia/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pandaqi/pq-trivia.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Pandaqi/pq-trivia/issues"
+  },
   "scripts": {
     "check": "bun check -p tsconfig.json && bun check -p tsconfig.core.json && bun check -p tsconfig.scripts.json",
     "lint": "bun run scripts/lint.ts",
@@ -22,19 +30,46 @@
     "build": "bun run scripts/build.ts",
     "dev": "bun run scripts/build.ts --watch",
     "size": "bun run scripts/size.ts",
+    "bench": "bun run scripts/bench.ts",
     "test": "bun test",
     "check:content": "bun run cli/index.ts validate template/questions test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
     "validate": "bun run cli/index.ts validate",
     "format": "bun run cli/index.ts format",
     "docs": "bun run cli/index.ts docs",
+    "docs:dev": "bun ./node_modules/vitepress/bin/vitepress.js dev docs",
+    "docs:build": "bun ./node_modules/vitepress/bin/vitepress.js build docs",
+    "docs:preview": "bun ./node_modules/vitepress/bin/vitepress.js preview docs",
+    "docs:reference": "bun run scripts/docsReference.ts",
     "pack": "bun run cli/index.ts pack",
-    "preview": "bun run scripts/serve.ts"
+    "preview": "bun run scripts/serve.ts",
+    "release:dry": "bun run scripts/release.ts"
+  },
+  "exports": {
+    ".": "./dist/v3/player.js",
+    "./core": "./dist/v3/core.js",
+    "./headless": "./dist/v3/headless.js",
+    "./browser": "./dist/v3/browser.js",
+    "./multiplayer": "./dist/v3/multiplayer.js",
+    "./animations": "./dist/v3/animations.js",
+    "./themes/*": "./dist/v3/themes/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/v3",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   },
   "dependencies": {
-    "preact": "^11.2.0"
+    "preact": "^11.2.0",
+    "trystero": "^0.27.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.0"
+    "@types/bun": "^1.3.0",
+    "vitepress": "^1.6.4"
   },
   "engines": {
     "bun": ">=1.4.4"

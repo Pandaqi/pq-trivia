@@ -12,6 +12,7 @@ import {
   type ScreenViewModel,
 } from "../../core/session/viewModel";
 import { CodeHighlightContext } from "./components/CodeBlock";
+import { preloadNextQuestion } from "../../platform/browser/preload";
 import { EndScreen } from "./screens/EndScreen";
 import { LockedScreen } from "./screens/LockedScreen";
 import { MessageScreen } from "./screens/MessageScreen";
@@ -141,7 +142,8 @@ export function QuizApp({
 
   useEffect(() => {
     root.current?.querySelector<HTMLElement>("[data-pq-heading]")?.focus();
-  }, [snapshot.screen]);
+    preloadNextQuestion(quiz);
+  }, [quiz, snapshot.screen]);
 
   const screen = snapshot.screen;
   if (screen === null) {

@@ -5,7 +5,7 @@
  * use this. The Preact player is one consumer of it.
  */
 
-import type { QuizModel } from "../model/quiz";
+import { parseQuiz, type QuizModel } from "../model/quiz";
 import { planQuiz, type PlanOptions } from "../plan/plan";
 import {
   toEmbedded,
@@ -215,6 +215,7 @@ export function createQuiz(options: CreateQuizOptions = {}): Quiz {
   const loader = createLoader({
     destroyed: () => destroyed,
     config: () => config,
+    parseText: options.parseText ?? parseQuiz,
     revealMode,
     state: () => state,
     setState: (next) => {

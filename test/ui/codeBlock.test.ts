@@ -18,6 +18,20 @@ describe("fence highlighter", () => {
     expect(kinds("a { color: #fff; }", "css")).toEqual(["number"]);
   });
 
+  test("a URL in CSS is not a comment", () => {
+    expect(
+      kinds("a { background: url(https://example.com/x.png); }", "css"),
+    ).not.toContain("comment");
+  });
+
+  test("CSS block comments still work", () => {
+    expect(kinds("/* note */ a { color: red; }", "css")).toContain("comment");
+  });
+
+  test("SCSS keeps its line comments", () => {
+    expect(kinds("// note\na { color: red; }", "scss")).toContain("comment");
+  });
+
   test("a hash is a comment in Python", () => {
     expect(kinds("x = 1  # note", "python")).toEqual(["number", "comment"]);
   });

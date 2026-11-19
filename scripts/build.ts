@@ -58,6 +58,7 @@ const THEME_PARTS: Readonly<Record<string, readonly string[]>> = {
     "paper.answers.css",
     "paper.controls.css",
     "paper.interactive.css",
+    "paper.live.css",
   ],
   "print.css": ["print.pages.css", "print.questions.css", "print.forms.css"],
 };
