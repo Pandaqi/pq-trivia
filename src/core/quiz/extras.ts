@@ -256,6 +256,14 @@ export function createExtras(ctx: ExtrasContext): Extras {
           index: record.index,
           startedAt: record.startedAt,
           endedAt: record.endedAt,
+          ...(record.confidence === undefined
+            ? {}
+            : { confidence: record.confidence }),
+          ...(record.wagers === undefined ? {} : { wagers: record.wagers }),
+          ...(record.noIdea === undefined ? {} : { noIdea: record.noIdea }),
+          ...(record.mediaPlays === undefined
+            ? {}
+            : { mediaPlays: record.mediaPlays }),
         },
         Date.now(),
       ),

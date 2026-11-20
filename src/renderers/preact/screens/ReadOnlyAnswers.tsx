@@ -17,6 +17,7 @@ import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { answerLabel } from "../components/answerLabels";
+import { Feedback } from "../../forms/fields";
 import { useT } from "../i18n";
 
 export function ReadOnlyAnswers({
@@ -48,6 +49,7 @@ export function ReadOnlyAnswers({
             ) : (
               <Media item={answer.media} />
             )}
+            <Feedback answer={answer} />
           </span>
           {answer.points === null ? null : (
             <span class="pq-answer-score">+{answer.points}</span>

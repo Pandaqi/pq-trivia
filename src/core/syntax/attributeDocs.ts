@@ -64,4 +64,6 @@ export const ATTRIBUTE_DESCRIPTIONS: Readonly<Record<string, string>> = {
   Continue: "When the player may move on.",
   Include: "Path[#selector] to merge before planning.",
   Script: "Sandboxed widget file.",
+  Wager:
+    "Bet up to your score, never more than the question's points. Right wins the stake, wrong loses it, and a score never goes below zero.",
 };

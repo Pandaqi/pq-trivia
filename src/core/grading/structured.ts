@@ -8,7 +8,7 @@ import {
 import { answerRefs } from "../model/answers";
 import { ResponseKind, type Response } from "../session/responses";
 import { matchText, normalizeText } from "./normalize";
-import { closePoints, part, scoringPoints } from "./parts";
+import { closePoints, part, round2, scoringPoints } from "./parts";
 import { GradeKind, type GradeOptions, type GradeResult } from "./types";
 
 const PAIR_SYMBOL = "~";
@@ -114,6 +114,64 @@ export function gradeSort(
     kind: won
       ? GradeKind.Correct
       : given.length === 0
+        ? GradeKind.Unanswered
+        : points > 0
+          ? GradeKind.Partial
+          : GradeKind.Wrong,
+    points,
+    maxPoints: questionMaxScore(question),
+    parts,
+    normalizedGiven: given.map((id) => textOf.get(id) ?? id),
+    normalizedCorrect: expected.map((id) => textOf.get(id) ?? id),
+  };
+}
+
+/**
+ * Rank: the same input as sort, a friendlier score. Every adjacent pair that
+ * sits the right way round earns an even share. Duplicates cannot pass.
+ */
+export function gradeRank(
+  question: QuestionModel,
+  response: Response,
+): GradeResult {
+  const refs = answerRefs(question);
+  const given =
+    response.kind === ResponseKind.Sort ? response.order : ([] as string[]);
+  const expected = refs.map((ref) => ref.id);
+  const textOf = new Map(refs.map((ref) => [ref.id, ref.value.text]));
+  const pairs = Math.max(expected.length - 1, 1);
+  const perPair = closePoints(questionMaxScore(question), pairs).points;
+  const parts = Array.from({ length: expected.length - 1 }, (_, index) => {
+    const first = expected[index] ?? "";
+    const second = expected[index + 1] ?? "";
+    const at = given.indexOf(first);
+    const won = at >= 0 && given[at + 1] === second;
+    return part(
+      `${textOf.get(first) ?? first} then ${textOf.get(second) ?? second}`,
+      `${textOf.get(first) ?? ""} → ${textOf.get(second) ?? ""}`,
+      at >= 0
+        ? `${textOf.get(first) ?? ""} → ${textOf.get(given[at + 1] ?? "") ?? ""}`
+        : "",
+      won,
+      perPair,
+    );
+  });
+  const unique =
+    new Set(given).size === given.length && given.length === expected.length;
+  const all =
+    parts.length > 0 && parts.every((entry) => entry.correct) && unique;
+  const won = parts.filter((entry) => entry.correct).length;
+  const points = all
+    ? questionMaxScore(question)
+    : round2((questionMaxScore(question) * won) / pairs);
+  const answered = given.length > 0;
+  return {
+    questionId: question.id,
+    answered,
+    correct: all,
+    kind: all
+      ? GradeKind.Correct
+      : !answered
         ? GradeKind.Unanswered
         : points > 0
           ? GradeKind.Partial

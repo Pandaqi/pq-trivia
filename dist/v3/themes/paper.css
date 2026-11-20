@@ -2174,6 +2174,278 @@
   }
 }
 
+/* --- Answer interfaces (Phase 10) --------------------------------------- */
+
+.pq-field-note {
+  margin: 0.25rem 0 0;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.pq-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pq-unit {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+.pq-mic,
+.pq-no-idea,
+.pq-confidence-key,
+.pq-numpad-key,
+.pq-region,
+.pq-bucket-name {
+  border: 1px solid var(--pq-line, currentColor);
+  border-radius: 0.4rem;
+  background: var(--pq-surface, transparent);
+  color: inherit;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pq-mic[aria-pressed="true"],
+.pq-no-idea[aria-pressed="true"],
+.pq-confidence-key[aria-pressed="true"],
+.pq-region[aria-pressed="true"] {
+  background: var(--pq-accent, currentColor);
+  color: var(--pq-accent-ink, #fff);
+}
+
+.pq-response-extras {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.pq-confidence {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.pq-wager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* The keypad is for thumbs. A mouse keeps the field. */
+.pq-numpad {
+  display: none;
+  grid-template-columns: repeat(3, minmax(3rem, 1fr));
+  gap: 0.35rem;
+  max-width: 16rem;
+  margin-top: 0.5rem;
+}
+
+.pq-numpad-wide {
+  grid-column: span 2;
+}
+
+@media (pointer: coarse) {
+  .pq-numpad {
+    display: grid;
+  }
+}
+
+.pq-slider {
+  width: 100%;
+}
+
+.pq-slider-value,
+.pq-wager-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.pq-parts {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pq-matrix {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pq-matrix th,
+.pq-matrix td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--pq-line, rgba(0, 0, 0, 0.15));
+  text-align: left;
+}
+
+.pq-matrix td {
+  text-align: center;
+}
+
+.pq-matrix input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+}
+
+/* The map is a shortcut. The list under it is the real answer for keyboard. */
+.pq-map {
+  position: relative;
+  max-width: 40rem;
+}
+
+.pq-map-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: crosshair;
+}
+
+.pq-map-surface img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.pq-map-marker {
+  position: absolute;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--pq-accent, #d33);
+  border: 2px solid #fff;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.pq-map-status {
+  font-size: 0.85em;
+  opacity: 0.8;
+}
+
+.pq-regions ul,
+.pq-labels,
+.pq-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.25rem 0 0;
+}
+
+.pq-target {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  padding: 0.25rem 0.4rem;
+  border: 2px dashed var(--pq-accent, #666);
+  border-radius: 0.4rem;
+  background: var(--pq-surface, #fff);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pq-target[data-pq-used="true"] {
+  border-style: solid;
+}
+
+.pq-target-owner {
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+.pq-label,
+.pq-placed {
+  border: 1px solid var(--pq-line, currentColor);
+  border-radius: 0.4rem;
+  background: var(--pq-surface, transparent);
+  color: inherit;
+  padding: 0.3rem 0.55rem;
+  font: inherit;
+  cursor: grab;
+}
+
+.pq-label[aria-pressed="true"] {
+  outline: 2px solid var(--pq-accent, currentColor);
+}
+
+.pq-label[data-pq-placed="true"] {
+  opacity: 0.65;
+}
+
+.pq-classification {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pq-buckets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.5rem;
+}
+
+.pq-bucket {
+  border: 1px dashed var(--pq-line, rgba(0, 0, 0, 0.25));
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  min-height: 4rem;
+}
+
+.pq-bucket ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+}
+
+.pq-bucket-name {
+  width: 100%;
+  font-weight: 600;
+}
+
+.pq-answer-feedback {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.pq-review-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  font-size: 0.85em;
+}
+
+.pq-flag {
+  border: 1px solid var(--pq-line, rgba(0, 0, 0, 0.2));
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
+
+.pq-media-limit {
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px dashed var(--pq-line, currentColor);
+  border-radius: 0.5rem;
+}
+
 
 /* Live mode. Paper, part five: a code you can read from the back row, and
  * phone buttons a thumb can hit without aiming. Everything else is the player's
@@ -2189,6 +2461,21 @@
 .pq-live-meta,
 .pq-live-hint {
   margin: 0;
+}
+
+/* A stake on a phone. The solo slider, sized for a thumb. */
+.pq-live-stake {
+  display: grid;
+  gap: 0.4rem;
+
+  input {
+    width: 100%;
+  }
+
+  output {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
 }
 
 .pq-live-heading {

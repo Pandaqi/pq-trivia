@@ -143,11 +143,18 @@ export function HostView({
                 <span>{player.name}</span>
                 <span class="pq-live-score">
                   {player.answered ? "in" : "…"}
+                  {player.stake === null ? "" : ` · staked ${player.stake}`}
                 </span>
               </li>
             ))}
           </ul>
         </section>
+      )}
+
+      {state.buzz === null || phase !== RoomPhase.Question ? null : (
+        <p class="pq-live-hint pq-live-buzz" role="status">
+          {state.buzz.name} buzzed first.
+        </p>
       )}
 
       {reveal === null ? null : (

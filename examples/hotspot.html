@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hotspot coordinates</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 52rem;
+        padding: 1.5rem;
+        line-height: 1.5;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      #stage {
+        position: relative;
+        margin: 1rem 0;
+        border: 1px solid currentColor;
+      }
+      #stage img {
+        display: block;
+        width: 100%;
+        height: auto;
+        cursor: crosshair;
+      }
+      .mark {
+        position: absolute;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid white;
+        border-radius: 50%;
+        background: #c33;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+      }
+      output {
+        display: block;
+        font-family: ui-monospace, monospace;
+        white-space: pre-wrap;
+      }
+      .empty {
+        opacity: 0.7;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Hotspot coordinates</h1>
+    <p>
+      Pick an image, then click the spots you want. The numbers are percent of
+      the image, ready for <code>Answer =&gt; 40,60</code>. Nothing is uploaded:
+      the picture never leaves your computer.
+    </p>
+    <input type="file" id="file" accept="image/*" />
+    <div id="stage" hidden><img id="map" alt="The image to measure" /></div>
+    <output id="out" class="empty">No clicks yet.</output>
+
+    <script>
+      const file = document.querySelector("#file");
+      const stage = document.querySelector("#stage");
+      const map = document.querySelector("#map");
+      const out = document.querySelector("#out");
+      const clicks = [];
+
+      file.addEventListener("change", () => {
+        const picked = file.files && file.files[0];
+        if (!picked) {
+          return;
+        }
+        if (map.dataset.url) {
+          URL.revokeObjectURL(map.dataset.url);
+        }
+        const url = URL.createObjectURL(picked);
+        map.dataset.url = url;
+        map.src = url;
+        stage.hidden = false;
+        clicks.length = 0;
+        stage.querySelectorAll(".mark").forEach((node) => node.remove());
+        out.textContent = "No clicks yet.";
+        out.classList.add("empty");
+      });
+
+      map.addEventListener("click", (event) => {
+        const box = map.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) {
+          return;
+        }
+        const x = Math.round(((event.clientX - box.left) / box.width) * 100);
+        const y = Math.round(((event.clientY - box.top) / box.height) * 100);
+        const point = {
+          x: Math.min(100, Math.max(0, x)),
+          y: Math.min(100, Math.max(0, y)),
+        };
+        clicks.push(point);
+
+        const mark = document.createElement("span");
+        mark.className = "mark";
+        mark.style.left = `${point.x}%`;
+        mark.style.top = `${point.y}%`;
+        stage.append(mark);
+
+        out.classList.remove("empty");
+        out.textContent = clicks
+          .map((entry) => `Answer => ${entry.x},${entry.y}`)
+          .join("\n");
+      });
+    </script>
+  </body>
+</html>

@@ -34,12 +34,35 @@ export function typeHintText(
       });
     case QuestionType.Range:
       return t("typeHintRange", { range: hint.range ?? 0 });
+    case QuestionType.Estimate:
+      return t("typeHintEstimate", {
+        ...score,
+        unit: hint.unit ?? "",
+      });
     case QuestionType.Sort:
       return t("typeHintSort", score);
+    case QuestionType.Rank:
+      return t("typeHintRank", score);
     case QuestionType.Match:
       return t("typeHintMatch", score);
     case QuestionType.Cloze:
       return t("typeHintCloze", score);
+    case QuestionType.OddOneOut:
+      return t("typeHintOddOneOut", score);
+    case QuestionType.Hotspot:
+      return t("typeHintHotspot", score);
+    case QuestionType.Matrix:
+      return t("typeHintMatrix", {
+        ...score,
+        rows: hint.rows,
+        answer: answers,
+      });
+    case QuestionType.Parts:
+      return t("typeHintParts", { count: hint.answerCount, ...score });
+    case QuestionType.Classification:
+      return t("typeHintClassification", score);
+    case QuestionType.Diagram:
+      return t("typeHintDiagram", score);
     default:
       return null;
   }

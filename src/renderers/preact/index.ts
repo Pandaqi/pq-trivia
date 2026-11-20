@@ -10,7 +10,7 @@ export { EndScreen } from "./screens/EndScreen";
 export { MessageScreen } from "./screens/MessageScreen";
 export { Inline } from "./components/Inline";
 export { Media } from "./components/Media";
-export { Answers } from "./components/Answers";
+export { Answers } from "../forms/Answers";
 export { Problems } from "./components/Problems";
 export { SettingsPanel } from "./screens/SettingsPanel";
 export { backgroundStyle } from "./components/background";

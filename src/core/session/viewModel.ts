@@ -6,77 +6,43 @@
  * That is what makes DOM inspection useless in classroom mode.
  */
 
-import { InlineKind, parseInline, type InlineNode } from "../format/inline";
+import { parseInline, type InlineNode } from "../format/inline";
 import { numberPrefix } from "../format/numbering";
-import { answerRefs } from "../model/answers";
+import type { QuestionPart } from "../model/parts";
 import { OrderMode } from "../model/question";
+import { typeHintOf, type QuestionTypeHint } from "../model/typeHint";
+import {
+  buildAnswers,
+  inlineValue,
+  type AnswerViewModel,
+} from "../values/answerView";
 import { derivedRng, shuffleWith } from "../plan/shuffle";
 import type { QuizMeta } from "../model/quiz";
 import {
   QuestionType,
-  ScoringMethod,
+  questionMaxScore,
   type QuestionModel,
 } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
-import type { GradeReport } from "../grading/report";
+import { bankAt, type GradeReport } from "../grading/report";
+import { stakingLimit } from "../grading/wager";
 import { PlayMode, type Progress, type SessionState } from "./session";
 import { stepViewOf, type StepViewModel } from "../model/steps";
-import {
-  mediaForConfig,
-  MediaKind,
-  parseMediaDescriptor,
-  type MediaDescriptor,
-  type MediaOptions,
-} from "../values/media";
+import { MediaKind, type MediaOptions } from "../values/media";
+import { toMediaViewModel, type MediaViewModel } from "../values/mediaView";
+import type { HotspotTarget, SliderRange } from "../values/point";
+import type { Confidence } from "./responses";
+
+export { toMediaViewModel };
+export type { AnswerViewModel, MediaViewModel };
+export { typeHintOf };
+export type { QuestionTypeHint };
 
 export enum ScreenKind {
   Start = "start",
   Question = "question",
   End = "end",
   Results = "results",
-}
-
-export interface AnswerViewModel {
-  readonly id: string;
-  readonly text: string;
-  /** The same inline tree the question uses. Links and emphasis work here too. */
-  readonly nodes: readonly InlineNode[];
-  /** Set when the answer is a media file, like V2 allowed. Otherwise null. */
-  readonly media: MediaViewModel | null;
-  /** Null in question mode. True or false once answers may be shown. */
-  readonly correct: boolean | null;
-  /** Points this answer earns, shown in a corner bubble. Null until revealed. */
-  readonly points: number | null;
-}
-
-export interface MediaViewModel {
-  readonly path: string;
-  readonly kind: MediaKind;
-  readonly alt: string | null;
-  readonly credit: string | null;
-  /** `name-640.jpg 640w, name-1280.jpg 1280w`, straight from the descriptor. */
-  readonly srcset: string | null;
-  readonly poster: string | null;
-  /** A WebVTT file. Audio without captions excludes people. */
-  readonly captions: string | null;
-}
-
-export function toMediaViewModel(
-  descriptor: MediaDescriptor,
-  fallbackAlt: string | null = null,
-  media: MediaOptions = {},
-): MediaViewModel {
-  const resolved = mediaForConfig(descriptor, media);
-  const options = resolved.options;
-  return {
-    path: resolved.path,
-    kind: resolved.kind,
-    alt: options["alt"] ?? fallbackAlt,
-    credit: options["credit"] ?? null,
-    srcset: options["srcset"] ?? null,
-    poster: options["poster"] ?? null,
-    captions: options["captions"] ?? null,
-  };
 }
 
 /**
@@ -86,15 +52,6 @@ export function toMediaViewModel(
  * into words, so the core stays free of interface strings. Answer identities
  * never travel here: only how many there are.
  */
-export interface QuestionTypeHint {
-  readonly kind: QuestionType;
-  readonly answerCount: number;
-  readonly correctCount: number;
-  /** Points a single correct answer earns. */
-  readonly pointsPerAnswer: number;
-  readonly range: number | null;
-}
-
 export interface QuestionViewModel {
   readonly kind: ScreenKind.Question;
   readonly id: string;
@@ -103,6 +60,27 @@ export interface QuestionViewModel {
   readonly body: readonly InlineNode[];
   readonly answers: readonly AnswerViewModel[];
   readonly media: readonly MediaViewModel[];
+  /** The image a hotspot or diagram sits on. Null for every other type. */
+  readonly map: MediaViewModel | null;
+  /** Choice with `Negate => true`: pick the false one. */
+  readonly negated: boolean;
+  /** Autocomplete suggestions. Empty when the author gave none. */
+  readonly suggestions: readonly string[];
+  readonly slider: SliderRange | null;
+  readonly unit: string | null;
+  readonly tolerance: number | null;
+  readonly rows: readonly string[];
+  readonly scale: readonly string[];
+  readonly multiple: boolean;
+  readonly parts: readonly QuestionPart[];
+  readonly buckets: readonly string[];
+  readonly targets: readonly HotspotTarget[];
+  readonly hitRadius: number;
+  readonly wager: boolean;
+  readonly wagerMax: number;
+  readonly wagerValue: number | null;
+  readonly confidence: Confidence | null;
+  readonly noIdea: boolean;
   readonly hints: {
     readonly revealed: readonly {
       readonly text: string;
@@ -211,43 +189,6 @@ export {
   type ViewRenderer,
 } from "./registry";
 
-/** `$` and `FormatText => false` both mean: show the characters, nothing else. */
-function inlineValue(
-  value: { readonly text: string; readonly keepAsIs: boolean },
-  formatText: boolean,
-): readonly InlineNode[] {
-  return formatText && !value.keepAsIs
-    ? parseInline(value.text).nodes
-    : [{ kind: InlineKind.Text, text: value.text }];
-}
-
-/** Types with no fixed answer shape have nothing useful to say here. */
-const NO_TYPE_HINT: ReadonlySet<QuestionType> = new Set([
-  QuestionType.Section,
-  QuestionType.Start,
-  QuestionType.End,
-  QuestionType.Custom,
-]);
-
-/** Counts only, never identities: both the screen and the paper word this. */
-export function typeHintOf(question: QuestionModel): QuestionTypeHint | null {
-  if (NO_TYPE_HINT.has(question.type)) {
-    return null;
-  }
-  const parts = Math.max(question.correct.length, 1);
-  const pointsPerAnswer =
-    question.scoring === ScoringMethod.Partial
-      ? Math.round((question.score / parts) * 10) / 10
-      : question.score;
-  return {
-    kind: question.type,
-    answerCount: question.answers.length,
-    correctCount: parts,
-    pointsPerAnswer,
-    range: question.range,
-  };
-}
-
 export interface QuestionScreenView {
   readonly index: number;
   /** Playable number. Defaults to `index + 1`. */
@@ -285,46 +226,33 @@ export function questionScreen(
   const bodyValues = question.text.slice(1);
   const revealed = state.revealed.includes(question.id);
   const showAnswers = state.mode === PlayMode.Answers || revealed;
-  const correctTexts = new Set(question.correct.map((value) => value.text));
   const formatText = question.formatText;
-
-  const declared = answerRefs(question);
-  const refs =
-    question.answersOrder === OrderMode.Shuffle
-      ? shuffleWith(declared, derivedRng(question.id, "answers"))
-      : declared;
-  const parts = Math.max(question.correct.length, 1);
-  const pointsPerAnswer =
-    question.scoring === ScoringMethod.Partial
-      ? Math.round((question.score / parts) * 10) / 10
-      : question.score;
-  const answers: AnswerViewModel[] = refs.map((ref) => {
-    const correct = showAnswers ? correctTexts.has(ref.value.text) : null;
-    const descriptor = parseMediaDescriptor(ref.value.text);
-    const resolved = mediaForConfig(descriptor, mediaOptions);
-    const isMedia = !ref.value.keepAsIs && resolved.kind !== MediaKind.File;
-    return {
-      id: ref.id,
-      text: ref.value.text,
-      nodes: inlineValue(ref.value, formatText),
-      media: isMedia
-        ? toMediaViewModel(descriptor, question.alt, mediaOptions)
-        : null,
-      correct,
-      points: correct === true ? pointsPerAnswer : null,
-    };
-  });
+  const answers = buildAnswers(
+    question,
+    showAnswers,
+    mediaOptions,
+    state.mediaPlays[question.id] ?? 0,
+  );
 
   const typeHint = typeHintOf(question);
   const hintCount = state.hints[question.id] ?? 0;
   const hints = question.hints.slice(0, hintCount);
   const declaredMedia = question.media.map((item) =>
-    toMediaViewModel(item, question.alt, mediaOptions),
+    toMediaViewModel(
+      item,
+      question.alt,
+      mediaOptions,
+      question.playLimit,
+      state.mediaPlays[question.id] ?? 0,
+    ),
   );
   const media =
     question.mediaOrder === OrderMode.Shuffle
       ? shuffleWith(declaredMedia, derivedRng(question.id, "media"))
       : declaredMedia;
+  const isMapType =
+    question.type === QuestionType.Hotspot ||
+    question.type === QuestionType.Diagram;
 
   return {
     kind: ScreenKind.Question,
@@ -337,6 +265,38 @@ export function questionScreen(
     body: bodyValues.flatMap((value) => inlineValue(value, formatText)),
     answers,
     media,
+    map: isMapType
+      ? (declaredMedia.find((item) => item.kind === MediaKind.Image) ?? null)
+      : null,
+    negated: question.negate,
+    suggestions:
+      question.suggestions.length > 0
+        ? question.suggestions
+        : question.alsoAccept,
+    slider: question.slider,
+    unit: question.unit,
+    tolerance: question.tolerance,
+    rows: question.rows,
+    scale: question.scale,
+    multiple: question.multiple,
+    parts: question.parts,
+    buckets: question.buckets,
+    targets: question.targets,
+    hitRadius: question.hitRadius,
+    wager: question.wager,
+    // Stake up to the question's points, and only as far as the score reaches.
+    wagerMax:
+      state.plan === null
+        ? 0
+        : stakingLimit(
+            questionMaxScore(question),
+            bankAt(state.plan, state.responses, view.index, {
+              wagers: state.wagers,
+            }),
+          ),
+    wagerValue: state.wagers[question.id] ?? null,
+    confidence: state.confidence[question.id] ?? null,
+    noIdea: state.noIdea.includes(question.id),
     hints: {
       revealed: hints.map((value) => ({
         text: value.text,

@@ -12,7 +12,7 @@ import { PlayMode, type SessionState } from "../../../core/session/session";
 import type { TimerSound } from "../../../core/session/timers";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
-import { Answers } from "../components/Answers";
+import { Answers } from "../../forms/Answers";
 import { QuestionOptions, ReadOnlyAnswers } from "./ReadOnlyAnswers";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
@@ -235,6 +235,7 @@ export function QuestionScreen({
             autoplay={quiz.config.mediaAutoPlay === true}
             asIframe={quiz.config.loadExternalMediaAsIframe === true}
             animate={stepEnter(screen, StepPart.Media)}
+            onPlay={() => quiz.noteMediaPlay(screen.id)}
             onEnded={staged ? () => void quiz.nextStep() : undefined}
           />
         ))}

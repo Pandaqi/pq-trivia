@@ -7,6 +7,7 @@
  */
 
 import { answerRefs } from "../model/answers";
+import { groupedAnswers } from "../model/parts";
 import {
   GradingMode,
   questionMaxScore,
@@ -21,8 +22,16 @@ import {
 } from "../session/responses";
 import { matchText, normalizeText, parseNumber } from "./normalize";
 import { closePoints, part, round2 } from "./parts";
+import {
+  gradeClassification,
+  gradeDiagram,
+  gradeHotspot,
+  gradeMatrix,
+  gradeOddOneOut,
+  gradeParts,
+} from "./interfaces";
 import { GradeKind, type GradeOptions, type GradeResult } from "./types";
-import { gradeList, gradeMatch, gradeSort } from "./structured";
+import { gradeList, gradeMatch, gradeRank, gradeSort } from "./structured";
 
 export * from "./types";
 
@@ -75,12 +84,17 @@ function gradeOpen(
   };
 }
 
-function gradeRange(question: QuestionModel, response: Response): GradeResult {
+function gradeNumber(
+  question: QuestionModel,
+  response: Response,
+  margin: number,
+  unit: string | null,
+): GradeResult {
   const given = response.kind === ResponseKind.Range ? response.value : null;
   const expectedText =
     question.correct[0]?.text ?? question.answers[0]?.text ?? "";
   const expected = parseNumber(expectedText);
-  const margin = question.range ?? 0;
+  const suffix = unit === null ? "" : ` ${unit}`;
   const won =
     given !== null && expected !== null && Math.abs(given - expected) <= margin;
   const maxPoints = questionMaxScore(question);
@@ -109,8 +123,10 @@ function gradeRange(question: QuestionModel, response: Response): GradeResult {
     parts: [
       part(
         "Number",
-        margin === 0 ? expectedText : `${expectedText} ± ${margin}`,
-        String(given),
+        margin === 0
+          ? `${expectedText}${suffix}`
+          : `${expectedText} ± ${margin}${suffix}`,
+        `${given}${suffix}`,
         won,
         maxPoints,
       ),
@@ -118,6 +134,23 @@ function gradeRange(question: QuestionModel, response: Response): GradeResult {
     normalizedGiven: [String(given)],
     normalizedCorrect: expected === null ? [] : [String(expected)],
   };
+}
+
+function gradeRange(question: QuestionModel, response: Response): GradeResult {
+  return gradeNumber(question, response, question.range ?? 0, null);
+}
+
+/** `Tolerance` is the margin, in the answer's own unit. */
+function gradeEstimate(
+  question: QuestionModel,
+  response: Response,
+): GradeResult {
+  return gradeNumber(
+    question,
+    response,
+    question.tolerance ?? question.range ?? 0,
+    question.unit,
+  );
 }
 
 function gradeChoice(
@@ -130,16 +163,23 @@ function gradeChoice(
   const selected =
     response.kind === ResponseKind.Choice ? response.selected : [];
   const correctTexts = new Set(question.correct.map((value) => value.text));
-  const correctIds = refs
-    .filter((ref) => correctTexts.has(ref.value.text))
-    .map((ref) => ref.id);
+  // `Negate => true` lists the true statements; the odd one out is the answer.
+  const wanted = (ref: (typeof refs)[number]): boolean =>
+    question.negate
+      ? !correctTexts.has(ref.value.text)
+      : correctTexts.has(ref.value.text);
+  const correctIds = refs.filter(wanted).map((ref) => ref.id);
   const maxPoints = questionMaxScore(question);
 
   if (correctIds.length <= 1) {
-    const wanted = correctIds[0];
+    const wantedId = correctIds[0];
     const won =
-      wanted !== undefined && selected.length === 1 && selected[0] === wanted;
-    const expectedText = question.correct[0]?.text ?? "";
+      wantedId !== undefined &&
+      selected.length === 1 &&
+      selected[0] === wantedId;
+    const expectedText = question.negate
+      ? (refs.find((ref) => ref.id === wantedId)?.value.text ?? "")
+      : (question.correct[0]?.text ?? "");
     const givenText =
       refs.find((ref) => selected.includes(ref.id))?.value.text ?? "";
     return {
@@ -163,7 +203,7 @@ function gradeChoice(
   // so `all-or-nothing` can never be fooled by ticking everything.
   const perPart = closePoints(maxPoints, correctIds.length);
   const parts = refs
-    .filter((ref) => correctTexts.has(ref.value.text))
+    .filter(wanted)
     .map((ref) =>
       part(
         "Answer",
@@ -174,7 +214,7 @@ function gradeChoice(
       ),
     );
   for (const ref of refs) {
-    if (correctTexts.has(ref.value.text) || !selected.includes(ref.id)) {
+    if (wanted(ref) || !selected.includes(ref.id)) {
       continue;
     }
     parts.push(
@@ -213,7 +253,9 @@ function gradeChoice(
     normalizedGiven: refs
       .filter((ref) => selected.includes(ref.id))
       .map((ref) => normalizeText(ref.value.text, mode)),
-    normalizedCorrect: question.correct.map((value) => value.text),
+    normalizedCorrect: correctIds.map(
+      (id) => refs.find((ref) => ref.id === id)?.value.text ?? id,
+    ),
   };
 }
 
@@ -223,25 +265,7 @@ function gradeChoice(
  * leaves the empty split entry where `||` sits, and that is the separator.
  */
 export function clozeGroups(question: QuestionModel): string[][] {
-  const texts = question.answers.map((value) => value.text);
-  const groups: string[][] = [];
-  let current: string[] = [];
-  let grouped = false;
-  for (const text of texts) {
-    if (text.trim().length === 0) {
-      grouped = true;
-      if (current.length > 0) {
-        groups.push(current);
-        current = [];
-      }
-      continue;
-    }
-    current.push(text);
-  }
-  if (current.length > 0) {
-    groups.push(current);
-  }
-  return grouped ? groups : texts.map((text) => [text]);
+  return groupedAnswers(question.answers.map((value) => value.text));
 }
 
 function gradeCloze(
@@ -361,14 +385,30 @@ export function gradeQuestion(
       return gradeChoice(question, response, options, mode);
     case QuestionType.Range:
       return gradeRange(question, response);
+    case QuestionType.Estimate:
+      return gradeEstimate(question, response);
     case QuestionType.List:
       return gradeList(question, response, options, mode);
     case QuestionType.Sort:
       return gradeSort(question, response);
+    case QuestionType.Rank:
+      return gradeRank(question, response);
     case QuestionType.Match:
       return gradeMatch(question, response);
     case QuestionType.Cloze:
       return gradeCloze(question, response, options);
+    case QuestionType.OddOneOut:
+      return gradeOddOneOut(question, response, options, mode);
+    case QuestionType.Hotspot:
+      return gradeHotspot(question, response);
+    case QuestionType.Matrix:
+      return gradeMatrix(question, response);
+    case QuestionType.Parts:
+      return gradeParts(question, response, options, mode);
+    case QuestionType.Classification:
+      return gradeClassification(question, response);
+    case QuestionType.Diagram:
+      return gradeDiagram(question, response);
     case QuestionType.Custom:
       return gradeCustom(question, response);
     default:

@@ -7,32 +7,32 @@
 
 import type { AstAttribute, AstQuestion } from "../syntax/ast";
 import { ATTRIBUTES } from "../syntax/attributeRegistry";
-import { QUESTION_TYPES } from "../syntax/attributes";
-import {
-  DiagnosticCodes,
-  syntaxWarning,
-  type Diagnostic,
-  type SourceLocation,
-} from "../syntax/diagnostics";
-import {
-  coerceBoolean,
-  coerceDuration,
-  coerceEnum,
-  coerceNumber,
-} from "../values/coerce";
+import type { Diagnostic } from "../syntax/diagnostics";
 import { parseMediaDescriptor } from "../values/media";
 import { pickValue, type QuestionValue } from "../values/qval";
-import { stableId } from "./ids";
 import {
-  isStepToken,
-  isStepTransition,
-  STEP_PARTS,
-  STEP_TRANSITIONS,
-} from "./steps";
+  CONTINUE_VALUES,
+  DIRECTION_VALUES,
+  GRADING_VALUES,
+  ORDER_VALUES,
+  readBoolean,
+  readEnum,
+  readNumber,
+  readScale,
+  readSlider,
+  readSteps,
+  readTargets,
+  readTimer,
+  readType,
+  SCORING_VALUES,
+} from "./attributeReaders";
+import { stableId } from "./ids";
+import { parseParts } from "./parts";
 import {
   attributeValues,
   ContinueMode,
-  detectType,
+  DEFAULT_HIT_RADIUS,
+  DEFAULT_SCALE,
   Direction,
   firstAttributeValue,
   GradingMode,
@@ -43,198 +43,22 @@ import {
   type QuestionModel,
 } from "./question";
 
-const SCORING_VALUES: readonly ScoringMethod[] = [
-  ScoringMethod.AllOrNothing,
-  ScoringMethod.Partial,
-  ScoringMethod.PerCorrect,
-];
-const GRADING_VALUES: readonly GradingMode[] = [
-  GradingMode.Exact,
-  GradingMode.Normalized,
-  GradingMode.Fuzzy,
-];
-const ORDER_VALUES: readonly OrderMode[] = [OrderMode.Keep, OrderMode.Shuffle];
-const DIRECTION_VALUES: readonly Direction[] = [
-  Direction.Auto,
-  Direction.Ltr,
-  Direction.Rtl,
-];
-const CONTINUE_VALUES: readonly ContinueMode[] = [
-  ContinueMode.Always,
-  ContinueMode.OnCorrect,
-  ContinueMode.OnWrong,
-];
-
 /** Types where every answer is part of the truth: order, pairs or blanks. */
 const ALL_ANSWERS_ARE_CORRECT: ReadonlySet<QuestionType> = new Set([
   QuestionType.List,
   QuestionType.Sort,
+  QuestionType.Rank,
   QuestionType.Match,
   QuestionType.Cloze,
+  QuestionType.Hotspot,
+  QuestionType.Classification,
+  QuestionType.Diagram,
 ]);
 
 /** Anything the registry does not know lands in `extra`, so nothing is lost. */
 const KNOWN_KEYS: ReadonlySet<string> = new Set(
   ATTRIBUTES.map((attribute) => attribute.key),
 );
-
-function readBoolean(
-  attributes: readonly AstAttribute[],
-  key: string,
-  fallback: boolean,
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): boolean {
-  const raw = firstAttributeValue(attributes, key);
-  if (raw === undefined) {
-    return fallback;
-  }
-  const value = coerceBoolean(raw);
-  if (value !== undefined) {
-    return value;
-  }
-  diagnostics.push(
-    syntaxWarning(
-      DiagnosticCodes.InvalidBoolean,
-      `"${key}" should be true or false, not "${raw}".`,
-      { location, suggestion: "Use true, false, yes, no, on or off." },
-    ),
-  );
-  return fallback;
-}
-
-function readNumber(
-  attributes: readonly AstAttribute[],
-  key: string,
-  fallback: number | null,
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): number | null {
-  const raw = firstAttributeValue(attributes, key);
-  if (raw === undefined) {
-    return fallback;
-  }
-  const value = coerceNumber(raw);
-  if (value !== undefined) {
-    return value;
-  }
-  diagnostics.push(
-    syntaxWarning(
-      DiagnosticCodes.InvalidNumber,
-      `"${key}" should be a number, not "${raw}".`,
-      {
-        location,
-      },
-    ),
-  );
-  return fallback;
-}
-
-function readEnum<T extends string>(
-  attributes: readonly AstAttribute[],
-  key: string,
-  allowed: readonly T[],
-  fallback: T,
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): T {
-  const raw = firstAttributeValue(attributes, key);
-  if (raw === undefined) {
-    return fallback;
-  }
-  const value = coerceEnum(raw, allowed);
-  if (value !== undefined) {
-    return value;
-  }
-  diagnostics.push(
-    syntaxWarning(
-      DiagnosticCodes.InvalidValue,
-      `"${key}" has an unknown value "${raw}".`,
-      {
-        location,
-        suggestion: `Allowed: ${allowed.join(", ")}.`,
-      },
-    ),
-  );
-  return fallback;
-}
-
-/** A typo in `Steps` costs a step, so it is worth a word. */
-function readSteps(
-  attributes: readonly AstAttribute[],
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): readonly string[] {
-  const raw = attributeValues(attributes, "Steps");
-  for (const entry of raw.flatMap((value) => value.split("|"))) {
-    const token = entry.trim();
-    if (token.length === 0 || isStepToken(token) || isStepTransition(token)) {
-      continue;
-    }
-    diagnostics.push(
-      syntaxWarning(
-        DiagnosticCodes.InvalidValue,
-        `"Steps" has an unknown part or transition "${token}".`,
-        {
-          location,
-          suggestion: `Parts: ${STEP_PARTS.join(", ")} or all. Transitions: ${STEP_TRANSITIONS.join(", ")}.`,
-        },
-      ),
-    );
-  }
-  return raw;
-}
-
-function readTimer(
-  attributes: readonly AstAttribute[],
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): number | null {
-  const raw = firstAttributeValue(attributes, "Timer");
-  if (raw === undefined) {
-    return null;
-  }
-  const value = coerceDuration(raw);
-  if (value !== undefined) {
-    return value;
-  }
-  diagnostics.push(
-    syntaxWarning(
-      DiagnosticCodes.InvalidDuration,
-      `"Timer" should be a duration, not "${raw}".`,
-      {
-        location,
-        suggestion: "Try 90, 1:30 or 1m30s.",
-      },
-    ),
-  );
-  return null;
-}
-
-function readType(
-  attributes: readonly AstAttribute[],
-  diagnostics: Diagnostic[],
-  location: SourceLocation,
-): QuestionType {
-  const declared = firstAttributeValue(attributes, "Type");
-  if (
-    declared === undefined ||
-    coerceEnum(declared, QUESTION_TYPES) !== undefined
-  ) {
-    return detectType(attributes);
-  }
-  diagnostics.push(
-    syntaxWarning(
-      DiagnosticCodes.UnknownType,
-      `Unknown question type "${declared}".`,
-      {
-        location,
-        suggestion: `Allowed: ${QUESTION_TYPES.join(", ")}. Falling back to open.`,
-      },
-    ),
-  );
-  return QuestionType.Open;
-}
 
 /**
  * Screens may stay unanswered. List, sort, match and cloze treat every answer as
@@ -369,6 +193,29 @@ export function createQuestion(
       location,
     ),
     range: readNumber(attributes, "Range", null, diagnostics, location),
+    tolerance: readNumber(attributes, "Tolerance", null, diagnostics, location),
+    unit: firstAttributeValue(attributes, "Unit") ?? null,
+    slider: readSlider(attributes, diagnostics, location),
+    negate: readBoolean(attributes, "Negate", false, diagnostics, location),
+    feedback: attributeValues(attributes, "Feedback"),
+    suggestions: attributeValues(attributes, "Suggest"),
+    rows: attributeValues(attributes, "Rows"),
+    scale: readScale(attributes, DEFAULT_SCALE),
+    multiple: readBoolean(attributes, "Multiple", false, diagnostics, location),
+    parts: parseParts(attributeValues(attributes, "Parts")),
+    buckets: attributeValues(attributes, "Buckets"),
+    targets: readTargets(attributes, diagnostics, location),
+    hitRadius:
+      readNumber(
+        attributes,
+        "HitRadius",
+        DEFAULT_HIT_RADIUS,
+        diagnostics,
+        location,
+      ) ?? DEFAULT_HIT_RADIUS,
+    playLimit: readNumber(attributes, "PlayLimit", null, diagnostics, location),
+    wager: readBoolean(attributes, "Wager", false, diagnostics, location),
+    buzzer: readBoolean(attributes, "Buzzer", false, diagnostics, location),
     timerMs: readTimer(attributes, diagnostics, location),
     answersOrder: readEnum(
       attributes,

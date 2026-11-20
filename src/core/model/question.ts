@@ -9,18 +9,28 @@ import type { AstAttribute } from "../syntax/ast";
 import { QUESTION_TYPES } from "../syntax/attributes";
 import type { SourceLocation } from "../syntax/diagnostics";
 import type { Symbols } from "../syntax/symbols";
+import type { HotspotTarget, SliderRange } from "../values/point";
 import { coerceEnum } from "../values/coerce";
 import type { MediaDescriptor } from "../values/media";
 import type { QuestionValue } from "../values/qval";
+import { partPoints, type QuestionPart } from "./parts";
 
 export enum QuestionType {
   Open = "open",
   Choice = "choice",
   List = "list",
   Range = "range",
+  Rank = "rank",
+  Estimate = "estimate",
   Sort = "sort",
   Match = "match",
   Cloze = "cloze",
+  Matrix = "matrix",
+  Parts = "parts",
+  Classification = "classification",
+  Diagram = "diagram",
+  Hotspot = "hotspot",
+  OddOneOut = "odd-one-out",
   Section = "section",
   Start = "start",
   End = "end",
@@ -83,6 +93,38 @@ export interface QuestionModel {
   readonly grading: GradingMode;
   readonly fuzzyDistance: number | null;
   readonly range: number | null;
+  /** Estimate: how far off the answer may be. Falls back to `Range`. */
+  readonly tolerance: number | null;
+  /** Estimate: km, kg, years. Shown next to the number, never graded. */
+  readonly unit: string | null;
+  /** A slider, when the author names its bounds: `Slider => 0..100`. */
+  readonly slider: SliderRange | null;
+  /** Choice: the player must pick the one false option, not the true ones. */
+  readonly negate: boolean;
+  /** One line per answer, shown after the reveal. */
+  readonly feedback: readonly string[];
+  /** Autocomplete suggestions. Falls back to `AlsoAccept`. */
+  readonly suggestions: readonly string[];
+  /** Matrix: one statement per row. */
+  readonly rows: readonly string[];
+  /** Matrix: the shared scale. Defaults to true and false. */
+  readonly scale: readonly string[];
+  /** Matrix: tick more than one box per row. */
+  readonly multiple: boolean;
+  /** Parts: one input per part, with its own kind and share of the score. */
+  readonly parts: readonly QuestionPart[];
+  /** Classification: the named buckets. */
+  readonly buckets: readonly string[];
+  /** Hotspot and diagram: named points on the image. */
+  readonly targets: readonly HotspotTarget[];
+  /** How close a click must land, in percent of the image. */
+  readonly hitRadius: number;
+  /** Media: how many times a clip may be played. Null means no limit. */
+  readonly playLimit: number | null;
+  /** Wager: bet points before the reveal. */
+  readonly wager: boolean;
+  /** Buzzer: first correct answer in the live room wins. */
+  readonly buzzer: boolean;
   readonly timerMs: number | null;
   readonly answersOrder: OrderMode;
   readonly mediaOrder: OrderMode;
@@ -126,6 +168,12 @@ export interface BuildContext {
   readonly symbols: Symbols;
 }
 
+/** The scale a matrix uses when the author did not name one. */
+export const DEFAULT_SCALE: readonly string[] = ["True", "False"];
+
+/** How far a click may land when no `HitRadius` is given. */
+export const DEFAULT_HIT_RADIUS = 8;
+
 export function attributeValues(
   attributes: readonly AstAttribute[],
   key: string,
@@ -146,12 +194,32 @@ export function firstAttributeValue(
   return attributeValues(attributes, key)[0];
 }
 
+/** `OddOneOut`, `odd-one-out` and `odd one out` are the same question. */
+const TYPE_ALIASES: Readonly<Record<string, QuestionType>> = {
+  oddoneout: QuestionType.OddOneOut,
+  multipart: QuestionType.Parts,
+  multiparts: QuestionType.Parts,
+  number: QuestionType.Range,
+};
+
+export function toQuestionType(raw: string): QuestionType | null {
+  const exact = coerceEnum(raw, QUESTION_TYPES);
+  if (exact !== undefined) {
+    return exact as QuestionType;
+  }
+  const key = raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+  return TYPE_ALIASES[key] ?? null;
+}
+
 export function detectType(attributes: readonly AstAttribute[]): QuestionType {
   const raw = firstAttributeValue(attributes, "Type");
   if (raw !== undefined) {
-    const type = coerceEnum(raw, QUESTION_TYPES);
-    if (type !== undefined) {
-      return type as QuestionType;
+    const type = toQuestionType(raw);
+    if (type !== null) {
+      return type;
     }
   }
   if (firstAttributeValue(attributes, "Range") !== undefined) {
@@ -167,6 +235,12 @@ export function detectType(attributes: readonly AstAttribute[]): QuestionType {
 export function questionMaxScore(question: QuestionModel): number {
   if (question.type === QuestionType.Section) {
     return 0;
+  }
+  if (question.type === QuestionType.Parts && question.parts.length > 0) {
+    return partPoints(question.parts, question.score).reduce(
+      (total, points) => total + points,
+      0,
+    );
   }
   const parts = Math.max(question.correct.length, 1);
   return question.scoring === ScoringMethod.PerCorrect
@@ -189,5 +263,16 @@ export function isOpenType(type: QuestionType): boolean {
     type === QuestionType.Range ||
     type === QuestionType.List ||
     type === QuestionType.Cloze
+  );
+}
+
+/** Types where the keyboard path is a list of answers, not a free field. */
+export function isStructuredType(type: QuestionType): boolean {
+  return (
+    type === QuestionType.Sort ||
+    type === QuestionType.Rank ||
+    type === QuestionType.Match ||
+    type === QuestionType.Classification ||
+    type === QuestionType.Diagram
   );
 }

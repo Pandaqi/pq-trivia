@@ -45,6 +45,8 @@ export function gradesCsv(
         "Points",
         "Max",
         "Status",
+        "Confidence",
+        "Wager",
         "Your answer",
         "Correct answer",
       ],
@@ -63,9 +65,13 @@ export function gradesCsv(
           String(question.maxPoints),
           question.correct
             ? "correct"
-            : question.answered
-              ? "wrong"
-              : "skipped",
+            : question.noIdea
+              ? "no idea"
+              : question.answered
+                ? "wrong"
+                : "skipped",
+          question.confidence ?? "",
+          question.wager === null ? "" : String(question.wager),
           question.parts.map((part) => part.given).join(" | "),
           question.parts.map((part) => part.expected).join(" | "),
         ],
@@ -83,6 +89,8 @@ export function gradesCsv(
         String(report.points),
         String(report.maxPoints),
         `${report.percent}%`,
+        "",
+        "",
         "",
         "",
       ],

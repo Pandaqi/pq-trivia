@@ -475,3 +475,173 @@ describe("reveal modes", () => {
     ada.leave();
   });
 });
+
+const BUZZ = `
+Title => Buzz
+Seed => buzz
+
+Question => Fast one
+Answers => A | B
+Type => Choice
+Correct => B
+Buzzer => true
+
+Question => Calm one
+Answers => A | B
+Type => Choice
+Correct => B
+`;
+
+describe("the buzzer", () => {
+  test("the first phone owns the question, and the next one clears it", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await quizFrom(BUZZ),
+      transport: network,
+      code: "BUZZ",
+    });
+    const ada = await createPlayer({
+      transport: network,
+      code: "BUZZ",
+      name: "Ada",
+    });
+    await ada.join();
+    const bob = await createPlayer({
+      transport: network,
+      code: "BUZZ",
+      name: "Bob",
+    });
+    await bob.join();
+
+    host.start();
+    await tick();
+    expect(host.state().buzz).toBeNull();
+
+    await breathe();
+    ada.buzz();
+    await tick();
+    expect(host.state().buzz?.name).toBe("Ada");
+    expect(bob.state().buzz?.name).toBe("Ada");
+
+    await breathe();
+    bob.buzz();
+    await tick();
+    expect(host.state().buzz?.name).toBe("Ada");
+
+    host.show(1);
+    await tick();
+    expect(host.state().buzz).toBeNull();
+    expect(ada.state().buzz).toBeNull();
+
+    host.leave();
+    ada.leave();
+    bob.leave();
+  });
+});
+
+const WAGER_ROOM = `
+Title => Bets
+Seed => bets
+
+Question => Warm up
+Answers => A | B
+Type => Choice
+Correct => B
+Score => 2
+
+Question => All in
+Answers => A | B
+Type => Choice
+Correct => B
+Score => 2
+Wager => true
+`;
+
+describe("a live wager", () => {
+  test("a stake is paid on a right answer and taken on a wrong one", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await quizFrom(WAGER_ROOM),
+      transport: network,
+      code: "BETS",
+    });
+    const ada = await createPlayer({
+      transport: network,
+      code: "BETS",
+      name: "Ada",
+    });
+    await ada.join();
+    const bob = await createPlayer({
+      transport: network,
+      code: "BETS",
+      name: "Bob",
+    });
+    await bob.join();
+    const bobId = bob.state().id;
+
+    host.start();
+    await tick();
+    const warmUp = ada.state().question;
+    if (warmUp === null) {
+      throw new Error("the host showed no question");
+    }
+    const warmUpRight = warmUp.answers.find((item) => item.text === "B")?.id;
+    if (warmUpRight === undefined) {
+      throw new Error("the warm-up lost its answer");
+    }
+
+    // Two points each, so both can afford a stake on the next question.
+    await breathe();
+    ada.submit({ kind: ResponseKind.Choice, selected: [warmUpRight] });
+    await tick();
+    await breathe();
+    bob.submit({ kind: ResponseKind.Choice, selected: [warmUpRight] });
+    await tick();
+    host.reveal();
+    await tick();
+    host.next();
+    await tick();
+
+    const question = ada.state().question;
+    if (question === null) {
+      throw new Error("the wager question never showed");
+    }
+    // Answer ids belong to a question, so this one names its own.
+    const right = question.answers.find((item) => item.text === "B")?.id;
+    const wrong = question.answers.find((item) => item.text === "A")?.id;
+    if (right === undefined || wrong === undefined) {
+      throw new Error("the wager question lost its answers");
+    }
+    expect(question.wager).toBe(true);
+    expect(question?.wagerMax).toBe(2);
+    expect(host.state().players.every((item) => item.stake === null)).toBe(
+      true,
+    );
+
+    await breathe();
+    ada.submit({ kind: ResponseKind.Choice, selected: [right] }, 2);
+    await tick();
+    // The host screen sees the stake as soon as the answer lands.
+    const staked = host.state().players.find((item) => item.name === "Ada");
+    expect(staked?.stake).toBe(2);
+    await breathe();
+    bob.submit({ kind: ResponseKind.Choice, selected: [wrong] }, 2);
+    await tick();
+
+    host.reveal();
+    await tick();
+    const scores = host.lastReveal()?.leaderboard ?? [];
+    expect(scores[0]?.name).toBe("Ada");
+    expect(scores[0]?.score).toBe(6);
+    // Bob had two to lose, so the wrong bet took both.
+    expect(scores[1]?.name).toBe("Bob");
+    expect(scores[1]?.score).toBe(0);
+    const bobResult = host.lastReveal()?.items[0]?.results[bobId ?? ""];
+    expect(bobResult?.points).toBe(-2);
+    expect(bobResult?.stake).toBe(2);
+
+    host.leave();
+    ada.leave();
+    bob.leave();
+  });
+});

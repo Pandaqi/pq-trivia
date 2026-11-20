@@ -6,8 +6,10 @@
  */
 
 import type { QuestionType } from "../core/model/question";
+import type { Quiz } from "../core/session/quiz";
 import type { Response } from "../core/session/responses";
 import type { MediaKind } from "../core/values/media";
+import type { RoomTransport, Unsubscribe } from "./transport/types";
 
 export const PROTOCOL_VERSION = 1;
 export const MAX_PLAYERS = 32;
@@ -54,6 +56,7 @@ export enum MessageType {
   Join = "join",
   AnswerSubmit = "answer:submit",
   Ready = "ready",
+  Buzz = "buzz",
   Pong = "pong",
 }
 
@@ -95,6 +98,23 @@ export interface LiveQuestion {
   /** Blanks in a cloze question. */
   readonly blanks: number;
   readonly roundName: string | null;
+  /** `Buzzer => true`: the first phone to buzz owns this question. */
+  readonly buzzer: boolean;
+  /** `Wager => true`: the phone offers a stake before answering. */
+  readonly wager: boolean;
+  /** The most a stake can be: the question's own points. */
+  readonly wagerMax: number;
+}
+
+/** The first phone that buzzed. A timestamp, not a race in the app. */
+export interface BuzzState {
+  readonly playerId: string;
+  readonly name: string;
+  readonly at: number;
+}
+
+export interface BuzzPayload extends BuzzState {
+  readonly questionId: string;
 }
 
 export interface LivePlayer {
@@ -105,6 +125,8 @@ export interface LivePlayer {
   readonly ready: boolean;
   readonly answered: boolean;
   readonly late: number;
+  /** Points on the current question, when it takes a wager. */
+  readonly stake: number | null;
 }
 
 export interface LeaderRow {
@@ -127,6 +149,8 @@ export interface RoomStatePayload {
   readonly you: string | null;
   /** Reconnect token. Only ever sent to that player's own peer. */
   readonly token: string | null;
+  /** Who buzzed first on the current question, if anyone did. */
+  readonly buzz: BuzzState | null;
 }
 
 export interface QuestionPayload {
@@ -146,6 +170,8 @@ export interface PlayerResult {
   readonly correct: boolean;
   readonly points: number;
   readonly late: boolean;
+  /** The stake this question carried, or null when it took none. */
+  readonly stake: number | null;
 }
 
 /** One question's answers. A round reveal sends several of these at once. */
@@ -186,6 +212,8 @@ export interface JoinPayload {
 export interface SubmitPayload {
   readonly questionId: string;
   readonly response: Response;
+  /** Points riding on this answer. Null when the question takes no stake. */
+  readonly stake: number | null;
   readonly token: string | null;
 }
 
@@ -195,6 +223,43 @@ export interface ReadyPayload {
 
 export interface PingPayload {
   readonly now: number;
+}
+
+export interface HostOptions {
+  readonly quiz: Quiz;
+  readonly transport: RoomTransport;
+  readonly code: string;
+  /** A player may change an answer until the reveal. Off by default. */
+  readonly allowChanges?: boolean;
+  readonly maxPlayers?: number;
+  /** Defaults to one reveal per question. */
+  readonly reveal?: RevealMode;
+  /** Round cards on the phones. On by default; the host can turn them off. */
+  readonly sections?: boolean;
+}
+
+/** The host screen's whole door. The phones never see this. */
+export interface HostRoom {
+  readonly code: string;
+  state(): RoomStatePayload;
+  question(): LiveQuestion | null;
+  /** The last reveal, including correct answers. Host screen only. */
+  lastReveal(): RevealPayload | null;
+  /** Lobby only. A mode changed mid-quiz would rewrite its own history. */
+  setRevealMode(mode: RevealMode): void;
+  /** Lobby only, for the same reason: the flow positions would move. */
+  setSections(show: boolean): void;
+  start(): void;
+  show(index: number): void;
+  close(): void;
+  /** Reveal what the mode says is due. A no-op when nothing is. */
+  reveal(): void;
+  /** Next question, next reveal, the answer pass, or the end. */
+  next(): void;
+  end(): void;
+  ping(): void;
+  subscribe(listener: () => void): Unsubscribe;
+  leave(): void;
 }
 
 export interface PongPayload {

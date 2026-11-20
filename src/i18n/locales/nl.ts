@@ -225,6 +225,63 @@ export const nl: TranslationTable = {
   printMediaNone: "Deze quiz heeft geen media.",
   printNotes: "Notities",
 
+  typeHintRank:
+    "Zet de opties in de juiste volgorde. Elk buurpaar levert {points} {point} op.",
+  typeHintEstimate:
+    "Geef je beste getal{unit}. Elk antwoord is {points} {point}.",
+  typeHintOddOneOut:
+    "Kies de uitzondering en zeg waarom. De keuze en de reden zijn elk de helft.",
+  typeHintHotspot: "Klik de juiste plek op de afbeelding, of kies een regio.",
+  typeHintMatrix:
+    "Beantwoord alle {rows} rijen op dezelfde schaal, {points} {point} per rij.",
+  typeHintParts:
+    "Vul alle {count} onderdelen in. Elk onderdeel heeft eigen punten.",
+  typeHintClassification:
+    "Zet elk item in de juiste bak. Elk item levert punten op.",
+  typeHintDiagram:
+    "Sleep elk label naar zijn doel. Elk label levert punten op.",
+
+  reasonPlaceholder: "Waarom is dit de uitzondering?",
+  pickFalse: "Kies de onjuiste.",
+  numberPad: "Cijferblok",
+  backspace: "Wis",
+  clearValue: "Leeg",
+  sliderLabel: "Schuif, of typ een getal",
+  toleranceHint: "Blijf binnen {tolerance} {unit} van het antwoord.",
+  mapHint: "Nog niets gekozen. Klik de afbeelding of gebruik de lijst.",
+  mapPicked: "Gekozen op {x} procent breed, {y} procent hoog.",
+  region: "Regio {number}",
+  regionList: "Regio's",
+  labelList: "Labels",
+  itemList: "Items",
+  removeItem: "Haal dit item terug",
+  matrixOne: "Eén antwoord per rij.",
+  matrixMany: "Vink elke optie aan die klopt, op elke rij.",
+  needSpot: "Klik de afbeelding of kies een regio.",
+  needReason: "Kies de uitzondering en geef een reden.",
+  needRows: "Beantwoord elke rij.",
+  needParts: "Vul elk onderdeel in.",
+  needBuckets: "Zet elk item in een bak.",
+  needLabels: "Plaats elk label.",
+  noIdea: "Geen idee",
+  noIdeaNote: "Apart gezet, niet fout gerekend.",
+  confidence: "Hoe zeker ben je?",
+  confidenceLow: "Laag",
+  confidenceMedium: "Middel",
+  confidenceHigh: "Hoog",
+  wagerLabel: "Zet tot {max} {unit} in",
+  wagerResult: "{wager} ingezet ({risk} risico), {outcome}",
+  wagerWon: "gewonnen",
+  wagerLost: "verloren",
+  riskLow: "laag",
+  riskMedium: "middel",
+  riskHigh: "hoog",
+  confidenceWord: "Zekerheid",
+  playLimitReached: "Dat fragment is {limit} keer afgespeeld. Niet meer.",
+  speak: "Spreek in",
+  speechHint:
+    "Dicteren gebruikt de spraakdienst van je browser. Chrome, Edge en Safari ondersteunen het; Firefox niet. Typen werkt altijd.",
+
   answerPlaceholder: "Jouw antwoord",
   numberPlaceholder: "Getal",
   listPlaceholder: "Eén antwoord per regel",

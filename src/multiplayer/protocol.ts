@@ -17,6 +17,8 @@ import {
 export const RATE_LIMIT_MS = 250;
 export const MAX_RESPONSE_TEXT = 2000;
 export const MAX_RESPONSE_ITEMS = 100;
+/** No question is worth more, and a script should not try. */
+export const MAX_STAKE = 1000;
 
 const MESSAGE_TYPES: ReadonlySet<string> = new Set(Object.values(MessageType));
 
@@ -129,6 +131,27 @@ export function isResponse(value: unknown): value is Response {
       return stringList(entry["blanks"]);
     case ResponseKind.Match:
       return pairList(entry["pairs"]);
+    case ResponseKind.Buckets:
+      return pairList(entry["placements"]);
+    case ResponseKind.Parts:
+      return stringList(entry["values"]);
+    case ResponseKind.Reasoned:
+      return (
+        stringList(entry["selected"]) &&
+        typeof entry["reason"] === "string" &&
+        entry["reason"].length <= MAX_RESPONSE_TEXT
+      );
+    case ResponseKind.Hotspot: {
+      const point = record(entry["point"]);
+      return (
+        entry["point"] === null ||
+        (point !== null &&
+          typeof point["x"] === "number" &&
+          typeof point["y"] === "number")
+      );
+    }
+    case ResponseKind.Matrix:
+      return Array.isArray(entry["rows"]) && entry["rows"].every(stringList);
     default:
       return false;
   }
@@ -166,10 +189,30 @@ export function readJoin(payload: unknown): JoinRequest | null {
   };
 }
 
+/** A buzz names the question it is for, so a late one cannot win the next. */
+export function readBuzz(payload: unknown): { questionId: string } | null {
+  const entry = record(payload);
+  if (entry === null) {
+    return null;
+  }
+  const questionId = entry["questionId"];
+  return typeof questionId === "string" && questionId.length > 0
+    ? { questionId }
+    : null;
+}
+
 export interface SubmitRequest {
   readonly questionId: string;
   readonly response: Response;
+  readonly stake: number | null;
   readonly token: string | null;
+}
+
+/** A stake is a plain number. The host still clamps it to the question. */
+function readStake(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) && value > 0
+    ? Math.min(Math.floor(value), MAX_STAKE)
+    : null;
 }
 
 export function readSubmit(payload: unknown): SubmitRequest | null {
@@ -185,6 +228,7 @@ export function readSubmit(payload: unknown): SubmitRequest | null {
   return {
     questionId,
     response: entry["response"],
+    stake: readStake(entry["stake"]),
     token: typeof token === "string" && token.length > 0 ? token : null,
   };
 }

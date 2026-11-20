@@ -149,6 +149,11 @@ export function Leaderboard({
   );
 }
 
+/** `+2`, `-2`, `0`. A lost stake has to look lost. */
+function signed(points: number): string {
+  return points > 0 ? `+${points}` : String(points);
+}
+
 /**
  * What the reveal shows. One question or a whole round; a personal verdict or
  * everyone's answers, which is the point of the paper mode.
@@ -197,11 +202,10 @@ export function RevealPanel({
                           : result.given}
                       </span>
                       <span class="pq-live-score">
-                        {result === undefined
+                        {result === undefined ? "" : signed(result.points)}
+                        {result?.stake == null
                           ? ""
-                          : result.correct
-                            ? `+${result.points}`
-                            : "0"}
+                          : ` · staked ${result.stake}`}
                       </span>
                     </li>
                   );
@@ -210,7 +214,9 @@ export function RevealPanel({
             ) : mine === undefined ? null : (
               <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
                 <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
-                {mine.late ? "Late. No points." : `${mine.points} points`}
+                {mine.late ? "Late. " : ""}
+                {`${signed(mine.points)} points`}
+                {mine.stake === null ? "" : ` · staked ${mine.stake}`}
                 {mine.given.length === 0 ? "" : ` · you said: ${mine.given}`}
               </p>
             )}

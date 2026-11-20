@@ -24,6 +24,18 @@ const BAND_KEYS: Readonly<Record<string, string>> = {
   [GradeBand.Empty]: "bandEmpty",
 };
 
+const CONFIDENCE_KEYS: Readonly<Record<string, string>> = {
+  low: "confidenceLow",
+  medium: "confidenceMedium",
+  high: "confidenceHigh",
+};
+
+const RISK_KEYS: Readonly<Record<string, string>> = {
+  low: "riskLow",
+  medium: "riskMedium",
+  high: "riskHigh",
+};
+
 function statusMark(question: QuestionReport): string {
   if (question.correct) {
     return "✓";
@@ -96,6 +108,37 @@ function ReviewCard({
         </table>
       )}
 
+      {question.noIdea ||
+      question.confidence !== null ||
+      question.wager !== null ? (
+        <ul class="pq-review-flags">
+          {question.noIdea ? (
+            <li class="pq-flag pq-flag-noidea">{t("noIdea")}</li>
+          ) : null}
+          {question.confidence === null ? null : (
+            <li class="pq-flag">
+              {t("confidenceWord")}:{" "}
+              {t(CONFIDENCE_KEYS[question.confidence] ?? question.confidence)}
+            </li>
+          )}
+          {question.wager === null ? null : (
+            <li class="pq-flag">
+              {t("wagerResult", {
+                wager: question.wager,
+                risk: t(RISK_KEYS[question.wagerRisk ?? "low"] ?? "riskLow"),
+                // A partial answer loses the stake too: only a full correct
+                // answer pays it out.
+                outcome: t(
+                  question.answered && question.correct
+                    ? "wagerWon"
+                    : "wagerLost",
+                ),
+              })}
+            </li>
+          )}
+        </ul>
+      ) : null}
+
       {question.explanation === null ? null : (
         <p class="pq-review-explanation">{question.explanation}</p>
       )}
@@ -165,6 +208,12 @@ export function ResultsScreen({
             <dt>{t("skipped")}</dt>
             <dd>{report.unanswered}</dd>
           </div>
+          {report.noIdea === 0 ? null : (
+            <div>
+              <dt>{t("noIdea")}</dt>
+              <dd>{report.noIdea}</dd>
+            </div>
+          )}
           <div>
             <dt>{t("time")}</dt>
             <dd>{formatDuration(report.durationMs) || "—"}</dd>

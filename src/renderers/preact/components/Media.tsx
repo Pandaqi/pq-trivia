@@ -41,6 +41,7 @@ export function Media({
   asIframe = false,
   animate,
   onEnded,
+  onPlay,
 }: {
   readonly item: MediaViewModel;
   readonly autoplay?: boolean;
@@ -49,11 +50,25 @@ export function Media({
   readonly animate?: string | undefined;
   /** A finished clip can be the signal for the next step. */
   readonly onEnded?: (() => void) | undefined;
+  /** Counted in the attempt, so a `PlayLimit` is honest. */
+  readonly onPlay?: (() => void) | undefined;
 }): JSX.Element {
   // A new attempt remounts the tag, which is the only way to make the browser
   // ask for the file again.
   const [attempt, setAttempt] = useState(0);
   const [failed, setFailed] = useState(false);
+  const [plays, setPlays] = useState(0);
+  const t = useT();
+  const used = Math.max(item.plays, plays);
+  const limitReached = item.playLimit !== null && used >= item.playLimit;
+
+  const countPlay = (): void => {
+    if (limitReached) {
+      return;
+    }
+    setPlays(used + 1);
+    onPlay?.();
+  };
 
   const retry = (): void => {
     setFailed(false);
@@ -81,6 +96,17 @@ export function Media({
     );
   }
 
+  if (limitReached) {
+    return (
+      <figure class="pq-media pq-media-limited" role="status">
+        <p class="pq-media-limit">
+          {t("playLimitReached", { limit: item.playLimit ?? 0 })}
+        </p>
+        <Credit text={item.credit} />
+      </figure>
+    );
+  }
+
   if (item.kind === MediaKind.Audio) {
     return (
       <figure class="pq-media" data-pq-transition={animate}>
@@ -91,6 +117,7 @@ export function Media({
           autoplay={autoplay}
           preload="metadata"
           onEnded={onEnded}
+          onPlay={countPlay}
           onError={() => setFailed(true)}
         >
           {item.captions === null ? null : (
@@ -114,6 +141,7 @@ export function Media({
           playsinline
           preload="metadata"
           onEnded={onEnded}
+          onPlay={countPlay}
           onError={() => setFailed(true)}
         >
           {item.captions === null ? null : (

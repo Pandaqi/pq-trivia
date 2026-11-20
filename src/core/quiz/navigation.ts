@@ -5,9 +5,15 @@
  * factory stays about wiring, and so one file owns "where am I".
  */
 
+import { questionMaxScore } from "../model/question";
 import type { Emitter } from "../session/events";
-import type { Response } from "../session/responses";
 import {
+  defaultResponse,
+  type Confidence,
+  type Response,
+} from "../session/responses";
+import {
+  currentQuestion,
   PlayMode,
   sessionReducer,
   type SessionState,
@@ -37,6 +43,10 @@ export type Navigation = Pick<
   | "setMode"
   | "setInteractive"
   | "setResponse"
+  | "setConfidence"
+  | "setNoIdea"
+  | "setWager"
+  | "noteMediaPlay"
 >;
 
 export function createNavigation(deps: NavigationDeps): Navigation {
@@ -199,6 +209,72 @@ export function createNavigation(deps: NavigationDeps): Navigation {
       deps.emitter.emit("response:change", { id: questionId, response });
       deps.replan();
       deps.autoReveal();
+    },
+
+    setConfidence(questionId: string, level: Confidence | null): void {
+      deps.apply(
+        sessionReducer(
+          deps.state(),
+          { type: "confidence/set", questionId, level },
+          Date.now(),
+        ),
+      );
+    },
+
+    setNoIdea(questionId: string, value: boolean): void {
+      const question = deps
+        .state()
+        .plan?.questions.find((entry) => entry.id === questionId);
+      // A deliberate blank is blank. Keeping the old text would grade it.
+      if (value && question !== undefined) {
+        deps.apply(
+          sessionReducer(
+            deps.state(),
+            {
+              type: "response/set",
+              questionId,
+              response: defaultResponse(question),
+            },
+            Date.now(),
+          ),
+        );
+      }
+      deps.apply(
+        sessionReducer(
+          deps.state(),
+          { type: "noidea/set", questionId, value },
+          Date.now(),
+        ),
+      );
+    },
+
+    setWager(questionId: string, value: number): void {
+      const question = deps
+        .state()
+        .plan?.questions.find((entry) => entry.id === questionId);
+      // Only a question with `Wager => true` takes a stake. Anything else
+      // records nothing, so the report cannot show a bet that never happened.
+      const max =
+        question === undefined || !question.wager
+          ? 0
+          : questionMaxScore(question);
+      deps.apply(
+        sessionReducer(
+          deps.state(),
+          { type: "wager/set", questionId, value: Math.min(value, max) },
+          Date.now(),
+        ),
+      );
+    },
+
+    noteMediaPlay(questionId?: string): void {
+      const id = questionId ?? currentQuestion(deps.state())?.id;
+      if (id === undefined) {
+        return;
+      }
+      deps.apply(
+        sessionReducer(deps.state(), { type: "media/play", questionId: id }, 0),
+      );
     },
   };
 }

@@ -8,6 +8,7 @@ import type { PlayerRoom } from "../player";
 import {
   RevealMode,
   RoomPhase,
+  type BuzzState,
   type LivePlayer,
   type LiveQuestion,
   type RevealPayload,
@@ -60,6 +61,42 @@ function QuestionBody({
   );
 }
 
+/**
+ * The buzzer. One press, and the host decides who was first. The button stays
+ * a button: no timers, no local "I won". That would be a game of ping.
+ */
+function BuzzBar({
+  player,
+  buzz,
+  selfId,
+  closed,
+}: {
+  readonly player: PlayerRoom;
+  readonly buzz: BuzzState | null;
+  readonly selfId: string | null;
+  readonly closed: boolean;
+}): JSX.Element {
+  if (buzz !== null) {
+    return (
+      <p class="pq-live-hint pq-live-buzz" role="status">
+        {buzz.playerId === selfId
+          ? "You buzzed first. Answer out loud."
+          : `${buzz.name} buzzed first.`}
+      </p>
+    );
+  }
+  return (
+    <button
+      type="button"
+      class="pq-primary pq-live-buzz"
+      disabled={closed}
+      onClick={() => player.buzz()}
+    >
+      Buzz
+    </button>
+  );
+}
+
 /** Answer mode on the phone: the question, then the host's answers. */
 function AnswerPass({
   question,
@@ -91,6 +128,43 @@ function AnswerPass({
   );
 }
 
+/**
+ * `Wager => true` on the phone: the same bet the solo screen offers. It goes
+ * out with the answer, so the host can only pay what it also graded.
+ */
+function StakePicker({
+  max,
+  value,
+  disabled,
+  onChange,
+}: {
+  readonly max: number;
+  readonly value: number;
+  readonly disabled: boolean;
+  readonly onChange: (value: number) => void;
+}): JSX.Element | null {
+  if (max <= 0) {
+    return null;
+  }
+  return (
+    <label class="pq-live-stake">
+      <span>
+        Wager up to {max} {max === 1 ? "point" : "points"}
+      </span>
+      <input
+        type="range"
+        min={0}
+        max={max}
+        step={1}
+        value={value}
+        disabled={disabled}
+        onInput={(event) => onChange(Number(event.currentTarget.value))}
+      />
+      <output>{value}</output>
+    </label>
+  );
+}
+
 export function PlayerView({
   player,
 }: {
@@ -100,8 +174,16 @@ export function PlayerView({
   const state = player.state();
   const question = state.question;
   const reveal = state.reveal;
+  const [stake, setStake] = useState(0);
+  // You can only stake what you hold. The host clamps again, in case this
+  // screen is out of date.
+  const myScore =
+    state.players.find((item) => item.id === state.id)?.score ?? 0;
 
-  const submit = (response: Response): void => player.submit(response);
+  // Each question starts with nothing on the line.
+  useEffect(() => setStake(0), [question?.id]);
+
+  const submit = (response: Response): void => player.submit(response, stake);
 
   if (!state.joined) {
     return (
@@ -166,6 +248,22 @@ export function PlayerView({
         </p>
       ) : reveal === null ? (
         <>
+          {question.buzzer ? (
+            <BuzzBar
+              player={player}
+              buzz={state.buzz}
+              selfId={state.id}
+              closed={state.closed}
+            />
+          ) : null}
+          {question.wager ? (
+            <StakePicker
+              max={Math.min(question.wagerMax, Math.floor(myScore))}
+              value={Math.min(stake, question.wagerMax, Math.floor(myScore))}
+              disabled={state.submitted || state.closed}
+              onChange={setStake}
+            />
+          ) : null}
           <PlayerAnswer
             question={question}
             disabled={state.submitted || state.closed}
@@ -173,7 +271,9 @@ export function PlayerView({
           />
           {state.submitted ? (
             <p class="pq-live-hint" role="status">
-              Sent. Wait for the reveal.
+              {stake > 0
+                ? `Sent with ${stake} on the line. Wait for the reveal.`
+                : "Sent. Wait for the reveal."}
             </p>
           ) : null}
           {state.closed && !state.submitted ? (

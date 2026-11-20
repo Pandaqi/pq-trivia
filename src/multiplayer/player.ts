@@ -10,6 +10,8 @@ import {
   MessageType,
   RevealMode,
   RoomPhase,
+  type BuzzPayload,
+  type BuzzState,
   type JoinPayload,
   type LeaderRow,
   type LivePlayer,
@@ -43,6 +45,8 @@ export interface PlayerState {
   readonly submitted: boolean;
   readonly reveal: RevealPayload | null;
   readonly leaderboard: readonly LeaderRow[];
+  /** First buzz on this question, if anyone has pressed it. */
+  readonly buzz: BuzzState | null;
 }
 
 export interface PlayerRoom {
@@ -50,7 +54,10 @@ export interface PlayerRoom {
   readonly token: string | null;
   state(): PlayerState;
   join(): Promise<void>;
-  submit(response: Response): void;
+  /** `stake` only counts when the question asks for a wager. */
+  submit(response: Response, stake?: number): void;
+  /** Press the buzzer. A no-op unless the question asks for one. */
+  buzz(): void;
   ready(value?: boolean): void;
   subscribe(listener: () => void): Unsubscribe;
   leave(): void;
@@ -157,6 +164,7 @@ export async function createPlayer(
     submitted: false,
     reveal: null,
     leaderboard: [],
+    buzz: null,
   };
 
   function update(next: Partial<PlayerState>): void {
@@ -205,6 +213,7 @@ export async function createPlayer(
       players: payload.players,
       phase: payload.phase,
       revealMode: readRevealMode(payload.revealMode),
+      buzz: payload.buzz ?? null,
     });
     settleJoin(null);
   }
@@ -226,6 +235,7 @@ export async function createPlayer(
           allowChanges: shown.allowChanges,
           submitted: false,
           reveal: null,
+          buzz: null,
           phase: shown.phase,
         });
       }
@@ -248,6 +258,21 @@ export async function createPlayer(
               : RoomPhase.Reveal,
           closed: true,
           leaderboard: reveal.leaderboard,
+        });
+      }
+      return;
+    }
+    if (type === MessageType.Buzz) {
+      const entry = record(payload);
+      if (
+        entry !== null &&
+        typeof entry["playerId"] === "string" &&
+        typeof entry["name"] === "string" &&
+        typeof entry["at"] === "number" &&
+        (state.question === null || entry["questionId"] === state.question.id)
+      ) {
+        update({
+          buzz: entry as unknown as BuzzPayload,
         });
       }
       return;
@@ -310,7 +335,7 @@ export async function createPlayer(
         );
       });
     },
-    submit(response) {
+    submit(response, stake) {
       const question = state.question;
       if (
         question === null ||
@@ -319,18 +344,42 @@ export async function createPlayer(
       ) {
         return;
       }
+      const bet =
+        question.wager && stake !== undefined && Number.isFinite(stake)
+          ? Math.max(0, Math.min(Math.floor(stake), question.wagerMax))
+          : null;
       room.send(
         createEnvelope(
           MessageType.AnswerSubmit,
           {
             questionId: question.id,
             response,
+            stake: bet,
             token,
           } satisfies SubmitPayload,
           room.selfId,
         ),
       );
       update({ submitted: true });
+    },
+    buzz() {
+      const question = state.question;
+      if (
+        question === null ||
+        !question.buzzer ||
+        state.buzz !== null ||
+        state.closed ||
+        state.phase !== RoomPhase.Question
+      ) {
+        return;
+      }
+      room.send(
+        createEnvelope(
+          MessageType.Buzz,
+          { questionId: question.id },
+          room.selfId,
+        ),
+      );
     },
     ready(value = true) {
       room.send(

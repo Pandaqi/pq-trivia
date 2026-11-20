@@ -9,13 +9,19 @@ import { inlineToPlainText, parseInline } from "../format/inline";
 import type { QuestionModel } from "../model/question";
 import { QuestionType } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
-import { defaultResponse, type ResponseMap } from "../session/responses";
+import {
+  defaultResponse,
+  type Confidence,
+  type ResponseMap,
+} from "../session/responses";
 import {
   GradeKind,
   gradeQuestion,
   type GradeOptions,
   type GradePart,
 } from "./grading";
+import { round2 } from "./parts";
+import { settleWager } from "./wager";
 
 export enum GradeBand {
   Excellent = "excellent",
@@ -23,6 +29,27 @@ export enum GradeBand {
   Fair = "fair",
   Practice = "practice",
   Empty = "empty",
+}
+
+/** How much of the question's score a wager put on the line. */
+export enum WagerRisk {
+  Low = "low",
+  Medium = "medium",
+  High = "high",
+}
+
+export function wagerRiskOf(wager: number, maxPoints: number): WagerRisk {
+  if (maxPoints <= 0 || wager <= 0) {
+    return WagerRisk.Low;
+  }
+  const share = wager / maxPoints;
+  if (share >= 0.75) {
+    return WagerRisk.High;
+  }
+  if (share >= 0.4) {
+    return WagerRisk.Medium;
+  }
+  return WagerRisk.Low;
 }
 
 export interface QuestionReport {
@@ -44,6 +71,11 @@ export interface QuestionReport {
   readonly points: number;
   readonly maxPoints: number;
   readonly parts: readonly GradePart[];
+  /** A deliberate blank. Not wrong, just unanswered on purpose. */
+  readonly noIdea: boolean;
+  readonly confidence: Confidence | null;
+  readonly wager: number | null;
+  readonly wagerRisk: WagerRisk | null;
 }
 
 export interface RoundReport {
@@ -72,6 +104,8 @@ export interface GradeReport {
   readonly correct: number;
   readonly wrong: number;
   readonly unanswered: number;
+  /** How many of those unanswered were a deliberate blank. */
+  readonly noIdea: number;
   readonly points: number;
   readonly maxPoints: number;
   readonly percent: number;
@@ -88,6 +122,9 @@ export interface ReportOptions extends GradeOptions {
   readonly title?: string;
   readonly startedAt?: number | null;
   readonly endedAt?: number | null;
+  readonly noIdea?: readonly string[];
+  readonly confidence?: Readonly<Record<string, Confidence>>;
+  readonly wagers?: Readonly<Record<string, number>>;
 }
 
 export enum ReportFilter {
@@ -124,6 +161,39 @@ function titleOf(question: QuestionModel): string {
   return inlineToPlainText(parseInline(first).nodes).trim() || question.id;
 }
 
+/**
+ * What the player holds before the question at `planIndex`.
+ *
+ * The wager picker needs it: you can only stake what you already earned. It
+ * walks the same rule as the report, so the two cannot disagree.
+ */
+export function bankAt(
+  plan: QuizPlan,
+  responses: ResponseMap,
+  planIndex: number,
+  options: ReportOptions = {},
+): number {
+  let bank = 0;
+  for (const question of plan.questions.slice(0, Math.max(planIndex, 0))) {
+    if (question.type === QuestionType.Section) {
+      continue;
+    }
+    const response = responses[question.id] ?? defaultResponse(question);
+    const result = gradeQuestion(question, response, options);
+    const settled = settleWager({
+      offered: options.wagers?.[question.id],
+      allowed: question.wager,
+      answered: result.answered,
+      points: result.points,
+      maxPoints: result.maxPoints,
+      bank,
+      correct: result.correct,
+    });
+    bank = round2(bank + settled.points);
+  }
+  return bank;
+}
+
 /** Grade every playable question in plan order. */
 export function gradeAttempt(
   plan: QuizPlan,
@@ -134,6 +204,9 @@ export function gradeAttempt(
   const rounds = new Map<string, { name: string; items: QuestionReport[] }>();
   const categories = new Map<string, QuestionReport[]>();
   let number = 0;
+  let stakes = 0;
+  /** Points earned so far. The floor for a lost stake. */
+  let bank = 0;
 
   plan.questions.forEach((question, planIndex) => {
     // A section screen has no answer. It must not appear as a skipped question.
@@ -145,6 +218,20 @@ export function gradeAttempt(
     const roundId = question.round ?? "";
     const roundName =
       plan.rounds.find((round) => round.id === question.round)?.name ?? null;
+    // One rule for the whole app: right pays the stake, wrong or skipped does
+    // not, and a score never goes below zero.
+    const settled = settleWager({
+      offered: options.wagers?.[question.id],
+      allowed: question.wager,
+      answered: result.answered,
+      points: result.points,
+      maxPoints: result.maxPoints,
+      bank,
+      correct: result.correct,
+    });
+    bank = round2(bank + settled.points);
+    stakes += settled.stake;
+    const wager = settled.stake > 0 ? settled.stake : null;
     const report: QuestionReport = {
       id: question.id,
       index: number,
@@ -159,9 +246,13 @@ export function gradeAttempt(
       answered: result.answered,
       correct: result.correct,
       kind: result.kind,
-      points: result.points,
-      maxPoints: result.maxPoints,
+      points: settled.points,
+      maxPoints: settled.maxPoints,
       parts: result.parts,
+      noIdea: options.noIdea?.includes(question.id) === true,
+      confidence: options.confidence?.[question.id] ?? null,
+      wager,
+      wagerRisk: wager === null ? null : wagerRiskOf(wager, result.maxPoints),
     };
     questions.push(report);
     number += 1;
@@ -181,7 +272,9 @@ export function gradeAttempt(
   });
 
   const points = questions.reduce((total, entry) => total + entry.points, 0);
-  const maxPoints = plan.maxScore;
+  // A stake raises what this attempt could have earned, so a full-stake run
+  // still tops out at 100 percent.
+  const maxPoints = round2(plan.maxScore + stakes);
   const percent = percentOf(points, maxPoints);
   const correct = questions.filter((entry) => entry.correct).length;
   const answered = questions.filter((entry) => entry.answered).length;
@@ -195,6 +288,7 @@ export function gradeAttempt(
     correct,
     wrong: answered - correct,
     unanswered: questions.length - answered,
+    noIdea: questions.filter((entry) => entry.noIdea).length,
     points: Math.round(points * 100) / 100,
     maxPoints,
     percent,

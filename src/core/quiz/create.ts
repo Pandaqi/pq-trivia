@@ -27,14 +27,14 @@ import {
 } from "../session/session";
 import { ScreenKind, type ScreenViewModel } from "../session/viewModel";
 import { screenFor } from "../session/screens";
-import { gradeAttempt, type GradeReport } from "../grading/report";
+import type { GradeReport } from "../grading/report";
 import { RevealMode } from "../session/policies";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import { applyFlow } from "../session/flow";
 import { createExtras } from "./extras";
 import { createNavigation } from "./navigation";
 import { createLoader } from "./load";
-import { persistState } from "./persist";
+import { persistState, reportFor } from "./report";
 import { languagesOf } from "./languages";
 import {
   findLanguageKey,
@@ -112,15 +112,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     );
   }
   function buildReport(): GradeReport | null {
-    if (state.plan === null) {
-      return null;
-    }
-    return gradeAttempt(state.plan, state.responses, {
-      title: quiz?.meta.title ?? "",
-      startedAt: state.startedAt,
-      endedAt: state.endedAt,
-      ...(config.grading !== undefined ? { grading: config.grading } : {}),
-    });
+    return reportFor(state.plan, state, quiz?.meta.title ?? "", config.grading);
   }
   function persist(): void {
     persistState(journal, quiz, state, config);

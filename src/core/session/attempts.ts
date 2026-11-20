@@ -6,7 +6,7 @@
  */
 
 import type { GradeReport } from "../grading/report";
-import type { ResponseMap } from "./responses";
+import type { Confidence, ResponseMap } from "./responses";
 import { SessionStatus, type SessionState } from "./session";
 import type { StorageAdapter } from "./storage";
 
@@ -48,6 +48,11 @@ export interface AttemptRecord {
   readonly savedAt: number;
   readonly report: GradeReport | null;
   readonly config: AttemptConfig;
+  /** Optional: older records do not have these, and that is fine. */
+  readonly confidence?: Readonly<Record<string, Confidence>>;
+  readonly wagers?: Readonly<Record<string, number>>;
+  readonly noIdea?: readonly string[];
+  readonly mediaPlays?: Readonly<Record<string, number>>;
 }
 
 function keyOf(attemptKey: string, savedAt: number): string {
@@ -80,6 +85,10 @@ export function createAttempt(
     readonly endedAt: number | null;
     readonly report: GradeReport | null;
     readonly savedAt: number;
+    readonly confidence?: Readonly<Record<string, Confidence>>;
+    readonly wagers?: Readonly<Record<string, number>>;
+    readonly noIdea?: readonly string[];
+    readonly mediaPlays?: Readonly<Record<string, number>>;
   },
 ): AttemptRecord {
   return {
@@ -94,6 +103,14 @@ export function createAttempt(
     savedAt: fields.savedAt,
     report: fields.report,
     config,
+    ...(fields.confidence === undefined
+      ? {}
+      : { confidence: fields.confidence }),
+    ...(fields.wagers === undefined ? {} : { wagers: fields.wagers }),
+    ...(fields.noIdea === undefined ? {} : { noIdea: fields.noIdea }),
+    ...(fields.mediaPlays === undefined
+      ? {}
+      : { mediaPlays: fields.mediaPlays }),
   };
 }
 
@@ -146,6 +163,10 @@ export function saveAttempt(
       endedAt: state.endedAt,
       report: state.report,
       savedAt: Date.now(),
+      confidence: state.confidence,
+      wagers: state.wagers,
+      noIdea: state.noIdea,
+      mediaPlays: state.mediaPlays,
     }),
   );
 }

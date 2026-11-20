@@ -6,7 +6,7 @@
 
 import { countBlanks, parseInline } from "../core/format/inline";
 import { answerRefs } from "../core/model/answers";
-import type { QuestionModel } from "../core/model/question";
+import { questionMaxScore, type QuestionModel } from "../core/model/question";
 import type { QuizPlan } from "../core/plan/plan";
 import { ResponseKind, type Response } from "../core/session/responses";
 import type { LiveQuestion } from "./types";
@@ -41,6 +41,9 @@ export function liveQuestion(
       0,
     ),
     roundName: roundNameValue,
+    buzzer: question.buzzer,
+    wager: question.wager,
+    wagerMax: questionMaxScore(question),
   };
 }
 
@@ -69,6 +72,27 @@ export function describeResponse(
       return response.blanks.join(" | ");
     case ResponseKind.Open:
       return response.text;
+    case ResponseKind.Reasoned:
+      return [
+        ...response.selected.map((id) => byId.get(id) ?? id),
+        response.reason,
+      ]
+        .filter((part) => part.length > 0)
+        .join(" — ");
+    case ResponseKind.Hotspot:
+      return response.point === null
+        ? ""
+        : `${response.point.x},${response.point.y}`;
+    case ResponseKind.Matrix:
+      return response.rows
+        .map((row) => row.map((id) => byId.get(id) ?? id).join(" + "))
+        .join(" | ");
+    case ResponseKind.Parts:
+      return response.values.join(" | ");
+    case ResponseKind.Buckets:
+      return response.placements
+        .map((pair) => `${pair[0]} → ${pair[1]}`)
+        .join(" | ");
     default:
       return "";
   }

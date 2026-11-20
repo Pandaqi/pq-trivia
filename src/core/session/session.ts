@@ -8,13 +8,13 @@ import type { Diagnostic } from "../syntax/diagnostics";
 import type { GradeReport } from "../grading/report";
 import {
   defaultResponse,
-  isEmptyResponse,
   toggleChoice,
   setResponse,
+  type Confidence,
   type Response,
   type ResponseMap,
 } from "./responses";
-import { QuestionType, type QuestionModel } from "../model/question";
+import type { QuestionModel } from "../model/question";
 import { timerFor, type TimerState } from "./timers";
 
 export enum SessionStatus {
@@ -42,6 +42,14 @@ export interface SessionState {
   /** Which staged part of the current question is on screen. */
   readonly step: number;
   readonly responses: ResponseMap;
+  /** Low, medium or high, per question. Stored, never scored. */
+  readonly confidence: Readonly<Record<string, Confidence>>;
+  /** Points put on the line, for `Wager => true`. */
+  readonly wagers: Readonly<Record<string, number>>;
+  /** Deliberate blanks. Out of the wrong count, visible in the report. */
+  readonly noIdea: readonly string[];
+  /** Plays per clip, so `PlayLimit` is counted in the attempt. */
+  readonly mediaPlays: Readonly<Record<string, number>>;
   readonly revealed: readonly string[];
   readonly hints: Readonly<Record<string, number>>;
   readonly language: string | null;
@@ -83,6 +91,22 @@ export type SessionAction =
       readonly questionId: string;
       readonly answerId: string;
     }
+  | {
+      readonly type: "confidence/set";
+      readonly questionId: string;
+      readonly level: Confidence | null;
+    }
+  | {
+      readonly type: "wager/set";
+      readonly questionId: string;
+      readonly value: number;
+    }
+  | {
+      readonly type: "noidea/set";
+      readonly questionId: string;
+      readonly value: boolean;
+    }
+  | { readonly type: "media/play"; readonly questionId: string }
   | { readonly type: "hint/reveal"; readonly questionId: string }
   | { readonly type: "reveal"; readonly questionId: string }
   | { readonly type: "hide"; readonly questionId: string }
@@ -96,6 +120,10 @@ export type SessionAction =
       readonly index: number;
       readonly startedAt: number | null;
       readonly endedAt: number | null;
+      readonly confidence?: Readonly<Record<string, Confidence>>;
+      readonly wagers?: Readonly<Record<string, number>>;
+      readonly noIdea?: readonly string[];
+      readonly mediaPlays?: Readonly<Record<string, number>>;
     }
   | { readonly type: "finish" };
 
@@ -103,13 +131,6 @@ export interface SessionOptions {
   readonly language?: string | null;
   readonly diagnostics?: readonly Diagnostic[];
 }
-
-export const EMPTY_PROGRESS: Progress = {
-  index: 0,
-  total: 0,
-  answered: 0,
-  percent: 0,
-};
 
 export function createSessionState(options: SessionOptions = {}): SessionState {
   return {
@@ -120,6 +141,10 @@ export function createSessionState(options: SessionOptions = {}): SessionState {
     index: -1,
     step: 0,
     responses: {},
+    confidence: {},
+    wagers: {},
+    noIdea: [],
+    mediaPlays: {},
     revealed: [],
     hints: {},
     language: options.language ?? null,
@@ -165,6 +190,10 @@ export function sessionReducer(
         index: -1,
         step: 0,
         responses,
+        confidence: {},
+        wagers: {},
+        noIdea: [],
+        mediaPlays: {},
         timer: null,
         expired: [],
         report: null,
@@ -252,6 +281,10 @@ export function sessionReducer(
         step: 0,
         status: SessionStatus.Ready,
         responses: action.keepResponses === true ? state.responses : {},
+        confidence: action.keepResponses === true ? state.confidence : {},
+        wagers: action.keepResponses === true ? state.wagers : {},
+        noIdea: action.keepResponses === true ? state.noIdea : [],
+        mediaPlays: action.keepResponses === true ? state.mediaPlays : {},
         revealed: [],
         hints: {},
         startedAt: null,
@@ -292,6 +325,44 @@ export function sessionReducer(
         ),
       };
     }
+
+    case "confidence/set": {
+      const confidence = { ...state.confidence };
+      if (action.level === null) {
+        delete confidence[action.questionId];
+      } else {
+        confidence[action.questionId] = action.level;
+      }
+      return { ...state, confidence };
+    }
+
+    case "wager/set":
+      return {
+        ...state,
+        wagers: {
+          ...state.wagers,
+          [action.questionId]: Math.max(0, action.value),
+        },
+      };
+
+    case "noidea/set":
+      return {
+        ...state,
+        noIdea: action.value
+          ? state.noIdea.includes(action.questionId)
+            ? state.noIdea
+            : [...state.noIdea, action.questionId]
+          : state.noIdea.filter((id) => id !== action.questionId),
+      };
+
+    case "media/play":
+      return {
+        ...state,
+        mediaPlays: {
+          ...state.mediaPlays,
+          [action.questionId]: (state.mediaPlays[action.questionId] ?? 0) + 1,
+        },
+      };
 
     case "hint/reveal": {
       const used = state.hints[action.questionId] ?? 0;
@@ -339,6 +410,10 @@ export function sessionReducer(
       const restored: SessionState = {
         ...state,
         responses: { ...state.responses, ...action.responses },
+        confidence: action.confidence ?? state.confidence,
+        wagers: action.wagers ?? state.wagers,
+        noIdea: action.noIdea ?? state.noIdea,
+        mediaPlays: action.mediaPlays ?? state.mediaPlays,
         index,
         step: 0,
         status:
@@ -385,36 +460,10 @@ export function currentQuestion(state: SessionState): QuestionModel | null {
   return state.plan.questions[state.index] ?? null;
 }
 
-export interface Progress {
-  readonly index: number;
-  readonly total: number;
-  readonly answered: number;
-  readonly percent: number;
-}
-
-/** A section screen opens a round. It is not a question, so it never counts. */
-export function countsAsQuestion(question: QuestionModel): boolean {
-  return question.type !== QuestionType.Section;
-}
-
-export function progressOf(state: SessionState): Progress {
-  const questions = (state.plan?.questions ?? []).filter(countsAsQuestion);
-  const total = questions.length;
-  let answered = 0;
-  for (const question of questions) {
-    const response = state.responses[question.id];
-    if (response !== undefined && !isEmptyResponse(response)) {
-      answered += 1;
-    }
-  }
-  return {
-    index: Math.max(state.index, 0),
-    total,
-    answered,
-    percent: total === 0 ? 0 : Math.round((answered / total) * 100),
-  };
-}
-
-export function isLastQuestion(state: SessionState): boolean {
-  return state.plan !== null && state.index === state.plan.questions.length - 1;
-}
+export {
+  countsAsQuestion,
+  EMPTY_PROGRESS,
+  isLastQuestion,
+  progressOf,
+  type Progress,
+} from "../plan/progress";

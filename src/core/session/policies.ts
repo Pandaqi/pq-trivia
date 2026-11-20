@@ -56,9 +56,28 @@ function isComplete(question: QuestionModel, response: Response): boolean {
     case QuestionType.Match:
     case QuestionType.Open:
     case QuestionType.Range:
+    case QuestionType.Estimate:
     case QuestionType.Custom:
     case QuestionType.List:
+    case QuestionType.Hotspot:
+    case QuestionType.OddOneOut:
+    case QuestionType.Parts:
       return !isEmptyResponse(response);
+    case QuestionType.Matrix:
+      return (
+        response.kind === ResponseKind.Matrix &&
+        response.rows.length === question.rows.length &&
+        response.rows.every((row) => row.length > 0)
+      );
+    case QuestionType.Classification: {
+      const placements =
+        response.kind === ResponseKind.Buckets ? response.placements : [];
+      return placements.length === question.answers.length;
+    }
+    case QuestionType.Diagram: {
+      const pairs = response.kind === ResponseKind.Match ? response.pairs : [];
+      return pairs.length === question.answers.length;
+    }
     case QuestionType.Cloze: {
       const blanks =
         response.kind === ResponseKind.Cloze ? response.blanks : [];
@@ -66,7 +85,8 @@ function isComplete(question: QuestionModel, response: Response): boolean {
         blanks.length > 0 && blanks.every((blank) => blank.trim().length > 0)
       );
     }
-    case QuestionType.Sort: {
+    case QuestionType.Sort:
+    case QuestionType.Rank: {
       const order = response.kind === ResponseKind.Sort ? response.order : [];
       return order.length === answerRefs(question).length;
     }
@@ -80,8 +100,10 @@ export function responseIssues(
   question: QuestionModel,
   response: Response,
   policy: InteractivePolicy,
+  blanked = false,
 ): ResponseIssue[] {
-  if (policy === InteractivePolicy.Permissive) {
+  // A deliberate blank is a complete answer to "do you know this?".
+  if (policy === InteractivePolicy.Permissive || blanked) {
     return [];
   }
   const issues: ResponseIssue[] = [];
@@ -113,7 +135,20 @@ function messageFor(question: QuestionModel): readonly [string, string] {
     case QuestionType.Choice:
       return ["Choose at least one answer.", "needChoice"];
     case QuestionType.Range:
+    case QuestionType.Estimate:
       return ["Enter a number.", "needNumber"];
+    case QuestionType.Hotspot:
+      return ["Click the image or pick a region.", "needSpot"];
+    case QuestionType.OddOneOut:
+      return ["Pick the odd one out and say why.", "needReason"];
+    case QuestionType.Matrix:
+      return ["Answer every row.", "needRows"];
+    case QuestionType.Parts:
+      return ["Fill in every part.", "needParts"];
+    case QuestionType.Classification:
+      return ["Put every item in a bucket.", "needBuckets"];
+    case QuestionType.Diagram:
+      return ["Place every label.", "needLabels"];
     case QuestionType.List:
       return ["Give at least one answer.", "needList"];
     case QuestionType.Sort:
@@ -152,7 +187,8 @@ function completenessIssues(
       });
       break;
     }
-    case QuestionType.Sort: {
+    case QuestionType.Sort:
+    case QuestionType.Rank: {
       const order = response.kind === ResponseKind.Sort ? response.order : [];
       if (order.length !== answerRefs(question).length) {
         issues.push(
@@ -181,7 +217,8 @@ function completenessIssues(
       }
       break;
     }
-    case QuestionType.Range: {
+    case QuestionType.Range:
+    case QuestionType.Estimate: {
       const value =
         response.kind === ResponseKind.Range ? response.value : null;
       if (value === null) {
@@ -244,13 +281,15 @@ export function nextCheck(
   // Only interactive play has fields to fill. A read-aloud quiz has nothing to
   // type in, so "you must answer first" would block the presenter forever.
   // Answer mode is presentation too: the answers are on screen already.
+  const blanked = state.noIdea.includes(question.id);
   const issues =
     state.interactive && state.mode === PlayMode.Questions
-      ? responseIssues(question, response, policy)
+      ? responseIssues(question, response, policy, blanked)
       : [];
   if (
     question.continueMode === ContinueMode.Always ||
-    isEmptyResponse(response)
+    isEmptyResponse(response) ||
+    blanked
   ) {
     return { issues, blocked: false };
   }

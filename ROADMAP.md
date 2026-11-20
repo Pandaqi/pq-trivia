@@ -473,6 +473,22 @@ Aliases are accepted and rewritten to canonical form by the formatter.
 | `Correct`        | `CorrectAnswer`             | list                           | defaults to first answer                                                                         |
 | `Type`           |                             | enum                           | `Open`, `Choice`, `List`, `Range`, `Sort`, `Match`, `Cloze`, `Section`, `Start`, `End`, `Custom` |
 | `Range`          | `Margin`                    | number                         | error margin. Implies `Range`.                                                                   |
+| `Tolerance`      |                             | number                         | Estimate: how far off the number may be                                                          |
+| `Unit`           |                             | text                           | Estimate: km, kg, years                                                                          |
+| `Slider`         |                             | range                          | `0..100`. Adds a slider and keeps the field                                                      |
+| `HitRadius`      |                             | number                         | Hotspot: percent of the image. Default 8                                                         |
+| `Negate`         |                             | boolean                        | Choice: pick the false option                                                                    |
+| `Feedback`       |                             | list                           | One line per answer, after the reveal                                                            |
+| `Suggest`        |                             | list                           | Autocomplete. Falls back to `AlsoAccept`                                                         |
+| `Rows`           |                             | list                           | Matrix statements                                                                                |
+| `Scale`          |                             | list                           | Matrix options. Default `True \| False`                                                          |
+| `Multiple`       |                             | boolean                        | Matrix: tick more than one per row                                                               |
+| `Parts`          |                             | list                           | Multi-part: `open: Label: points`                                                                |
+| `Buckets`        |                             | list                           | Classification buckets                                                                           |
+| `Targets`        |                             | list                           | Diagram: `Label @ x,y`                                                                           |
+| `PlayLimit`      |                             | number                         | Media plays per attempt                                                                          |
+| `Wager`          |                             | boolean                        | Bet up to your score: win it, lose it, never below zero. Solo and live                           |
+| `Buzzer`         |                             | boolean                        | Live room: first buzz wins                                                                       |
 | `Media`          | `Image`, `Audio`, `Video`   | media list                     | §5.6                                                                                             |
 | `Category`       | `Categories`, `Tag`, `Tags` | list                           |                                                                                                  |
 | `Author`         | `Authors`, `By`             | list                           |                                                                                                  |
@@ -635,6 +651,116 @@ Type => Cloze
 - `||` separates per-blank answer lists: `Answers => 1969|1969 AD || Apollo 11|Apollo XI`.
 - Graded per blank, partial credit per blank.
 - Print: numbered underscores, numbered answer form.
+
+#### `Rank`
+
+```trivia
+Question => Put these in release order.
+Answers => Please Please Me | Revolver | Abbey Road
+Type => Rank
+```
+
+- `Answers` is the correct order. The player gets it shuffled.
+- Click or drag. Arrow keys move an item, so the keyboard path is the same one.
+- Score is the share of neighbouring pairs that sit the right way round. A duplicate cannot pass.
+
+#### `Estimate`
+
+```trivia
+Question => How far to the moon?
+Answer => 384400
+Type => Estimate
+Tolerance => 500
+Unit => km
+Slider => 380000..390000
+```
+
+- Inside the tolerance is correct. The edges count.
+- The unit is shown and never graded.
+- Slider and number field share one parser: `1,5` is one and a half.
+
+#### `OddOneOut`
+
+```trivia
+Question => Which one is not a planet?
+Answers => Mars | Venus | Pluto
+Type => OddOneOut
+Correct => Pluto
+AlsoAccept => Pluto is a dwarf planet
+```
+
+- Two parts: the pick, then the reason, each worth half.
+- `AlsoAccept` holds accepted reasons. Without it any reason earns the half, and the CLI warns.
+
+#### `Hotspot`
+
+```trivia
+Question => Click the lighthouse.
+Media => map.png { alt="A coastline" }
+Answers => 30,40
+Type => Hotspot
+HitRadius => 6
+```
+
+- Coordinates are percentages of the image, so the same numbers work on a phone and a projector.
+- `Label @ x,y` names a point; a bare `x,y` gets a number.
+- Every region is also a button in a visible list. The image is a shortcut, not the only door.
+- `examples/hotspot.html` prints coordinates for a local image. No install.
+
+#### `Matrix`
+
+```trivia
+Question => Mark each claim.
+Type => Matrix
+Answers => True | False
+Rows => The sky is blue | Water is dry
+Correct => True | False
+```
+
+- `Answers` is the shared scale. `Rows` are the statements. `Correct` has one line per row.
+- Radio by default. `Multiple => true` makes it checkboxes, and `Correct => True+False` joins the right boxes with `+`.
+- One part per row, so partial credit is normal.
+
+#### `Parts`
+
+```trivia
+Question => Name the band and the singer.
+Type => Parts
+Parts => open: Band: 2 | number: Year: 1
+Answers => The Beatles || 1962
+```
+
+- `||` gives each part its own accepted answers, like a cloze.
+- `open` matches text; `number` compares numbers inside `Range`.
+- The number after the label is that part's points. Without one the score is split evenly.
+
+#### `Classification`
+
+```trivia
+Question => Put each item in its decade.
+Type => Classification
+Answers => Abbey Road | Discovery
+Buckets => 1960s | 2000s
+Correct => Abbey Road @ 1960s | Discovery @ 2000s
+```
+
+- `Answers` is what the player moves. `Buckets` is where it goes. `Correct` says which.
+- One part per item. Click an item then a bucket, or drag it in.
+
+#### `Diagram`
+
+```trivia
+Question => Label the door.
+Type => Diagram
+Media => door.png { alt="A door" }
+Answers => Handle | Hinge
+Targets => Handle spot @ 30,50 | Hinge spot @ 70,50
+Correct => Handle @ Handle spot | Hinge @ Hinge spot
+```
+
+- Labels come from `Answers`, targets from `Targets`, the mapping from `Correct`.
+- Without `Correct`, the first answer pairs with the first target. That is a shortcut, not a wish.
+- Shares the hotspot frame, so click, drag and the keyboard all work.
 
 ### 5.8 Layouts and per-question styling
 
@@ -1014,6 +1140,11 @@ type Response =
   | { kind: "sort"; order: string[] } // answer IDs
   | { kind: "match"; pairs: Array<[string, string]> }
   | { kind: "cloze"; blanks: string[] }
+  | { kind: "reasoned"; selected: string[]; reason: string }
+  | { kind: "hotspot"; point: { x: number; y: number } | null }
+  | { kind: "matrix"; rows: string[][] }
+  | { kind: "parts"; values: string[] }
+  | { kind: "buckets"; placements: Array<[string, string]> }
   | { kind: "custom"; value: unknown };
 ```
 
@@ -1726,37 +1857,9 @@ end, tick it. Nothing here is promised for 3.0.
 
 **Where a new question type lands:** §5 syntax, `src/core/model/question.ts`,
 `src/core/model/validate.ts`, `src/core/grading/grading.ts`,
-`src/core/session/viewModel.ts`, `src/renderers/preact/components/Answers.tsx`,
-`src/themes/paper.*.css`, `test/core/grading.test.ts`, and one new file in
-`test/fixtures/`.
-
-#### Step 1. Answer interfaces
-
-- [ ] **Click on image (M).** Pairs with Hotspot. Include a visible list of regions for keyboard and screen readers.
-- [ ] **Slider (S).** Drag, arrow keys and a live value. Reuse the Range field's parser.
-- [ ] **Drag and drop (M).** Sort and Match work by click today. Add drag, keep the click path, and test both.
-- [ ] **Number pad (S).** Large keys for phones. Sits next to Range and Estimate inputs.
-- [ ] **Autocomplete (S).** Suggest from `Aliases` or a `Suggest =>` list. Forgive spelling without accepting nonsense.
-- [ ] **"No idea" button (S).** Records a deliberate blank, keeps it out of the wrong count, shows it in the report.
-- [ ] **Confidence (M).** Low, medium, high per response. Store it, export it in CSV, leave scoring alone for now.
-- [ ] **Per-option feedback (S).** `Feedback =>` under an answer, shown after the reveal. One line per option.
-- [ ] **Speech input (M).** Optional Web Speech adapter in `platform/`. Say plainly which browsers support it; the field still works by typing.
-
-#### Step 2. Question types
-
-- [ ] **Ranking (S).** New `Type => Rank`. `Answers` are written in the correct order. Click-to-place UI with arrow-key support. Score is the fraction of adjacent pairs in order. Tests: full, partial, empty, duplicate item. ---> How is this different from SORT questions? Perhaps enhance Sort instead of adding this one.
-- [ ] **Estimate (S).** `Type => Estimate` with `Answer => 42`, `Tolerance => 2`, `Unit => km`. Slider plus a number field. Correct when the value is inside the tolerance. Tests at the edges. ---> How is this different from RANGE questions? Maybe enhance Range instead of adding this one.
-- [ ] **Negation (S).** `Negate => true` on a Choice question. Grading marks the one wrong option correct. Add `negated` to the answer view model so the UI can say "Pick the false one".
-- [ ] **Odd one out (S).** Choice plus a required reason. Two score parts: the pick, then the reason graded like an open answer.
-- [ ] **Hotspot (M).** `Media => map.png` plus `Answer => 120,80` regions. Click layer over the image, keyboard fallback as a region list, distance check in grading. Needs an authoring helper to read coordinates.
-- [ ] **Matrix (M).** Rows of statements against one shared scale. `Rows =>` block. One score per row, partial credit, checkbox and radio variants.
-- [ ] **Multi-part (M).** One stem, several inputs, one total. `Parts =>` with a type and points per part. Reuse the existing grading parts rather than inventing a second scorer.
-- [ ] **Classification (M).** Items dropped into named buckets. Click-to-place first, drag later. Score per item.
-- [ ] **Audio and video clips (S).** No new type: give `Media` a `PlayLimit` and controls (like in V2 but enhanced). Count plays in the attempt.
-- [ ] **Wager (M).** `Wager => true`. Bet 0 to max before the reveal, store it in the session, show risk on the report.
-- [ ] **Diagram labels (M).** Drag labels onto targets. Shares the Hotspot click layer, so build Hotspot first.
-- [ ] **Buzzer (L).** First correct answer wins. Needs the live-room transport. Do not fake it with timers.
-
+`src/core/session/viewModel.ts`, `src/core/values/answerView.ts`,
+`src/renderers/forms/`, `src/themes/paper.*.css`, `test/core/grading.test.ts`,
+and one new file in `test/fixtures/`.
 
 #### Step 3. Play and host
 
@@ -1791,7 +1894,7 @@ end, tick it. Nothing here is promised for 3.0.
 - [ ] **Attempt analytics export (M).** Per-question stats across a class, as CSV.
 - [ ] **Plugin API (L).** Register a question type from outside core. Only after two new types prove the seams.
 
-**Order I would pick:** the S items in Question types and Answer interfaces first (a week of small wins), then Hotspot and Matrix, then team mode and host view once live rooms are in daily use.
+**Order I would pick:** team mode and host view once live rooms are in daily use, then the authoring items. The answer interfaces and the new question types are in.
 
 ### Dependencies
 

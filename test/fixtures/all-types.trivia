@@ -35,3 +35,66 @@ Background => color:#101820
 Print => no-background
 Transition => fade
 Direction => ltr
+
+Question => Where is the lighthouse?
+Media => map.png { alt="A coastline map" }
+Answers => 30,40
+Type => Hotspot
+HitRadius => 6
+
+Question => Rank the albums.
+Answers => First | Second | Third
+Type => Rank
+
+Question => How far away is the moon?
+Answers => 384400
+Type => Estimate
+Tolerance => 500
+Unit => km
+Slider => 380000..390000
+
+Question => Which one is not a planet?
+Answers => Mars | Venus | Pluto
+Type => OddOneOut
+Correct => Pluto
+AlsoAccept => pluto is a dwarf planet
+
+Question => Mark each claim.
+Answers => True | False
+Rows => The sky is blue | Water is dry
+Correct => True | False
+
+Question => Name the band and the singer.
+Type => Parts
+Parts => open: Band: 2 | open: Singer: 1
+Answers => The Beatles || Paul McCartney
+
+Question => Put these in the right bucket.
+Type => Classification
+Answers => Apple | Carrot
+Buckets => Fruit | Vegetable
+Correct => Apple @ Fruit | Carrot @ Vegetable
+
+Question => Label the parts.
+Type => Diagram
+Media => map.png { alt="A diagram of a door" }
+Answers => Handle | Hinge
+Targets => Handle spot @ 30,50 | Hinge spot @ 70,50
+Correct => Handle @ Handle spot | Hinge @ Hinge spot
+
+Question => Which planet is the odd one out?
+Answers => Mars | Venus | Pluto
+Type => Choice
+Correct => Mars | Venus
+Negate => true
+Feedback => A rocky neighbour. | Also a rocky neighbour. | Not a planet any more.
+Wager => true
+Buzzer => true
+
+Question => Which year did the moon landing happen?
+Answers => 1969
+Type => Range
+Range => 0
+Slider => 1900..2000
+Suggest => 1969 | 1968
+PlayLimit => 1

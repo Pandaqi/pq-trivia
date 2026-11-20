@@ -35,7 +35,7 @@ import type { Diagnostic } from "../syntax/diagnostics";
 import type { SessionState, PlayMode, Progress } from "../session/session";
 import type { SessionStatus } from "../session/session";
 import type { ScreenViewModel } from "../session/viewModel";
-import type { Response } from "../session/responses";
+import type { Confidence, Response } from "../session/responses";
 import type { GradeReport } from "../grading/report";
 import type { ResponseIssue } from "../session/policies";
 import type { GradingMode } from "../model/question";
@@ -323,6 +323,14 @@ export interface QuizApi {
   configure(partial: Partial<QuizConfig>): void;
   setMode(mode: PlayMode): boolean;
   setResponse(questionId: string, response: Response): void;
+  /** Low, medium or high. Pass null to clear it. */
+  setConfidence(questionId: string, level: Confidence | null): void;
+  /** A deliberate blank. Clears the field and keeps it out of the wrong count. */
+  setNoIdea(questionId: string, value: boolean): void;
+  /** Put points on the line. Clamped to the question's maximum. */
+  setWager(questionId: string, value: number): void;
+  /** Count one play of this question's clip. Defaults to the current one. */
+  noteMediaPlay(questionId?: string): void;
   /** Manual reveal. False when restricted or already shown. */
   reveal(): boolean;
   /** Show the answer or put it away again. V2's `a`. */

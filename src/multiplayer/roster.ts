@@ -12,6 +12,7 @@ import {
   makeId,
   makeToken,
   parseEnvelope,
+  readBuzz,
   readJoin,
   readSubmit,
 } from "./protocol";
@@ -33,6 +34,8 @@ export interface PlayerRecord {
   ready: boolean;
   peer: string | null;
   readonly responses: Map<string, Response>;
+  /** Points each player put on each question. The host pays or takes them. */
+  readonly stakes: Map<string, number>;
   readonly answered: Set<string>;
   readonly late: Set<string>;
 }
@@ -51,6 +54,8 @@ export interface RosterContext {
   readonly publishState: () => void;
   /** The current question and reveal, for a phone that came back. */
   readonly replay: (peer: string) => void;
+  /** A phone pressed the buzzer. The host decides who was first. */
+  readonly onBuzz: (playerId: string, name: string, questionId: string) => void;
 }
 
 export interface Roster {
@@ -67,6 +72,7 @@ export function createRoster(context: RosterContext): Roster {
   const seen = new Set<string>();
   const joinLimit = createRateLimiter();
   const submitLimit = createRateLimiter();
+  const buzzLimit = createRateLimiter();
 
   function playerOf(peer: string): PlayerRecord | undefined {
     const id = byPeer.get(peer);
@@ -85,6 +91,7 @@ export function createRoster(context: RosterContext): Roster {
 
   function live(): LivePlayer[] {
     const question = context.current();
+    const wagerQuestion = question !== null && question.wager;
     return [...players.values()].map((player) => ({
       id: player.id,
       name: player.name,
@@ -93,6 +100,10 @@ export function createRoster(context: RosterContext): Roster {
       ready: player.ready,
       answered: question !== null && player.answered.has(question.id),
       late: player.late.size,
+      stake:
+        question === null || !wagerQuestion
+          ? null
+          : (player.stakes.get(question.id) ?? null),
     }));
   }
 
@@ -132,6 +143,7 @@ export function createRoster(context: RosterContext): Roster {
       ready: false,
       peer,
       responses: new Map(),
+      stakes: new Map(),
       answered: new Set(),
       late: new Set(),
     };
@@ -175,6 +187,9 @@ export function createRoster(context: RosterContext): Roster {
     }
     const deadline = context.deadline();
     player.responses.set(question.id, request.response);
+    if (request.stake !== null) {
+      player.stakes.set(question.id, request.stake);
+    }
     player.answered.add(question.id);
     const late =
       context.closed() || (deadline !== null && Date.now() > deadline);
@@ -217,6 +232,18 @@ export function createRoster(context: RosterContext): Roster {
     }
     if (message.type === MessageType.Ready) {
       setReady(from, message.payload);
+      return;
+    }
+    if (message.type === MessageType.Buzz) {
+      const player = playerOf(from);
+      const request = readBuzz(message.payload);
+      if (player === undefined || request === null) {
+        return;
+      }
+      if (!buzzLimit.allow(player.id)) {
+        return;
+      }
+      context.onBuzz(player.id, player.name, request.questionId);
     }
   }
 

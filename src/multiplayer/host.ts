@@ -14,21 +14,25 @@
 
 import { gradeQuestion } from "../core/grading/grading";
 import { round2 } from "../core/grading/parts";
+import { settleWager } from "../core/grading/wager";
 import { QuestionType, type QuestionModel } from "../core/model/question";
 import type { QuizPlan } from "../core/plan/plan";
-import type { Quiz } from "../core/session/quiz";
 import { flowSlots, rangeOf, roundRanges } from "./flow";
 import { describeResponse, liveQuestion, roundNameOf } from "./present";
 import { createEnvelope } from "./protocol";
 import { createRoster } from "./roster";
-import type { Room, RoomTransport, Unsubscribe } from "./transport/types";
+import type { Room } from "./transport/types";
 import {
   DEFAULT_REVEAL_MODE,
   MAX_PLAYERS,
   MessageType,
   RevealMode,
   RoomPhase,
+  type BuzzPayload,
+  type BuzzState,
   type ClosePayload,
+  type HostOptions,
+  type HostRoom,
   type JoinPayload,
   type LiveQuestion,
   type PlayerResult,
@@ -39,42 +43,6 @@ import {
   type ScorePayload,
   type SubmitPayload,
 } from "./types";
-
-export interface HostOptions {
-  readonly quiz: Quiz;
-  readonly transport: RoomTransport;
-  readonly code: string;
-  /** A player may change an answer until the reveal. Off by default. */
-  readonly allowChanges?: boolean;
-  readonly maxPlayers?: number;
-  /** Defaults to one reveal per question. */
-  readonly reveal?: RevealMode;
-  /** Round cards on the phones. On by default; the host can turn them off. */
-  readonly sections?: boolean;
-}
-
-export interface HostRoom {
-  readonly code: string;
-  state(): RoomStatePayload;
-  question(): LiveQuestion | null;
-  /** The last reveal, including correct answers. Host screen only. */
-  lastReveal(): RevealPayload | null;
-  /** Lobby only. A mode changed mid-quiz would rewrite its own history. */
-  setRevealMode(mode: RevealMode): void;
-  /** Lobby only, for the same reason: the flow positions would move. */
-  setSections(show: boolean): void;
-  start(): void;
-  show(index: number): void;
-  close(): void;
-  /** Reveal what the mode says is due. A no-op when nothing is. */
-  reveal(): void;
-  /** Next question, next reveal, the answer pass, or the end. */
-  next(): void;
-  end(): void;
-  ping(): void;
-  subscribe(listener: () => void): Unsubscribe;
-  leave(): void;
-}
 
 export async function createHost(options: HostOptions): Promise<HostRoom> {
   const quiz = options.quiz;
@@ -108,6 +76,8 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   let seq = 0;
   let lastQuestion: QuestionPayload | null = null;
   let lastReveal: RevealPayload | null = null;
+  /** First buzz on the current question. Cleared when the next one shows. */
+  let buzz: BuzzState | null = null;
 
   const roster = createRoster({
     room,
@@ -120,6 +90,7 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     sendState,
     publishState,
     replay,
+    onBuzz,
   });
 
   let snapshot = stateOf(null);
@@ -139,6 +110,7 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
       seq,
       you,
       token,
+      buzz,
     };
   }
 
@@ -195,6 +167,25 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     }
   }
 
+  /**
+   * The host is the clock. A phone's buzz only counts if it is the first to
+   * arrive for the current buzzer question. The timestamp is the receipt.
+   */
+  function onBuzz(playerId: string, name: string, questionId: string): void {
+    if (current === null || phase !== RoomPhase.Question || closed) {
+      return;
+    }
+    if (!current.buzzer || current.id !== questionId || buzz !== null) {
+      return;
+    }
+    buzz = { playerId, name, at: Date.now() };
+    broadcast(MessageType.Buzz, {
+      questionId,
+      ...buzz,
+    } satisfies BuzzPayload);
+    publishState();
+  }
+
   function questionAt(position: number): QuestionModel | undefined {
     const at = slots[position];
     return at === undefined ? undefined : plan.questions[at];
@@ -218,13 +209,26 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
       }
       const grade = gradeQuestion(question, response);
       const late = player.late.has(question.id);
-      const points = late ? 0 : grade.points;
-      player.score = round2(player.score + points);
+      const correct = grade.correct && !late;
+      // The same rule as solo, from the same file. A late answer is wrong, so
+      // it loses the stake too.
+      const settled = settleWager({
+        offered: player.stakes.get(question.id),
+        allowed: question.wager,
+        // An empty submission is still an empty answer. No bet, no loss.
+        answered: grade.answered,
+        points: late ? 0 : grade.points,
+        maxPoints: grade.maxPoints,
+        bank: player.score,
+        correct,
+      });
+      player.score = round2(player.score + settled.points);
       results[player.id] = {
         given: describeResponse(question, response),
-        correct: grade.correct && !late,
-        points,
+        correct,
+        points: settled.points,
         late,
+        stake: settled.stake > 0 ? settled.stake : null,
       };
     }
     graded.add(question.id);
@@ -310,6 +314,7 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     phase = phaseValue;
     closed = phaseValue === RoomPhase.Answers;
     lastReveal = null;
+    buzz = null;
     deadline =
       phaseValue === RoomPhase.Question && question.timerMs !== null
         ? Date.now() + question.timerMs
@@ -486,4 +491,4 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   };
 }
 
-export type { JoinPayload, SubmitPayload };
+export type { HostOptions, HostRoom, JoinPayload, SubmitPayload };
