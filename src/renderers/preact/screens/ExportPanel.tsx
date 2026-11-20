@@ -1,11 +1,9 @@
 /**
- * Every way out of the quiz, in three boxes.
+ * Every way out of the quiz, in three groups.
  *
  * A host on a projector wants paper. A teacher wants CSV, GIFT or QTI. The
  * files are the same exports the CLI writes, so nothing here is a second
- * implementation. Keeping the three jobs apart means the paper page is not
- * lost among the classroom files, and the classroom files are not mistaken for
- * another download.
+ * implementation.
  */
 
 import type { JSX } from "preact";
@@ -24,6 +22,7 @@ import {
   printQuiz,
 } from "../../../platform/browser/exports";
 import { useT } from "../i18n";
+import { GroupHead, HoverNote } from "./Info";
 
 function CopyNote({
   what,
@@ -45,8 +44,8 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
 
   return (
     <>
-      <fieldset class="pq-settings-group">
-        <legend>{t("settingsExport")}</legend>
+      <fieldset class="pq-settings-group" aria-label={t("settingsExport")}>
+        <GroupHead label={t("settingsExport")} note={t("downloadNote")} />
         <div class="pq-settings-row">
           <button type="button" onClick={() => downloadQuizJson(quiz)}>
             {t("saveJson")}
@@ -83,12 +82,17 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
             {t("copyTrivia")}
           </button>
         </div>
-        <p class="pq-settings-note">{t("downloadNote")}</p>
         <CopyNote what={copied} />
       </fieldset>
 
-      <fieldset class="pq-settings-group">
-        <legend>{t("settingsExportClassroom")}</legend>
+      <fieldset
+        class="pq-settings-group"
+        aria-label={t("settingsExportClassroom")}
+      >
+        <GroupHead
+          label={t("settingsExportClassroom")}
+          note={t("classroomNote")}
+        />
         <div class="pq-settings-row">
           <button type="button" onClick={() => downloadQuizCsv(quiz)}>
             {t("saveCsv")}
@@ -103,11 +107,10 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
             {t("saveResultsCsv")}
           </button>
         </div>
-        <p class="pq-settings-note">{t("classroomNote")}</p>
       </fieldset>
 
-      <fieldset class="pq-settings-group">
-        <legend>{t("settingsPrint")}</legend>
+      <fieldset class="pq-settings-group" aria-label={t("settingsPrint")}>
+        <GroupHead label={t("settingsPrint")} note={t("printNote")} />
         <div class="pq-settings-row">
           <button type="button" onClick={() => printQuiz("questions")}>
             {t("printQuestions")}
@@ -125,31 +128,34 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
             {t("printMediaOnly")}
           </button>
         </div>
-        <label class="pq-check">
-          <input
-            type="checkbox"
-            checked={quiz.config.printAnswerLines === true}
-            onChange={(event) => {
-              quiz.configure({
-                printAnswerLines: event.currentTarget.checked,
-              });
-            }}
-          />
-          {t("printAnswerLines")}
-        </label>
-        <p class="pq-settings-note">{t("printAnswerLinesNote")}</p>
-        <label class="pq-check">
-          <input
-            type="checkbox"
-            checked={quiz.config.printTypeHints !== false}
-            onChange={(event) => {
-              quiz.configure({ printTypeHints: event.currentTarget.checked });
-            }}
-          />
-          {t("printTypeHints")}
-        </label>
-        <p class="pq-settings-note">{t("printTypeHintsNote")}</p>
-        <p class="pq-settings-note">{t("printNote")}</p>
+        <HoverNote text={t("printAnswerLinesNote")}>
+          <label class="pq-check">
+            <input
+              type="checkbox"
+              checked={quiz.config.printAnswerLines === true}
+              onChange={(event) => {
+                quiz.configure({
+                  printAnswerLines: event.currentTarget.checked,
+                });
+              }}
+            />
+            {t("printAnswerLines")}
+          </label>
+        </HoverNote>
+        <HoverNote text={t("printTypeHintsNote")}>
+          <label class="pq-check">
+            <input
+              type="checkbox"
+              checked={quiz.config.printTypeHints !== false}
+              onChange={(event) => {
+                quiz.configure({
+                  printTypeHints: event.currentTarget.checked,
+                });
+              }}
+            />
+            {t("printTypeHints")}
+          </label>
+        </HoverNote>
       </fieldset>
     </>
   );

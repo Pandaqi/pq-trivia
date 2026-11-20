@@ -172,6 +172,26 @@ export function moveSlide(
   store.update(withBlocks(snapshot.text, bodies), target);
 }
 
+/** Lift a block and put it down at `to`, keeping the rest in order. */
+export function moveSlideTo(
+  store: EditorStore,
+  from: number,
+  to: number,
+): void {
+  if (NO_SPACE.includes(from) || from === to) {
+    return;
+  }
+  const snapshot = store.snapshot();
+  const bodies = blockTexts(snapshot.text, snapshot.doc);
+  const moving = bodies[from];
+  if (moving === undefined || bodies[to] === undefined) {
+    return;
+  }
+  bodies.splice(from, 1);
+  bodies.splice(to, 0, moving);
+  store.update(withBlocks(snapshot.text, bodies), to);
+}
+
 /* -------------------------------------------------------------- text panes */
 
 export function setSlideText(

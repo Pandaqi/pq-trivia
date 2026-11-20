@@ -39,11 +39,19 @@ export function downloadQuizCsv(quiz: Quiz): void {
 }
 
 export function downloadQuizGift(quiz: Quiz): void {
-  downloadText(`${fileSlug(title(quiz))}.gift.txt`, quiz.export.gift(), "text/plain");
+  downloadText(
+    `${fileSlug(title(quiz))}.gift.txt`,
+    quiz.export.gift(),
+    "text/plain",
+  );
 }
 
 export function downloadQuizQti(quiz: Quiz): void {
-  downloadText(`${fileSlug(title(quiz))}.qti.xml`, quiz.export.qti(), "application/xml");
+  downloadText(
+    `${fileSlug(title(quiz))}.qti.xml`,
+    quiz.export.qti(),
+    "application/xml",
+  );
 }
 
 /** Results so far. A half-played quiz exports what has been answered. */
@@ -52,11 +60,7 @@ export function downloadQuizGrades(quiz: Quiz): void {
   if (text === null) {
     return;
   }
-  downloadText(
-    `${fileSlug(title(quiz))}-results.csv`,
-    text,
-    "text/csv",
-  );
+  downloadText(`${fileSlug(title(quiz))}-results.csv`, text, "text/csv");
 }
 
 export function downloadQuizHandout(quiz: Quiz): void {

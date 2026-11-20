@@ -9,13 +9,19 @@
  */
 
 import { createQuiz } from "../core/quiz/create";
+import type { PreviewPlace } from "../editor/mount";
 import { mountQuiz } from "./preact/mount";
 
 export interface MountedPreview {
   /** Same player, new text. Cheaper than a remount and keeps the pane's place. */
   load(text: string): void;
+  /** Jump to the slide the author picked in the list. */
+  show(place: PreviewPlace): void;
   destroy(): void;
 }
+
+/** Where a section screen nobody wrote comes from. */
+const SYNTHETIC = "<section-screen>";
 
 export interface PreviewOptions {
   /** Name for diagnostics and the export path. */
@@ -54,9 +60,43 @@ export function mountPreview(
     },
   });
   const file = options.file ?? PREVIEW_FILE;
+  /** The slide the wizard last asked for. Survives a reload. */
+  let wanted: PreviewPlace | null = null;
+
+  const show = (place: PreviewPlace): void => {
+    wanted = place;
+    const plan = quiz.state.plan;
+    if (plan === null) {
+      return;
+    }
+    if (place.kind === "end") {
+      quiz.goToEnd();
+      return;
+    }
+    if (place.kind === "header" || place.kind === "start") {
+      quiz.goToStart();
+      return;
+    }
+    // A line survives the player adding screens the author never wrote, so
+    // find the question there first and fall back to the block index.
+    const at =
+      place.line > 0
+        ? plan.questions.findIndex(
+            (question) =>
+              question.location.file !== SYNTHETIC &&
+              question.location.line === place.line,
+          )
+        : -1;
+    const index =
+      at >= 0
+        ? at
+        : Math.min(Math.max(place.index, 0), plan.questions.length - 1);
+    quiz.goTo(index);
+  };
+
   const load = (next: string): void => {
-    // A reload starts at the start screen. An author editing the question they
-    // are looking at wants to stay there, so the same question is reopened.
+    // A reload starts at the start screen. The author wants the slide they are
+    // on, or the one they picked in the list, not the start.
     const was = quiz.state.index;
     const mode = quiz.state.mode;
     void quiz
@@ -64,7 +104,16 @@ export function mountPreview(
       .catch(() => undefined)
       .then(() => {
         const plan = quiz.state.plan;
-        if (was > -1 && plan !== null) {
+        // Read late: the wizard may have asked for a slide while this loaded.
+        const place = wanted;
+        if (plan === null) {
+          restore();
+          return;
+        }
+        if (place !== null) {
+          // After a reload the player is back at the top. Follow the author.
+          show(place);
+        } else if (was > -1) {
           quiz.setMode(mode);
           quiz.goTo(Math.min(was, plan.questions.length - 1));
         }
@@ -84,6 +133,7 @@ export function mountPreview(
 
   return {
     load,
+    show,
     destroy() {
       unsubscribe?.();
       mounted.destroy();

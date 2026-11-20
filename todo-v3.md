@@ -8,7 +8,7 @@
 
 
 
-MILESTONE: Fully implement Phase 10 from `ROADMAP.md`. Remove the finished work from the file once done.
+
 
 EXAMPLES: Please create an example test within `examples` for all major features of the framework (incl animations, transitions, audio, video, multiplayer, etcetera). (Either a raw `.html` or a folder with more files inside for that specific example.) A suite of 10 or 15 simple examples that, together, cover basically everything you can do.
 

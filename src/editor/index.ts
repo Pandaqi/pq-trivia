@@ -19,6 +19,7 @@ export {
   type PickedMedia,
   type PreviewHook,
   type PreviewInstance,
+  type PreviewPlace,
 } from "./mount";
 export {
   readText,
@@ -50,6 +51,7 @@ export {
   moveAnswer,
   moveMedia,
   moveSlide,
+  moveSlideTo,
   removeAnswer,
   removeMedia,
   removeSlide,
@@ -72,3 +74,14 @@ export {
   type FieldSpec,
   type HeaderFieldSpec,
 } from "./fields";
+export {
+  EditorPane,
+  MIN_PANE_WIDTH,
+  PANE_LABELS,
+  PANE_ORDER,
+  defaultLayout,
+  startLayout,
+  writeLayout,
+  type EditorLayout,
+  type LayoutChoice,
+} from "./layout";

@@ -168,11 +168,7 @@ function readSteps(
   const raw = attributeValues(attributes, "Steps");
   for (const entry of raw.flatMap((value) => value.split("|"))) {
     const token = entry.trim();
-    if (
-      token.length === 0 ||
-      isStepToken(token) ||
-      isStepTransition(token)
-    ) {
+    if (token.length === 0 || isStepToken(token) || isStepTransition(token)) {
       continue;
     }
     diagnostics.push(
@@ -399,8 +395,7 @@ export function createQuestion(
     transition: firstAttributeValue(attributes, "Transition") ?? null,
     reveal: firstAttributeValue(attributes, "Reveal") ?? null,
     steps: readSteps(attributes, diagnostics, location),
-    stepTransition:
-      firstAttributeValue(attributes, "StepTransition") ?? null,
+    stepTransition: firstAttributeValue(attributes, "StepTransition") ?? null,
     direction: readEnum(
       attributes,
       "Direction",

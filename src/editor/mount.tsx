@@ -7,6 +7,7 @@
  */
 
 import { h, render } from "preact";
+import type { EditorLayout } from "./layout";
 import { createEditorStore, type EditorStore } from "./store";
 import { EDITOR_CSS } from "./styles";
 import { EditorApp } from "./ui/EditorApp";
@@ -23,9 +24,24 @@ export interface PickedMedia {
   readonly copied: boolean;
 }
 
+/**
+ * A slide, in the list's own words: `"round"`, `"question"`, and so on. A
+ * string, not the enum, so a renderer can read this without importing the
+ * wizard.
+ */
+export interface PreviewPlace {
+  readonly kind: string;
+  /** Block index in the text. -1 is the header. */
+  readonly index: number;
+  /** Line the block starts on, so the player can find the same question. */
+  readonly line: number;
+}
+
 /** A mounted player: new text in, teardown out. */
 export interface PreviewInstance {
   load(text: string): void;
+  /** Follow the author to this slide. A host may leave this out. */
+  show?(place: PreviewPlace): void;
   destroy(): void;
 }
 
@@ -46,6 +62,10 @@ export interface EditorOptions {
   readonly preview?: PreviewHook | undefined;
   /** Start with the preview pane open. Default true when a hook exists. */
   readonly previewOpen?: boolean | undefined;
+  /** Panes and widths to open with. Wins over anything the last visit saved. */
+  readonly layout?: EditorLayout | undefined;
+  /** Keep the panes and widths for the next visit. Default true. */
+  readonly rememberLayout?: boolean | undefined;
 }
 
 export interface MountedEditor {

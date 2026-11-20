@@ -8,6 +8,7 @@
 import type { ComponentChildren, JSX } from "preact";
 import { useRef } from "preact/hooks";
 import { addSlide, setFieldValue, SlideTemplate, valuesFor } from "../commands";
+import { EditorPane, PANE_LABELS, PANE_ORDER } from "../layout";
 import type { EditorFile, EditorOptions } from "../mount";
 import { HEADER_INDEX } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
@@ -18,8 +19,9 @@ export interface ToolbarProps {
   readonly store: EditorStore;
   readonly snapshot: EditorSnapshot;
   readonly options: EditorOptions;
-  readonly previewOpen: boolean;
-  readonly onTogglePreview: () => void;
+  readonly panes: readonly EditorPane[];
+  readonly hasPreview: boolean;
+  readonly onTogglePane: (pane: EditorPane) => void;
 }
 
 const TITLE_ID = "pq-editor-title";
@@ -54,8 +56,9 @@ export function Toolbar({
   store,
   snapshot,
   options,
-  previewOpen,
-  onTogglePreview,
+  panes,
+  hasPreview,
+  onTogglePane,
 }: ToolbarProps): JSX.Element {
   const title =
     valuesFor(snapshot, HEADER_INDEX, "Title")[0] ??
@@ -113,6 +116,30 @@ export function Toolbar({
       </div>
 
       <div class="pq-editor-groups">
+        <div class="pq-editor-group" role="group" aria-label="Panes">
+          {PANE_ORDER.map((pane) => {
+            const on = panes.includes(pane);
+            const unavailable = pane === EditorPane.Preview && !hasPreview;
+            return (
+              <button
+                key={pane}
+                type="button"
+                class="pq-editor-pane-toggle"
+                aria-pressed={on}
+                disabled={unavailable}
+                title={
+                  unavailable
+                    ? "No preview hook on this page"
+                    : `Show or hide the ${PANE_LABELS[pane]} pane`
+                }
+                onClick={() => onTogglePane(pane)}
+              >
+                {PANE_LABELS[pane]}
+              </button>
+            );
+          })}
+        </div>
+
         <div class="pq-editor-group" role="group" aria-label="History">
           <button
             type="button"
@@ -193,20 +220,6 @@ export function Toolbar({
             </button>
           )}
         </div>
-
-        {options.preview === undefined ? null : (
-          <div class="pq-editor-group" role="group" aria-label="View">
-            <button
-              type="button"
-              class="pq-editor-button"
-              onClick={onTogglePreview}
-              aria-pressed={previewOpen}
-              title="Show the real player beside the editor"
-            >
-              Preview
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

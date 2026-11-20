@@ -39,7 +39,9 @@ import {
   type LayoutMode,
 } from "../../../core/quiz/types";
 import type { Quiz } from "../../../core/session/quiz";
+import { bubbleIsOpen, dismissBubbles } from "../../../shared/bubble";
 import { ExportPanel } from "./ExportPanel";
+import { GroupHead, HoverNote } from "./Info";
 import {
   setThemeMode,
   storedThemeMode,
@@ -116,8 +118,8 @@ export function SettingsPanel({
 
   return (
     <>
-      <fieldset class="pq-settings-group">
-        <legend>{t("settingsOrder")}</legend>
+      <fieldset class="pq-settings-group" aria-label={t("settingsOrder")}>
+        <GroupHead label={t("settingsOrder")} note={t("orderNote")} />
         <label class="pq-field">
           <span class="pq-field-label">{t("seed")}</span>
           <input
@@ -156,12 +158,14 @@ export function SettingsPanel({
         >
           {t("applyOrder")}
         </button>
-        <p class="pq-settings-note">{t("orderNote")}</p>
       </fieldset>
 
       {available.length === 0 ? null : (
-        <fieldset class="pq-settings-group">
-          <legend>{t("settingsRounds")}</legend>
+        <fieldset class="pq-settings-group" aria-label={t("settingsRounds")}>
+          <GroupHead
+            label={t("settingsRounds")}
+            note={t("settingsRoundsNote")}
+          />
           {available.map((round) => (
             <label class="pq-check" key={round.id}>
               <input
@@ -174,7 +178,6 @@ export function SettingsPanel({
               {round.name}
             </label>
           ))}
-          <p class="pq-settings-note">{t("settingsRoundsNote")}</p>
           {empty ? (
             <p class="pq-settings-note pq-warning" role="status">
               {t("emptyQuiz")}
@@ -185,23 +188,24 @@ export function SettingsPanel({
 
       <fieldset class="pq-settings-group">
         <legend>{t("settingsAppearance")}</legend>
-        <label class="pq-field">
-          <span class="pq-field-label">{t("settingsLayout")}</span>
-          <select
-            class="pq-input"
-            value={layout}
-            onChange={(event) => {
-              const next = event.currentTarget.value as LayoutMode;
-              setLayout(next);
-              setLayoutMode(next);
-              quiz.configure({ layoutMode: next });
-            }}
-          >
-            <option value="viewport">{t("layoutViewport")}</option>
-            <option value="inline">{t("layoutInline")}</option>
-          </select>
-        </label>
-        <p class="pq-settings-note">{t("settingsLayoutNote")}</p>
+        <HoverNote text={t("settingsLayoutNote")}>
+          <label class="pq-field">
+            <span class="pq-field-label">{t("settingsLayout")}</span>
+            <select
+              class="pq-input"
+              value={layout}
+              onChange={(event) => {
+                const next = event.currentTarget.value as LayoutMode;
+                setLayout(next);
+                setLayoutMode(next);
+                quiz.configure({ layoutMode: next });
+              }}
+            >
+              <option value="viewport">{t("layoutViewport")}</option>
+              <option value="inline">{t("layoutInline")}</option>
+            </select>
+          </label>
+        </HoverNote>
         <label class="pq-field">
           <span class="pq-field-label">{t("themeMode")}</span>
           <select
@@ -277,8 +281,8 @@ export function SettingsPanel({
         </label>
       </fieldset>
 
-      <fieldset class="pq-settings-group">
-        <legend>{t("toolbar")}</legend>
+      <fieldset class="pq-settings-group" aria-label={t("toolbar")}>
+        <GroupHead label={t("toolbar")} note={t("toolbarNote")} />
         {TOOLBAR_ACTIONS.map((action) => {
           const checked = pinned.includes(action.id);
           return (
@@ -300,28 +304,20 @@ export function SettingsPanel({
             </label>
           );
         })}
-        {actions.length === 0 ? null : (
-          <>
-            <p class="pq-settings-note">{t("hostActions")}</p>
-            {actions.map((action) => (
-              <label class="pq-check" key={action.id}>
-                <input
-                  type="checkbox"
-                  checked={action.pinned === true}
-                  onChange={(event) => {
-                    quiz.actions.setPinned(
-                      action.id,
-                      event.currentTarget.checked,
-                    );
-                    // Pinned order lives in the registry, so ask for a paint.
-                    quiz.configure({});
-                  }}
-                />
-                {t("pin", { label: action.label })}
-              </label>
-            ))}
-          </>
-        )}
+        {actions.map((action) => (
+          <label class="pq-check" key={action.id}>
+            <input
+              type="checkbox"
+              checked={action.pinned === true}
+              onChange={(event) => {
+                quiz.actions.setPinned(action.id, event.currentTarget.checked);
+                // Pinned order lives in the registry, so ask for a paint.
+                quiz.configure({});
+              }}
+            />
+            {t("pin", { label: action.label })}
+          </label>
+        ))}
       </fieldset>
 
       <ExportPanel quiz={quiz} />
@@ -351,11 +347,17 @@ export function SettingsOverlay({
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        onClose();
+      if (event.key !== "Escape") {
+        return;
       }
+      event.preventDefault();
+      event.stopPropagation();
+      // A note that is open takes the key. One press, one thing.
+      if (bubbleIsOpen()) {
+        dismissBubbles();
+        return;
+      }
+      onClose();
     };
     // Capture, so Escape closes the panel instead of jumping to the end screen.
     window.addEventListener("keydown", onKey, { capture: true });

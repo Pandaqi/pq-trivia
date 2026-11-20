@@ -37,9 +37,7 @@ if (plain === undefined || staged === undefined) {
 const partsOf = (raw: readonly string[]): (readonly StepPart[])[] =>
   parseSteps(raw).map((step) => step.parts);
 
-const enteredOf = (
-  raw: readonly string[],
-): Record<string, string | null> => {
+const enteredOf = (raw: readonly string[]): Record<string, string | null> => {
   const out: Record<string, string | null> = {};
   for (const entry of parseSteps(raw).flatMap((step) => step.entered)) {
     out[entry.part] = entry.transition;

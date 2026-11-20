@@ -39,8 +39,19 @@ describe("the wizard", () => {
     const slides = host.querySelectorAll(".pq-editor-slide");
     expect(slides.length).toBe(3);
     expect(slides[0]?.textContent).toContain("Untitled quiz");
-    expect(host.querySelector("#pq-editor-syntax")).not.toBeNull();
     expect(host.querySelector("#pq-editor-title")).not.toBeNull();
+    // No preview hook here, so the wizard opens on slides and details.
+    expect(host.querySelector("#pq-editor-question")).not.toBeNull();
+    expect(host.querySelector("#pq-editor-syntax")).toBeNull();
+  });
+
+  test("a pane toggle puts the Syntax pane up and takes it down", async () => {
+    button("Syntax")?.click();
+    await tick();
+    expect(host.querySelector("#pq-editor-syntax")).not.toBeNull();
+    button("Syntax")?.click();
+    await tick();
+    expect(host.querySelector("#pq-editor-syntax")).toBeNull();
   });
 
   test("the form follows the selection", async () => {

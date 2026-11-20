@@ -96,8 +96,7 @@ export const en: TranslationTable = {
   roundsLabel: "Round",
   roundWord: "Round",
   hints: "Hints",
-  startDate:
-    "This quiz was created or last updated in {year}. Questions were designed using the information available at that time!",
+  startDate: "Made in {year}. Facts were checked then.",
   safetyMode: "Are you sure you want to toggle mode (questions/answers)?",
   safetyEnd: "Are you sure you want to skip to the end?",
   mediaMissing: "Media not found: {path}",
@@ -150,13 +149,13 @@ export const en: TranslationTable = {
   shuffleQuestions: "Shuffle questions inside a round",
   shuffleRounds: "Shuffle rounds",
   applyOrder: "Apply order",
-  orderNote:
-    "The same seed gives the same order. Answers stay where you left them.",
+  orderNote: "Same seed, same shuffle. Answers never move.",
   beep: "Beep in the last five seconds",
   toolbar: "Toolbar",
   pin: "Pin {label}",
   unpin: "Unpin {label}",
-  hostActions: "Buttons your page added",
+  toolbarNote:
+    "Pinned actions show on every screen. Buttons your page added land here too.",
   answerLabels: "Answer labels",
   answerLetters: "A, B, C",
   answerLowercase: "a, b, c",
@@ -173,20 +172,19 @@ export const en: TranslationTable = {
   saveQti: "Save QTI",
   saveResultsCsv: "Save results CSV",
   classroomNote:
-    "CSV opens in a spreadsheet, GIFT in Moodle, QTI in Canvas and friends. Results include the answers given so far, so a half-played quiz exports too.",
+    "CSV for a spreadsheet, GIFT for Moodle, QTI for Canvas. Results carry the answers given so far.",
   downloadNote:
-    "JSON opens in any editor. The handout is HTML with no script, so it prints and reads offline.",
+    "JSON is plain text. The handout is one HTML file with no script, so it opens anywhere.",
 
   settingsOrder: "Order and seed",
   settingsRounds: "Rounds",
-  settingsRoundsNote:
-    "Everything is included by default. Uncheck a round to hide it.",
+  settingsRoundsNote: "Untick a round to leave it out of this run.",
   settingsAppearance: "Appearance",
-  settingsLayout: "Page size",
+  settingsLayout: "Layout",
   layoutViewport: "Fill the window",
   layoutInline: "Fit inline",
   settingsLayoutNote:
-    "Fill keeps the quiz one screen high. Long content scrolls inside. Fit lets it grow with the page. Your choice is remembered.",
+    "Fill: one screen high, long slides scroll inside. Fit: grows with the page. Remembered on this device.",
   themeMode: "Colour mode",
   themeAuto: "Follow the system",
   themeLight: "Light",
@@ -205,19 +203,18 @@ export const en: TranslationTable = {
   triviaWord: "Trivia Syntax",
   copiedWhat: "Copied {what}.",
   save: "Done",
+  moreInfo: "More information",
   loadHeading: "Load questions",
   insertQuiz: "Insert a quiz file",
   printTypeHints: "Question type hints on paper",
   printTypeHintsNote:
-    "The same quiet line under each question: what kind of answer and how many. Off for a bare sheet.",
+    "The quiet line under each question: answer type and count. Off for a bare sheet.",
   printAnswerLines: "Ruled lines on written answers",
-  printAnswerLinesNote:
-    "Off by default. Turns an open question into something to write on, with a line under it.",
+  printAnswerLinesNote: "Adds a line to write on under open questions.",
   insertError: "That file did not load: {message}",
   loadBuiltin: "Play the built-in questions",
   loadOnline: "Load online questions ({count})",
-  printNote:
-    "Uses the browser's own print dialog. Choose Save as PDF there to get a file.",
+  printNote: "Opens your browser's print dialog. Pick Save as PDF for a file.",
   printQuestions: "Print questions",
   printAnswers: "Print answers",
   printAnswerSheet: "Print answer sheet",

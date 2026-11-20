@@ -44,6 +44,8 @@
   --pq-code-ink: #f6f1e6;
   --pq-scan: #fff;
   --pq-veil: light-dark(rgb(20 16 24 / 0.45), rgb(0 0 0 / 0.6));
+  /* A surface that floats: notes, bubbles, anything over the page. */
+  --pq-pop: light-dark(#ffffff, #33413a);
 
   /* Shape. */
   --pq-r-sm: 0.4rem;
@@ -53,6 +55,8 @@
   --pq-line-w: 1px;
   --pq-border: var(--pq-line-w) solid var(--pq-line);
   --pq-border-strong: 1.5px solid var(--pq-line-strong);
+  /* A section rule. Dotted, so it separates without drawing a box. */
+  --pq-rule-dot: var(--pq-line-w) dotted var(--pq-line-strong);
   --pq-focus: 3px solid var(--pq-accent);
   --pq-shadow-1:
     0 1px 2px light-dark(rgb(74 58 30 / 0.1), rgb(0 0 0 / 0.35)),
@@ -185,7 +189,6 @@
 .pq-resume,
 .pq-widget-frame,
 .pq-settings,
-.pq-settings-group,
 .pq-stats div,
 .pq-problems-panel,
 .pq-media-missing,
@@ -198,7 +201,6 @@
 
 /* The ones that sit a shade deeper, so a group reads as one block. */
 .pq-settings,
-.pq-settings-group,
 .pq-stats div,
 .pq-resume,
 .pq-live-settings {

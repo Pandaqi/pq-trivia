@@ -11,6 +11,7 @@ import { setSlideText, setWholeText } from "../commands";
 import { HEADER_INDEX } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 import { blockTextAt, headerText } from "../text";
+import { NoteHead } from "./NoteHead";
 
 export enum TextTab {
   Slide = "slide",
@@ -47,7 +48,10 @@ export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
 
   return (
     <section class="pq-editor-panel" aria-label="Trivia Syntax">
-      <h2>Trivia Syntax</h2>
+      <NoteHead
+        label="Trivia Syntax"
+        note="Edits land on blur or Apply. The text always wins: the forms are rebuilt from it."
+      />
       <div class="pq-editor-tabs" role="tablist" aria-label="Text scope">
         <button
           type="button"
@@ -90,10 +94,6 @@ export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
           Reset
         </button>
       </div>
-      <p class="pq-editor-hint">
-        Edits land on blur or Apply. The rest of the wizard is rebuilt from this
-        text, so the text always wins.
-      </p>
     </section>
   );
 }

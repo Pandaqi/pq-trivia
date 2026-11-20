@@ -20,6 +20,7 @@ const MAX_ENTRIES = 12;
 
 const LAYER_OF: Readonly<Record<string, number>> = {
   core: 1,
+  shared: 2,
   multiplayer: 7,
   editor: 4,
   platform: 5,

@@ -18,10 +18,7 @@ export function isStaged(screen: QuestionViewModel): boolean {
 }
 
 /** A part shows when nothing is staged, or when its step has come. */
-export function showsStep(
-  screen: QuestionViewModel,
-  part: StepPart,
-): boolean {
+export function showsStep(screen: QuestionViewModel, part: StepPart): boolean {
   return !isStaged(screen) || screen.steps.visible.includes(part);
 }
 

@@ -17,6 +17,7 @@ import {
   type MountedEditor,
   type PickedMedia,
   type PreviewInstance,
+  type PreviewPlace,
 } from "../editor";
 import { downloadText, fileSlug } from "../platform/browser/download";
 
@@ -26,6 +27,7 @@ export type {
   MountedEditor,
   PickedMedia,
   PreviewInstance,
+  PreviewPlace,
 } from "../editor";
 export {
   EditorStore,
@@ -278,6 +280,7 @@ function saveDownload(name: string, text: string): void {
  */
 function previewQuiz(text: string, host: HTMLElement): PreviewInstance {
   let current = text;
+  let place: PreviewPlace | null = null;
   let cancelled = false;
   let live: PreviewInstance | null = null;
   void import("../renderers/preview").then(({ mountPreview }) => {
@@ -285,11 +288,19 @@ function previewQuiz(text: string, host: HTMLElement): PreviewInstance {
       return;
     }
     live = mountPreview(current, host, { keepHead: true });
+    // The pane may have asked for a slide before the player arrived.
+    if (place !== null) {
+      live.show?.(place);
+    }
   });
   return {
     load(next) {
       current = next;
       live?.load(next);
+    },
+    show(next) {
+      place = next;
+      live?.show?.(next);
     },
     destroy() {
       cancelled = true;

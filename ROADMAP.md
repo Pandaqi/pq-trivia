@@ -1207,12 +1207,16 @@ Author a quiz **inside** the page. No text file, no editor.
 - Separate entry: `pq-trivia/editor`. Separate bundle. **Default builds leave it out.**
 - Build flag: `bun run build --editor`. Off by default.
 - Uses core only: `parse`, `serialize`, `validate`, plus the player for preview.
-- Three panes: **slide list** | **form editor** | **Trivia Syntax text**.
-- Optional fourth: live preview.
+- Four panes: **slides** | **details** | **Trivia Syntax** | **live preview**.
+- Slides and preview open by default. The others are one toggle away, in the toolbar.
+- Drag a divider to widen a pane. Double-click it to reset the widths.
+- The layout is remembered per browser. `mountEditor` takes `layout` and `rememberLayout` to override that.
+- A new slide opens the details pane. Clicking the selected slide again shuts it.
 
 **What it does:**
 
-- Add, remove, duplicate and reorder slides (rounds, questions, start, end).
+- Add, remove, duplicate and reorder slides (rounds, questions, start, end). Drag a slide, use its arrows, or press Alt+↑/↓.
+- The list shows the shape: rounds sit one step in, their questions two, with a branch tick.
 - Edit fields through generated forms. Forms come from the attribute registry, so new attributes appear automatically. No hand-written field lists.
 - Edit the text pane directly. Press Refresh (or blur) → parse → forms update.
 - Form edits rewrite the text buffer via `serialize()`. One serializer. The text _is_ the model.
@@ -1221,13 +1225,14 @@ Author a quiz **inside** the page. No text file, no editor.
 - Undo/redo: stack of serialized snapshots. Text is small. No dependency.
 - Save: download `.trivia` + `quiz.manifest.json`. Optional "save to folder".
 - Import: paste, upload files, or open a folder.
-- Preview: run the real player against the current buffer.
+- Preview: run the real player against the current buffer. It follows the slide you pick, and goes back to it after an edit. Drift inside the preview and it stays there until the next pick or edit.
+- The preview never scrolls. The whole page is scaled to fit whatever the pane is, so dragging a divider resizes the quiz instead of clipping it.
 
 **Rules:**
 
 - **Text is the single source of truth.** Every UI action becomes text. No separate model to keep in sync. This is why the wizard is cheap later.
 - No server. No account. Works offline.
-- Accessible forms, labelled fields, keyboard reorder (Alt+↑/↓), no drag-only interactions.
+- Accessible forms, labelled fields, keyboard reorder (Alt+↑/↓). Drag is a shortcut, never the only way.
 - Host-side only. Players never see it.
 
 **What the plan must already have (Phase 1–2), so this stays cheap:**

@@ -6,7 +6,8 @@
  */
 
 import type { ComponentChildren, JSX } from "preact";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { Bubble } from "../../shared/bubble";
 import { FieldKind } from "../fields";
 import { ListEditor } from "./ListEditor";
 
@@ -23,14 +24,29 @@ export function FieldShell({
   description,
   children,
 }: FieldShellProps): JSX.Element {
+  const host = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const hasNote = description !== undefined && description.length > 0;
   return (
-    <div class="pq-editor-field">
+    <div
+      ref={host}
+      class={hasNote ? "pq-editor-field pq-editor-has-note" : "pq-editor-field"}
+      onPointerEnter={() => setOpen(hasNote)}
+      onPointerLeave={() => setOpen(false)}
+      onFocusIn={() => setOpen(hasNote)}
+      onFocusOut={() => setOpen(false)}
+    >
       <label class="pq-editor-label" for={id}>
         {label}
       </label>
       {children}
-      {description !== undefined && description.length > 0 ? (
-        <p class="pq-editor-hint">{description}</p>
+      {open && hasNote ? (
+        <Bubble
+          anchor={host}
+          text={description}
+          class="pq-editor-bubble"
+          onClose={() => setOpen(false)}
+        />
       ) : null}
     </div>
   );

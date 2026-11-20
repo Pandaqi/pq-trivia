@@ -33,6 +33,7 @@ import { HEADER_INDEX, SLIDE_KIND_LABELS, slideAt } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 import type { SlideInfo } from "../slides";
 import { DraftText, FieldRow, FieldShell, Select } from "./Field";
+import { NoteHead } from "./NoteHead";
 import { ListEditor } from "./ListEditor";
 
 export interface FormPaneProps {
@@ -65,7 +66,7 @@ const ANSWER_HINTS: Readonly<Record<string, string>> = {
   [QuestionType.Choice]: "Tick every option that counts as correct.",
   [QuestionType.List]: "Tick the answers a player must give, in any order.",
   [QuestionType.Sort]: "Write them in the right order. The player sorts them.",
-  [QuestionType.Range]: "The expected number. Range adds the margin.",
+  [QuestionType.Range]: "The expected number. Range sets the margin.",
   [QuestionType.Match]: "Write each pair as Left ~ Right.",
   [QuestionType.Cloze]: "One answer per [blank], or groups split by ||.",
 };
@@ -85,9 +86,9 @@ function textHint(type: string): string {
     return "The heading on its own screen at the start of the round.";
   }
   if (SCREENS.has(type)) {
-    return "The big line. Inline formatting works here.";
+    return "The big line. Inline formatting works.";
   }
-  return "Inline formatting works here. [blank] is a cloze gap.";
+  return "Inline formatting works. [blank] is a cloze gap.";
 }
 
 export function FormPane({
@@ -121,11 +122,10 @@ function HeaderForm({
   const empty = snapshot.slides.length === 1;
   return (
     <section class="pq-editor-panel" aria-label="Quiz settings">
-      <h2>Quiz settings</h2>
-      <p class="pq-editor-hint">
-        The title sits in the toolbar. These lines go above the first question;
-        leave a field empty to remove its line.
-      </p>
+      <NoteHead
+        label="Quiz settings"
+        note="These lines sit above the first question. Empty a field to drop its line."
+      />
       {HEADER_FIELDS.map((field) => (
         <FieldRow
           key={field.key}
@@ -242,7 +242,7 @@ function BlockForm({
       <FieldShell
         id="pq-editor-type"
         label="Type"
-        description="What this block is. Open asks for typed text; the rest show answers."
+        description="Open asks for typed text. The rest show answer cards."
       >
         <Select
           id="pq-editor-type"
@@ -274,7 +274,7 @@ function BlockForm({
             onRemove={(at) => removeAnswer(store, index, at)}
             onMove={(at, delta) => moveAnswer(store, index, at, delta)}
             addLabel="Add answer"
-            emptyText="No answers yet. Open questions can skip this."
+            emptyText="Open questions can skip this."
           />
         </FieldShell>
       )}
@@ -282,7 +282,7 @@ function BlockForm({
       <FieldShell
         id="pq-editor-media"
         label="Media"
-        description="Pick a file to copy it into media/, or add any path you like."
+        description="Pick a file to copy it into media/. Any path works too."
       >
         <ListEditor
           id="pq-editor-media"
@@ -313,16 +313,18 @@ function BlockForm({
         return (
           <details class="pq-editor-more" key={group}>
             <summary>{label}</summary>
-            {fields.map((field) => (
-              <FieldRow
-                key={field.key}
-                field={field}
-                values={valuesFor(snapshot, index, field.key)}
-                onChange={(values) =>
-                  setValuesField(store, index, field.key, values)
-                }
-              />
-            ))}
+            <div class="pq-editor-more-body">
+              {fields.map((field) => (
+                <FieldRow
+                  key={field.key}
+                  field={field}
+                  values={valuesFor(snapshot, index, field.key)}
+                  onChange={(values) =>
+                    setValuesField(store, index, field.key, values)
+                  }
+                />
+              ))}
+            </div>
           </details>
         );
       })}

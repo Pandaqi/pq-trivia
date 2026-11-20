@@ -97,6 +97,109 @@
 
 .pq-settings-note {
   letter-spacing: 0;
+  text-align: left;
+}
+
+/* A keycap. A rounded rectangle reads as "press this", plain text does not. */
+.pq-keys kbd {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border: 1px solid var(--pq-line-strong);
+  border-radius: var(--pq-r-sm);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font-family: var(--pq-font-mono);
+  font-size: 0.9em;
+  line-height: 1.45;
+}
+
+/* --- Help, on demand -------------------------------------------------- */
+
+/* The "?" itself. Small, round, quiet until you need it. */
+.pq-info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: var(--pq-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.7rem;
+  line-height: 1;
+  cursor: pointer;
+  vertical-align: middle;
+
+  &:hover,
+  &[aria-expanded="true"] {
+    border-color: var(--pq-accent);
+    color: var(--pq-accent);
+  }
+}
+
+/* Next to a heading, a little air so it is not glued to the last letter. */
+.pq-settings-group legend .pq-info-button {
+  margin-left: 0.4rem;
+}
+
+/*
+ * The note floats, so it never reflows the panel. Fixed position keeps it out
+ * of every scroll box between here and the window.
+ */
+.pq-bubble {
+  position: fixed;
+  z-index: 60;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.55rem 0.8rem;
+  border: var(--pq-border);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-pop);
+  box-shadow: var(--pq-shadow-2);
+  color: var(--pq-ink);
+  font-size: var(--pq-text-sm);
+  line-height: 1.45;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+
+  &[data-pq-placed="true"] {
+    opacity: 1;
+  }
+
+  /* The tail. A square turned 45 degrees, carrying the same edge as the box. */
+  &::before {
+    content: "";
+    position: absolute;
+    left: var(--pq-arrow, 1.1rem);
+    width: 0.6rem;
+    height: 0.6rem;
+    border: inherit;
+    background: inherit;
+    transform: rotate(45deg);
+  }
+
+  &[data-pq-side="below"]::before {
+    top: -0.35rem;
+    margin-left: -0.3rem;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  &[data-pq-side="above"]::before {
+    bottom: -0.35rem;
+    margin-left: -0.3rem;
+    border-top: 0;
+    border-left: 0;
+  }
+}
+
+/* A hover wrapper adds nothing of its own; it is a target for the bubble. */
+.pq-hover > .pq-field {
+  margin: 0;
 }
 
 .pq-stats div {
@@ -212,9 +315,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: var(--pq-gap) 1rem;
-  border-bottom: 1px dashed var(--pq-line-strong);
-  background: var(--pq-paper-deep);
+  padding: var(--pq-gap-lg) var(--pq-space) var(--pq-gap);
+  background: var(--pq-slide);
 }
 
 /* Every small heading in a panel or a card. */
@@ -238,25 +340,51 @@
   cursor: pointer;
 }
 
-/* Three groups, evenly spaced: export, classroom, print. */
+/* Groups of settings: headings and space. A box inside a box is just a border
+   the reader has to step over twice. */
 .pq-settings-body {
   display: flex;
   flex-direction: column;
-  gap: var(--pq-gap-lg);
-  padding: 0 1.4rem 1.5rem;
+  gap: var(--pq-space);
+  padding: var(--pq-gap) var(--pq-space) var(--pq-space);
 }
 
 .pq-settings-group {
-  margin: var(--pq-gap-sm) 0 0;
-  padding: 1rem 1.1rem var(--pq-gap-lg);
+  position: relative;
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
 
-  legend {
-    padding: 0 0.45rem;
+  /* One rhythm for every row. Fieldsets do not do grid in every browser. */
+  > * + * {
+    margin-top: var(--pq-gap);
   }
+}
+
+/* A section heading: bigger, in ink, with a dotted rule under the lot. */
+.pq-settings-group legend {
+  display: block;
+  width: 100%;
+  padding: 0 0 var(--pq-gap-sm);
+  border-bottom: var(--pq-rule-dot);
+  color: var(--pq-ink);
+  font-family: var(--pq-font-heading);
+  font-size: var(--pq-text-md);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
 }
 
 .pq-settings-row {
   justify-content: flex-start;
+}
+
+/* A settings field is read at arm's length, not across a room. */
+.pq-settings .pq-input {
+  min-height: 2.4rem;
+  padding: 0.4rem 0.7rem;
 }
 
 .pq-check {
@@ -382,10 +510,10 @@
 
 .pq-warning {
   margin: var(--pq-gap-sm) 0;
-  padding: var(--pq-gap-sm) var(--pq-gap);
-  border: 1px solid color-mix(in srgb, var(--pq-accent) 40%, transparent);
-  border-radius: var(--pq-r-sm);
-  background: color-mix(in srgb, var(--pq-accent) 12%, transparent);
+  padding: 0 0 0 var(--pq-gap);
+  border: 0;
+  border-left: 3px solid var(--pq-accent);
   color: var(--pq-ink);
   font-weight: 600;
+  text-align: left;
 }

@@ -691,7 +691,10 @@
   display: inline-flex;
   align-items: center;
   gap: var(--pq-gap-sm);
-  padding: 0.45rem 1rem;
+  padding: 0.35rem 0.75rem;
+  /* A file picker is a footnote on the start screen, not a call to action. */
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
   border: 1px dashed var(--pq-line-strong);
   border-radius: var(--pq-r-pill);
   background: color-mix(in srgb, var(--pq-slide) 70%, transparent);

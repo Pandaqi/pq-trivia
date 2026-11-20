@@ -49,6 +49,7 @@ Adds replay protection to the multiplayer lobby
 | Requirements list         | `todo.md`                                                           |
 | V3 code                   | `src/core/`, `src/entries/`, `cli/`                                 |
 | Renderers and platform    | `src/renderers/`, `src/platform/`                                   |
+| Shared player/wizard bits | `src/shared/` (the info bubble)                                     |
 | Live mode                 | `src/multiplayer/`                                                  |
 | Docs site                 | `docs/` (VitePress)                                                 |
 | Runnable examples         | `examples/` (`player`, `element`, `print`, `custom`, `multiplayer`) |
