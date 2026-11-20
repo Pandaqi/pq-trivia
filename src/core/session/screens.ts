@@ -8,6 +8,7 @@ import { questionMaxScore } from "../model/question";
 import { SessionStatus, countsAsQuestion, type SessionState } from "./session";
 import { progressOf } from "./session";
 import { isEmptyResponse } from "./responses";
+import type { StepDefaults } from "../model/steps";
 import type { AttemptRecord } from "./attempts";
 import type { MediaOptions } from "../values/media";
 import {
@@ -38,6 +39,8 @@ export function screenFor(
   state: SessionState,
   saved: AttemptRecord | null,
   media: MediaOptions = {},
+  numbers = true,
+  steps: StepDefaults = {},
 ): ScreenViewModel | null {
   if (
     quiz === null ||
@@ -93,6 +96,7 @@ export function screenFor(
       index: state.index,
       total: playable.length,
       number,
+      numbers,
       progress,
       roundName: round?.name ?? null,
       roundSecret: round?.secret ?? null,
@@ -104,6 +108,13 @@ export function screenFor(
         roundQuestions.reduce((sum, item) => sum + questionMaxScore(item), 0),
       seed: state.plan.seed,
       isRoundStart: round !== null && previous?.round !== question.round,
+      ...(steps.defaultSteps === undefined
+        ? {}
+        : { defaultSteps: steps.defaultSteps }),
+      ...(steps.defaultStepTransition === undefined ||
+      steps.defaultStepTransition === null
+        ? {}
+        : { defaultStepTransition: steps.defaultStepTransition }),
       authorsDiverse:
         new Set(state.plan.questions.flatMap((item) => item.authors)).size > 1,
       categoriesDiverse:

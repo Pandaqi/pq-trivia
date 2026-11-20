@@ -16,12 +16,15 @@ import { Answers } from "../components/Answers";
 import { QuestionOptions, ReadOnlyAnswers } from "./ReadOnlyAnswers";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
+import { isStaged, showsStep, StepBar, stepEnter } from "./QuestionSteps";
+import { StepPart } from "../../../core/model/steps";
 import { ScriptWidget } from "../components/ScriptWidget";
 import { Timer } from "../components/Timer";
 import { Toolbar } from "../components/Toolbar";
 import { backgroundStyle } from "../components/background";
 import { roundColour, type RoundColour } from "../components/roundAccent";
 import { useT, type Translate } from "../i18n";
+import { typeHintText } from "../typeHint";
 
 function accentStyle(colour: RoundColour): string {
   return [
@@ -77,6 +80,7 @@ function SectionScreen({
             : t("roundNumber", { number: screen.roundNumber })}
         </p>
         <h1 class="pq-title pq-section-title" data-pq-heading tabIndex={-1}>
+          {screen.numberPrefix}
           {screen.title.length === 0 ? (
             (screen.roundName ?? t("roundWord"))
           ) : (
@@ -185,6 +189,19 @@ export function QuestionScreen({
       <QuestionOptions quiz={quiz} screen={screen} />
     ) : null;
 
+  // Staged reveals. Each part carries the transition it arrived with, and an
+  // ordinary question gets no attributes at all.
+  const staged = isStaged(screen);
+  const answerBlock =
+    answers === null || !showsStep(screen, StepPart.Answers) ? null : (
+      <div
+        class="pq-step-part"
+        data-pq-transition={stepEnter(screen, StepPart.Answers)}
+      >
+        {answers}
+      </div>
+    );
+
   const className = [
     "pq-screen",
     "pq-screen-question",
@@ -196,15 +213,33 @@ export function QuestionScreen({
 
   const hasMedia = screen.media.length > 0;
   const manyAnswers = screen.answers.length > 1;
+  // A media-only step is the clip's turn. One column, nothing beside it.
+  const mediaOnly = staged && hasMedia && !showsStep(screen, StepPart.Question);
   // V2's rule: media goes on the right, answers follow the media, and a single
   // short line stays in the middle of one column.
-  const split = hasMedia || (manyAnswers && answers !== null);
+  const split = !mediaOnly && (hasMedia || (manyAnswers && answers !== null));
   const answersLeft = hasMedia && answers !== null;
   const answersRight = !hasMedia && manyAnswers && answers !== null;
   // One column, one input: an open question, a range, a list, a cloze. Without
   // this the input was built and then never placed anywhere. Which is how an
   // interactive quiz ended up with no box to type in.
   const answersInline = answers !== null && !answersLeft && !answersRight;
+
+  const mediaList =
+    !hasMedia || !showsStep(screen, StepPart.Media) ? null : (
+      <div class="pq-media-list">
+        {screen.media.map((item) => (
+          <Media
+            key={item.path}
+            item={item}
+            autoplay={quiz.config.mediaAutoPlay === true}
+            asIframe={quiz.config.loadExternalMediaAsIframe === true}
+            animate={stepEnter(screen, StepPart.Media)}
+            onEnded={staged ? () => void quiz.nextStep() : undefined}
+          />
+        ))}
+      </div>
+    );
 
   return (
     <main
@@ -216,6 +251,7 @@ export function QuestionScreen({
       data-pq-answered={String(screen.answered)}
       data-pq-variant={screen.variant ?? undefined}
       data-pq-split={split ? "true" : "false"}
+      data-pq-step={mediaOnly ? "media" : undefined}
       style={`${backgroundStyle(screen.background) ?? ""};${accentStyle(colour)}`}
     >
       <Timer quiz={quiz} sound={timerSound} />
@@ -283,20 +319,40 @@ export function QuestionScreen({
 
       <div class={split ? "pq-split" : "pq-split pq-split-single"}>
         <div class="pq-split-left">
-          <header class="pq-header">
-            <h1 class="pq-title" data-pq-heading tabIndex={-1}>
-              <Inline nodes={screen.title} />
-            </h1>
-          </header>
+          {!showsStep(screen, StepPart.Question) ? null : (
+            <header
+              class="pq-header"
+              data-pq-transition={stepEnter(screen, StepPart.Question)}
+            >
+              <h1 class="pq-title" data-pq-heading tabIndex={-1}>
+                {screen.numberPrefix}
+                <Inline nodes={screen.title} />
+              </h1>
+            </header>
+          )}
 
-          {screen.body.length === 0 ? null : (
-            <div class="pq-body">
+          {quiz.config.questionTypeHints === false ||
+          screen.typeHint === null ||
+          !showsStep(screen, StepPart.Question) ? null : (
+            <p class="pq-type-hint">{typeHintText(t, screen.typeHint)}</p>
+          )}
+
+          {screen.body.length === 0 ||
+          !showsStep(screen, StepPart.Question) ? null : (
+            <div
+              class="pq-body"
+              data-pq-transition={stepEnter(screen, StepPart.Question)}
+            >
               <Inline nodes={screen.body} />
             </div>
           )}
 
-          {screen.comments.length === 0 ? null : (
-            <div class="pq-comments">
+          {screen.comments.length === 0 ||
+          !showsStep(screen, StepPart.Comments) ? null : (
+            <div
+              class="pq-comments"
+              data-pq-transition={stepEnter(screen, StepPart.Comments)}
+            >
               <Inline nodes={screen.comments} />
             </div>
           )}
@@ -307,27 +363,40 @@ export function QuestionScreen({
             allowed={quiz.config.allowScripts === true}
           />
 
-          {answersInline ? answers : null}
-          {answersLeft ? answers : null}
+          {mediaOnly ? mediaList : null}
+          {answersInline ? answerBlock : null}
+          {answersLeft ? answerBlock : null}
 
           {/* V2 put the comment, the hints and the sources right under the
               question. A box above the toolbar was my idea, not a good one. */}
-          {screen.explanation === null ? null : (
-            <p class="pq-explanation">
+          {screen.explanation === null ||
+          !showsStep(screen, StepPart.Explanation) ? null : (
+            <p
+              class="pq-explanation"
+              data-pq-transition={stepEnter(screen, StepPart.Explanation)}
+            >
               <Inline nodes={screen.explanation} />
             </p>
           )}
 
-          {screen.sources.length === 0 ? null : (
-            <p class="pq-sources">
+          {screen.sources.length === 0 ||
+          !showsStep(screen, StepPart.Sources) ? null : (
+            <p
+              class="pq-sources"
+              data-pq-transition={stepEnter(screen, StepPart.Sources)}
+            >
               {screen.sources.map((source, index) => (
                 <span key={index}>{source}</span>
               ))}
             </p>
           )}
 
-          {hintCount === 0 ? null : (
-            <aside class="pq-hints" aria-label={t("hints")}>
+          {hintCount === 0 || !showsStep(screen, StepPart.Hints) ? null : (
+            <aside
+              class="pq-hints"
+              aria-label={t("hints")}
+              data-pq-transition={stepEnter(screen, StepPart.Hints)}
+            >
               <ul>
                 {screen.hints.revealed.map((hint, index) => (
                   <li key={index}>
@@ -341,22 +410,13 @@ export function QuestionScreen({
 
         {!split ? null : (
           <div class="pq-split-right">
-            {hasMedia ? (
-              <div class="pq-media-list">
-                {screen.media.map((item) => (
-                  <Media
-                    key={item.path}
-                    item={item}
-                    autoplay={quiz.config.mediaAutoPlay === true}
-                    asIframe={quiz.config.loadExternalMediaAsIframe === true}
-                  />
-                ))}
-              </div>
-            ) : null}
-            {answersRight ? answers : null}
+            {mediaList}
+            {answersRight ? answerBlock : null}
           </div>
         )}
       </div>
+
+      <StepBar quiz={quiz} screen={screen} />
 
       {quiz.config.disableUI === true ? null : (
         <footer class="pq-toolbar">

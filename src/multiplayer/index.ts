@@ -28,6 +28,7 @@ export { createBroadcastTransport } from "./transport/broadcast";
 export {
   createTrysteroTransport,
   loadTrystero,
+  registerTrysteroModule,
   type TrysteroOptions,
 } from "./transport/trystero";
 export { memoryNetwork, type MemoryNetwork } from "./transport/memory";

@@ -168,6 +168,18 @@ describe("other exporters", () => {
     expect(document.maxScore).toBe(plan.maxScore);
   });
 
+  test("print titles carry their number unless told not to", () => {
+    const numbered = buildPrintModel(plan, quiz.meta);
+    const first = numbered.pages.flatMap((page) => page.questions)[0];
+    expect(first?.title.startsWith("1. ")).toBe(true);
+    expect(numbered.pages[1]?.title.startsWith("1. ")).toBe(true);
+
+    const bare = buildPrintModel(plan, quiz.meta, { numbers: false });
+    expect(
+      bare.pages.flatMap((page) => page.questions)[0]?.title.startsWith("1. "),
+    ).toBe(false);
+  });
+
   test("standalone html escapes injected markup", () => {
     const html = toStandaloneHtml(plan, quiz.meta);
     expect(html).toContain("&lt;script&gt;");

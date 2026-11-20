@@ -22,8 +22,26 @@ export enum RoomPhase {
   Lobby = "lobby",
   Question = "question",
   Reveal = "reveal",
+  /** The second pass of the paper mode: questions again, then the answers. */
+  Answers = "answers",
   Ended = "ended",
 }
+
+/**
+ * When the truth comes out.
+ *
+ * A pub quiz has four honest shapes. One reveal per question (the classic),
+ * one per round, one at the very end, or the paper version: play the whole
+ * quiz first, then walk back through it with everyone's answers.
+ */
+export enum RevealMode {
+  Question = "question",
+  Round = "round",
+  End = "end",
+  Pass = "pass",
+}
+
+export const DEFAULT_REVEAL_MODE = RevealMode.Question;
 
 export enum MessageType {
   RoomState = "room:state",
@@ -98,6 +116,9 @@ export interface LeaderRow {
 export interface RoomStatePayload {
   readonly code: string;
   readonly phase: RoomPhase;
+  readonly revealMode: RevealMode;
+  /** Round cards are part of the flow, unless the host turned them off. */
+  readonly sections: boolean;
   readonly players: readonly LivePlayer[];
   readonly index: number;
   readonly total: number;
@@ -113,6 +134,7 @@ export interface QuestionPayload {
   readonly seq: number;
   readonly allowChanges: boolean;
   readonly closed: boolean;
+  readonly phase: RoomPhase;
 }
 
 export interface ClosePayload {
@@ -126,7 +148,18 @@ export interface PlayerResult {
   readonly late: boolean;
 }
 
+/** One question's answers. A round reveal sends several of these at once. */
+export interface RevealItem {
+  readonly questionId: string;
+  readonly index: number;
+  readonly title: string;
+  readonly correct: readonly string[];
+  readonly explanation: string | null;
+  readonly results: Readonly<Record<string, PlayerResult>>;
+}
+
 export interface RevealPayload {
+  /** The first question in `items`, kept flat for the per-question reveal. */
   readonly questionId: string;
   readonly index: number;
   readonly correct: readonly string[];
@@ -134,6 +167,7 @@ export interface RevealPayload {
   readonly results: Readonly<Record<string, PlayerResult>>;
   readonly leaderboard: readonly LeaderRow[];
   readonly seq: number;
+  readonly items: readonly RevealItem[];
 }
 
 export interface ScorePayload {

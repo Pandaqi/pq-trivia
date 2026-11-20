@@ -3,8 +3,6 @@
 export * from "./core";
 export {
   createQuiz,
-  Quiz,
-  type QuizOptions,
   type CreateQuizOptions,
   type QuizConfig,
   type LoadInput,
@@ -13,6 +11,9 @@ export {
   type QuizRoundInfo,
   ThemeMode,
 } from "../core/quiz";
+// The player's `Quiz` is the core one plus a mount: `new Quiz({ text })` is a
+// whole page. Core keeps the class without a document.
+export { Quiz, type QuizOptions } from "../renderers/preact/quiz";
 export {
   mountQuiz,
   mountPrintSheet,

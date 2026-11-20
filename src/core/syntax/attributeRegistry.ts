@@ -77,6 +77,8 @@ const ROWS: readonly Row[] = [
   ["ColorScheme", [], AttributeType.Text, AttributeGroup.Display],
   ["Transition", ["Animation"], AttributeType.Text, AttributeGroup.Display],
   ["Reveal", [], AttributeType.Text, AttributeGroup.Display],
+  ["Steps", [], AttributeType.List, AttributeGroup.Display],
+  ["StepTransition", [], AttributeType.Text, AttributeGroup.Display],
   ["Print", [], AttributeType.List, AttributeGroup.Display],
   ["Direction", ["Dir"], AttributeType.Enum, AttributeGroup.Display],
   ["Height", [], AttributeType.Text, AttributeGroup.Display],

@@ -7,6 +7,7 @@
  */
 
 import { InlineKind, parseInline, type InlineNode } from "../format/inline";
+import { numberPrefix } from "../format/numbering";
 import { answerRefs } from "../model/answers";
 import { OrderMode } from "../model/question";
 import { derivedRng, shuffleWith } from "../plan/shuffle";
@@ -19,6 +20,7 @@ import {
 import type { QuizPlan } from "../plan/plan";
 import type { GradeReport } from "../grading/report";
 import { PlayMode, type Progress, type SessionState } from "./session";
+import { stepViewOf, type StepViewModel } from "../model/steps";
 import {
   mediaForConfig,
   MediaKind,
@@ -77,6 +79,22 @@ export function toMediaViewModel(
   };
 }
 
+/**
+ * What the question wants from the player, as numbers only.
+ *
+ * V2 printed a line like "This is an open question!". The renderer turns this
+ * into words, so the core stays free of interface strings. Answer identities
+ * never travel here: only how many there are.
+ */
+export interface QuestionTypeHint {
+  readonly kind: QuestionType;
+  readonly answerCount: number;
+  readonly correctCount: number;
+  /** Points a single correct answer earns. */
+  readonly pointsPerAnswer: number;
+  readonly range: number | null;
+}
+
 export interface QuestionViewModel {
   readonly kind: ScreenKind.Question;
   readonly id: string;
@@ -104,11 +122,15 @@ export interface QuestionViewModel {
   readonly colorScheme: string | null;
   readonly transition: string | null;
   readonly reveal: string | null;
+  /** One part at a time. `total` of 1 means everything shows at once. */
+  readonly steps: StepViewModel;
   readonly variant: string | null;
   readonly background: string | null;
   readonly index: number;
   /** Number among the questions that count, starting at one. Zero for a section. */
   readonly number: number;
+  /** `3. ` in front of the title. Empty when numbering is off. */
+  readonly numberPrefix: string;
   readonly total: number;
   readonly round: string | null;
   readonly roundName: string | null;
@@ -126,6 +148,8 @@ export interface QuestionViewModel {
   readonly authorsDiverse: boolean;
   readonly categoriesDiverse: boolean;
   readonly points: number;
+  /** Null for sections, start and end screens, and script widgets. */
+  readonly typeHint: QuestionTypeHint | null;
   readonly language: string | null;
   readonly progress: Progress;
   readonly revealable: boolean;
@@ -197,10 +221,39 @@ function inlineValue(
     : [{ kind: InlineKind.Text, text: value.text }];
 }
 
+/** Types with no fixed answer shape have nothing useful to say here. */
+const NO_TYPE_HINT: ReadonlySet<QuestionType> = new Set([
+  QuestionType.Section,
+  QuestionType.Start,
+  QuestionType.End,
+  QuestionType.Custom,
+]);
+
+/** Counts only, never identities: both the screen and the paper word this. */
+export function typeHintOf(question: QuestionModel): QuestionTypeHint | null {
+  if (NO_TYPE_HINT.has(question.type)) {
+    return null;
+  }
+  const parts = Math.max(question.correct.length, 1);
+  const pointsPerAnswer =
+    question.scoring === ScoringMethod.Partial
+      ? Math.round((question.score / parts) * 10) / 10
+      : question.score;
+  return {
+    kind: question.type,
+    answerCount: question.answers.length,
+    correctCount: parts,
+    pointsPerAnswer,
+    range: question.range,
+  };
+}
+
 export interface QuestionScreenView {
   readonly index: number;
   /** Playable number. Defaults to `index + 1`. */
   readonly number?: number;
+  /** The host turned `questionNumbers` off. On when unset. */
+  readonly numbers?: boolean;
   readonly total: number;
   readonly progress: Progress;
   readonly roundName: string | null;
@@ -213,7 +266,12 @@ export interface QuestionScreenView {
   readonly isRoundStart: boolean;
   readonly authorsDiverse: boolean;
   readonly categoriesDiverse: boolean;
+  /** Quiz-wide defaults, from `DefaultSteps` and `DefaultStepTransition`. */
+  readonly defaultSteps?: readonly string[];
+  readonly defaultStepTransition?: string | null;
 }
+
+export type { StepViewModel } from "../model/steps";
 
 export function questionScreen(
   question: QuestionModel,
@@ -257,6 +315,7 @@ export function questionScreen(
     };
   });
 
+  const typeHint = typeHintOf(question);
   const hintCount = state.hints[question.id] ?? 0;
   const hints = question.hints.slice(0, hintCount);
   const declaredMedia = question.media.map((item) =>
@@ -301,10 +360,25 @@ export function questionScreen(
     colorScheme: question.colorScheme,
     transition: question.transition,
     reveal: question.reveal,
+    // The answer is up, or the host asked for everything: one step, all parts.
+    steps: stepViewOf({
+      steps: question.steps,
+      transition: question.stepTransition,
+      defaults: view,
+      step: state.step,
+      complete: showAnswers,
+    }),
     variant: question.variant,
     background: question.background,
     index,
     number: view.number ?? index + 1,
+    numberPrefix: numberPrefix(
+      // A round screen wears the round's number, not a question number.
+      question.type === QuestionType.Section
+        ? (view.roundNumber ?? null)
+        : (view.number ?? index + 1),
+      view.numbers !== false,
+    ),
     total,
     round: question.round,
     roundName: view.roundName,
@@ -321,6 +395,7 @@ export function questionScreen(
     authorsDiverse: view.authorsDiverse,
     categoriesDiverse: view.categoriesDiverse,
     points: question.score,
+    typeHint,
     language: question.language,
     progress,
     revealable: !showAnswers,

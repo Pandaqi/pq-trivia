@@ -26,6 +26,8 @@ export interface StandaloneOptions {
   readonly explanations?: boolean;
   /** Media folder, link prefixes and formats. The same rules as the player. */
   readonly media?: MediaOptions;
+  /** `QuestionNumbers => false` leaves the headline bare. On when unset. */
+  readonly numbers?: boolean;
 }
 
 function escapeHtml(text: string): string {
@@ -200,6 +202,7 @@ export function toStandaloneHtml(
     variant: answers ? "answers" : "questions",
     includeExplanations: answers || options.explanations === true,
     ...(options.media === undefined ? {} : { media: options.media }),
+    ...(options.numbers === undefined ? {} : { numbers: options.numbers }),
   });
   const title = escapeHtml(doc.title);
   return `<!doctype html>

@@ -1,8 +1,9 @@
 /**
  * One settings panel, reachable from every screen.
  *
- * Order, rounds, colour mode, sound, pinned buttons and every export. Everything
- * here is also a `QuizConfig` key, so code can do the same thing without a click.
+ * Order, rounds, colour mode, sound and pinned buttons. Everything here is also
+ * a `QuizConfig` key, so code can do the same thing without a click. Exports
+ * have their own panel next door.
  */
 
 import type { JSX } from "preact";
@@ -38,14 +39,7 @@ import {
   type LayoutMode,
 } from "../../../core/quiz/types";
 import type { Quiz } from "../../../core/session/quiz";
-import {
-  copyQuizJson,
-  copyQuizTrivia,
-  downloadQuizHandout,
-  downloadQuizJson,
-  downloadQuizTrivia,
-  printQuiz,
-} from "../../../platform/browser/exports";
+import { ExportPanel } from "./ExportPanel";
 import {
   setThemeMode,
   storedThemeMode,
@@ -68,19 +62,6 @@ function includedRounds(quiz: Quiz): Record<string, boolean> {
       !hidden.has(round.id.toLowerCase());
   }
   return out;
-}
-
-function CopyNote({
-  what,
-}: {
-  readonly what: string | null;
-}): JSX.Element | null {
-  const t = useT();
-  return what === null ? null : (
-    <p class="pq-settings-note" role="status">
-      {t("copiedWhat", { what })}
-    </p>
-  );
 }
 
 export function SettingsPanel({
@@ -111,12 +92,13 @@ export function SettingsPanel({
     quiz.config.answerLabels ?? AnswerLabels.Letters,
   );
   const [icons, setIcons] = useState(quiz.config.metadataIcons !== false);
+  const [typeHints, setTypeHints] = useState(
+    quiz.config.questionTypeHints !== false,
+  );
   const [pinned, setPinned] = useState<readonly string[]>(() => [
     ...pinnedActions(quiz),
   ]);
-  const [copied, setCopied] = useState<string | null>(null);
   const actions = quiz.actions.list();
-  const trivia = quiz.sourceText();
   const available = quiz.rounds();
   const empty =
     available.length > 0 &&
@@ -280,6 +262,19 @@ export function SettingsPanel({
           />
           {t("metadataIcons")}
         </label>
+        <label class="pq-check">
+          <input
+            type="checkbox"
+            checked={typeHints}
+            onChange={(event) => {
+              setTypeHints(event.currentTarget.checked);
+              quiz.configure({
+                questionTypeHints: event.currentTarget.checked,
+              });
+            }}
+          />
+          {t("questionTypeHints")}
+        </label>
       </fieldset>
 
       <fieldset class="pq-settings-group">
@@ -329,79 +324,7 @@ export function SettingsPanel({
         )}
       </fieldset>
 
-      <fieldset class="pq-settings-group">
-        <legend>{t("settingsExport")}</legend>
-        <div class="pq-settings-row">
-          <button type="button" onClick={() => downloadQuizJson(quiz)}>
-            {t("saveJson")}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              void copyQuizJson(quiz).then((ok) =>
-                setCopied(ok ? t("jsonWord") : null),
-              );
-            }}
-          >
-            {t("copyJson")}
-          </button>
-          <button type="button" onClick={() => downloadQuizHandout(quiz)}>
-            {t("saveHandout")}
-          </button>
-          <button
-            type="button"
-            disabled={trivia === null}
-            onClick={() => downloadQuizTrivia(quiz)}
-          >
-            {t("saveTrivia")}
-          </button>
-          <button
-            type="button"
-            disabled={trivia === null}
-            onClick={() => {
-              void copyQuizTrivia(quiz).then((ok) =>
-                setCopied(ok ? t("triviaWord") : null),
-              );
-            }}
-          >
-            {t("copyTrivia")}
-          </button>
-        </div>
-        <p class="pq-settings-note">{t("downloadNote")}</p>
-
-        <div class="pq-settings-row">
-          <button type="button" onClick={() => printQuiz("questions")}>
-            {t("printQuestions")}
-          </button>
-          <button type="button" onClick={() => printQuiz("answers")}>
-            {t("printAnswers")}
-          </button>
-          <button type="button" onClick={() => printQuiz("sheet")}>
-            {t("printAnswerSheet")}
-          </button>
-          <button type="button" onClick={() => printQuiz("form")}>
-            {t("printAnswerForm")}
-          </button>
-          <button type="button" onClick={() => printQuiz("media")}>
-            {t("printMediaOnly")}
-          </button>
-        </div>
-        <label class="pq-check">
-          <input
-            type="checkbox"
-            checked={quiz.config.printAnswerLines === true}
-            onChange={(event) => {
-              quiz.configure({
-                printAnswerLines: event.currentTarget.checked,
-              });
-            }}
-          />
-          {t("printAnswerLines")}
-        </label>
-        <p class="pq-settings-note">{t("printAnswerLinesNote")}</p>
-        <p class="pq-settings-note">{t("printNote")}</p>
-        <CopyNote what={copied} />
-      </fieldset>
+      <ExportPanel quiz={quiz} />
 
       {onClose === undefined ? null : (
         <div class="pq-settings-row">

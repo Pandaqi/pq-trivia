@@ -1,18 +1,17 @@
 /*
  * Paper — the default theme.
  *
- * Two ideas from V2, kept: a question is a slide, and the answer is the biggest
- * thing on it. One idea from the rest of the studio: paper, not glass. Warm
- * cream, ink, fern and honey, slightly uneven corners, a soft shadow instead of
- * a hard border. Rough edges, natural tones, nothing stark.
+ * Two layers and nothing else: one token block, then a small vocabulary of
+ * pieces (label, note, card, row, stack, list, table). A component below says
+ * what makes it different; it never respells a piece. Restyle the tokens and
+ * the whole theme follows.
  *
- * Colours are sampled from Pandaqi's own palette so a quiz night looks like the
- * rest of the shelf. Everything here is a token. Override the tokens, keep the
- * layout.
+ * Light and dark are one palette, paired with `light-dark()`. The switch on
+ * `<html>` only sets `color-scheme`.
  */
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
   --pq-font-heading:
     "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -20,117 +19,73 @@
   --pq-font-label: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
   --pq-font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --pq-ink: #2f2a33;
-  --pq-muted: #5f585e;
-  --pq-paper: #faf5ea;
-  --pq-paper-deep: #f2e9d9;
-  --pq-slide: #fffdf7;
-  --pq-line: #d9d0be;
-  --pq-line-strong: #b9ad99;
-  --pq-strip: #2f2a33;
-  --pq-strip-ink: #fbf7ee;
+  /* Ink and paper. Sampled from Pandaqi's own palette. */
+  --pq-ink: light-dark(#2f2a33, #f3ebdd);
+  --pq-muted: light-dark(#5f585e, #b9b0a4);
+  --pq-paper: light-dark(#faf5ea, #1d2522);
+  --pq-paper-deep: light-dark(#f2e9d9, #141a18);
+  --pq-slide: light-dark(#fffdf7, #24302a);
+  --pq-line: light-dark(#d9d0be, #46564a);
+  --pq-line-strong: light-dark(#b9ad99, #63755f);
+  --pq-strip: light-dark(#2f2a33, #121815);
+  --pq-strip-ink: light-dark(#fbf7ee, #f3ebdd);
 
-  --pq-accent: #6f4b98;
-  --pq-accent-ink: #fffdf7;
+  --pq-accent: light-dark(#6f4b98, #c6a8e8);
+  --pq-accent-ink: light-dark(#fffdf7, #1d2522);
   --pq-honey: #f5c65d;
-  --pq-honey-soft: #fbe7b4;
-  --pq-fern: #839c66;
-  --pq-fern-soft: #dce6cc;
-  --pq-berry: #a9556b;
-  --pq-sparkle: #f0b93f;
-  --pq-right: #3e7a4c;
-  --pq-wrong: #a03a3a;
+  --pq-honey-soft: light-dark(#fbe7b4, #4a3d20);
+  --pq-fern: light-dark(#839c66, #a8c48a);
+  --pq-fern-soft: light-dark(#dce6cc, #2f3d2a);
+  --pq-berry: light-dark(#a9556b, #e39aa9);
+  --pq-right: light-dark(#3e7a4c, #8cc4a0);
+  --pq-wrong: light-dark(#a03a3a, #e79a92);
+  --pq-warn: light-dark(#8a5a12, #e9c47a);
+  --pq-code-bg: #221f26;
+  --pq-code-ink: #f6f1e6;
+  --pq-scan: #fff;
+  --pq-veil: light-dark(rgb(20 16 24 / 0.45), rgb(0 0 0 / 0.6));
 
+  /* Shape. */
   --pq-r-sm: 0.4rem;
   --pq-r-md: 0.75rem;
-  --pq-r-lg: 1.15rem;
   --pq-r-organic: 1.15rem 0.85rem 1.3rem 0.9rem;
   --pq-r-pill: 999rem;
-
+  --pq-line-w: 1px;
+  --pq-border: var(--pq-line-w) solid var(--pq-line);
+  --pq-border-strong: 1.5px solid var(--pq-line-strong);
+  --pq-focus: 3px solid var(--pq-accent);
   --pq-shadow-1:
-    0 1px 2px rgb(74 58 30 / 0.1), 0 2px 6px -3px rgb(74 58 30 / 0.1);
-  --pq-shadow-2: 0 10px 26px -16px rgb(74 58 30 / 0.55);
-  --pq-tilt: -1.1deg;
+    0 1px 2px light-dark(rgb(74 58 30 / 0.1), rgb(0 0 0 / 0.35)),
+    0 2px 6px -3px light-dark(rgb(74 58 30 / 0.1), rgb(0 0 0 / 0.35));
+  --pq-shadow-2: 0 10px 26px -16px
+    light-dark(rgb(74 58 30 / 0.55), rgb(0 0 0 / 0.7));
 
-  --pq-space: clamp(1rem, 2.6vw, 2.25rem);
+  /* Space and type. Every size is a clamp, so nothing needs a breakpoint. */
+  --pq-gap-sm: 0.4rem;
+  --pq-gap: 0.75rem;
+  --pq-gap-lg: 1.15rem;
+  --pq-tap: 2.75rem;
+  --pq-bar: 0.35rem;
+  --pq-space: clamp(0.9rem, 2.6vw, 2.25rem);
+  --pq-text-xs: clamp(0.68rem, 0.66rem + 0.1vw, 0.78rem);
+  --pq-text-sm: clamp(0.85rem, 0.83rem + 0.1vw, 0.95rem);
+  --pq-text-md: clamp(1rem, 0.97rem + 0.15vw, 1.08rem);
   --pq-title-size: clamp(1.9rem, 4.6vw, 3.5rem);
   --pq-answer-size: clamp(1.05rem, 1.9vw, 1.55rem);
+  --pq-max-text: 46ch;
+  --pq-max-slide: 56rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --pq-ink: #f3ebdd;
-    --pq-muted: #b9b0a4;
-    --pq-paper: #1d2522;
-    --pq-paper-deep: #141a18;
-    --pq-slide: #24302a;
-    --pq-line: #46564a;
-    --pq-line-strong: #63755f;
-    --pq-strip: #121815;
-    --pq-strip-ink: #f3ebdd;
-
-    --pq-accent: #c6a8e8;
-    --pq-accent-ink: #1d2522;
-    --pq-honey: #f5c65d;
-    --pq-honey-soft: #4a3d20;
-    --pq-fern: #a8c48a;
-    --pq-fern-soft: #2f3d2a;
-    --pq-berry: #e39aa9;
-    --pq-right: #8cc4a0;
-    --pq-wrong: #e79a92;
-
-    --pq-shadow-2: 0 12px 30px -18px rgb(0 0 0 / 0.7);
-  }
-}
-
-/* Colour mode as a switch. `auto` removes the attribute; these two force it. */
+/* Colour mode as a switch. `auto` removes the attribute, so the OS decides. */
 :root[data-pq-mode="light"] {
   color-scheme: light;
-  --pq-ink: #2f2a33;
-  --pq-muted: #5f585e;
-  --pq-paper: #faf5ea;
-  --pq-paper-deep: #f2e9d9;
-  --pq-slide: #fffdf7;
-  --pq-line: #d9d0be;
-  --pq-line-strong: #b9ad99;
-  --pq-strip: #2f2a33;
-  --pq-strip-ink: #fbf7ee;
-  --pq-accent: #6f4b98;
-  --pq-accent-ink: #fffdf7;
-  --pq-honey-soft: #fbe7b4;
-  --pq-fern: #839c66;
-  --pq-fern-soft: #dce6cc;
-  --pq-berry: #a9556b;
-  --pq-right: #3e7a4c;
-  --pq-wrong: #a03a3a;
-  --pq-shadow-2: 0 10px 26px -16px rgb(74 58 30 / 0.55);
 }
 
 :root[data-pq-mode="dark"] {
   color-scheme: dark;
-  --pq-ink: #f3ebdd;
-  --pq-muted: #b9b0a4;
-  --pq-paper: #1d2522;
-  --pq-paper-deep: #141a18;
-  --pq-slide: #24302a;
-  --pq-line: #46564a;
-  --pq-line-strong: #63755f;
-  --pq-strip: #121815;
-  --pq-strip-ink: #f3ebdd;
-  --pq-accent: #c6a8e8;
-  --pq-accent-ink: #1d2522;
-  --pq-honey-soft: #4a3d20;
-  --pq-fern: #a8c48a;
-  --pq-fern-soft: #2f3d2a;
-  --pq-berry: #e39aa9;
-  --pq-right: #8cc4a0;
-  --pq-wrong: #e79a92;
-  --pq-shadow-2: 0 12px 30px -18px rgb(0 0 0 / 0.7);
 }
 
-/* High contrast: black on white, thicker borders, no soft edges. */
+/* High contrast: black on white, thicker lines, no soft edges. */
 :root[data-pq-mode="high-contrast"] {
   color-scheme: light;
   --pq-ink: #000;
@@ -140,6 +95,7 @@
   --pq-slide: #fff;
   --pq-line: #000;
   --pq-line-strong: #000;
+  --pq-line-w: 2px;
   --pq-strip: #000;
   --pq-strip-ink: #fff;
   --pq-accent: #0033cc;
@@ -151,12 +107,199 @@
   --pq-berry: #8a0000;
   --pq-right: #005c25;
   --pq-wrong: #8a0000;
+  --pq-warn: #6b4300;
+  --pq-shadow-1: none;
   --pq-shadow-2: none;
 }
 
-.pq-quiz {
+/* --- The vocabulary --------------------------------------------------- */
+
+/* A small caps label. Strips, kickers, legends, field names. */
+.pq-kicker,
+.pq-meta-strip,
+.pq-band,
+.pq-field-label,
+.pq-stats dt,
+.pq-settings-group legend,
+.pq-settings > summary,
+.pq-review-head,
+.pq-insert-button,
+.pq-media-kind,
+.pq-live-kicker,
+.pq-meta-strip .pq-settings-toggle {
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Everything that is a note, not a headline. */
+.pq-section-stats,
+.pq-description,
+.pq-byline,
+.pq-type-hint,
+.pq-body,
+.pq-comments,
+.pq-answers-plain,
+.pq-media-credit,
+.pq-sources,
+.pq-facts,
+.pq-settings-note,
+.pq-keys,
+.pq-suggestion,
+.pq-timer-value,
+.pq-timer-note,
+.pq-sort-rank,
+.pq-match-pair,
+.pq-match-hint,
+.pq-field-label,
+.pq-score-max,
+.pq-review-explanation,
+.pq-review-sources,
+.pq-empty,
+.pq-resume-note,
+.pq-resume-when,
+.pq-intro,
+.pq-credits,
+.pq-step-count,
+.pq-theme-note,
+.pq-media-kind,
+.pq-table caption,
+.pq-table thead th,
+.pq-live-kicker,
+.pq-live-meta,
+.pq-live-hint,
+.pq-live-count,
+.pq-live-rank {
+  color: var(--pq-muted);
+}
+
+/* A bordered note on the paper. Answers, fields, settings, review cards. */
+.pq-answer,
+.pq-input,
+.pq-sort-item,
+.pq-match-item,
+.pq-match-static-item,
+.pq-sort-button,
+.pq-review-card,
+.pq-resume,
+.pq-widget-frame,
+.pq-settings,
+.pq-settings-group,
+.pq-stats div,
+.pq-problems-panel,
+.pq-media-missing,
+.pq-live-code,
+.pq-live-settings {
+  border: var(--pq-border);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-slide);
+}
+
+/* The ones that sit a shade deeper, so a group reads as one block. */
+.pq-settings,
+.pq-settings-group,
+.pq-stats div,
+.pq-resume,
+.pq-live-settings {
+  background: var(--pq-paper-deep);
+}
+
+.pq-media-missing {
+  border-style: dashed;
+}
+
+/* A line of things: buttons, chips, filters, sources, blanks, media. */
+.pq-toolbar,
+.pq-toolbar-row,
+.pq-insert,
+.pq-stats,
+.pq-start-actions,
+.pq-resume-actions,
+.pq-load-questions,
+.pq-chip-list,
+.pq-filters,
+.pq-sources,
+.pq-cloze,
+.pq-media-list,
+.pq-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pq-gap);
+}
+
+/* A column of things. */
+.pq-field,
+.pq-settings-group,
+.pq-theme-picker,
+.pq-live-settings,
+.pq-live-roster,
+.pq-live-progress,
+.pq-live-board,
+.pq-live-reveal,
+.pq-live-reveal-item,
+.pq-live-join,
+.pq-live-join form,
+.pq-live-question {
+  display: grid;
+  gap: var(--pq-gap);
+  width: 100%;
+}
+
+/* A stack of cards with no markers. Answers, sort, match, review, people. */
+.pq-answers,
+.pq-sort,
+.pq-match-column,
+.pq-review,
+.pq-live-players,
+.pq-live-rows,
+.pq-live-board ol {
+  display: grid;
+  gap: var(--pq-gap);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Every table: summary, review parts, the media appendix. */
+.pq-table,
+.pq-review-parts,
+.pq-media-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pq-text-sm);
+  text-align: left;
+}
+
+.pq-table th,
+.pq-table td,
+.pq-review-parts th,
+.pq-review-parts td,
+.pq-media-table th,
+.pq-media-table td {
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  border-bottom: var(--pq-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* --- Shell ------------------------------------------------------------ */
+
+.pq-quiz,
+.pq-quiz *,
+.pq-quiz *::before,
+.pq-quiz *::after,
+.pq-print-only *,
+.pq-print-only *::before,
+.pq-print-only *::after {
   box-sizing: border-box;
-  /* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
+}
+
+/* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
+.pq-quiz {
   position: relative;
   height: 100vh;
   height: 100dvh;
@@ -167,34 +310,31 @@
   background-image:
     radial-gradient(
       circle at 1px 1px,
-      rgb(47 42 51 / 0.045) 1px,
+      color-mix(in srgb, var(--pq-ink) 5%, transparent) 1px,
       transparent 0
     ),
-    radial-gradient(circle at 7px 11px, rgb(47 42 51 / 0.03) 1px, transparent 0);
+    radial-gradient(
+      circle at 7px 11px,
+      color-mix(in srgb, var(--pq-ink) 3%, transparent) 1px,
+      transparent 0
+    );
   background-size:
     26px 26px,
     41px 37px;
   color: var(--pq-ink);
   font-family: var(--pq-font-body);
-  font-size: 1rem;
+  font-size: var(--pq-text-md);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
-}
-
-.pq-quiz *,
-.pq-quiz *::before,
-.pq-quiz *::after,
-.pq-print-only *,
-.pq-print-only *::before,
-.pq-print-only *::after {
-  box-sizing: border-box;
 }
 
 .pq-screen {
   display: flex;
   flex-direction: column;
+  gap: var(--pq-space);
   height: 100%;
   min-height: 0;
+  padding-inline: var(--pq-space);
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -211,44 +351,39 @@
   background-size: cover;
 }
 
-.pq-screen-question,
-.pq-screen-section,
-.pq-screen-end,
-.pq-screen-message {
-  padding: 0 var(--pq-space);
-}
-
-/* A quiz is one page. The question sits in the middle of it, like V2. */
+/* A quiz is one page. The question sits at the top of it, like V2. */
 .pq-screen-question {
   justify-content: flex-start;
 }
 
-.pq-screen-section {
+.pq-screen-section,
+.pq-screen-start {
   justify-content: safe center;
-  gap: var(--pq-space);
+}
+
+.pq-screen-section {
   text-align: center;
+}
+
+.pq-screen-start {
+  padding: var(--pq-space);
 }
 
 .pq-section-body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: clamp(0.7rem, 2vh, 1.3rem);
+  gap: var(--pq-gap);
   width: min(100%, 52rem);
   margin: auto;
   padding: clamp(1rem, 4vh, 3rem) 0;
 }
 
-.pq-screen-section .pq-title {
-  font-size: clamp(2.4rem, 7vw, 4.5rem);
-}
-
 .pq-section-stats,
 .pq-section-secret {
   margin: 0;
-  color: var(--pq-muted);
   font-family: var(--pq-font-label);
-  font-size: 0.95rem;
+  font-size: var(--pq-text-sm);
   letter-spacing: 0.04em;
 }
 
@@ -260,123 +395,56 @@
   color: var(--pq-ink);
   font-family: var(--pq-font-heading);
   font-style: italic;
-  font-size: 1.15rem;
-}
-
-.pq-screen-section .pq-comments,
-.pq-screen-section .pq-body {
-  margin-inline: auto;
-  font-size: 1.1rem;
-}
-
-.pq-screen-start {
-  justify-content: center;
-  /* Safe centering keeps the top reachable when the content is taller. */
-  justify-content: safe center;
-  gap: var(--pq-space);
-  padding: var(--pq-space);
+  font-size: var(--pq-text-md);
 }
 
 /* Fill the window means fill the window: no desk, no sheet edge, no gutter.
  * The sheet on the desk belongs to the inline layout, where the quiz shares
  * the page with other things. */
-.pq-quiz[data-pq-layout="viewport"] {
-  padding: 0;
-}
+.pq-quiz[data-pq-layout="inline"] {
+  height: auto;
+  min-height: 20rem;
+  padding: clamp(0.5rem, 2vw, 1.75rem);
+  overflow: visible;
 
-.pq-quiz[data-pq-layout="viewport"] > .pq-screen {
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-@media screen and (min-width: 48rem) {
-  .pq-quiz[data-pq-layout="inline"] {
-    padding: clamp(0.75rem, 2vw, 1.75rem);
-  }
-
-  .pq-quiz[data-pq-layout="inline"] .pq-screen {
+  .pq-screen {
     width: min(100%, 78rem);
-    min-height: 0;
+    height: auto;
+    min-height: 20rem;
     margin-inline: auto;
-    border: 1px solid var(--pq-line);
+    overflow: clip;
+    border: var(--pq-border);
     border-radius: var(--pq-r-organic);
     box-shadow: var(--pq-shadow-2);
   }
 }
 
-/* Inline: the quiz is a block in a page, not the whole page. */
-.pq-quiz[data-pq-layout="inline"] {
-  height: auto;
-  min-height: 20rem;
-  overflow: visible;
+/* One screen, no scrolling: the layout gives back the room it does not need.
+ * One token block instead of eight rules fighting the same spacing. */
+.pq-quiz[data-pq-layout="viewport"] {
+  --pq-gap-sm: 0.3rem;
+  --pq-gap: 0.55rem;
+  --pq-gap-lg: 0.85rem;
 }
 
-.pq-quiz[data-pq-layout="inline"] .pq-screen {
-  height: auto;
-  min-height: 20rem;
-  overflow: clip;
-}
-
-/* Filling the window means one screen with no scrolling. The inline layout
- * keeps the roomy rhythm; here every gap gives something back. */
-.pq-quiz[data-pq-layout="viewport"] .pq-meta-strip {
-  padding-block: 0.42rem;
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-header {
-  padding-top: clamp(0.45rem, 1.6vh, 1rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-kicker {
-  margin-bottom: 0.35rem;
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-body {
-  margin-top: clamp(0.4rem, 1.2vh, 0.8rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-screen-start {
-  gap: clamp(0.45rem, 1.5vh, 0.9rem);
-  padding: clamp(0.7rem, 2.4vh, 1.6rem) var(--pq-space);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-split {
-  padding-top: clamp(0.2rem, 0.8vh, 0.5rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-answers {
-  margin-top: clamp(0.4rem, 1.4vh, 0.9rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-toolbar {
-  padding: clamp(0.35rem, 1.1vh, 0.7rem) 0
-    calc(clamp(0.75rem, 2.2vh, 1.4rem) + env(safe-area-inset-bottom, 0px));
-}
+/* --- Strip and heading ------------------------------------------------ */
 
 /* V2's strip, warmed up. A host reads it at a glance across a room. */
 .pq-meta-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35rem 1.1rem;
+  gap: 0.3rem var(--pq-gap-lg);
   margin: 0 calc(var(--pq-space) * -1);
-  padding: 0.55rem var(--pq-space);
+  padding: var(--pq-gap-sm) var(--pq-space);
   background: var(--pq-strip);
   color: var(--pq-strip-ink);
-  font-family: var(--pq-font-label);
-  font-size: clamp(0.68rem, 1vw, 0.8rem);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.pq-meta-strip > .pq-points {
+.pq-points {
   margin-left: auto;
-  padding-left: 0.7rem;
-  border-left: 1px solid rgb(255 253 247 / 0.3);
+  padding-left: var(--pq-gap);
+  border-left: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   color: var(--pq-honey);
   font-variant-numeric: tabular-nums;
 }
@@ -394,19 +462,19 @@
   filter: saturate(0.7);
 }
 
+/* A question slide wears the round's colour. */
 .pq-screen-question .pq-meta-strip {
+  border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
   background: var(--pq-round-shade, var(--pq-strip));
   color: var(--pq-accent-ink, var(--pq-strip-ink));
-}
 
-.pq-screen-question .pq-meta-strip > .pq-points {
-  border-left-color: color-mix(in srgb, currentColor 35%, transparent);
-  color: inherit;
+  .pq-points {
+    color: inherit;
+  }
 }
 
 .pq-count {
   font-variant-numeric: tabular-nums;
-  opacity: 0.9;
 }
 
 .pq-header {
@@ -416,14 +484,9 @@
 
 .pq-kicker {
   display: inline-block;
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--pq-gap);
   padding-bottom: 0.15rem;
   border-bottom: 2px dotted var(--pq-round-accent, var(--pq-honey));
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
 }
 
 .pq-title {
@@ -435,72 +498,70 @@
   text-wrap: balance;
 }
 
-.pq-screen-start .pq-title {
-  font-size: clamp(2.2rem, 6vw, 4rem);
+.pq-screen-start .pq-title,
+.pq-screen-section .pq-title {
+  font-size: clamp(2.2rem, 6.5vw, 4.2rem);
 }
 
-.pq-title:focus {
-  outline: none;
-}
-
+/* One reading column for every quiet paragraph under a heading. */
 .pq-description,
-.pq-byline {
-  margin: 0.7rem auto 0;
-  max-width: 42ch;
-  color: var(--pq-muted);
+.pq-byline,
+.pq-type-hint,
+.pq-body,
+.pq-comments {
+  margin: var(--pq-gap) auto 0;
+  max-width: var(--pq-max-text);
   text-align: center;
 }
 
 .pq-description {
   font-family: var(--pq-font-heading);
+  font-size: var(--pq-text-md);
   font-style: italic;
-  font-size: 1.1rem;
+}
+
+.pq-byline,
+.pq-type-hint {
+  margin-top: var(--pq-gap-sm);
+  font-size: var(--pq-text-sm);
+}
+
+/* V2's "This is an open question." line: there when you look for it, never in
+   the way of the question itself. */
+.pq-type-hint {
+  font-style: italic;
 }
 
 .pq-body {
-  margin: clamp(0.8rem, 2vh, 1.3rem) auto 0;
-  max-width: 46ch;
-  color: var(--pq-muted);
-  text-align: center;
-  font-size: 1.05rem;
   white-space: pre-wrap;
 }
 
 
-/* Paper, part two: answers, fields, notes, controls. Built into paper.css. */
+/* Paper, part two: answers, fields, media, notes. Built into paper.css. */
 
 /* Answers: cream cards, honey numbers, one good shadow. */
 .pq-answers {
-  display: grid;
-  gap: 0.65rem;
-  width: 100%;
-  max-width: 56rem;
-  margin: clamp(1rem, 3vh, 2rem) auto 0;
-  padding: 0;
-  list-style: none;
-}
+  max-width: var(--pq-max-slide);
+  margin: var(--pq-gap-lg) auto 0;
 
-@media (min-width: 60rem) {
-  .pq-answers {
+  @media (min-width: 60rem) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem 1rem;
-  }
+    gap: var(--pq-gap) var(--pq-gap-lg);
 
-  .pq-answers > li:only-child {
-    grid-column: 1 / -1;
+    > li:only-child {
+      grid-column: 1 / -1;
+    }
   }
 }
 
 .pq-answer {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  width: 100%;
+  gap: var(--pq-gap);
   min-height: 3.35rem;
-  padding: 0.8rem 1.05rem;
-  border: 1px solid var(--pq-line);
+  padding: var(--pq-gap) var(--pq-gap-lg);
   border-radius: var(--pq-r-organic);
-  background: var(--pq-slide);
   box-shadow: var(--pq-shadow-1);
   color: var(--pq-ink);
   font: inherit;
@@ -511,41 +572,66 @@
     transform 140ms,
     box-shadow 140ms,
     border-color 140ms;
-}
 
-.pq-answer:hover {
-  border-color: var(--pq-line-strong);
-  box-shadow: var(--pq-shadow-2);
-  transform: translateY(-1px) rotate(-0.35deg);
-}
+  /* Room for the points bubble only when there is one to make room for. */
+  &:has(.pq-answer-score) {
+    padding-right: 3.2rem;
+  }
 
-.pq-answer:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 3px;
-}
+  &:not(.pq-answer-static):hover {
+    border-color: var(--pq-line-strong);
+    box-shadow: var(--pq-shadow-2);
+    transform: translateY(-1px) rotate(-0.35deg);
+  }
 
-.pq-answer[data-pq-selected="true"] {
-  border-color: var(--pq-accent);
-  background: color-mix(in srgb, var(--pq-accent) 9%, var(--pq-slide));
-  box-shadow:
-    inset 0 0 0 2px var(--pq-accent),
-    var(--pq-shadow-1);
-}
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 3px;
+  }
 
-.pq-answer-number {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50% 45% 50% 48%;
-  background: var(--pq-round-shade, var(--pq-honey-soft));
-  color: var(--pq-accent-ink, #3b2e14);
-  font-family: var(--pq-font-label);
-  font-weight: 700;
-  font-size: 0.85em;
-  font-variant-numeric: tabular-nums;
-  text-transform: uppercase;
+  &[data-pq-selected="true"] {
+    border-color: var(--pq-accent);
+    background: color-mix(in srgb, var(--pq-accent) 9%, var(--pq-slide));
+    box-shadow:
+      inset 0 0 0 2px var(--pq-accent),
+      var(--pq-shadow-1);
+  }
+
+  &[data-pq-correct="true"] {
+    border-color: var(--pq-right);
+    background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
+    box-shadow:
+      inset 0 0 0 2px var(--pq-right),
+      var(--pq-shadow-1);
+    animation: pq-pop 180ms ease-out;
+
+    .pq-answer-number {
+      border-radius: var(--pq-r-pill);
+      background: var(--pq-fern);
+      color: var(--pq-code-bg);
+    }
+
+    .pq-mark {
+      color: var(--pq-right);
+    }
+  }
+
+  &[data-pq-correct="false"] {
+    opacity: 0.5;
+
+    &:not(.pq-answer-static) {
+      box-shadow: none;
+      transform: scale(0.985);
+    }
+
+    .pq-answer-number {
+      text-decoration: line-through;
+    }
+
+    .pq-mark {
+      color: var(--pq-wrong);
+    }
+  }
 }
 
 /* Answer mode: cards, not buttons. A room reads them out loud. */
@@ -553,21 +639,26 @@
   cursor: default;
 }
 
-.pq-answer-static:hover {
-  transform: none;
-  box-shadow: var(--pq-shadow-1);
-  border-color: var(--pq-line);
+.pq-answer-number,
+.pq-answer-score {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.pq-answer-static[data-pq-correct="true"] {
-  border-color: var(--pq-right);
-  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
-  opacity: 1;
-  transform: none;
-}
-
-.pq-answer-static[data-pq-correct="false"] {
-  opacity: 0.55;
+.pq-answer-number {
+  flex: 0 0 auto;
+  border-radius: 50% 45% 50% 48%;
+  background: var(--pq-round-shade, var(--pq-honey-soft));
+  color: var(--pq-accent-ink, var(--pq-ink));
+  font-weight: 700;
+  font-size: 0.85em;
+  text-transform: uppercase;
 }
 
 .pq-answer-text {
@@ -575,66 +666,21 @@
   white-space: pre-wrap;
 }
 
-.pq-answer[data-pq-correct="true"] {
-  border-color: var(--pq-right);
-  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
-  box-shadow:
-    inset 0 0 0 2px var(--pq-right),
-    var(--pq-shadow-1);
-  animation: pq-pop 180ms ease-out;
-}
-
-.pq-answer[data-pq-correct="true"] .pq-answer-number {
-  background: var(--pq-fern);
-  color: #1d2a16;
-}
-
-.pq-answer[data-pq-correct="false"] {
-  opacity: 0.45;
-  transform: scale(0.985);
-  box-shadow: none;
-}
-
-.pq-answer[data-pq-correct="false"] .pq-answer-number {
-  text-decoration: line-through;
-}
-
 .pq-mark {
   font-weight: 700;
 }
 
 /* Points earned by this answer, in the corner, like V2. */
-.pq-answer {
-  position: relative;
-  padding-right: 3.2rem;
-}
-
 .pq-answer-score {
   position: absolute;
   top: -0.5rem;
   right: -0.4rem;
-  display: inline-grid;
-  place-items: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.4rem;
+  padding: 0 var(--pq-gap-sm);
   border: 2px solid var(--pq-slide);
-  border-radius: 999rem;
+  border-radius: var(--pq-r-pill);
   background: var(--pq-fern);
   box-shadow: var(--pq-shadow-1);
-  color: #14200f;
-  font-family: var(--pq-font-label);
-  font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.pq-answer[data-pq-correct="true"] .pq-mark {
-  color: var(--pq-right);
-}
-
-.pq-answer[data-pq-correct="false"] .pq-mark {
-  color: var(--pq-wrong);
+  color: var(--pq-code-bg);
 }
 
 @keyframes pq-pop {
@@ -652,12 +698,43 @@
 .pq-split {
   display: grid;
   gap: var(--pq-space);
+  align-items: center;
+  flex: 1 1 auto;
   width: 100%;
   max-width: 72rem;
   margin-inline: auto;
+  padding-top: var(--pq-gap);
+
+  /* A split stacks on a phone and splits on a desk. */
+  @media (min-width: 60rem) {
+    &:not(.pq-split-single) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .pq-split-right {
+      padding-left: var(--pq-space);
+      border-left: 1px dashed var(--pq-line);
+    }
+  }
+
+  /* Half a slide already has a column; a grid inside it does not need two. */
+  .pq-answers {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
+  }
+
+  .pq-media-list {
+    margin-top: 0;
+  }
+}
+
+.pq-split-single {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   flex: 1 1 auto;
-  align-items: center;
-  padding: clamp(0.5rem, 2vh, 1.25rem) 0 0;
+  max-width: var(--pq-max-slide);
+  margin-inline: auto;
 }
 
 .pq-split-left,
@@ -668,89 +745,29 @@
   min-width: 0;
 }
 
-.pq-split-single {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1 1 auto;
-  max-width: 56rem;
-  margin-inline: auto;
-}
-
-@media (min-width: 60rem) {
-  .pq-split:not(.pq-split-single) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .pq-split-right {
-    padding-left: var(--pq-space);
-    border-left: 1px dashed var(--pq-line);
-  }
-}
-
-.pq-split-right .pq-answers {
-  margin-top: 0;
-}
-
-/* One answer per row inside a half. Two columns in 550px is a squeeze. */
-.pq-split .pq-answers {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.6rem;
-}
-
-.pq-split-right .pq-media-list {
-  margin-top: 0;
-}
-
-.pq-screen-question .pq-meta-strip {
-  border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
-}
-
-/* Comments read like a note under the question, not another heading. */
-.pq-comments {
-  max-width: 46ch;
-  margin: clamp(0.7rem, 2vh, 1.1rem) auto 0;
-  color: var(--pq-muted);
-  text-align: center;
-  font-size: 1.02rem;
-}
-
 .pq-comments p {
   margin: 0;
 }
 
 /* Typed answers sit on a line, like a form on paper. They share the question's
- * column, so an input lines up with the cards beside it instead of hanging off
- * to one side of the text above it. */
+ * column, so an input lines up with the cards beside it. */
 .pq-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
   max-width: 100%;
-  margin: clamp(0.9rem, 2.6vh, 1.6rem) auto 0;
-}
-
-.pq-field-label {
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  margin: var(--pq-gap-lg) auto 0;
 }
 
 .pq-input {
-  width: 100%;
-  max-width: 100%;
   min-height: 3rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--pq-line);
-  border-radius: var(--pq-r-md);
-  background: var(--pq-slide);
   color: var(--pq-ink);
   font: inherit;
   line-height: 1.4;
-  box-shadow: inset 0 1px 2px rgb(74 58 30 / 0.08);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--pq-ink) 8%, transparent);
+
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 1px;
+  }
 }
 
 /* The answer box is read from across a room; a settings field is not. */
@@ -758,89 +775,84 @@
   font-size: 1.25rem;
 }
 
-.pq-input:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 1px;
-}
-
 .pq-input-number {
   max-width: 12rem;
 }
 
 .pq-cloze {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.9rem;
-  margin-top: clamp(1rem, 3vh, 1.8rem);
+  margin-top: var(--pq-gap-lg);
+
+  /* Blanks share the row instead of sitting in fixed boxes at one end. */
+  .pq-field {
+    flex: 1 1 12rem;
+    width: auto;
+    margin: 0;
+  }
 }
 
-/* Blanks share the row instead of sitting in fixed little boxes at one end. */
-.pq-cloze .pq-field {
-  flex: 1 1 12rem;
-  width: auto;
+.pq-answers-plain {
+  margin: var(--pq-gap-lg) 0 0;
+  padding-left: var(--pq-gap-lg);
+  font-size: var(--pq-text-md);
+}
+
+.pq-media-list {
+  margin-top: var(--pq-gap-lg);
+}
+
+.pq-media {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  justify-items: center;
   max-width: 100%;
   margin: 0;
 }
 
-.pq-answers-plain {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin: 1.4rem 0 0;
-  padding-left: 1.4rem;
-  color: var(--pq-muted);
-  font-size: 1.1rem;
-}
-
-.pq-media-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: clamp(1rem, 3vh, 1.8rem);
-}
-
-.pq-media-list img,
-.pq-media-list video {
+.pq-media img,
+.pq-media video {
   max-width: 100%;
   max-height: 55vh;
   border-radius: var(--pq-r-md);
   box-shadow: var(--pq-shadow-1);
 }
 
-.pq-hints {
-  max-width: 46ch;
-  margin: clamp(0.9rem, 2.6vh, 1.5rem) auto 0;
-  padding: 0.75rem 1rem;
-  border-left: 3px solid var(--pq-honey);
-  border-radius: 0 var(--pq-r-md) var(--pq-r-md) 0;
-  background: color-mix(in srgb, var(--pq-honey) 14%, transparent);
-  text-align: left;
+.pq-media audio {
+  width: min(100%, 26rem);
 }
 
-.pq-hints ul {
-  margin: 0;
-  padding-left: 1.2rem;
-}
-
-/* V2's comment slot: plain words under the question, no box of its own. Only
-   the answer reveal brings it, so it sits where the eye already is. */
-.pq-explanation {
-  max-width: 46ch;
-  margin: clamp(0.7rem, 2vh, 1.2rem) auto 0;
-  font-family: var(--pq-font-heading);
+.pq-media-credit {
+  font-size: var(--pq-text-xs);
   font-style: italic;
-  font-size: 1.05rem;
   text-align: center;
 }
 
-.pq-explanation::before {
-  content: "";
-  display: block;
-  width: 3rem;
-  margin: 0 auto 0.6rem;
-  border-top: 2px dotted var(--pq-fern);
+.pq-media-embed iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--pq-r-md);
+}
+
+.pq-media-link {
+  color: var(--pq-accent);
+  word-break: break-all;
+}
+
+.pq-media-missing {
+  padding: var(--pq-gap-lg);
+  color: var(--pq-muted);
+  text-align: center;
+}
+
+.pq-media-missing-text {
+  margin: 0;
+  color: var(--pq-ink);
+  font-weight: 600;
+}
+
+.pq-media-missing-hint {
+  margin: var(--pq-gap-sm) 0 0;
+  font-size: var(--pq-text-sm);
 }
 
 /* Markdown images, in a question or an answer. Small enough to share a card. */
@@ -856,39 +868,96 @@
 .pq-answer .pq-media {
   margin: 0;
   pointer-events: none;
+
+  img,
+  video {
+    max-height: 5.5rem;
+    border-radius: var(--pq-r-sm);
+  }
 }
 
-.pq-answer .pq-media img,
-.pq-answer .pq-media video {
-  max-height: 5.5rem;
-  max-width: 100%;
-  border-radius: var(--pq-r-sm);
+.pq-hints {
+  max-width: var(--pq-max-text);
+  margin: var(--pq-gap-lg) auto 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--pq-honey);
+  border-radius: 0 var(--pq-r-md) var(--pq-r-md) 0;
+  background: color-mix(in srgb, var(--pq-honey) 14%, transparent);
+  text-align: left;
+
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
 }
 
-.pq-answer .pq-media audio {
-  max-width: 100%;
+/* V2's comment slot: plain words under the question, no box of its own. Only
+   the answer reveal brings it, so it sits where the eye already is. */
+.pq-explanation {
+  max-width: var(--pq-max-text);
+  margin: var(--pq-gap) auto 0;
+  font-family: var(--pq-font-heading);
+  font-style: italic;
+  font-size: var(--pq-text-md);
+  text-align: center;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 3rem;
+    margin: 0 auto 0.6rem;
+    border-top: 2px dotted var(--pq-fern);
+  }
 }
 
 /* Sources, quiet, under the explanation. V2 put them in small print too. */
 .pq-sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  max-width: 46ch;
+  max-width: var(--pq-max-text);
   margin: 0.55rem auto 0;
-  color: var(--pq-muted);
-  font-size: 0.82rem;
+  font-size: var(--pq-text-xs);
 }
 
 
 /* Paper, part three: controls, notes and utilities. Built into paper.css. */
 
+/*
+ * Every button in the quiz, in one rule. `:where` keeps the specificity at
+ * zero, so `.pq-primary` and a pressed filter can win without `!important`.
+ */
+:where(
+  .pq-toolbar button,
+  .pq-toolbar-row button,
+  .pq-action,
+  .pq-settings button,
+  .pq-load-questions button,
+  .pq-start-actions button,
+  .pq-resume-actions button,
+  .pq-filter,
+  .pq-problems-reopen
+) {
+  min-height: var(--pq-tap);
+  padding: var(--pq-gap-sm) var(--pq-gap-lg);
+  border: var(--pq-border-strong);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-size: var(--pq-text-sm);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--pq-ink);
+    background: var(--pq-paper-deep);
+  }
+}
+
+.pq-quiz button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* Controls stay small, pinned to the bottom, out of the way. */
 .pq-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
   margin-top: auto;
   /* Room under the buttons. A row of pills touching the window edge looks
      like it fell off. */
@@ -896,40 +965,14 @@
     calc(var(--pq-space) * 0.75 + env(safe-area-inset-bottom, 0px));
 }
 
-.pq-toolbar button,
-.pq-toolbar-row button,
-.pq-action,
-.pq-settings button,
-.pq-resume-actions button,
-.pq-start-actions button {
-  min-height: 2.75rem;
-  padding: 0.55rem 1.15rem;
-  border: 1.5px solid var(--pq-line-strong);
-  border-radius: var(--pq-r-pill);
-  background: var(--pq-slide);
-  color: var(--pq-ink);
-  font: inherit;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition:
-    background-color 130ms,
-    border-color 130ms,
-    transform 130ms;
-}
-
 .pq-toolbar-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.55rem;
   width: 100%;
-}
 
-.pq-toolbar-row button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+  button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--pq-gap-sm);
+  }
 }
 
 .pq-action-icon {
@@ -938,82 +981,48 @@
   opacity: 0.75;
 }
 
-.pq-toolbar button:hover:not(:disabled),
-.pq-toolbar-row button:hover:not(:disabled),
-.pq-settings button:hover:not(:disabled),
-.pq-resume-actions button:hover,
-.pq-start-actions button:hover:not(:disabled) {
-  border-color: var(--pq-ink);
-  background: var(--pq-paper-deep);
-}
-
-.pq-toolbar button:disabled,
-.pq-toolbar-row button:disabled {
-  opacity: 0.4;
-  cursor: default;
+.pq-start-actions button {
+  min-width: 12rem;
 }
 
 /* The one loud button. It takes the round's colour. */
 .pq-primary {
-  border: 2px solid var(--pq-strip) !important;
-  background: var(--pq-accent) !important;
-  color: var(--pq-accent-ink, #fffdf7) !important;
+  border: calc(var(--pq-line-w) * 2) solid var(--pq-strip);
+  background: var(--pq-accent);
+  color: var(--pq-accent-ink);
   font-weight: 700;
   box-shadow: 0 2px 0 var(--pq-strip);
-}
 
-.pq-primary:hover {
-  background: color-mix(in srgb, var(--pq-accent) 84%, black) !important;
-  transform: translateY(-1px);
-}
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--pq-accent) 84%, black);
+    transform: translateY(-1px);
+  }
 
-.pq-primary:active {
-  box-shadow: none;
-  transform: translateY(1px);
+  &:active {
+    box-shadow: none;
+    transform: translateY(1px);
+  }
 }
 
 /* The home screen's numbers, one quiet line. */
-.pq-facts {
+.pq-facts,
+.pq-settings-note,
+.pq-keys {
   margin: 0;
-  color: var(--pq-muted);
   font-family: var(--pq-font-label);
-  font-size: 0.82rem;
+  font-size: var(--pq-text-xs);
   letter-spacing: 0.04em;
   text-align: center;
 }
 
-/* Insert a file or a theme folder: dashed pills on one line. */
-.pq-insert {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.pq-stats {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.6rem;
-  margin: 0;
+.pq-settings-note {
+  letter-spacing: 0;
 }
 
 .pq-stats div {
   min-width: 6.5rem;
-  padding: 0.6rem 1rem;
-  border: 1px dashed var(--pq-line-strong);
-  border-radius: var(--pq-r-md);
-  background: var(--pq-paper-deep);
+  padding: var(--pq-gap) 1rem;
   text-align: center;
-}
-
-.pq-stats dt {
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
 }
 
 .pq-stats dd {
@@ -1024,23 +1033,23 @@
 }
 
 .pq-progress {
-  width: min(100%, 56rem);
-  height: 0.35rem;
-  margin: 1.6rem auto 0;
+  width: min(100%, var(--pq-max-slide));
+  height: var(--pq-bar);
+  margin: var(--pq-gap-lg) auto 0;
   border-radius: var(--pq-r-pill);
   background: var(--pq-paper-deep);
   overflow: hidden;
-}
 
-.pq-progress span {
-  display: block;
-  height: 100%;
-  /* The round's own colour, so the progress bar belongs to the round. */
-  background: linear-gradient(
-    90deg,
-    var(--pq-round-accent, var(--pq-accent, var(--pq-honey))),
-    var(--pq-fern)
-  );
+  span {
+    display: block;
+    height: 100%;
+    /* The round's own colour, so the progress bar belongs to the round. */
+    background: linear-gradient(
+      90deg,
+      var(--pq-round-accent, var(--pq-accent)),
+      var(--pq-fern)
+    );
+  }
 }
 
 /* Screens with no strip: the top-right corner, where nothing else sits. */
@@ -1050,18 +1059,18 @@
   right: max(var(--pq-space), 0.75rem);
   z-index: 20;
   min-height: 2.4rem;
-  padding: 0.4rem 0.95rem;
-  border: 1.5px solid var(--pq-line-strong);
+  padding: var(--pq-gap-sm) var(--pq-gap-lg);
+  border: var(--pq-border-strong);
   border-radius: var(--pq-r-pill);
   background: var(--pq-paper-deep);
   color: var(--pq-ink);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--pq-text-sm);
   cursor: pointer;
-}
 
-.pq-settings-toggle:hover {
-  border-color: var(--pq-ink);
+  &:hover {
+    border-color: var(--pq-ink);
+  }
 }
 
 /* A question slide has a strip. The button joins it, after the points, and
@@ -1075,16 +1084,12 @@
   border-radius: var(--pq-r-pill);
   background: transparent;
   color: inherit;
-  font-family: var(--pq-font-label);
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
   line-height: 1.5;
-}
 
-.pq-meta-strip .pq-settings-toggle:hover {
-  border-color: currentColor;
-  background: color-mix(in srgb, currentColor 16%, transparent);
+  &:hover {
+    border-color: currentColor;
+    background: color-mix(in srgb, currentColor 16%, transparent);
+  }
 }
 
 .pq-settings-backdrop {
@@ -1093,21 +1098,31 @@
   z-index: 40;
   display: flex;
   justify-content: flex-end;
-  padding: 1rem;
-  background: rgb(20 16 24 / 0.45);
+  padding: var(--pq-gap-lg);
+  background: var(--pq-veil);
   overflow: auto;
 }
 
-.pq-settings.pq-settings-panel {
+/* Settings, problems, keys: paper notes, not app chrome. */
+.pq-settings {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+}
+
+/* The panel in the overlay is the exception: it is the whole page's settings. */
+.pq-settings-panel {
   width: min(100%, 38rem);
-  max-height: calc(100dvh - 2rem);
+  max-height: calc(100dvh - var(--pq-gap-lg) * 2);
   margin: 0 0 0 auto;
   overflow: auto;
-  border: 1px solid var(--pq-strip);
-  border-radius: var(--pq-r-md);
   background: var(--pq-slide);
   box-shadow: var(--pq-shadow-2);
   text-align: left;
+}
+
+.pq-settings > summary {
+  padding: var(--pq-gap) 1rem;
+  cursor: pointer;
 }
 
 .pq-settings-head {
@@ -1117,205 +1132,79 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.8rem 1rem;
+  padding: var(--pq-gap) 1rem;
   border-bottom: 1px dashed var(--pq-line-strong);
   background: var(--pq-paper-deep);
 }
 
-.pq-settings-title {
+/* Every small heading in a panel or a card. */
+.pq-settings-title,
+.pq-resume-title,
+.pq-review-title,
+.pq-live-title {
   margin: 0;
   font-family: var(--pq-font-heading);
-  font-size: 1.15rem;
+  font-size: var(--pq-text-md);
 }
 
 .pq-settings-close {
   min-height: 2rem;
   padding: 0.2rem 0.7rem;
-  border: 1px solid var(--pq-line-strong);
+  border: var(--pq-border);
   border-radius: var(--pq-r-pill);
   background: transparent;
   color: var(--pq-ink);
-  font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--pq-text-xs);
   cursor: pointer;
 }
 
-.pq-load-questions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.55rem;
-}
-
-.pq-load-questions button {
-  min-height: 2.75rem;
-  padding: 0.55rem 1.15rem;
-  border: 1.5px solid var(--pq-line-strong);
-  border-radius: var(--pq-r-pill);
-  background: var(--pq-slide);
-  color: var(--pq-ink);
-  font: inherit;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.pq-settings button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-/* High contrast also thickens the lines, not just the colours. */
-:root[data-pq-mode="high-contrast"] .pq-answer {
-  border-width: 2px;
-}
-
-:root[data-pq-mode="high-contrast"] .pq-answer[data-pq-selected="true"] {
-  box-shadow: inset 0 0 0 3px var(--pq-accent);
-}
-
-:root[data-pq-mode="high-contrast"] .pq-answer[data-pq-correct="false"] {
-  opacity: 1;
-  transform: none;
-  border-style: dashed;
-}
-
-:root[data-pq-mode="high-contrast"]
-  .pq-answer[data-pq-correct="false"]
-  .pq-answer-text {
-  text-decoration: line-through;
-}
-
-:root[data-pq-mode="high-contrast"] .pq-answer[data-pq-correct="true"] {
-  box-shadow: inset 0 0 0 3px var(--pq-right);
-}
-
-/* Settings, problems, keys: paper notes, not app chrome. */
-.pq-settings {
-  width: min(100%, 34rem);
-  margin: 0 auto;
-  border: 1px dashed var(--pq-line-strong);
-  border-radius: var(--pq-r-md);
-  background: var(--pq-paper-deep);
-}
-
-.pq-settings > summary {
-  padding: 0.7rem 1rem;
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
-
+/* Three groups, evenly spaced: export, classroom, print. */
 .pq-settings-body {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: var(--pq-gap-lg);
   padding: 0 1.4rem 1.5rem;
 }
 
-.pq-settings .pq-field {
-  margin: 0.15rem 0 0.35rem;
-}
-
 .pq-settings-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.7rem;
-  margin: 0.4rem 0 0;
-  padding: 1rem 1.1rem 1.15rem;
-  border: 1px solid var(--pq-line);
-  border-radius: var(--pq-r-md);
-}
+  margin: var(--pq-gap-sm) 0 0;
+  padding: 1rem 1.1rem var(--pq-gap-lg);
 
-.pq-settings-group legend {
-  padding: 0 0.45rem;
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  legend {
+    padding: 0 0.45rem;
+  }
 }
 
 .pq-settings-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+  justify-content: flex-start;
 }
 
 .pq-check {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: var(--pq-gap);
   min-height: 2rem;
-  padding: 0.1rem 0;
+
+  input {
+    flex: 0 0 auto;
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--pq-accent);
+  }
 }
 
-.pq-check input {
-  flex: 0 0 auto;
-  width: 1.05rem;
-  height: 1.05rem;
-  accent-color: var(--pq-accent);
-}
-
-.pq-settings .pq-input {
-  width: 100%;
-}
-
-.pq-start-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem;
-  margin: 1.4rem auto 0;
-}
-
-.pq-start-actions button {
-  min-width: 12rem;
-}
-
-.pq-resume-actions button,
-.pq-start-actions button {
-  min-height: 2.75rem;
-  padding: 0.55rem 1.15rem;
-  border: 1.5px solid var(--pq-line-strong);
-  border-radius: var(--pq-r-pill);
-  background: var(--pq-slide);
-  color: var(--pq-ink);
-  font: inherit;
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-.pq-settings-note,
-.pq-keys {
-  margin: 0;
-  color: var(--pq-muted);
-  font-size: 0.85rem;
-  text-align: center;
-}
-
-.pq-keys {
-  font-size: 0.8rem;
-}
-
-.pq-keys kbd {
-  padding: 0.05rem 0.35rem;
-  border: 1px solid var(--pq-line-strong);
-  border-radius: var(--pq-r-sm);
-  background: var(--pq-slide);
-  font-family: var(--pq-font-mono);
-  font-size: 0.9em;
+.pq-start-actions,
+.pq-resume-actions,
+.pq-load-questions {
+  margin: var(--pq-gap-lg) auto 0;
 }
 
 .pq-problems-panel {
   width: min(100%, 40rem);
   margin: 0 auto;
-  padding: 0.8rem 1rem;
-  border: 1px solid var(--pq-berry);
+  padding: var(--pq-gap) 1rem;
+  border-color: var(--pq-berry);
   border-left-width: 5px;
-  border-radius: var(--pq-r-md);
   background: color-mix(in srgb, var(--pq-berry) 8%, var(--pq-slide));
   text-align: left;
 }
@@ -1324,12 +1213,13 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--pq-gap-sm);
   font-weight: 600;
 }
 
 .pq-problems-close {
-  border: none;
+  padding: 0;
+  border: 0;
   background: none;
   color: inherit;
   font-size: 1.2rem;
@@ -1340,7 +1230,7 @@
 .pq-problems {
   margin: 0;
   padding-left: 1.1rem;
-  font-size: 0.9rem;
+  font-size: var(--pq-text-sm);
 }
 
 .pq-problems strong {
@@ -1348,21 +1238,15 @@
   font-size: 0.85em;
 }
 
-.pq-problems-reopen {
-  align-self: center;
-  padding: 0.35rem 0.8rem;
-  border: 1px solid var(--pq-berry);
-  border-radius: var(--pq-r-pill);
-  background: none;
-  color: var(--pq-berry);
-  font: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
+.pq-suggestion {
+  font-style: italic;
 }
 
-.pq-suggestion {
-  color: var(--pq-muted);
-  font-style: italic;
+/* A message the reader must act on: wrong passphrase, an empty room. */
+.pq-issue {
+  margin: var(--pq-gap) 0;
+  color: var(--pq-wrong);
+  text-align: center;
 }
 
 .pq-custom-view {
@@ -1372,40 +1256,23 @@
 
 /* The media appendix: a reference table, not a slide. */
 .pq-print-media-title {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--pq-gap);
   font-family: var(--pq-font-heading);
   font-size: 1.6rem;
 }
 
 .pq-media-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  text-align: left;
-}
+  max-width: 100%;
 
-.pq-media-table th,
-.pq-media-table td {
-  padding: 0.35rem 0.45rem;
-  border-bottom: 1px solid var(--pq-line);
-  vertical-align: top;
-}
-
-.pq-media-table code {
-  font-family: var(--pq-font-mono);
-  word-break: break-all;
-}
-
-.pq-media-kind {
-  color: var(--pq-muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  code {
+    font-family: var(--pq-font-mono);
+    word-break: break-all;
+  }
 }
 
 .pq-code {
   padding: 0.1em 0.3em;
-  border-radius: 0.25em;
+  border-radius: var(--pq-r-sm);
   background: color-mix(in srgb, var(--pq-ink) 9%, transparent);
   font-family: var(--pq-font-mono);
   font-size: 0.92em;
@@ -1433,47 +1300,18 @@
   display: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pq-quiz * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-@media (max-width: 34rem) {
-  .pq-screen-question,
-  .pq-screen-end,
-  .pq-screen-message {
-    padding-inline: 0.9rem;
-  }
-
-  .pq-meta-strip,
-  .pq-round-banner {
-    margin-inline: -0.9rem;
-  }
-
-  .pq-toolbar {
-    gap: 0.4rem;
-  }
-
-  .pq-toolbar button,
-  .pq-action {
-    flex: 1 1 auto;
-  }
-}
-
 .pq-warning {
-  margin: 0.5rem 0;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid color-mix(in oklab, var(--pq-accent) 40%, transparent);
-  border-radius: var(--pq-radius, 0.4rem);
-  background: color-mix(in oklab, var(--pq-accent) 12%, transparent);
+  margin: var(--pq-gap-sm) 0;
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  border: 1px solid color-mix(in srgb, var(--pq-accent) 40%, transparent);
+  border-radius: var(--pq-r-sm);
+  background: color-mix(in srgb, var(--pq-accent) 12%, transparent);
   color: var(--pq-ink);
   font-weight: 600;
 }
 
 
-/* Interactive play, results and motion. Paper, part three.
+/* Interactive play, results and motion. Paper, part four.
  * Animations are transform and opacity only, under 300ms. Reduced motion wins.
  */
 
@@ -1482,49 +1320,47 @@
 .pq-timer {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
   justify-content: center;
-  margin: 0 auto 0.6rem;
+  gap: var(--pq-gap);
   max-width: 30rem;
+  margin: 0 auto var(--pq-gap);
   font-family: var(--pq-font-label);
+
+  &[data-pq-urgency="warn"] .pq-timer-value {
+    color: var(--pq-warn);
+  }
+
+  &[data-pq-urgency="urgent"] .pq-timer-value,
+  &[data-pq-urgency="done"] .pq-timer-value {
+    color: var(--pq-wrong);
+    font-weight: 700;
+  }
 }
 
 .pq-timer-value {
   margin: 0;
+  font-size: var(--pq-text-md);
   font-variant-numeric: tabular-nums;
-  font-size: 1.15rem;
-  color: var(--pq-muted);
 }
 
 .pq-timer-bar {
   flex: 1;
-  height: 0.35rem;
-  border-radius: 999px;
+  height: var(--pq-bar);
+  border-radius: var(--pq-r-pill);
   background: var(--pq-paper-deep);
   overflow: hidden;
-}
 
-.pq-timer-bar > span {
-  display: block;
-  height: 100%;
-  background: var(--pq-accent);
-  transition: width 250ms linear;
-}
-
-.pq-timer[data-pq-urgency="warn"] .pq-timer-value {
-  color: #8a5a12;
-}
-
-.pq-timer[data-pq-urgency="urgent"] .pq-timer-value,
-.pq-timer[data-pq-urgency="done"] .pq-timer-value {
-  color: #9d2f3a;
-  font-weight: 700;
+  > span {
+    display: block;
+    height: 100%;
+    background: var(--pq-accent);
+    transition: width 250ms linear;
+  }
 }
 
 .pq-timer-note {
-  margin: 0.4rem auto 0;
-  color: var(--pq-muted);
-  font-size: 0.9rem;
+  margin: var(--pq-gap-sm) auto 0;
+  font-size: var(--pq-text-sm);
 }
 
 /* --- Inline errors ----------------------------------------------------- */
@@ -1533,47 +1369,56 @@
  * quietly left-align every input. */
 
 .pq-input[aria-invalid="true"] {
-  border-color: #9d2f3a;
-  box-shadow: 0 0 0 3px rgb(157 47 58 / 0.15);
+  border-color: var(--pq-wrong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pq-wrong) 15%, transparent);
 }
 
 .pq-field-error {
-  color: #9d2f3a;
-  font-size: 0.9rem;
+  color: var(--pq-wrong);
+  font-size: var(--pq-text-sm);
 }
 
 .pq-answers[aria-invalid="true"] {
-  outline: 3px solid rgb(157 47 58 / 0.35);
+  outline: 3px solid color-mix(in srgb, var(--pq-wrong) 35%, transparent);
   outline-offset: 4px;
-  border-radius: 12px;
+  border-radius: var(--pq-r-md);
 }
 
-/* --- Sort ------------------------------------------------------------- */
+/* --- Sort and match --------------------------------------------------- */
 
 .pq-sort {
-  list-style: none;
-  width: 100%;
-  margin: 0.9rem 0;
-  padding: 0;
-  display: grid;
-  gap: 0.45rem;
-  max-width: 100%;
+  margin: var(--pq-gap-lg) 0;
 }
 
-.pq-sort-item {
+/* One row of a sort, a match column or a given pair: same card, same line. */
+.pq-sort-item,
+.pq-match-item,
+.pq-match-static-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  background: var(--pq-slide);
-  border: 1px solid var(--pq-line);
-  border-radius: 10px;
+  gap: var(--pq-gap);
+  min-height: var(--pq-tap);
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  color: var(--pq-ink);
+  text-align: left;
+}
+
+.pq-match-item {
+  cursor: pointer;
+
+  &[aria-pressed="true"] {
+    border-color: var(--pq-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--pq-accent) 18%, transparent);
+  }
+
+  &[data-pq-connected="true"] {
+    border-style: dashed;
+  }
 }
 
 .pq-sort-rank {
-  font-family: var(--pq-font-label);
-  color: var(--pq-muted);
   min-width: 1.5rem;
+  font-family: var(--pq-font-label);
 }
 
 .pq-sort-text {
@@ -1581,85 +1426,34 @@
 }
 
 .pq-sort-button {
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 8px;
-  border: 1px solid var(--pq-line);
+  min-width: var(--pq-tap);
+  min-height: var(--pq-tap);
+  border-radius: var(--pq-r-sm);
   background: var(--pq-paper);
   color: var(--pq-ink);
   cursor: pointer;
 }
 
-.pq-sort-button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-/* --- Match ------------------------------------------------------------ */
-
 .pq-match {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 0.8rem 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pq-gap) var(--pq-gap-lg);
   width: 100%;
-  margin: 0.9rem 0;
-  max-width: 100%;
-}
-
-.pq-match-column {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.4rem;
-}
-
-.pq-match-item {
-  width: 100%;
-  min-height: 44px;
-  text-align: left;
-  padding: 0.55rem 0.75rem;
-  background: var(--pq-slide);
-  border: 1.5px solid var(--pq-line);
-  border-radius: 10px;
-  color: var(--pq-ink);
-  cursor: pointer;
-}
-
-.pq-match-item[aria-pressed="true"] {
-  border-color: var(--pq-accent);
-  box-shadow: 0 0 0 3px rgb(111 75 152 / 0.18);
-}
-
-.pq-match-item[data-pq-connected="true"] {
-  border-style: dashed;
+  margin: var(--pq-gap-lg) 0;
 }
 
 .pq-match-pair {
   display: block;
-  font-size: 0.85rem;
-  color: var(--pq-muted);
+  font-size: var(--pq-text-xs);
 }
 
 .pq-match-hint {
-  color: var(--pq-muted);
-  font-size: 0.9rem;
-  max-width: 100%;
   margin: 0.2rem 0 0.8rem;
-}
-
-/* Question mode, no input: both columns, nothing clickable. */
-.pq-match-static-item {
-  min-height: 44px;
-  padding: 0.55rem 0.75rem;
-  border: 1.5px solid var(--pq-line);
-  border-radius: 10px;
-  background: var(--pq-slide);
+  font-size: var(--pq-text-sm);
 }
 
 /* --- Results ---------------------------------------------------------- */
 
-/* Results get room to breathe, and everything inside lines up in the middle. */
 .pq-screen-results {
   align-items: stretch;
   padding: var(--pq-space);
@@ -1668,9 +1462,9 @@
 .pq-score {
   display: flex;
   align-items: baseline;
-  gap: 0.3rem;
   justify-content: center;
-  margin: 0.4rem 0 0;
+  gap: 0.3rem;
+  margin: var(--pq-gap-sm) 0 0;
   font-family: var(--pq-font-heading);
 }
 
@@ -1680,154 +1474,109 @@
 }
 
 .pq-score-max {
-  color: var(--pq-muted);
-  font-size: 1.2rem;
+  font-size: var(--pq-text-md);
 }
 
 .pq-score-percent {
-  margin-left: 0.6rem;
+  margin-left: var(--pq-gap);
   color: var(--pq-accent);
   font-weight: 700;
 }
 
 .pq-band {
   margin: 0.2rem 0 0;
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
+/* Every table on the results page: summary, review parts. */
 .pq-table {
-  width: 100%;
   max-width: 40rem;
-  margin: 1rem auto;
-  border-collapse: collapse;
-  font-size: 0.95rem;
+  margin: var(--pq-gap-lg) auto;
+
+  caption {
+    padding-bottom: var(--pq-gap-sm);
+    font-family: var(--pq-font-label);
+    text-align: left;
+  }
+
+  thead th {
+    font-weight: 600;
+  }
 }
 
-.pq-table caption {
-  text-align: left;
-  font-family: var(--pq-font-label);
-  color: var(--pq-muted);
-  padding-bottom: 0.35rem;
-}
-
-.pq-table th,
-.pq-table td {
-  text-align: left;
-  padding: 0.45rem 0.6rem;
-  border-bottom: 1px solid var(--pq-line);
-}
-
-.pq-table thead th {
-  color: var(--pq-muted);
-  font-weight: 600;
+.pq-review-parts {
+  max-width: 40rem;
+  margin: var(--pq-gap-lg) auto;
 }
 
 .pq-chip-list {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
-  padding: 0;
-  margin: 0.6rem 0;
+  margin: var(--pq-gap) 0;
 }
 
 .pq-chip {
   padding: 0.25rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--pq-r-pill);
   background: var(--pq-paper-deep);
-  font-size: 0.85rem;
+  font-size: var(--pq-text-xs);
 }
 
 .pq-filters {
-  display: flex;
-  gap: 0.4rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin: 1rem 0 0.6rem;
-}
-
-.pq-filter {
-  min-height: 44px;
-  padding: 0.4rem 0.9rem;
-  border-radius: 999px;
-  border: 1.5px solid var(--pq-line);
-  background: var(--pq-slide);
-  color: var(--pq-ink);
-  cursor: pointer;
+  margin: var(--pq-gap-lg) 0 var(--pq-gap);
 }
 
 .pq-filter[aria-pressed="true"] {
+  border-color: var(--pq-strip);
   background: var(--pq-strip);
   color: var(--pq-strip-ink);
-  border-color: var(--pq-strip);
 }
 
 .pq-filter-count {
   opacity: 0.75;
-  font-size: 0.85rem;
+  font-size: 0.85em;
 }
 
 .pq-review {
-  list-style: none;
-  padding: 0;
-  margin: 0 auto;
-  width: 100%;
   max-width: 44rem;
-  display: grid;
-  gap: 0.8rem;
+  margin: 0 auto;
 }
 
 .pq-review-card {
-  background: var(--pq-slide);
-  border: 1px solid var(--pq-line);
+  padding: var(--pq-gap) 1rem;
   border-left: 5px solid var(--pq-line-strong);
-  border-radius: 12px;
-  padding: 0.8rem 1rem;
-}
 
-.pq-review-card[data-pq-correct="true"] {
-  border-left-color: #2f7a4f;
-}
+  &[data-pq-correct="true"] {
+    border-left-color: var(--pq-right);
 
-.pq-review-card[data-pq-answered="true"][data-pq-correct="false"] {
-  border-left-color: #9d2f3a;
+    .pq-review-status {
+      color: var(--pq-right);
+    }
+  }
+
+  &[data-pq-answered="true"][data-pq-correct="false"] {
+    border-left-color: var(--pq-wrong);
+
+    .pq-review-status {
+      color: var(--pq-wrong);
+    }
+  }
 }
 
 .pq-review-head {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
   justify-content: space-between;
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.85rem;
-}
+  gap: var(--pq-gap);
 
-.pq-review-head p {
-  margin: 0;
+  p {
+    margin: 0;
+  }
 }
 
 .pq-review-status {
   font-weight: 700;
 }
 
-.pq-review-card[data-pq-correct="true"] .pq-review-status {
-  color: #2f7a4f;
-}
-
-.pq-review-card[data-pq-answered="true"][data-pq-correct="false"]
-  .pq-review-status {
-  color: #9d2f3a;
-}
-
 .pq-review-title {
-  font-family: var(--pq-font-heading);
-  font-size: 1.1rem;
-  margin: 0.3rem 0 0.5rem;
+  margin-top: var(--pq-gap-sm);
 }
 
 /* The question is the link back. It reads like a heading, not a button. */
@@ -1840,153 +1589,116 @@
   color: var(--pq-ink);
   text-align: left;
   cursor: pointer;
-}
 
-.pq-review-open:hover {
-  text-decoration: underline;
-}
+  &:hover {
+    text-decoration: underline;
+  }
 
-.pq-review-open:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 3px;
-}
-
-.pq-review-parts {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-}
-
-.pq-review-parts th,
-.pq-review-parts td {
-  text-align: left;
-  padding: 0.3rem 0.5rem;
-  border-bottom: 1px solid var(--pq-line);
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 3px;
+  }
 }
 
 .pq-review-parts tr[data-pq-correct="false"] td:last-child {
-  color: #2f7a4f;
+  color: var(--pq-right);
 }
 
 .pq-review-explanation {
-  margin: 0.5rem 0 0;
-  color: var(--pq-muted);
+  margin: var(--pq-gap-sm) 0 0;
   font-style: italic;
 }
 
 .pq-review-sources {
   margin: 0.3rem 0 0;
-  font-size: 0.85rem;
-  color: var(--pq-muted);
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
+  font-size: var(--pq-text-xs);
 }
 
 .pq-link {
+  padding: var(--pq-gap-sm) 0;
+  border: 0;
   background: none;
-  border: none;
-  padding: 0.4rem 0;
   color: var(--pq-accent);
+  font: inherit;
   text-decoration: underline;
   cursor: pointer;
-  font: inherit;
 }
 
 .pq-empty {
+  padding: var(--pq-gap-lg);
   text-align: center;
-  color: var(--pq-muted);
-  padding: 1rem;
 }
 
 /* --- Resume, intro, credits, widget ----------------------------------- */
 
 .pq-resume {
-  border: 1.5px dashed var(--pq-line-strong);
-  border-radius: 12px;
-  padding: 0.9rem 1.1rem;
-  margin: 1rem auto;
   max-width: 34rem;
+  margin: var(--pq-gap-lg) auto;
+  padding: var(--pq-gap) var(--pq-gap-lg);
   text-align: center;
 }
 
-.pq-resume-title {
-  margin: 0;
-  font-family: var(--pq-font-heading);
-  font-size: 1.1rem;
-}
-
-.pq-resume-note {
-  margin: 0.3rem 0 0.7rem;
-  color: var(--pq-muted);
-  font-size: 0.95rem;
-}
-
-.pq-resume-actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: center;
-  flex-wrap: wrap;
+.pq-resume-note,
+.pq-resume-when,
+.pq-intro,
+.pq-credits {
+  margin: var(--pq-gap-sm) auto 0;
+  font-size: var(--pq-text-sm);
 }
 
 .pq-intro {
-  margin: 0.6rem auto 0;
-  max-width: 46ch;
-  color: var(--pq-muted);
+  max-width: var(--pq-max-text);
 }
 
 .pq-credits {
-  margin: 0.8rem auto 0;
   text-align: center;
-  color: var(--pq-muted);
-  font-size: 0.85rem;
 }
 
 .pq-widget {
-  margin: 0.8rem 0;
+  margin: var(--pq-gap) 0;
 }
 
 .pq-widget-frame {
   width: 100%;
-  border: 1.5px solid var(--pq-line);
-  border-radius: 12px;
-  background: var(--pq-slide);
 }
 
 .pq-widget-note {
   margin: 0.3rem 0 0;
-  color: #8a5a12;
-  font-size: 0.85rem;
+  color: var(--pq-warn);
+  font-size: var(--pq-text-sm);
 }
 
 /* --- Layouts ----------------------------------------------------------- */
 
-.pq-screen-question[data-pq-layout="center"] .pq-title {
-  font-size: clamp(2.4rem, 7vw, 4.4rem);
-}
+.pq-screen-question {
+  &[data-pq-layout="center"] {
+    .pq-title {
+      font-size: clamp(2.4rem, 7vw, 4.4rem);
+    }
 
-.pq-screen-question[data-pq-layout="center"] .pq-body {
-  font-size: 1.3rem;
-}
+    .pq-body {
+      font-size: 1.3rem;
+    }
+  }
 
-.pq-screen-question[data-pq-layout="compact"] {
-  padding-block: 0.4rem;
-}
+  &[data-pq-layout="compact"] {
+    padding-block: var(--pq-gap-sm);
+  }
 
-.pq-screen-question[data-pq-layout="quote"] .pq-title {
-  font-family: var(--pq-font-heading);
-  font-style: italic;
-  font-size: clamp(1.8rem, 5vw, 3rem);
-}
+  &[data-pq-layout="quote"] .pq-title {
+    font-style: italic;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+  }
 
-.pq-screen-question[data-pq-layout="full-bleed"] .pq-media-list {
-  width: 100%;
+  &[data-pq-layout="full-bleed"] .pq-media-list {
+    width: 100%;
+  }
 }
 
 /* Built-in utility classes, namespaced so an author cannot hit internals. */
 .pq-dark {
-  background: #221f26;
-  color: #f6f1e6;
+  background: var(--pq-code-bg);
+  color: var(--pq-code-ink);
 }
 
 .pq-invert {
@@ -1998,36 +1710,29 @@
 }
 
 .pq-spotlight {
-  box-shadow: inset 0 0 0 100vmax rgb(0 0 0 / 0.12);
+  box-shadow: inset 0 0 0 100vmax color-mix(in srgb, black 12%, transparent);
 }
 
 .pq-quote {
   font-style: italic;
 }
 
-.pq-code {
-  font-family: var(--pq-font-mono);
-}
-
 .pq-code-block {
-  margin: 0.8rem auto;
   max-width: 100%;
+  margin: var(--pq-gap) auto;
   text-align: left;
-}
 
-.pq-code-block pre {
-  margin: 0;
-  padding: 0.9rem 1rem;
-  background: #221f26;
-  color: #f6f1e6;
-  border-radius: 10px;
-  overflow-x: auto;
-  font-size: 0.92rem;
-  line-height: 1.5;
-}
-
-.pq-code-block code {
-  font-family: var(--pq-font-mono);
+  pre {
+    margin: 0;
+    padding: var(--pq-gap) 1rem;
+    border-radius: var(--pq-r-md);
+    background: var(--pq-code-bg);
+    color: var(--pq-code-ink);
+    font-family: var(--pq-font-mono);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
 }
 
 /* Only present when codeHighlight is on; the block stays one colour without. */
@@ -2048,53 +1753,125 @@
   color: #a9c9f0;
 }
 
+/* --- Steps ------------------------------------------------------------- */
+
+/* The staged-reveal button. Quiet, so it never competes with the slide. */
+.pq-step-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--pq-gap);
+  padding: 0 var(--pq-space);
+}
+
+.pq-step-count {
+  margin: 0;
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+}
+
+/* The first step is often just the clip. Give it the room it was given. */
+[data-pq-step="media"] .pq-media-list img,
+[data-pq-step="media"] .pq-media-list video {
+  max-height: 72vh;
+}
+
 /* --- Motion ------------------------------------------------------------ */
+/* One duration and one easing for the lot. A preset sets a name, nothing else. */
 
 @media (prefers-reduced-motion: no-preference) {
+  [data-pq-transition] {
+    animation: var(--pq-anim, pq-fade) 220ms ease-out both;
+  }
+
   [data-pq-transition="fade"] {
-    animation: pq-fade 180ms ease-out both;
+    --pq-anim: pq-fade;
+    animation-duration: 180ms;
   }
+
   [data-pq-transition="slide-up"] {
-    animation: pq-slide-up 220ms ease-out both;
+    --pq-anim: pq-slide-up;
   }
+
   [data-pq-transition="slide-left"] {
-    animation: pq-slide-left 220ms ease-out both;
+    --pq-anim: pq-slide-side;
   }
+
   [data-pq-transition="slide-right"] {
-    animation: pq-slide-right 220ms ease-out both;
+    --pq-anim: pq-slide-side;
+    --pq-shift: -18px;
   }
+
   [data-pq-transition="zoom-in"] {
-    animation: pq-zoom-in 240ms ease-out both;
+    --pq-anim: pq-zoom;
   }
+
   [data-pq-transition="zoom-out"] {
-    animation: pq-zoom-out 240ms ease-out both;
+    --pq-anim: pq-zoom;
+    --pq-scale: 1.04;
   }
+
   [data-pq-transition="flip-x"] {
-    animation: pq-flip-x 300ms ease-out both;
+    --pq-anim: pq-flip-x;
+    animation-duration: 300ms;
   }
+
   [data-pq-transition="blur-in"] {
-    animation: pq-blur-in 260ms ease-out both;
+    --pq-anim: pq-blur-in;
+    animation-duration: 260ms;
   }
+
   [data-pq-transition="wipe"] {
-    animation: pq-wipe 260ms ease-out both;
+    --pq-anim: pq-wipe;
+    animation-duration: 260ms;
   }
+
   [data-pq-transition="shake"] {
-    animation: pq-shake 240ms ease-out both;
+    --pq-anim: pq-shake;
+    animation-duration: 240ms;
   }
+
   [data-pq-transition="pulse"] {
-    animation: pq-pulse 240ms ease-out both;
+    --pq-anim: pq-pulse;
+    animation-duration: 240ms;
   }
+
   [data-pq-transition="stagger-children"] .pq-answer {
-    animation: pq-stagger 280ms ease-out both;
+    --pq-anim: pq-stagger;
+    animation: var(--pq-anim) 280ms ease-out both;
+
+    &:nth-child(2) {
+      animation-delay: 40ms;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 80ms;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 120ms;
+    }
   }
-  [data-pq-transition="stagger-children"] .pq-answer:nth-child(2) {
-    animation-delay: 40ms;
+
+  /* The answer reveal: the correct cards arrive, nothing else moves. */
+  [data-pq-reveal] .pq-answer[data-pq-correct] {
+    animation: pq-pop 220ms ease-out both;
   }
-  [data-pq-transition="stagger-children"] .pq-answer:nth-child(3) {
-    animation-delay: 80ms;
+
+  [data-pq-reveal="fade"] .pq-answer[data-pq-correct] {
+    animation: pq-fade 240ms ease-out both;
   }
-  [data-pq-transition="stagger-children"] .pq-answer:nth-child(4) {
-    animation-delay: 120ms;
+
+  [data-pq-reveal="slide-up"] .pq-answer[data-pq-correct] {
+    animation: pq-slide-up 260ms ease-out both;
+  }
+
+  [data-pq-reveal="zoom-in"] .pq-answer[data-pq-correct] {
+    animation: pq-zoom 260ms ease-out both;
+  }
+
+  [data-pq-reveal="shake"] .pq-answer[data-pq-correct] {
+    animation: pq-shake 260ms ease-out both;
   }
 }
 
@@ -2118,10 +1895,11 @@
   }
 }
 
-@keyframes pq-slide-left {
+/* One keyframe, two directions. The preset only sets the variable. */
+@keyframes pq-slide-side {
   from {
     opacity: 0;
-    transform: translateX(18px);
+    transform: translateX(var(--pq-shift, 18px));
   }
   to {
     opacity: 1;
@@ -2129,32 +1907,10 @@
   }
 }
 
-@keyframes pq-slide-right {
+@keyframes pq-zoom {
   from {
     opacity: 0;
-    transform: translateX(-18px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes pq-zoom-in {
-  from {
-    opacity: 0;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes pq-zoom-out {
-  from {
-    opacity: 0;
-    transform: scale(1.04);
+    transform: scale(var(--pq-scale, 0.96));
   }
   to {
     opacity: 1;
@@ -2227,149 +1983,119 @@
   }
 }
 
+/* No motion, without a fight: the presets above only ever set a name, so
+ * shortening every duration to nothing is enough. */
+@media (prefers-reduced-motion: reduce) {
+  .pq-quiz *,
+  .pq-quiz *::before,
+  .pq-quiz *::after {
+    animation-duration: 0.01ms;
+    transition-duration: 0.01ms;
+  }
+}
+
 /* --- Insert a file or a theme on the start screen ---------------------- */
 
 .pq-theme-picker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
+  justify-items: center;
 }
 
 .pq-insert-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--pq-gap-sm);
   padding: 0.45rem 1rem;
   border: 1px dashed var(--pq-line-strong);
   border-radius: var(--pq-r-pill);
   background: color-mix(in srgb, var(--pq-slide) 70%, transparent);
   color: var(--pq-ink);
-  font-family: var(--pq-font-label);
-  font-size: 0.82rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   text-decoration: none;
-}
 
-.pq-insert-button:hover {
-  border-color: var(--pq-accent);
-  color: var(--pq-accent);
-}
+  &:hover {
+    border-color: var(--pq-accent);
+    color: var(--pq-accent);
+  }
 
-.pq-insert-button:focus-within {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 3px;
+  &:focus-within {
+    outline: var(--pq-focus);
+    outline-offset: 3px;
+  }
 }
 
 .pq-theme-note {
   margin: 0;
-  color: var(--pq-muted);
-  font-size: 0.85rem;
+  font-size: var(--pq-text-sm);
   font-style: italic;
 }
 
 /* --- Per-question colour scheme ---------------------------------------- */
 /* A theme's `### ColorScheme name` block fills these four variables. */
 .pq-screen[data-pq-scheme] {
-  color: var(--pq-scheme-text, inherit);
   background-color: var(--pq-scheme-bg, transparent);
-}
-.pq-screen[data-pq-scheme] .pq-title,
-.pq-screen[data-pq-scheme] .pq-round-name,
-.pq-screen[data-pq-scheme] .pq-count {
   color: var(--pq-scheme-text, inherit);
-}
 
-/* --- Answer reveal ------------------------------------------------------ */
-@media (prefers-reduced-motion: no-preference) {
-  [data-pq-reveal] .pq-answer[data-pq-correct] {
-    animation: pq-pop 220ms ease-out both;
-  }
-  [data-pq-reveal="fade"] .pq-answer[data-pq-correct] {
-    animation: pq-fade 240ms ease-out both;
-  }
-  [data-pq-reveal="slide-up"] .pq-answer[data-pq-correct] {
-    animation: pq-slide-up 260ms ease-out both;
-  }
-  [data-pq-reveal="zoom-in"] .pq-answer[data-pq-correct] {
-    animation: pq-zoom-in 260ms ease-out both;
-  }
-  [data-pq-reveal="shake"] .pq-answer[data-pq-correct] {
-    animation: pq-shake 260ms ease-out both;
+  .pq-title,
+  .pq-round-name,
+  .pq-count {
+    color: inherit;
   }
 }
 
 
 /* Live mode. Paper, part five: a code you can read from the back row, and
- * phone buttons a thumb can hit without aiming.
+ * phone buttons a thumb can hit without aiming. Everything else is the player's
+ * own pieces (screen, title, cards, rows), reused as they are.
  */
 
 .pq-live-screen {
-  display: grid;
-  gap: var(--pq-space);
-  align-content: start;
   max-width: 46rem;
   margin: 0 auto;
-  padding: var(--pq-space);
 }
 
-.pq-live-kicker {
+.pq-live-kicker,
+.pq-live-meta,
+.pq-live-hint {
   margin: 0;
-  font-family: var(--pq-font-label);
-  font-size: 0.85rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--pq-muted);
 }
 
 .pq-live-heading {
   margin: 0;
-  font-family: var(--pq-font-heading);
-  font-size: clamp(1.6rem, 4.4vw, 2.6rem);
-  line-height: 1.15;
   color: var(--pq-ink);
-}
+  font-family: var(--pq-font-heading);
+  font-size: clamp(1.7rem, 4.4vw, 2.6rem);
+  line-height: 1.15;
 
-.pq-live-heading:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 4px;
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 4px;
+  }
 }
 
 .pq-live-meta {
-  margin: 0;
   font-family: var(--pq-font-label);
-  color: var(--pq-muted);
 }
 
-.pq-live-hint {
-  margin: 0;
-  color: var(--pq-muted);
-}
-
+/* The code, its link and its QR: one card, read from across a room. */
 .pq-live-code {
-  display: grid;
-  gap: 0.35rem;
   justify-items: center;
-  padding: 1.2rem 1rem;
+  padding: var(--pq-gap-lg) 1rem;
   border-radius: var(--pq-r-organic);
-  background: var(--pq-slide);
   box-shadow: var(--pq-shadow-2);
   text-align: center;
 }
 
 .pq-live-code-value {
   margin: 0;
+  color: var(--pq-accent);
   font-family: var(--pq-font-mono);
   font-size: clamp(3rem, 14vw, 7rem);
   letter-spacing: 0.22em;
   line-height: 1;
-  color: var(--pq-accent);
 }
 
 .pq-live-link {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--pq-text-sm);
   word-break: break-all;
 }
 
@@ -2377,45 +2103,19 @@
 .pq-live-qr {
   width: min(38vw, 20rem);
   height: auto;
-  margin-top: 0.4rem;
-  border-radius: 0.4rem;
-  background: #fff;
+  margin-top: var(--pq-gap-sm);
+  border-radius: var(--pq-r-sm);
+  background: var(--pq-scan);
 }
 
-.pq-live-roster,
-.pq-live-progress,
-.pq-live-board,
-.pq-live-reveal,
-.pq-live-join,
-.pq-live-question {
-  display: grid;
-  gap: 0.8rem;
-}
-
-.pq-live-title {
-  margin: 0;
-  font-family: var(--pq-font-heading);
-  font-size: 1.25rem;
-}
-
-.pq-live-count {
-  font-family: var(--pq-font-label);
-  color: var(--pq-muted);
-}
-
-.pq-live-players {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.pq-live-players li {
+/* Every row of people, in one shape: roster, board, all the answers. */
+.pq-live-players li,
+.pq-live-rows li,
+.pq-live-board li {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.7rem;
+  align-items: baseline;
+  gap: var(--pq-gap);
+  padding: var(--pq-gap-sm) var(--pq-gap);
   border-radius: var(--pq-r-md);
   background: var(--pq-paper-deep);
 }
@@ -2424,69 +2124,66 @@
   background: var(--pq-fern-soft);
 }
 
-.pq-live-score {
-  margin-left: auto;
-  font-family: var(--pq-font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.pq-live-offline {
-  font-size: 0.8rem;
-  color: var(--pq-berry);
-}
-
-.pq-live-answers {
-  gap: 0.6rem;
-}
-
-.pq-live-answers .pq-answer {
-  min-height: 3.2rem;
-  font-size: 1.05rem;
-}
-
-.pq-live-submit {
-  min-height: 3.4rem;
-  font-size: 1.1rem;
-}
-
-.pq-live-board ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.3rem;
-}
-
-.pq-live-board li {
-  display: flex;
-  gap: 0.7rem;
-  align-items: baseline;
-  padding: 0.45rem 0.7rem;
-  border-radius: var(--pq-r-md);
-  background: var(--pq-paper-deep);
-}
-
-.pq-live-board li[data-pq-self="true"] {
+.pq-live-board li[data-pq-self="true"],
+.pq-live-rows li[data-pq-self="true"] {
   outline: 2px solid var(--pq-accent);
   outline-offset: -2px;
 }
 
+.pq-live-score,
+.pq-live-rank {
+  font-family: var(--pq-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-live-score {
+  margin-left: auto;
+}
+
 .pq-live-rank {
   width: 1.6rem;
-  font-family: var(--pq-font-mono);
-  color: var(--pq-muted);
 }
 
 .pq-live-name {
   flex: 1;
 }
 
+/* What a player said, next to their name. */
+.pq-live-given {
+  flex: 2;
+  overflow-wrap: anywhere;
+}
+
+.pq-live-rows li[data-pq-correct="true"] .pq-live-given {
+  color: var(--pq-right);
+}
+
+.pq-live-rows li[data-pq-correct="false"] .pq-live-given {
+  color: var(--pq-muted);
+}
+
+.pq-live-offline {
+  color: var(--pq-berry);
+  font-size: var(--pq-text-xs);
+}
+
+/* A thumb needs a target, not a link. */
+.pq-live-answers .pq-answer {
+  min-height: 3.2rem;
+  font-size: var(--pq-text-md);
+}
+
+.pq-live-submit {
+  min-height: 3.4rem;
+  font-size: var(--pq-text-md);
+}
+
 .pq-live-answer {
   margin: 0;
-  padding: 0.8rem 1rem;
+  padding: var(--pq-gap) 1rem;
   border-radius: var(--pq-r-md);
   background: var(--pq-fern-soft);
-  font-size: 1.2rem;
+  font-size: var(--pq-text-md);
   font-weight: 600;
 }
 
@@ -2498,7 +2195,7 @@
   color: var(--pq-wrong);
 }
 
-.pq-live-join form {
-  display: grid;
-  gap: 0.8rem;
+/* The host's lobby settings: two fields, no extra chrome. */
+.pq-live-settings .pq-field {
+  margin: 0;
 }

@@ -15,6 +15,19 @@ export const en: TranslationTable = {
   round_other: "rounds",
   point_one: "point",
   point_other: "points",
+  answer_one: "answer",
+  answer_other: "answers",
+
+  typeHintOpen: "This is an open question.",
+  typeHintChoice:
+    "This is a multiple choice question wanting {count} {answer}, {points} {point} each.",
+  typeHintList:
+    "This is a multiple response question. Give {count} {answer}; {points} {point} each.",
+  typeHintRange: "Answer with a number. You may be off by at most {range}.",
+  typeHintSort:
+    "Put the options in the right order. Each correct spot scores {points} {point}.",
+  typeHintMatch: "Connect each pair. Each pair scores {points} {point}.",
+  typeHintCloze: "Fill in every blank. Each blank scores {points} {point}.",
 
   previous: "Previous",
   next: "Next",
@@ -151,9 +164,16 @@ export const en: TranslationTable = {
   answerRoman: "i, ii, iii",
   answerNone: "No labels",
   metadataIcons: "Show icons in the header",
+  questionTypeHints: "Question type hints",
   download: "Download",
   saveJson: "Save JSON",
   saveHandout: "Save handout",
+  saveCsv: "Save CSV",
+  saveGift: "Save GIFT",
+  saveQti: "Save QTI",
+  saveResultsCsv: "Save results CSV",
+  classroomNote:
+    "CSV opens in a spreadsheet, GIFT in Moodle, QTI in Canvas and friends. Results include the answers given so far, so a half-played quiz exports too.",
   downloadNote:
     "JSON opens in any editor. The handout is HTML with no script, so it prints and reads offline.",
 
@@ -172,7 +192,12 @@ export const en: TranslationTable = {
   themeLight: "Light",
   themeDark: "Dark",
   themeContrast: "High contrast",
-  settingsExport: "Export and print",
+  goLive: "Go live",
+  nextStep: "Next step",
+  stepOf: "Step {index} of {total}",
+  settingsExport: "Export",
+  settingsExportClassroom: "Export for the classroom",
+  settingsPrint: "Print",
   copyJson: "Copy JSON",
   saveTrivia: "Save .trivia",
   copyTrivia: "Copy .trivia",
@@ -182,6 +207,9 @@ export const en: TranslationTable = {
   save: "Done",
   loadHeading: "Load questions",
   insertQuiz: "Insert a quiz file",
+  printTypeHints: "Question type hints on paper",
+  printTypeHintsNote:
+    "The same quiet line under each question: what kind of answer and how many. Off for a bare sheet.",
   printAnswerLines: "Ruled lines on written answers",
   printAnswerLinesNote:
     "Off by default. Turns an open question into something to write on, with a line under it.",

@@ -12,7 +12,7 @@ import { createHost, type HostRoom } from "../host";
 import { createPlayer, type PlayerRoom } from "../player";
 import { createBroadcastTransport } from "../transport/broadcast";
 import type { RoomTransport } from "../transport/types";
-import { LiveRole } from "../types";
+import { LiveRole, type RevealMode } from "../types";
 import { HostView } from "./HostView";
 import { NameForm } from "./parts";
 import { PlayerView } from "./PlayerView";
@@ -27,6 +27,8 @@ export interface MountLiveOptions {
   readonly transport?: RoomTransport;
   readonly joinLink?: string;
   readonly allowChanges?: boolean;
+  /** One reveal per question, per round, at the end, or a second pass. */
+  readonly revealMode?: RevealMode;
 }
 
 export interface MountedLive {
@@ -116,6 +118,9 @@ function LiveShell({
       transport,
       code,
       ...(options.allowChanges === true ? { allowChanges: true } : {}),
+      ...(options.revealMode === undefined
+        ? {}
+        : { reveal: options.revealMode }),
     })
       .then((room) => {
         if (cancelled) {

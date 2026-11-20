@@ -10,9 +10,11 @@ import type { Emitter } from "../session/events";
 import { defaultResponse, type Response } from "../session/responses";
 import {
   currentQuestion,
+  PlayMode,
   sessionReducer,
   type SessionState,
 } from "../session/session";
+import { parseSteps } from "../model/steps";
 import { remainingOf } from "../session/timers";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import type { OrderOptions, QuizApi, QuizConfig, QuizEventMap } from "./types";
@@ -40,6 +42,7 @@ type Extras = Pick<
   QuizApi,
   | "reveal"
   | "toggleReveal"
+  | "nextStep"
   | "revealHint"
   | "expireTimer"
   | "timerRemaining"
@@ -97,6 +100,33 @@ export function createExtras(ctx: ExtrasContext): Extras {
         Date.now(),
       ),
     );
+    return true;
+  };
+
+  /**
+   * One staged part more. False when there is nothing left to show, so the
+   * keyboard can fall through to the next question.
+   */
+  const nextStep = (): boolean => {
+    const current = currentQuestion(ctx.state());
+    if (current === null) {
+      return false;
+    }
+    if (
+      ctx.state().mode === PlayMode.Answers ||
+      ctx.state().revealed.includes(current.id)
+    ) {
+      return false;
+    }
+    const declared =
+      current.steps.length > 0
+        ? current.steps
+        : (ctx.config().defaultSteps ?? []);
+    const total = parseSteps(declared).length;
+    if (total === 0 || ctx.state().step >= total - 1) {
+      return false;
+    }
+    ctx.apply(sessionReducer(ctx.state(), { type: "step/next" }, Date.now()));
     return true;
   };
 
@@ -288,6 +318,7 @@ export function createExtras(ctx: ExtrasContext): Extras {
   return {
     reveal,
     toggleReveal,
+    nextStep,
     revealHint,
     expireTimer,
     timerRemaining,

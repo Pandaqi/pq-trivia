@@ -161,14 +161,16 @@ contract.
 ## The new API
 
 ```ts
-import { createQuiz, mountQuiz } from "pq-trivia";
+import { Quiz } from "pq-trivia";
 
-const quiz = createQuiz({ config: { seed: "my-seed" } });
-mountQuiz(quiz, document.querySelector("#quiz"));
-await quiz.load({ type: "text", text: myText });
+new Quiz({ text: myText, id: "quiz", seed: "my-seed" });
 ```
 
-`new Quiz(params)` is gone from the default build. The V2 file still has it.
+`new Quiz(params)` is still one line, and still mounts itself: `id` fills an
+existing `#quiz` (or any selector), and without one the quiz appends to the
+body. The text loads in the constructor; add `await quiz.loading` if you need to
+wait. Config keys go inline, like V2, though the names are the V3 ones. The CLI
+`migrate` renames the old ones for you.
 
 ## Migrate a folder
 

@@ -6,11 +6,7 @@
  */
 import { parseQuiz, type QuizModel } from "../model/quiz";
 import { planQuiz, type PlanOptions } from "../plan/plan";
-import {
-  toEmbedded,
-  type EmbeddedOptions,
-  type EmbeddedQuizV3,
-} from "../export/embedded";
+import { createExports } from "../export/api";
 import {
   syntaxWarning,
   DiagnosticCodes,
@@ -51,6 +47,7 @@ import {
 import { builtinLanguages, translate } from "../../i18n/dictionary";
 import type {
   CreateQuizOptions,
+  LoadInput,
   OrderOptions,
   QuizApi,
   QuizConfig,
@@ -77,6 +74,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
   let destroyed = false;
   let journal: AttemptJournal | null = null;
   let saved: AttemptRecord | null = null;
+  let pending: Promise<void> = Promise.resolve();
   const views = new ViewRegistry();
   const actions = new ActionRegistry();
 
@@ -104,7 +102,14 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     return planOptionsFrom(config, planOrder, t("secretQuestion"));
   }
   function screenOf(): ScreenViewModel | null {
-    return screenFor(quiz, state, saved, config);
+    return screenFor(
+      quiz,
+      state,
+      saved,
+      config,
+      config.questionNumbers !== false,
+      config,
+    );
   }
   function buildReport(): GradeReport | null {
     if (state.plan === null) {
@@ -394,7 +399,12 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     get meta() {
       return quiz === null ? null : quiz.meta;
     },
-    load: loader.load,
+    load(input: LoadInput): Promise<void> {
+      return (pending = loader.load(input));
+    },
+    get loading(): Promise<void> {
+      return pending;
+    },
     ready: loader.ready,
     locked: loader.locked,
     unlock: loader.unlock,
@@ -453,14 +463,11 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     on(event, handler): () => void {
       return emitter.on(event, handler);
     },
-    export: {
-      embedded(embeddedOptions: EmbeddedOptions = {}): EmbeddedQuizV3 {
-        if (quiz === null) {
-          throw new Error("No quiz loaded.");
-        }
-        return toEmbedded(quiz, embeddedOptions);
-      },
-    },
+    export: createExports({
+      model: () => quiz,
+      plan: () => state.plan,
+      report: buildReport,
+    }),
     configure(partial: Partial<QuizConfig>): void {
       if (partial.language !== undefined && partial.language !== null) {
         const { language: _language, ...rest } = partial;

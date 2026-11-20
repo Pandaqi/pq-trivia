@@ -1,16 +1,11 @@
 /* Print, forms: the answer table, fields and utilities. Built into print.css. */
 @media print {
-  /* Answer form: a table a player writes on. */
-  .pq-print-form {
-    display: block;
-  }
-
   /* Typed questions get a line to write on, not an empty cell. */
   .pq-form-line {
     display: block;
     width: 100%;
     height: 6mm;
-    border-bottom: 0.6pt solid #000;
+    border-bottom: 0.6pt solid var(--pq-ink);
   }
 
   .pq-form-new-page {
@@ -65,7 +60,7 @@
   .pq-form th,
   .pq-grade th {
     padding: 1.5mm 2mm;
-    border-bottom: 1pt solid #000;
+    border-bottom: 1pt solid var(--pq-ink);
     font-size: 8.5pt;
     letter-spacing: 0.08em;
     text-align: left;
@@ -75,13 +70,13 @@
   .pq-form td,
   .pq-grade td {
     padding: 2mm;
-    border-bottom: 0.4pt solid #999;
+    border-bottom: 0.4pt solid var(--pq-line);
     vertical-align: top;
   }
 
   .pq-form tbody tr:nth-child(even) td,
   .pq-grade tbody tr:nth-child(even) td {
-    background: #f4f4f4;
+    background: var(--pq-paper-deep);
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -108,7 +103,7 @@
     display: inline-block;
     width: 3.5mm;
     height: 3.5mm;
-    border: 0.6pt solid #000;
+    border: 0.6pt solid var(--pq-ink);
   }
 
   .pq-form-points {
@@ -117,10 +112,6 @@
   }
 
   /* Grade table: correct answers filled in, a score box per row. */
-  .pq-print-grade {
-    display: block;
-  }
-
   .pq-grade-correct {
     width: 62mm;
     font-weight: 700;
@@ -159,7 +150,7 @@
   }
 
   a {
-    color: #000;
+    color: var(--pq-ink);
     text-decoration: underline;
   }
 }

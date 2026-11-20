@@ -23,11 +23,14 @@ export function PrintForm({
   rounds,
   compact,
   roundPageBreak,
+  numbers = true,
 }: {
   readonly questions: readonly QuestionModel[];
   readonly rounds: readonly FormRound[];
   readonly compact: boolean;
   readonly roundPageBreak: boolean;
+  /** Use the numbers the question pages show. Off falls back to per round. */
+  readonly numbers?: boolean;
 }): JSX.Element {
   const t = useT();
   return (
@@ -68,9 +71,12 @@ export function PrintForm({
                 {items.map((question, index) => {
                   const refs = answerRefs(question);
                   const isChoice = question.type === QuestionType.Choice;
+                  const number = numbers
+                    ? questions.indexOf(question) + 1
+                    : index + 1;
                   return (
                     <tr key={question.id}>
-                      <td class="pq-form-number">{index + 1}</td>
+                      <td class="pq-form-number">{number}</td>
                       <td>
                         {question.text.map((value) => value.text).join(" ")}
                       </td>

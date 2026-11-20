@@ -15,6 +15,20 @@ export const nl: TranslationTable = {
   round_other: "rondes",
   point_one: "punt",
   point_other: "punten",
+  answer_one: "antwoord",
+  answer_other: "antwoorden",
+
+  typeHintOpen: "Dit is een open vraag.",
+  typeHintChoice:
+    "Dit is een meerkeuzevraag met {count} {answer}, {points} {point} per antwoord.",
+  typeHintList:
+    "Dit is een vraag met meerdere antwoorden. Geef {count} {answer}; {points} {point} per antwoord.",
+  typeHintRange:
+    "Antwoord met een getal. Je mag er hoogstens {range} naast zitten.",
+  typeHintSort:
+    "Zet de opties in de juiste volgorde. Elke juiste plek levert {points} {point} op.",
+  typeHintMatch: "Verbind elk paar. Elk paar levert {points} {point} op.",
+  typeHintCloze: "Vul elk gat in. Elk gat levert {points} {point} op.",
 
   previous: "Vorige",
   next: "Volgende",
@@ -151,9 +165,19 @@ export const nl: TranslationTable = {
   answerRoman: "i, ii, iii",
   answerNone: "Geen labels",
   metadataIcons: "Toon iconen in de kop",
+  questionTypeHints: "Hints over het vraagtype",
   download: "Downloaden",
   saveJson: "Bewaar JSON",
   saveHandout: "Bewaar handout",
+  saveCsv: "Bewaar CSV",
+  saveGift: "Bewaar GIFT",
+  saveQti: "Bewaar QTI",
+  saveResultsCsv: "Bewaar resultaten (CSV)",
+  classroomNote:
+    "CSV opent in een spreadsheet, GIFT in Moodle, QTI in Canvas en soortgelijke tools. Resultaten bevatten de antwoorden tot nu toe, dus een halfgespeelde quiz exporteert ook.",
+  goLive: "Speel live",
+  nextStep: "Volgende stap",
+  stepOf: "Stap {index} van {total}",
   downloadNote:
     "JSON opent in elke editor. De handout is HTML zonder script, dus printbaar en offline leesbaar.",
 
@@ -172,7 +196,9 @@ export const nl: TranslationTable = {
   themeLight: "Licht",
   themeDark: "Donker",
   themeContrast: "Hoog contrast",
-  settingsExport: "Exporteren en printen",
+  settingsExport: "Exporteren",
+  settingsExportClassroom: "Exporteren voor de klas",
+  settingsPrint: "Printen",
   copyJson: "Kopieer JSON",
   saveTrivia: "Bewaar .trivia",
   copyTrivia: "Kopieer .trivia",
@@ -182,6 +208,9 @@ export const nl: TranslationTable = {
   save: "Klaar",
   loadHeading: "Vragen laden",
   insertQuiz: "Voeg een quizbestand in",
+  printTypeHints: "Vraagtypehints op papier",
+  printTypeHintsNote:
+    "Dezelfde rustige regel onder elke vraag: wat voor antwoord en hoeveel. Uit voor een kaal vel.",
   printAnswerLines: "Schrijflijnen bij open vragen",
   printAnswerLinesNote:
     "Standaard uit. Maakt van een open vraag iets om op te schrijven, met een lijn eronder.",

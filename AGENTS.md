@@ -32,7 +32,7 @@ Adds replay protection to the multiplayer lobby
 
 ## Hard rules
 
-- **No new dependencies.** Preact, Trystero (optional, multiplayer), VitePress (docs). `@types/bun` is dev-only. That is the whole list.
+- **No new dependencies.** Preact, Trystero (optional, multiplayer) and `uqr` (lazy join QR) at runtime. Dev only: VitePress, `@types/bun`, `happy-dom`, `axe-core`. That is the whole list.
 - **Bun only.** `bun check`, `bun lint`, `bun fmt`, `bun test`, `bun build`. No Biome, ESLint, Prettier, dependency-cruiser.
 - **TypeScript, strictest settings.** `ROADMAP.md` §14.2. Enums are fine and welcome.
 - **Core has no DOM.** `src/core/**` must compile with `lib: ["ES2022"]`.

@@ -49,6 +49,10 @@ export const ATTRIBUTE_DESCRIPTIONS: Readonly<Record<string, string>> = {
   ColorScheme: "Named color scheme.",
   Transition: "Screen enter animation.",
   Reveal: "Answer reveal animation.",
+  Steps:
+    "Reveal one part at a time: media, question, answers, comments, hints, sources, explanation, or all. An animation name between two parts sets the transition for what follows.",
+  StepTransition:
+    "Default animation between steps. Fade when nobody says.",
   Print: "hide, background, no-background, notes.",
   Direction: "Text direction: auto, ltr or rtl.",
   Height: "Height for a custom script widget.",

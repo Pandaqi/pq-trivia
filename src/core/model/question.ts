@@ -94,6 +94,10 @@ export interface QuestionModel {
   readonly colorScheme: string | null;
   readonly transition: string | null;
   readonly reveal: string | null;
+  /** Parts shown one at a time, in this order. Empty means all at once. */
+  readonly steps: readonly string[];
+  /** Animation between steps. Falls back to the quiz default, then to fade. */
+  readonly stepTransition: string | null;
   readonly direction: Direction;
   readonly classes: readonly string[];
   readonly printFlags: readonly string[];

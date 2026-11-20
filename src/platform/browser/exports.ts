@@ -30,6 +30,35 @@ export function downloadQuizTrivia(quiz: Quiz): void {
   downloadText(`${fileSlug(title(quiz))}.trivia`, text, "text/plain");
 }
 
+export function downloadQuizCsv(quiz: Quiz): void {
+  downloadText(
+    `${fileSlug(title(quiz))}-questions.csv`,
+    quiz.export.csv(),
+    "text/csv",
+  );
+}
+
+export function downloadQuizGift(quiz: Quiz): void {
+  downloadText(`${fileSlug(title(quiz))}.gift.txt`, quiz.export.gift(), "text/plain");
+}
+
+export function downloadQuizQti(quiz: Quiz): void {
+  downloadText(`${fileSlug(title(quiz))}.qti.xml`, quiz.export.qti(), "application/xml");
+}
+
+/** Results so far. A half-played quiz exports what has been answered. */
+export function downloadQuizGrades(quiz: Quiz): void {
+  const text = quiz.export.grades();
+  if (text === null) {
+    return;
+  }
+  downloadText(
+    `${fileSlug(title(quiz))}-results.csv`,
+    text,
+    "text/csv",
+  );
+}
+
 export function downloadQuizHandout(quiz: Quiz): void {
   const plan = quiz.state.plan;
   const meta = quiz.meta;
@@ -42,6 +71,7 @@ export function downloadQuizHandout(quiz: Quiz): void {
       answers: true,
       explanations: true,
       media: quiz.config,
+      numbers: quiz.config.questionNumbers !== false,
     }),
     "text/html",
   );

@@ -18,6 +18,9 @@
     --pq-fern-soft: #e6efdb;
     --pq-right: #1f5b2c;
     --pq-wrong: #7a1f1f;
+    /* Paper is white, so the grain goes. */
+    --pq-shadow-1: none;
+    --pq-shadow-2: none;
     --pq-title-size: 21pt;
     --pq-answer-size: 12pt;
     --pq-space: 0;
@@ -31,8 +34,8 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    background: #fff;
-    color: #000;
+    background: var(--pq-paper);
+    color: var(--pq-ink);
   }
 
   .pq-quiz {
@@ -58,7 +61,7 @@
 
   .pq-print-sheet {
     height: 100%;
-    color: #000;
+    color: var(--pq-ink);
     font-family: var(--pq-font-body);
     font-size: 10.5pt;
     line-height: 1.35;
@@ -84,23 +87,18 @@
     overflow: hidden;
     break-after: page;
     break-inside: avoid;
-    background: #fff;
+    background: var(--pq-paper);
   }
 
   /* Forms, answer sheets and the media list are documents, not slides. They
      flow, and the browser splits them over pages where it likes. */
   .pq-print-flow {
-    display: block;
     width: 100%;
     height: auto;
     margin: 0 0 8mm;
     padding: 0;
     overflow: visible;
     break-inside: auto;
-  }
-
-  .pq-print-flow-inner {
-    display: block;
   }
 
   .pq-print-flow table {
@@ -154,7 +152,7 @@
 
   .pq-card-label {
     margin: 0 0 4mm;
-    color: #555;
+    color: var(--pq-muted);
     font-size: 8.5pt;
     letter-spacing: 0.25em;
     text-transform: uppercase;
@@ -162,7 +160,7 @@
 
   /* A page that could not be made to fit. Visible on paper, so it is not lost. */
   .pq-print-page[data-pq-overflow="true"] {
-    outline: 0.8pt dashed #7a1f1f;
+    outline: 0.8pt dashed var(--pq-wrong);
     outline-offset: -2mm;
   }
 
@@ -172,8 +170,8 @@
     right: 0;
     bottom: 0;
     padding: 1mm 2mm;
-    background: #7a1f1f;
-    color: #fff;
+    background: var(--pq-wrong);
+    color: var(--pq-paper);
     font-size: 7pt;
     letter-spacing: 0.04em;
     print-color-adjust: exact;
@@ -206,7 +204,7 @@
     min-width: 0;
     min-height: 0;
     padding: 2mm 3mm;
-    border: 0.4pt solid #bbb;
+    border: 0.4pt solid var(--pq-line);
     border-radius: 1mm;
     overflow: hidden;
   }
@@ -261,21 +259,21 @@
     font-family: var(--pq-font-heading);
     font-style: italic;
     font-size: 13pt;
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-cover-byline {
     margin: 3mm 0 0;
     font-size: 10pt;
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-cover-banner {
     margin: 10mm 0 0;
     padding: 3mm 10mm;
-    border: 0.8pt solid #000;
+    border: 0.8pt solid var(--pq-ink);
     border-radius: 1.5mm;
-    background: #f6e7bd;
+    background: var(--pq-honey-soft);
     font-size: 11pt;
     letter-spacing: 0.04em;
     print-color-adjust: exact;
@@ -285,7 +283,7 @@
   .pq-cover-seed {
     margin: 4mm 0 0;
     font-size: 8.5pt;
-    color: #555;
+    color: var(--pq-muted);
   }
 
   /* Round page. */
@@ -316,6 +314,6 @@
   .pq-print-round .pq-round-secret {
     margin: 4mm 0 0;
     font-style: italic;
-    color: #333;
+    color: var(--pq-muted);
   }
 }

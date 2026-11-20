@@ -32,11 +32,11 @@ bones.
 
 ## Where to start
 
-| You want to                 | Read                                             |
-| --------------------------- | ------------------------------------------------ |
-| Make a quiz this afternoon  | [Five-minute quiz](/getting-started/quick-start) |
-| Know what an attribute does | [Reference](/syntax/reference)                   |
-| Put it in your own app      | [createQuiz](/api/create-quiz)                   |
-| Bring phones into the room  | [Multiplayer](/guides/multiplayer)               |
-| Print or export             | [Exporting](/guides/exporting)                   |
-| Move off V2                 | [Migrating](/getting-started/migrating-from-v2)  |
+| You want to                 | Read                                                       |
+| --------------------------- | ---------------------------------------------------------- |
+| Make a quiz this afternoon  | [Five-minute quiz](getting-started/quick-start.html)       |
+| Know what an attribute does | [Reference](syntax/reference.html)                         |
+| Put it in your own app      | [createQuiz](api/create-quiz.html)                         |
+| Bring phones into the room  | [Multiplayer](guides/multiplayer.html)                     |
+| Print or export             | [Exporting](guides/exporting.html)                         |
+| Move off V2                 | [Migrating](getting-started/migrating-from-v2.html)        |

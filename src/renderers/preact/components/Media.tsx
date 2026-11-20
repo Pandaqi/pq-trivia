@@ -39,10 +39,16 @@ export function Media({
   item,
   autoplay = false,
   asIframe = false,
+  animate,
+  onEnded,
 }: {
   readonly item: MediaViewModel;
   readonly autoplay?: boolean;
   readonly asIframe?: boolean;
+  /** `data-pq-transition` on the figure. Used by staged reveals. */
+  readonly animate?: string | undefined;
+  /** A finished clip can be the signal for the next step. */
+  readonly onEnded?: (() => void) | undefined;
 }): JSX.Element {
   // A new attempt remounts the tag, which is the only way to make the browser
   // ask for the file again.
@@ -60,7 +66,7 @@ export function Media({
 
   if (item.kind === MediaKind.Image) {
     return (
-      <figure class="pq-media">
+      <figure class="pq-media" data-pq-transition={animate}>
         <img
           key={attempt}
           src={item.path}
@@ -77,13 +83,14 @@ export function Media({
 
   if (item.kind === MediaKind.Audio) {
     return (
-      <figure class="pq-media">
+      <figure class="pq-media" data-pq-transition={animate}>
         <audio
           key={attempt}
           src={item.path}
           controls
           autoplay={autoplay}
           preload="metadata"
+          onEnded={onEnded}
           onError={() => setFailed(true)}
         >
           {item.captions === null ? null : (
@@ -97,7 +104,7 @@ export function Media({
 
   if (item.kind === MediaKind.Video) {
     return (
-      <figure class="pq-media">
+      <figure class="pq-media" data-pq-transition={animate}>
         <video
           key={attempt}
           src={item.path}
@@ -106,6 +113,7 @@ export function Media({
           autoplay={autoplay}
           playsinline
           preload="metadata"
+          onEnded={onEnded}
           onError={() => setFailed(true)}
         >
           {item.captions === null ? null : (
@@ -119,7 +127,7 @@ export function Media({
 
   if (asIframe) {
     return (
-      <figure class="pq-media pq-media-embed">
+      <figure class="pq-media pq-media-embed" data-pq-transition={animate}>
         <iframe
           src={item.path}
           title={item.alt ?? item.path}

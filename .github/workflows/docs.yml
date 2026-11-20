@@ -31,6 +31,12 @@ jobs:
       - run: bun run docs:reference
       - run: bun run docs:build
       - uses: actions/configure-pages@v5
+        with:
+          # Creates the Pages site when it does not exist yet. Existing sites
+          # are left alone, so the source must be set to "GitHub Actions" by
+          # hand: Pages otherwise builds `docs/` with Jekyll and every built
+          # URL loses its `/pq-trivia/` prefix.
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/.vitepress/dist

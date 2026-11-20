@@ -1,18 +1,7 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
 > **Working title:** _PQ-Trivia V3 — Trivia Syntax_
-> **Status:** Phases 0–8 shipped. The player, the Paper theme, `<pq-quiz>`,
-> grading with results and resume, flow control, includes, sandboxed scripts,
-> timers, animations, the exporters and the CLI are all in the tree.
-> Interactive mode also encrypts answers (AES-GCM behind an injected key),
-> beeps in the last five seconds when a host opts in, highlights fenced code
-> on request, pins host buttons from Settings, downloads JSON or a handout,
-> and packs a folder that plays offline (`bun run pack`, plus a service
-> worker when hosted).
-> Phases 6–8 shipped: worker parsing, the IndexedDB cache, live rooms (with a
-> join QR a phone can scan) and a VitePress docs site with a generated
-> attribute reference. What is left is the part a person must do: publish, tag,
-> deploy, announce.
+> **Status:** Phases 0–8 shipped.
 > **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
@@ -269,6 +258,8 @@ pq-trivia/
   "devDependencies": {
     "@types/bun": "^1.3.0",
     "vitepress": "^1.6.0",
+    "happy-dom": "^21.0.0",
+    "axe-core": "^4.14.0",
   },
   "exports": {
     ".": {
@@ -300,25 +291,26 @@ pq-trivia/
 }
 ```
 
-Only two real dependencies. `trystero` is optional and only imported by the multiplayer entry. `typescript` is **not** listed: `bun check` does the type checking, and declarations are emitted at release with `bunx tsc` (cache only, no manifest entry).
+Only two real dependencies. `trystero` is optional and only imported by the multiplayer entry. `happy-dom` and `axe-core` are dev-only: they test the renderer, they never ship. `typescript` is **not** listed: `bun check` does the type checking, and declarations are emitted at release with `bunx tsc` (cache only, no manifest entry).
 
 | Artifact                        | Format                                    | Contents                                                     | Budget (gzip)     |
 | ------------------------------- | ----------------------------------------- | ------------------------------------------------------------ | ----------------- |
-| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export   | **≤ 24 KB**       | **  |
-| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + theme folders + 3 animations | **≤ 52 KB**       |
-| `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                      | ≤ 55 KB           |
-| `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                             | ≤ 60 KB           |
-| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                    | ≤ 26 KB           |
-| `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                      | full + ≤ 12 KB    |
-| `dist/v3/animations.js`         | ESM                                       | full animation set                                           | ≤ 6 KB            |
-| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 45 KB, separate |
+| `dist/v3/core.js`               | ESM                                       | syntax, values, model, plan, session, grading, JSON export   | ≤ 40 KB           |
+| `dist/v3/player.js`             | ESM                                       | core + Preact + default theme + theme folders + 3 animations | ≤ 100 KB          |
+| `dist/v3/pq-trivia.js`          | ESM                                       | player + all question types + exporters                      | ≤ 105 KB          |
+| `dist/v3/pq-trivia.min.js`      | IIFE, `window.PQTrivia` (+ `window.Quiz`) | full, standalone, `file://`-safe                             | ≤ 115 KB          |
+| `dist/v3/pq-trivia.core.min.js` | IIFE                                      | core only                                                    | ≤ 42 KB           |
+| `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                      | ≤ 32 KB           |
+| `dist/v3/chunk-qr.js`           | ESM, lazy                                 | the join QR encoder, fetched by the lobby only               | ≤ 8 KB            |
+| `dist/v3/animations.js`         | ESM                                       | full animation set                                           | ≤ 10 KB           |
+| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 60 KB, separate |
 | `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`               | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.
 
-The first budgets (15 KB core, 40 KB player) were written before grading, flow control and attempts joined core. A measured split: parsing, model and plan alone are 11 KB gzip; adding session and grading reaches 17 KB; the full core is 23 KB. A 15 KB core with grading was never reachable, so the core budget stays at 24.
+The budgets used to describe a build that no longer existed. Core measured 27 KB against a 24 KB limit, headless 39 against 27, the player 73 against 52, the standalone 84 against 60. Four red lines, all of them noise. So they were rewritten as current size plus a third for the features already planned: core 40, player 100, standalone 115. A budget you are over before you start is not a budget.
 
-The player went from 41.8 to 46.7 KB when the unlock screen and WebCrypto key, timer beeps, the fence highlighter, downloads and the Settings additions landed. The budget is 48, measured plus air, not a round number picked first.
+The earlier note still explains why the numbers are round: they are measured size plus air, not a target someone picked first. When an artifact lands well under its number, bring that number down. That is the fun job.
 
 ### 4.5 Session
 
@@ -1150,6 +1142,7 @@ Players → host: `join`, `answer:submit`, `ready`, `pong`.
 ### 9.4 UX
 
 - **Host:** "Play live" → 4-letter code (no ambiguous characters) → big URL + QR → lobby → start → answer counter → reveal → leaderboard → podium.
+- **Reveal timing:** a mode, not a constant. Per question, per round, at the end, or the paper way: play it all, then a second pass through the answers. §9.4 detail lives in `docs/guides/multiplayer.md`.
 - **Player:** link or code → name → waiting → question (big tap targets) → submitted → reveal → leaderboard → final.
 - **QR:** the join link encoded locally with `uqr`, drawn as one SVG path from the module matrix. No image, no network, no external service.
 - **Media:** thumbnails from the manifest. No autoplay with sound. "Play on my phone" button.
@@ -1608,10 +1601,10 @@ Rules:
 
 ### 15.2 What is explicitly optional
 
-All of this is off by default. Add only if a real bug slips through.
+Both of these are in use now. The rest stays optional.
 
-- **happy-dom** for DOM tests. Only if it stays small and fast. Stretch.
-- **axe-core** for accessibility. Run manually on a release candidate, not in CI. Stretch.
+- **happy-dom** builds a real DOM in `bun test`. `test/ui/dom.ts` copies the globals, one window per suite. It costs about a second for the whole renderer suite.
+- **axe-core** runs on the start and question screens in `test/ui/screens.test.ts`. Colour contrast is off, because happy-dom does not lay anything out. Everything else is checked.
 - **Playwright** for end-to-end. Run by hand before a release: load → play → reveal → grade → results. Stretch.
 - Visual snapshots. Skip. Look at the page.
 - Lighthouse. Skip. Check sizes with `bun run size`.

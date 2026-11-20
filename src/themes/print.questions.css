@@ -5,8 +5,8 @@
     margin: 0 0 6mm;
     padding: 2mm 3mm;
     border: 0;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8.5pt;
     letter-spacing: 0.08em;
     print-color-adjust: exact;
@@ -29,9 +29,9 @@
     margin: 0 0 5mm;
     padding: 3mm 4mm;
     border: none;
-    border-left: 3mm solid var(--pq-round-accent, #111);
-    background: #f2f2f2 !important;
-    color: #000 !important;
+    border-left: 3mm solid var(--pq-round-accent, var(--pq-ink));
+    background: var(--pq-paper-deep) !important;
+    color: var(--pq-ink) !important;
     text-align: left;
   }
 
@@ -79,7 +79,7 @@
 
   .pq-split-right {
     padding-left: 8mm;
-    border-left: 0.5pt dashed #999;
+    border-left: 0.5pt dashed var(--pq-line);
   }
 
   .pq-header {
@@ -89,7 +89,7 @@
   .pq-kicker,
   .pq-description,
   .pq-byline {
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-title {
@@ -100,10 +100,21 @@
     text-wrap: pretty;
   }
 
+  /* The same quiet line the screen has, in ink. It says what to answer, not
+     how to answer it, so it reads the same on paper as on a projector. */
+  .pq-type-hint {
+    margin: 0 0 3mm;
+    max-width: none;
+    color: var(--pq-muted);
+    text-align: left;
+    font-size: 9.5pt;
+    font-style: italic;
+  }
+
   .pq-body {
     margin: 0;
     max-width: none;
-    color: #333;
+    color: var(--pq-muted);
     text-align: left;
     font-size: 11pt;
   }
@@ -146,12 +157,16 @@
     min-height: 0;
     padding: 2mm 3mm;
     border: 0.8pt solid
-      color-mix(in srgb, var(--pq-round-accent, #111) 60%, #000);
+      color-mix(
+        in srgb,
+        var(--pq-round-accent, var(--pq-ink)) 60%,
+        var(--pq-ink)
+      );
     border-radius: 1.2mm;
     background: color-mix(
       in srgb,
-      var(--pq-round-accent, #111) 24%,
-      #fff
+      var(--pq-round-accent, var(--pq-ink)) 24%,
+      var(--pq-paper)
     ) !important;
     box-shadow: none !important;
     font-size: var(--pq-answer-size);
@@ -168,8 +183,8 @@
     width: 5.5mm;
     height: 5.5mm;
     border-radius: 50%;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8pt;
     font-weight: 700;
     print-color-adjust: exact;
@@ -179,7 +194,7 @@
   .pq-answer[data-pq-correct="false"] {
     opacity: 1;
     border-style: dashed;
-    background: #fff !important;
+    background: var(--pq-paper) !important;
   }
 
   .pq-answer[data-pq-correct="false"] .pq-answer-text {
@@ -210,8 +225,8 @@
     height: 6mm;
     padding: 0 1mm;
     border-radius: 999rem;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8pt;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -229,7 +244,7 @@
     display: block;
     margin: 0;
     padding-left: 6mm;
-    color: #333;
+    color: var(--pq-muted);
     font-size: 11pt;
   }
 
@@ -238,7 +253,7 @@
     max-width: none;
     margin: 0;
     padding: 2mm 3mm;
-    border-left: 1.5pt solid var(--pq-round-accent, #111);
+    border-left: 1.5pt solid var(--pq-round-accent, var(--pq-ink));
     border-radius: 0;
     background: none !important;
     font-size: 10pt;
@@ -255,7 +270,7 @@
     align-items: center;
     margin: 0;
     padding-left: 3mm;
-    border-left: 1.5pt solid #000;
+    border-left: 1.5pt solid var(--pq-ink);
     font-size: 11pt;
   }
 
@@ -266,7 +281,7 @@
   .pq-print-line {
     display: block;
     height: 7mm;
-    border-bottom: 0.8pt solid #000;
+    border-bottom: 0.8pt solid var(--pq-ink);
   }
 
   .pq-field {
@@ -275,7 +290,7 @@
   }
 
   .pq-field-label {
-    color: #333;
+    color: var(--pq-muted);
     font-size: 8.5pt;
     letter-spacing: 0.06em;
   }
@@ -284,7 +299,7 @@
     width: 100%;
     padding: 0;
     border: none;
-    border-bottom: 0.8pt solid #000;
+    border-bottom: 0.8pt solid var(--pq-ink);
     border-radius: 0;
     background: none;
     box-shadow: none;

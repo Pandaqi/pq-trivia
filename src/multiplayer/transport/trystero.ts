@@ -56,9 +56,43 @@ function actionPair(value: unknown): [SendAction, ReceiveAction] | null {
   return [send as SendAction, receive as ReceiveAction];
 }
 
+function asModule(value: unknown): TrysteroModule | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const joinRoom = record["joinRoom"];
+  const selfId = record["selfId"];
+  if (!isJoinRoom(joinRoom) || typeof selfId !== "string") {
+    return null;
+  }
+  return { joinRoom, selfId };
+}
+
+let registered: TrysteroModule | null = null;
+
+/**
+ * Hand Trystero over instead of letting this module import it.
+ *
+ * A one-file bundle cannot resolve a bare specifier at runtime, so its page
+ * loads Trystero itself and calls this. Returns false when the object is not
+ * Trystero, which is the only check that matters.
+ */
+export function registerTrysteroModule(value: unknown): boolean {
+  const parsed = asModule(value);
+  if (parsed === null) {
+    return false;
+  }
+  registered = parsed;
+  return true;
+}
+
 export async function loadTrystero(
   name: string = MODULE_NAME,
 ): Promise<TrysteroModule> {
+  if (registered !== null) {
+    return registered;
+  }
   let module: unknown;
   try {
     module = await loadModule(name);
@@ -67,16 +101,11 @@ export async function loadTrystero(
       "Trystero is not installed. Run `bun add trystero`, or use the BroadcastChannel transport.",
     );
   }
-  if (typeof module !== "object" || module === null) {
-    throw new Error("Trystero loaded, but it does not look like Trystero.");
-  }
-  const record = module as Record<string, unknown>;
-  const joinRoom = record["joinRoom"];
-  const selfId = record["selfId"];
-  if (!isJoinRoom(joinRoom) || typeof selfId !== "string") {
+  const parsed = asModule(module);
+  if (parsed === null) {
     throw new Error("Trystero loaded, but joinRoom or selfId is missing.");
   }
-  return { joinRoom, selfId };
+  return parsed;
 }
 
 function subscribe<T>(

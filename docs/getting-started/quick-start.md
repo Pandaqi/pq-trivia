@@ -87,6 +87,6 @@ worker for a phone or a USB stick.
 
 ## Next
 
-- [Syntax reference](/syntax/reference) for every attribute.
-- [Themes](/guides/themes) to change the look.
-- [Multiplayer](/guides/multiplayer) to bring phones into it.
+- [Syntax reference](../syntax/reference.html) for every attribute.
+- [Themes](../guides/themes.html) to change the look.
+- [Multiplayer](../guides/multiplayer.html) to bring phones into it.

@@ -39,6 +39,8 @@ export interface SessionState {
   readonly interactive: boolean;
   /** -1 start screen, 0..n-1 questions, n end screen. */
   readonly index: number;
+  /** Which staged part of the current question is on screen. */
+  readonly step: number;
   readonly responses: ResponseMap;
   readonly revealed: readonly string[];
   readonly hints: Readonly<Record<string, number>>;
@@ -67,6 +69,7 @@ export type SessionAction =
   | { readonly type: "nav/next" }
   | { readonly type: "nav/prev" }
   | { readonly type: "nav/goTo"; readonly index: number }
+  | { readonly type: "step/next" }
   | { readonly type: "nav/restart"; readonly keepResponses?: boolean }
   | { readonly type: "mode/set"; readonly mode: PlayMode }
   | { readonly type: "interactive/set"; readonly interactive: boolean }
@@ -115,6 +118,7 @@ export function createSessionState(options: SessionOptions = {}): SessionState {
     mode: PlayMode.Questions,
     interactive: false,
     index: -1,
+    step: 0,
     responses: {},
     revealed: [],
     hints: {},
@@ -159,6 +163,7 @@ export function sessionReducer(
         status: SessionStatus.Ready,
         plan: action.plan,
         index: -1,
+        step: 0,
         responses,
         timer: null,
         expired: [],
@@ -203,6 +208,7 @@ export function sessionReducer(
         {
           ...state,
           index: next,
+          step: 0,
           status: finished,
           startedAt: state.startedAt ?? now,
           endedAt: next === total ? now : state.endedAt,
@@ -216,7 +222,10 @@ export function sessionReducer(
       if (state.plan === null) {
         return state;
       }
-      return withTimer({ ...state, index: Math.max(state.index - 1, -1) }, now);
+      return withTimer(
+        { ...state, index: Math.max(state.index - 1, -1), step: 0 },
+        now,
+      );
     }
 
     case "nav/goTo": {
@@ -224,15 +233,23 @@ export function sessionReducer(
         return state;
       }
       return withTimer(
-        { ...state, index: Math.max(-1, Math.min(action.index, total)) },
+        {
+          ...state,
+          index: Math.max(-1, Math.min(action.index, total)),
+          step: 0,
+        },
         now,
       );
     }
+
+    case "step/next":
+      return { ...state, step: state.step + 1 };
 
     case "nav/restart":
       return {
         ...state,
         index: -1,
+        step: 0,
         status: SessionStatus.Ready,
         responses: action.keepResponses === true ? state.responses : {},
         revealed: [],
@@ -323,6 +340,7 @@ export function sessionReducer(
         ...state,
         responses: { ...state.responses, ...action.responses },
         index,
+        step: 0,
         status:
           index >= total && total > 0
             ? SessionStatus.Finished
@@ -345,6 +363,7 @@ export function sessionReducer(
         ...state,
         status: SessionStatus.Finished,
         index: total,
+        step: 0,
         endedAt: now,
         timer: null,
         showingResults: false,

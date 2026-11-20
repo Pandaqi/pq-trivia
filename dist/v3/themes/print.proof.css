@@ -20,6 +20,9 @@
     --pq-fern-soft: #e6efdb;
     --pq-right: #1f5b2c;
     --pq-wrong: #7a1f1f;
+    /* Paper is white, so the grain goes. */
+    --pq-shadow-1: none;
+    --pq-shadow-2: none;
     --pq-title-size: 21pt;
     --pq-answer-size: 12pt;
     --pq-space: 0;
@@ -33,8 +36,8 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    background: #fff;
-    color: #000;
+    background: var(--pq-paper);
+    color: var(--pq-ink);
   }
 
   .pq-quiz {
@@ -60,7 +63,7 @@
 
   .pq-print-sheet {
     height: 100%;
-    color: #000;
+    color: var(--pq-ink);
     font-family: var(--pq-font-body);
     font-size: 10.5pt;
     line-height: 1.35;
@@ -86,23 +89,18 @@
     overflow: hidden;
     break-after: page;
     break-inside: avoid;
-    background: #fff;
+    background: var(--pq-paper);
   }
 
   /* Forms, answer sheets and the media list are documents, not slides. They
      flow, and the browser splits them over pages where it likes. */
   .pq-print-flow {
-    display: block;
     width: 100%;
     height: auto;
     margin: 0 0 8mm;
     padding: 0;
     overflow: visible;
     break-inside: auto;
-  }
-
-  .pq-print-flow-inner {
-    display: block;
   }
 
   .pq-print-flow table {
@@ -156,7 +154,7 @@
 
   .pq-card-label {
     margin: 0 0 4mm;
-    color: #555;
+    color: var(--pq-muted);
     font-size: 8.5pt;
     letter-spacing: 0.25em;
     text-transform: uppercase;
@@ -164,7 +162,7 @@
 
   /* A page that could not be made to fit. Visible on paper, so it is not lost. */
   .pq-print-page[data-pq-overflow="true"] {
-    outline: 0.8pt dashed #7a1f1f;
+    outline: 0.8pt dashed var(--pq-wrong);
     outline-offset: -2mm;
   }
 
@@ -174,8 +172,8 @@
     right: 0;
     bottom: 0;
     padding: 1mm 2mm;
-    background: #7a1f1f;
-    color: #fff;
+    background: var(--pq-wrong);
+    color: var(--pq-paper);
     font-size: 7pt;
     letter-spacing: 0.04em;
     print-color-adjust: exact;
@@ -208,7 +206,7 @@
     min-width: 0;
     min-height: 0;
     padding: 2mm 3mm;
-    border: 0.4pt solid #bbb;
+    border: 0.4pt solid var(--pq-line);
     border-radius: 1mm;
     overflow: hidden;
   }
@@ -263,21 +261,21 @@
     font-family: var(--pq-font-heading);
     font-style: italic;
     font-size: 13pt;
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-cover-byline {
     margin: 3mm 0 0;
     font-size: 10pt;
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-cover-banner {
     margin: 10mm 0 0;
     padding: 3mm 10mm;
-    border: 0.8pt solid #000;
+    border: 0.8pt solid var(--pq-ink);
     border-radius: 1.5mm;
-    background: #f6e7bd;
+    background: var(--pq-honey-soft);
     font-size: 11pt;
     letter-spacing: 0.04em;
     print-color-adjust: exact;
@@ -287,7 +285,7 @@
   .pq-cover-seed {
     margin: 4mm 0 0;
     font-size: 8.5pt;
-    color: #555;
+    color: var(--pq-muted);
   }
 
   /* Round page. */
@@ -318,7 +316,7 @@
   .pq-print-round .pq-round-secret {
     margin: 4mm 0 0;
     font-style: italic;
-    color: #333;
+    color: var(--pq-muted);
   }
 
 
@@ -330,8 +328,8 @@
     margin: 0 0 6mm;
     padding: 2mm 3mm;
     border: 0;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8.5pt;
     letter-spacing: 0.08em;
     print-color-adjust: exact;
@@ -354,9 +352,9 @@
     margin: 0 0 5mm;
     padding: 3mm 4mm;
     border: none;
-    border-left: 3mm solid var(--pq-round-accent, #111);
-    background: #f2f2f2 !important;
-    color: #000 !important;
+    border-left: 3mm solid var(--pq-round-accent, var(--pq-ink));
+    background: var(--pq-paper-deep) !important;
+    color: var(--pq-ink) !important;
     text-align: left;
   }
 
@@ -404,7 +402,7 @@
 
   .pq-split-right {
     padding-left: 8mm;
-    border-left: 0.5pt dashed #999;
+    border-left: 0.5pt dashed var(--pq-line);
   }
 
   .pq-header {
@@ -414,7 +412,7 @@
   .pq-kicker,
   .pq-description,
   .pq-byline {
-    color: #333;
+    color: var(--pq-muted);
   }
 
   .pq-title {
@@ -425,10 +423,21 @@
     text-wrap: pretty;
   }
 
+  /* The same quiet line the screen has, in ink. It says what to answer, not
+     how to answer it, so it reads the same on paper as on a projector. */
+  .pq-type-hint {
+    margin: 0 0 3mm;
+    max-width: none;
+    color: var(--pq-muted);
+    text-align: left;
+    font-size: 9.5pt;
+    font-style: italic;
+  }
+
   .pq-body {
     margin: 0;
     max-width: none;
-    color: #333;
+    color: var(--pq-muted);
     text-align: left;
     font-size: 11pt;
   }
@@ -471,12 +480,16 @@
     min-height: 0;
     padding: 2mm 3mm;
     border: 0.8pt solid
-      color-mix(in srgb, var(--pq-round-accent, #111) 60%, #000);
+      color-mix(
+        in srgb,
+        var(--pq-round-accent, var(--pq-ink)) 60%,
+        var(--pq-ink)
+      );
     border-radius: 1.2mm;
     background: color-mix(
       in srgb,
-      var(--pq-round-accent, #111) 24%,
-      #fff
+      var(--pq-round-accent, var(--pq-ink)) 24%,
+      var(--pq-paper)
     ) !important;
     box-shadow: none !important;
     font-size: var(--pq-answer-size);
@@ -493,8 +506,8 @@
     width: 5.5mm;
     height: 5.5mm;
     border-radius: 50%;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8pt;
     font-weight: 700;
     print-color-adjust: exact;
@@ -504,7 +517,7 @@
   .pq-answer[data-pq-correct="false"] {
     opacity: 1;
     border-style: dashed;
-    background: #fff !important;
+    background: var(--pq-paper) !important;
   }
 
   .pq-answer[data-pq-correct="false"] .pq-answer-text {
@@ -535,8 +548,8 @@
     height: 6mm;
     padding: 0 1mm;
     border-radius: 999rem;
-    background: var(--pq-round-accent, #111) !important;
-    color: var(--pq-accent-ink, #fff) !important;
+    background: var(--pq-round-accent, var(--pq-ink)) !important;
+    color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8pt;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
@@ -554,7 +567,7 @@
     display: block;
     margin: 0;
     padding-left: 6mm;
-    color: #333;
+    color: var(--pq-muted);
     font-size: 11pt;
   }
 
@@ -563,7 +576,7 @@
     max-width: none;
     margin: 0;
     padding: 2mm 3mm;
-    border-left: 1.5pt solid var(--pq-round-accent, #111);
+    border-left: 1.5pt solid var(--pq-round-accent, var(--pq-ink));
     border-radius: 0;
     background: none !important;
     font-size: 10pt;
@@ -580,7 +593,7 @@
     align-items: center;
     margin: 0;
     padding-left: 3mm;
-    border-left: 1.5pt solid #000;
+    border-left: 1.5pt solid var(--pq-ink);
     font-size: 11pt;
   }
 
@@ -591,7 +604,7 @@
   .pq-print-line {
     display: block;
     height: 7mm;
-    border-bottom: 0.8pt solid #000;
+    border-bottom: 0.8pt solid var(--pq-ink);
   }
 
   .pq-field {
@@ -600,7 +613,7 @@
   }
 
   .pq-field-label {
-    color: #333;
+    color: var(--pq-muted);
     font-size: 8.5pt;
     letter-spacing: 0.06em;
   }
@@ -609,7 +622,7 @@
     width: 100%;
     padding: 0;
     border: none;
-    border-bottom: 0.8pt solid #000;
+    border-bottom: 0.8pt solid var(--pq-ink);
     border-radius: 0;
     background: none;
     box-shadow: none;
@@ -633,17 +646,12 @@
 
 /* Print, forms: the answer table, fields and utilities. Built into print.css. */
 
-  /* Answer form: a table a player writes on. */
-  .pq-print-form {
-    display: block;
-  }
-
   /* Typed questions get a line to write on, not an empty cell. */
   .pq-form-line {
     display: block;
     width: 100%;
     height: 6mm;
-    border-bottom: 0.6pt solid #000;
+    border-bottom: 0.6pt solid var(--pq-ink);
   }
 
   .pq-form-new-page {
@@ -698,7 +706,7 @@
   .pq-form th,
   .pq-grade th {
     padding: 1.5mm 2mm;
-    border-bottom: 1pt solid #000;
+    border-bottom: 1pt solid var(--pq-ink);
     font-size: 8.5pt;
     letter-spacing: 0.08em;
     text-align: left;
@@ -708,13 +716,13 @@
   .pq-form td,
   .pq-grade td {
     padding: 2mm;
-    border-bottom: 0.4pt solid #999;
+    border-bottom: 0.4pt solid var(--pq-line);
     vertical-align: top;
   }
 
   .pq-form tbody tr:nth-child(even) td,
   .pq-grade tbody tr:nth-child(even) td {
-    background: #f4f4f4;
+    background: var(--pq-paper-deep);
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
@@ -741,7 +749,7 @@
     display: inline-block;
     width: 3.5mm;
     height: 3.5mm;
-    border: 0.6pt solid #000;
+    border: 0.6pt solid var(--pq-ink);
   }
 
   .pq-form-points {
@@ -750,10 +758,6 @@
   }
 
   /* Grade table: correct answers filled in, a score box per row. */
-  .pq-print-grade {
-    display: block;
-  }
-
   .pq-grade-correct {
     width: 62mm;
     font-weight: 700;
@@ -792,7 +796,7 @@
   }
 
   a {
-    color: #000;
+    color: var(--pq-ink);
     text-decoration: underline;
   }
 

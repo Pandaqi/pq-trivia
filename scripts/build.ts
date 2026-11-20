@@ -4,7 +4,7 @@
  * Adding an entry is a file in `src/entries/`, not a config edit.
  */
 
-import { mkdir, readdir, readFile, watch } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, watch } from "node:fs/promises";
 import { join } from "node:path";
 type BuildPlugin = NonNullable<
   NonNullable<Parameters<typeof Bun.build>[0]>["plugins"]
@@ -211,6 +211,16 @@ async function copyThemes(): Promise<void> {
 
 async function build(languages: readonly string[]): Promise<boolean> {
   await mkdir(OUT_DIR, { recursive: true });
+  // A rename leaves the old chunk behind, and dist is what ships. Chunks are
+  // rebuilt every run, so dropping them costs nothing.
+  for (const file of await readdir(OUT_DIR)) {
+    const stale =
+      file.startsWith("chunk-") &&
+      (file.endsWith(".js") || file.endsWith(".js.map"));
+    if (stale) {
+      await rm(join(OUT_DIR, file));
+    }
+  }
   localeFile = await writeLocales(languages);
 
   // One file in src/entries/ is one artifact. No config edit to add an entry.
@@ -237,7 +247,12 @@ async function build(languages: readonly string[]): Promise<boolean> {
       splitting: iifeName === undefined,
       minify: true,
       sourcemap: "external",
-      naming: `[dir]/${iifeName ?? `${entry.name}.[ext]`}`,
+      // Entries keep their own name. A chunk is named after the module that
+      // pulled it in (`chunk-qr.js`), so docs and a network panel can name it.
+      naming: {
+        entry: `[dir]/${iifeName ?? `${entry.name}.[ext]`}`,
+        chunk: "chunk-[name].[ext]",
+      },
       banner: banner(entry.name),
       plugins: [LOCALE_PLUGIN],
     });

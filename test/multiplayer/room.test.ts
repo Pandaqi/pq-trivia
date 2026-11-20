@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createQuiz } from "../../src/core/quiz";
 import { ResponseKind } from "../../src/core/session/responses";
 import { createRoomCode, isRoomCode } from "../../src/multiplayer/code";
+import { QuestionType } from "../../src/core/model/question";
 import { createHost } from "../../src/multiplayer/host";
 import { createPlayer } from "../../src/multiplayer/player";
 import {
@@ -9,8 +10,14 @@ import {
   isResponse,
   parseEnvelope,
 } from "../../src/multiplayer/protocol";
+import type { MemoryNetwork } from "../../src/multiplayer/transport/memory";
 import { memoryNetwork } from "../../src/multiplayer/transport/memory";
-import { MessageType, RoomPhase } from "../../src/multiplayer/types";
+import {
+  MessageType,
+  RevealMode,
+  RoomPhase,
+  type LiveQuestion,
+} from "../../src/multiplayer/types";
 
 const TEXT = `
 Title => Live test
@@ -29,11 +36,42 @@ Answers => hello
 const tick = (): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
-async function loadedQuiz(): Promise<ReturnType<typeof createQuiz>> {
+const ROUNDS = `
+Title => Modes
+Seed => modes
+
+## First
+
+Question => One
+Answers => A | B
+Type => Choice
+Correct => B
+
+Question => Two
+Answers => A | B
+Type => Choice
+Correct => B
+
+## Second
+
+Question => Three
+Answers => A | B
+Type => Choice
+Correct => B
+`;
+
+async function quizFrom(text: string): Promise<ReturnType<typeof createQuiz>> {
   const quiz = createQuiz();
-  await quiz.load({ type: "text", text: TEXT });
+  await quiz.load({ type: "text", text });
   return quiz;
 }
+
+async function loadedQuiz(): Promise<ReturnType<typeof createQuiz>> {
+  return quizFrom(TEXT);
+}
+
+/** Past the 250ms rate limit, so the next answer from this player lands. */
+const breathe = (): Promise<void> => Bun.sleep(260);
 
 function choice(id: string) {
   return { kind: ResponseKind.Choice as const, selected: [id] };
@@ -267,5 +305,173 @@ describe("a live round", () => {
     expect(again.state().leaderboard[0]?.score).toBe(1);
     host.leave();
     again.leave();
+  });
+});
+
+describe("reveal modes", () => {
+  function answerB(question: LiveQuestion | null): string {
+    return question?.answers.find((answer) => answer.text === "B")?.id ?? "";
+  }
+
+  async function join(code: string, network: MemoryNetwork) {
+    const player = await createPlayer({
+      transport: network,
+      code,
+      name: "Ada",
+    });
+    await player.join();
+    return player;
+  }
+
+  test("round mode keeps the answers until the round ends", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await quizFrom(ROUNDS),
+      transport: network,
+      code: "RND1",
+      reveal: RevealMode.Round,
+    });
+    const ada = await join("RND1", network);
+    host.start();
+    await tick();
+    expect(host.state().revealMode).toBe(RevealMode.Round);
+    // The round card reaches the phone too, so nobody thinks it froze.
+    expect(ada.state().question?.type).toBe(QuestionType.Section);
+    expect(host.state().total).toBe(5);
+
+    host.next();
+    await tick();
+    expect(ada.state().question?.title).toBe("One");
+    ada.submit(choice(answerB(ada.state().question)));
+    await tick();
+
+    host.next();
+    await tick();
+    expect(ada.state().question?.title).toBe("Two");
+    expect(ada.state().reveal).toBeNull();
+
+    await breathe();
+    ada.submit(choice(answerB(ada.state().question)));
+    await tick();
+    host.next();
+    await tick();
+    const reveal = ada.state().reveal;
+    expect(reveal?.items.length).toBe(2);
+    expect(reveal?.leaderboard[0]?.score).toBe(2);
+
+    host.next();
+    await tick();
+    expect(ada.state().question?.type).toBe(QuestionType.Section);
+    host.next();
+    await tick();
+    expect(ada.state().question?.title).toBe("Three");
+    host.leave();
+    ada.leave();
+  });
+
+  test("the host sets the mode and the round cards in the lobby", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await quizFrom(ROUNDS),
+      transport: network,
+      code: "SET1",
+    });
+    const ada = await join("SET1", network);
+    expect(host.state().sections).toBe(true);
+
+    host.setRevealMode(RevealMode.Pass);
+    host.setSections(false);
+    await tick();
+    expect(host.state().revealMode).toBe(RevealMode.Pass);
+    expect(host.state().total).toBe(3);
+
+    host.start();
+    await tick();
+    expect(ada.state().question?.title).toBe("One");
+
+    // Too late now: the flow positions would move under everyone.
+    host.setSections(true);
+    expect(host.state().sections).toBe(false);
+    host.leave();
+    ada.leave();
+  });
+
+  test("end mode says nothing until the quiz is over", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "END1",
+      reveal: RevealMode.End,
+    });
+    const ada = await join("END1", network);
+    host.start();
+    await tick();
+    ada.submit(choice(answerB(ada.state().question)));
+    await tick();
+    host.reveal();
+    expect(ada.state().reveal).toBeNull();
+
+    host.next();
+    await tick();
+    await breathe();
+    ada.submit({ kind: ResponseKind.Open, text: "hello" });
+    await tick();
+    host.next();
+    await tick();
+
+    expect(ada.state().phase).toBe(RoomPhase.Ended);
+    expect(ada.state().reveal).toBeNull();
+    expect(ada.state().leaderboard[0]?.score).toBe(2);
+    host.leave();
+    ada.leave();
+  });
+
+  test("pass mode replays the quiz with everyone's answers", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "PASS",
+      reveal: RevealMode.Pass,
+    });
+    const ada = await join("PASS", network);
+    host.start();
+    await tick();
+    ada.submit(choice(answerB(ada.state().question)));
+    await tick();
+    host.reveal();
+    expect(ada.state().reveal).toBeNull();
+
+    host.next();
+    await tick();
+    await breathe();
+    ada.submit({ kind: ResponseKind.Open, text: "hello" });
+    await tick();
+    host.next();
+    await tick();
+
+    expect(host.state().phase).toBe(RoomPhase.Answers);
+    expect(host.state().index).toBe(0);
+    expect(ada.state().phase).toBe(RoomPhase.Answers);
+    expect(ada.state().question?.title).toBe("Pick B");
+
+    host.reveal();
+    await tick();
+    const first = ada.state().reveal?.items[0];
+    expect(first?.results[ada.state().id ?? ""]?.given).toBe("B");
+
+    host.next();
+    await tick();
+    host.reveal();
+    await tick();
+    expect(ada.state().reveal?.items[0]?.correct).toEqual(["hello"]);
+
+    host.next();
+    await tick();
+    expect(ada.state().phase).toBe(RoomPhase.Ended);
+    expect(ada.state().leaderboard[0]?.score).toBe(2);
+    host.leave();
+    ada.leave();
   });
 });

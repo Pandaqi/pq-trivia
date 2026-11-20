@@ -171,6 +171,17 @@ export interface QuizConfig {
   readonly answerLabels?: AnswerLabels;
   /** Small icons in the metadata strip: points, author, category, round. */
   readonly metadataIcons?: boolean;
+  /** V2's line under the question: "This is an open question." On by default. */
+  readonly questionTypeHints?: boolean;
+  /**
+   * `3. Who is superman?` instead of the bare question. On by default: players
+   * writing answers need the number in front of them.
+   */
+  readonly questionNumbers?: boolean;
+  /** `Steps` for every question that does not set its own list. */
+  readonly defaultSteps?: readonly string[];
+  /** Animation between steps. `fade` when nobody says. */
+  readonly defaultStepTransition?: string;
   /** Let the home screen offer interactive play. */
   readonly allowInput?: boolean;
   /** V2's `settings`: controls the host adds to the start screen. */
@@ -227,6 +238,11 @@ export interface QuizConfig {
    * quizzes want the question, not a worksheet.
    */
   readonly printAnswerLines?: boolean;
+  /**
+   * The question type line on printed questions. On by default: paper says what
+   * the screen says. `questionTypeHints: false` hides it on both.
+   */
+  readonly printTypeHints?: boolean;
   /** Light, dark or high contrast. `auto` follows the system. */
   readonly themeMode?: ThemeMode;
   /**
@@ -271,12 +287,19 @@ export interface QuizApi {
   readonly state: Readonly<SessionState>;
   readonly config: Readonly<QuizConfig>;
   load(input: LoadInput): Promise<void>;
+  /**
+   * Settles when the load in flight has finished. Already resolved when there
+   * is none, so `await quiz.loading` is always safe.
+   */
+  readonly loading: Promise<void>;
   ready(): Promise<void>;
   /** True after loading an encrypted file that has no passphrase yet. */
   locked(): boolean;
   unlock(passphrase: string): Promise<boolean>;
   next(): NavResult;
   prev(): NavResult;
+  /** Show the next staged part. False when the question is already whole. */
+  nextStep(): boolean;
   nextRound(): NavResult;
   prevRound(): NavResult;
   goTo(index: number): NavResult;
@@ -332,6 +355,14 @@ export interface QuizApi {
   ): Unsubscribe;
   export: {
     embedded(options?: EmbeddedOptions): EmbeddedQuizV3;
+    /** One row per question: a spreadsheet, a gradebook, a quick check. */
+    csv(): string;
+    /** Moodle's GIFT text. Old, plain and still everywhere. */
+    gift(): string;
+    /** The boring, compatible QTI 2.1 subset Canvas imports. */
+    qti(): string;
+    /** Results so far as CSV, or null before there is a plan. */
+    grades(): string | null;
   };
   destroy(): void;
 }

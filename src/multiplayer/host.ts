@@ -3,37 +3,37 @@
  *
  * Players only ever receive an allowlisted question. Correct answers leave this
  * file at the reveal, never before it.
+ *
+ * When that reveal happens is a mode, not a constant: per question, per round,
+ * at the end, or a second pass through the whole quiz with everyone's answers.
+ *
+ * Everything here counts in `slots`: plan positions with the section screens
+ * taken out. A phone has no use for a round title as a question, and the
+ * numbering on screen should match the numbering a host reads out loud.
  */
 
 import { gradeQuestion } from "../core/grading/grading";
 import { round2 } from "../core/grading/parts";
-import type { QuestionModel } from "../core/model/question";
+import { QuestionType, type QuestionModel } from "../core/model/question";
 import type { QuizPlan } from "../core/plan/plan";
 import type { Quiz } from "../core/session/quiz";
-import type { Response } from "../core/session/responses";
+import { flowSlots, rangeOf, roundRanges } from "./flow";
 import { describeResponse, liveQuestion, roundNameOf } from "./present";
-import {
-  createEnvelope,
-  createRateLimiter,
-  makeId,
-  makeToken,
-  parseEnvelope,
-  readJoin,
-  readSubmit,
-} from "./protocol";
+import { createEnvelope } from "./protocol";
+import { createRoster } from "./roster";
 import type { Room, RoomTransport, Unsubscribe } from "./transport/types";
 import {
+  DEFAULT_REVEAL_MODE,
   MAX_PLAYERS,
   MessageType,
+  RevealMode,
   RoomPhase,
   type ClosePayload,
   type JoinPayload,
-  type LeaderRow,
   type LiveQuestion,
-  type LivePlayer,
   type PlayerResult,
   type QuestionPayload,
-  type ReadyPayload,
+  type RevealItem,
   type RevealPayload,
   type RoomStatePayload,
   type ScorePayload,
@@ -47,6 +47,10 @@ export interface HostOptions {
   /** A player may change an answer until the reveal. Off by default. */
   readonly allowChanges?: boolean;
   readonly maxPlayers?: number;
+  /** Defaults to one reveal per question. */
+  readonly reveal?: RevealMode;
+  /** Round cards on the phones. On by default; the host can turn them off. */
+  readonly sections?: boolean;
 }
 
 export interface HostRoom {
@@ -55,27 +59,21 @@ export interface HostRoom {
   question(): LiveQuestion | null;
   /** The last reveal, including correct answers. Host screen only. */
   lastReveal(): RevealPayload | null;
+  /** Lobby only. A mode changed mid-quiz would rewrite its own history. */
+  setRevealMode(mode: RevealMode): void;
+  /** Lobby only, for the same reason: the flow positions would move. */
+  setSections(show: boolean): void;
   start(): void;
   show(index: number): void;
   close(): void;
+  /** Reveal what the mode says is due. A no-op when nothing is. */
   reveal(): void;
+  /** Next question, next reveal, the answer pass, or the end. */
+  next(): void;
   end(): void;
   ping(): void;
   subscribe(listener: () => void): Unsubscribe;
   leave(): void;
-}
-
-interface PlayerRecord {
-  readonly id: string;
-  readonly token: string;
-  name: string;
-  score: number;
-  connected: boolean;
-  ready: boolean;
-  peer: string | null;
-  readonly responses: Map<string, Response>;
-  readonly answered: Set<string>;
-  readonly late: Set<string>;
 }
 
 export async function createHost(options: HostOptions): Promise<HostRoom> {
@@ -87,17 +85,22 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   const plan: QuizPlan = loadedPlan;
   const maxPlayers = Math.min(options.maxPlayers ?? MAX_PLAYERS, MAX_PLAYERS);
   const allowChanges = options.allowChanges === true;
+  let showSections = options.sections !== false;
+  let revealMode = options.reveal ?? DEFAULT_REVEAL_MODE;
+  let slots = flowSlots(plan, showSections);
+  let rounds = roundRanges(plan, slots);
+  let total = slots.length;
+  if (total === 0) {
+    throw new Error("Load a quiz before opening a room.");
+  }
   const room: Room = await options.transport.create(options.code);
-  const joinLimit = createRateLimiter();
-  const submitLimit = createRateLimiter();
-
-  const players = new Map<string, PlayerRecord>();
-  const byPeer = new Map<string, string>();
   const listeners = new Set<() => void>();
-  const seen = new Set<string>();
+  const graded = new Set<string>();
 
   let phase = RoomPhase.Lobby;
   let index = -1;
+  /** The highest slot whose answers have gone out. */
+  let revealedThrough = -1;
   let current: QuestionModel | null = null;
   let currentQuestion: LiveQuestion | null = null;
   let closed = false;
@@ -105,29 +108,21 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   let seq = 0;
   let lastQuestion: QuestionPayload | null = null;
   let lastReveal: RevealPayload | null = null;
+
+  const roster = createRoster({
+    room,
+    maxPlayers,
+    allowChanges,
+    phase: () => phase,
+    current: () => current,
+    closed: () => closed,
+    deadline: () => deadline,
+    sendState,
+    publishState,
+    replay,
+  });
+
   let snapshot = stateOf(null);
-
-  function leaderboard(): LeaderRow[] {
-    return [...players.values()]
-      .map((player) => ({
-        id: player.id,
-        name: player.name,
-        score: player.score,
-      }))
-      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-  }
-
-  function livePlayers(): LivePlayer[] {
-    return [...players.values()].map((player) => ({
-      id: player.id,
-      name: player.name,
-      score: player.score,
-      connected: player.connected,
-      ready: player.ready,
-      answered: current !== null && player.answered.has(current.id),
-      late: player.late.size,
-    }));
-  }
 
   function stateOf(
     you: string | null,
@@ -136,9 +131,11 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     return {
       code: options.code,
       phase,
-      players: livePlayers(),
+      revealMode,
+      sections: showSections,
+      players: roster.live(),
       index,
-      total: plan.total,
+      total,
       seq,
       you,
       token,
@@ -158,12 +155,12 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
 
   function sendState(peer: string, playerId: string | null): void {
     const token =
-      playerId === null ? null : (players.get(playerId)?.token ?? null);
+      playerId === null ? null : (roster.players.get(playerId)?.token ?? null);
     sendTo(peer, MessageType.RoomState, stateOf(playerId, token));
   }
 
   function broadcast(type: MessageType, payload: unknown): void {
-    for (const player of players.values()) {
+    for (const player of roster.players.values()) {
       if (player.peer !== null) {
         sendTo(player.peer, type, payload);
       }
@@ -171,7 +168,7 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   }
 
   function publishState(): void {
-    for (const player of players.values()) {
+    for (const player of roster.players.values()) {
       if (player.peer !== null) {
         sendState(player.peer, player.id);
       }
@@ -179,61 +176,8 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     notify();
   }
 
-  function findPeer(playerId: string): PlayerRecord | undefined {
-    return players.get(playerId);
-  }
-
-  function joinPeer(peer: string, payload: unknown): void {
-    if (!joinLimit.allow(peer)) {
-      return;
-    }
-    const request = readJoin(payload);
-    if (request === null) {
-      return;
-    }
-    const existing =
-      request.token === null
-        ? undefined
-        : [...players.values()].find(
-            (player) => player.token === request.token,
-          );
-
-    if (existing !== undefined) {
-      reconnect(existing, peer, request.name);
-      return;
-    }
-    if (phase !== RoomPhase.Lobby || players.size >= maxPlayers) {
-      sendState(peer, null);
-      return;
-    }
-
-    const player: PlayerRecord = {
-      id: `p-${makeId()}`,
-      token: makeToken(),
-      name: request.name,
-      score: 0,
-      connected: true,
-      ready: false,
-      peer,
-      responses: new Map(),
-      answered: new Set(),
-      late: new Set(),
-    };
-    players.set(player.id, player);
-    byPeer.set(peer, player.id);
-    sendState(peer, player.id);
-    publishState();
-  }
-
-  function reconnect(player: PlayerRecord, peer: string, name: string): void {
-    if (player.peer !== null) {
-      byPeer.delete(player.peer);
-    }
-    player.peer = peer;
-    player.connected = true;
-    player.name = name;
-    byPeer.set(peer, player.id);
-    sendState(peer, player.id);
+  /** A phone that came back gets the question and the reveal it missed. */
+  function replay(peer: string): void {
     if (lastQuestion !== null) {
       seq += 1;
       sendTo(peer, MessageType.QuestionShow, {
@@ -249,126 +193,25 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
         seq,
       } satisfies RevealPayload);
     }
-    publishState();
   }
 
-  function submit(peer: string, payload: unknown): void {
-    const playerId = byPeer.get(peer);
-    const player = playerId === undefined ? undefined : findPeer(playerId);
-    if (player === undefined || current === null) {
-      return;
-    }
-    if (!submitLimit.allow(player.id)) {
-      return;
-    }
-    const request = readSubmit(payload);
-    if (request === null || request.questionId !== current.id) {
-      return;
-    }
-    if (phase !== RoomPhase.Question) {
-      return;
-    }
-    if (!allowChanges && player.answered.has(current.id)) {
-      return;
-    }
-    player.responses.set(current.id, request.response);
-    player.answered.add(current.id);
-    const late = closed || (deadline !== null && Date.now() > deadline);
-    if (late) {
-      player.late.add(current.id);
-    }
-    publishState();
+  function questionAt(position: number): QuestionModel | undefined {
+    const at = slots[position];
+    return at === undefined ? undefined : plan.questions[at];
   }
 
-  function setReady(peer: string, payload: unknown): void {
-    const playerId = byPeer.get(peer);
-    const player = playerId === undefined ? undefined : findPeer(playerId);
-    if (player === undefined) {
-      return;
-    }
-    const entry =
-      typeof payload === "object" && payload !== null
-        ? (payload as Partial<ReadyPayload>)
-        : {};
-    player.ready = entry.ready === true;
-    publishState();
+  /** A round card has no answers to grade and nothing to reveal. */
+  function isSection(question: QuestionModel | undefined): boolean {
+    return question?.type === QuestionType.Section;
   }
 
-  function handle(envelope: unknown, from: string): void {
-    const message = parseEnvelope(envelope);
-    if (message === null || seen.has(message.id)) {
-      return;
-    }
-    seen.add(message.id);
-    if (seen.size > 2048) {
-      seen.clear();
-    }
-    if (message.type === MessageType.Join) {
-      joinPeer(from, message.payload);
-      return;
-    }
-    if (message.type === MessageType.AnswerSubmit) {
-      submit(from, message.payload);
-      return;
-    }
-    if (message.type === MessageType.Ready) {
-      setReady(from, message.payload);
-    }
-  }
-
-  const offMessage = room.onMessage((message) =>
-    handle(message.envelope, message.from),
-  );
-  const offLeave = room.onPeerLeave((peer) => {
-    const playerId = byPeer.get(peer);
-    if (playerId === undefined) {
-      return;
-    }
-    byPeer.delete(peer);
-    const player = players.get(playerId);
-    if (player !== undefined) {
-      player.peer = null;
-      player.connected = false;
-      publishState();
-    }
-  });
-
-  function show(nextIndex: number): void {
-    const question = plan.questions[nextIndex];
-    if (question === undefined) {
-      return;
-    }
-    index = nextIndex;
-    current = question;
-    phase = RoomPhase.Question;
-    closed = false;
-    lastReveal = null;
-    deadline = question.timerMs === null ? null : Date.now() + question.timerMs;
-    currentQuestion = liveQuestion(
-      question,
-      nextIndex,
-      plan.total,
-      roundNameOf(plan, nextIndex),
-      deadline,
-    );
-    seq += 1;
-    lastQuestion = {
-      question: currentQuestion,
-      seq,
-      allowChanges,
-      closed,
-    };
-    broadcast(MessageType.QuestionShow, lastQuestion);
-    publishState();
-  }
-
-  function reveal(): void {
-    const question = current;
-    if (question === null || phase !== RoomPhase.Question) {
-      return;
-    }
+  /**
+   * Score one question and collect what everyone said. Called once per
+   * question, ever: a second reveal must not pay out twice.
+   */
+  function gradeOne(question: QuestionModel): Record<string, PlayerResult> {
     const results: Record<string, PlayerResult> = {};
-    for (const player of players.values()) {
+    for (const player of roster.players.values()) {
       const response = player.responses.get(question.id);
       if (response === undefined) {
         continue;
@@ -384,17 +227,70 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
         late,
       };
     }
-    phase = RoomPhase.Reveal;
+    graded.add(question.id);
+    return results;
+  }
+
+  function gradeRange(start: number, end: number): void {
+    for (let position = Math.max(start, 0); position <= end; position += 1) {
+      const question = questionAt(position);
+      if (
+        question === undefined ||
+        isSection(question) ||
+        graded.has(question.id)
+      ) {
+        continue;
+      }
+      gradeOne(question);
+    }
+  }
+
+  function itemsFor(start: number, end: number): RevealItem[] {
+    const items: RevealItem[] = [];
+    for (let position = Math.max(start, 0); position <= end; position += 1) {
+      const question = questionAt(position);
+      if (
+        question === undefined ||
+        isSection(question) ||
+        graded.has(question.id)
+      ) {
+        continue;
+      }
+      items.push({
+        questionId: question.id,
+        index: position,
+        title: question.text[0]?.text ?? "",
+        correct: question.correct.map((value) => value.text),
+        explanation: question.explanation,
+        results: gradeOne(question),
+      });
+    }
+    return items;
+  }
+
+  function revealRange(start: number, end: number): void {
+    const items = itemsFor(start, end);
+    const head = items[0];
+    if (head === undefined) {
+      return;
+    }
+    // The paper mode's second pass stays a pass. Its reveal is content, not a
+    // phase of its own, or the host could never page to the next question.
+    const inPass =
+      revealMode === RevealMode.Pass && phase === RoomPhase.Answers;
+    phase = inPass ? RoomPhase.Answers : RoomPhase.Reveal;
     closed = true;
+    revealedThrough = Math.max(revealedThrough, end);
     seq += 1;
     lastReveal = {
-      questionId: question.id,
-      index,
-      correct: question.correct.map((value) => value.text),
-      explanation: question.explanation,
-      results,
-      leaderboard: leaderboard(),
+      questionId: head.questionId,
+      index: head.index,
+      correct: head.correct,
+      explanation: head.explanation,
+      results: head.results,
+      leaderboard: roster.leaderboard(),
       seq,
+      items,
     };
     broadcast(MessageType.AnswerReveal, lastReveal);
     broadcast(MessageType.ScoreUpdate, {
@@ -402,6 +298,139 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     } satisfies ScorePayload);
     publishState();
   }
+
+  function shown(position: number, phaseValue: RoomPhase): void {
+    const question = questionAt(position);
+    if (question === undefined) {
+      return;
+    }
+    const at = slots[position] ?? position;
+    index = position;
+    current = question;
+    phase = phaseValue;
+    closed = phaseValue === RoomPhase.Answers;
+    lastReveal = null;
+    deadline =
+      phaseValue === RoomPhase.Question && question.timerMs !== null
+        ? Date.now() + question.timerMs
+        : null;
+    currentQuestion = liveQuestion(
+      question,
+      position,
+      total,
+      roundNameOf(plan, at),
+      deadline,
+    );
+    seq += 1;
+    lastQuestion = {
+      question: currentQuestion,
+      seq,
+      allowChanges: phaseValue === RoomPhase.Question && allowChanges,
+      closed,
+      phase: phaseValue,
+    };
+    broadcast(MessageType.QuestionShow, lastQuestion);
+    publishState();
+  }
+
+  function show(nextIndex: number): void {
+    shown(nextIndex, RoomPhase.Question);
+  }
+
+  /** The paper mode's second pass: the question again, answers on request. */
+  function showAnswer(nextIndex: number): void {
+    shown(nextIndex, RoomPhase.Answers);
+  }
+
+  function reveal(): void {
+    if (
+      current === null ||
+      isSection(current) ||
+      revealMode === RevealMode.End
+    ) {
+      return;
+    }
+    if (revealMode === RevealMode.Pass) {
+      if (phase === RoomPhase.Answers) {
+        revealRange(index, index);
+      }
+      return;
+    }
+    if (phase !== RoomPhase.Question) {
+      return;
+    }
+    if (revealMode === RevealMode.Round) {
+      revealRange(rangeOf(rounds, index).start, index);
+      return;
+    }
+    revealRange(index, index);
+  }
+
+  function setRevealMode(mode: RevealMode): void {
+    if (phase !== RoomPhase.Lobby) {
+      return;
+    }
+    revealMode = mode;
+    publishState();
+  }
+
+  function setSections(show: boolean): void {
+    if (phase !== RoomPhase.Lobby) {
+      return;
+    }
+    showSections = show;
+    slots = flowSlots(plan, showSections);
+    rounds = roundRanges(plan, slots);
+    total = slots.length;
+    publishState();
+  }
+
+  function end(): void {
+    gradeRange(0, index);
+    phase = RoomPhase.Ended;
+    closed = true;
+    broadcast(MessageType.QuizEnd, {
+      leaderboard: roster.leaderboard(),
+    } satisfies ScorePayload);
+    publishState();
+  }
+
+  function next(): void {
+    if (phase === RoomPhase.Answers) {
+      if (index + 1 < total) {
+        showAnswer(index + 1);
+        return;
+      }
+      end();
+      return;
+    }
+    if (phase === RoomPhase.Lobby || phase === RoomPhase.Ended) {
+      return;
+    }
+    if (
+      phase === RoomPhase.Question &&
+      revealMode === RevealMode.Round &&
+      index === rangeOf(rounds, index).end &&
+      revealedThrough < index
+    ) {
+      reveal();
+      return;
+    }
+    if (index + 1 < total) {
+      show(index + 1);
+      return;
+    }
+    if (revealMode === RevealMode.Pass) {
+      showAnswer(0);
+      return;
+    }
+    end();
+  }
+
+  const offMessage = room.onMessage((message) =>
+    roster.handle(message.envelope, message.from),
+  );
+  const offLeave = room.onPeerLeave((peer) => roster.peerLeft(peer));
 
   return {
     code: options.code,
@@ -414,6 +443,8 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     lastReveal() {
       return lastReveal;
     },
+    setRevealMode,
+    setSections,
     start() {
       if (phase === RoomPhase.Lobby) {
         show(0);
@@ -421,7 +452,11 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     },
     show,
     close() {
-      if (current === null || phase !== RoomPhase.Question) {
+      if (
+        current === null ||
+        isSection(current) ||
+        phase !== RoomPhase.Question
+      ) {
         return;
       }
       closed = true;
@@ -431,11 +466,8 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
       publishState();
     },
     reveal,
-    end() {
-      phase = RoomPhase.Ended;
-      broadcast(MessageType.QuizEnd, { leaderboard: leaderboard() });
-      publishState();
-    },
+    next,
+    end,
     ping() {
       broadcast(MessageType.Ping, { now: Date.now() });
     },

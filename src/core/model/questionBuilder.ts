@@ -24,6 +24,12 @@ import { parseMediaDescriptor } from "../values/media";
 import { pickValue, type QuestionValue } from "../values/qval";
 import { stableId } from "./ids";
 import {
+  isStepToken,
+  isStepTransition,
+  STEP_PARTS,
+  STEP_TRANSITIONS,
+} from "./steps";
+import {
   attributeValues,
   ContinueMode,
   detectType,
@@ -151,6 +157,36 @@ function readEnum<T extends string>(
     ),
   );
   return fallback;
+}
+
+/** A typo in `Steps` costs a step, so it is worth a word. */
+function readSteps(
+  attributes: readonly AstAttribute[],
+  diagnostics: Diagnostic[],
+  location: SourceLocation,
+): readonly string[] {
+  const raw = attributeValues(attributes, "Steps");
+  for (const entry of raw.flatMap((value) => value.split("|"))) {
+    const token = entry.trim();
+    if (
+      token.length === 0 ||
+      isStepToken(token) ||
+      isStepTransition(token)
+    ) {
+      continue;
+    }
+    diagnostics.push(
+      syntaxWarning(
+        DiagnosticCodes.InvalidValue,
+        `"Steps" has an unknown part or transition "${token}".`,
+        {
+          location,
+          suggestion: `Parts: ${STEP_PARTS.join(", ")} or all. Transitions: ${STEP_TRANSITIONS.join(", ")}.`,
+        },
+      ),
+    );
+  }
+  return raw;
 }
 
 function readTimer(
@@ -362,6 +398,9 @@ export function createQuestion(
     colorScheme: firstAttributeValue(attributes, "ColorScheme") ?? null,
     transition: firstAttributeValue(attributes, "Transition") ?? null,
     reveal: firstAttributeValue(attributes, "Reveal") ?? null,
+    steps: readSteps(attributes, diagnostics, location),
+    stepTransition:
+      firstAttributeValue(attributes, "StepTransition") ?? null,
     direction: readEnum(
       attributes,
       "Direction",

@@ -245,3 +245,43 @@ Media => https://example.test/loud.png
     ).toEqual([2, 2]);
   });
 });
+
+describe("question numbers", () => {
+  test("a question starts with its number", () => {
+    expect(questionScreen(first, loaded(), view()).numberPrefix).toBe("1. ");
+  });
+
+  test("the number is the playable one, not the raw index", () => {
+    const screen = questionScreen(first, loaded(), { ...view(), number: 7 });
+    expect(screen.numberPrefix).toBe("7. ");
+  });
+
+  test("a round screen wears the round's number", () => {
+    const rounds = planQuiz(
+      buildQuiz(`
+Type => Section
+Question => Round two
+
+Question => Who is superman?
+Answers => Clark Kent
+`),
+    );
+    const section = rounds.questions[0];
+    if (section === undefined) {
+      throw new Error("fixture lost its section screen");
+    }
+    const screen = questionScreen(section, loaded(), {
+      ...view(),
+      roundNumber: 2,
+    });
+    expect(screen.numberPrefix).toBe("2. ");
+  });
+
+  test("QuestionNumbers => false leaves the title bare", () => {
+    const screen = questionScreen(first, loaded(), {
+      ...view(),
+      numbers: false,
+    });
+    expect(screen.numberPrefix).toBe("");
+  });
+});

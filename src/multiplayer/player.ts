@@ -6,7 +6,9 @@
 import { createEnvelope, parseEnvelope } from "./protocol";
 import type { Room, RoomTransport, Unsubscribe } from "./transport/types";
 import {
+  DEFAULT_REVEAL_MODE,
   MessageType,
+  RevealMode,
   RoomPhase,
   type JoinPayload,
   type LeaderRow,
@@ -33,6 +35,7 @@ export interface PlayerState {
   readonly joined: boolean;
   readonly error: string | null;
   readonly phase: RoomPhase;
+  readonly revealMode: RevealMode;
   readonly players: readonly LivePlayer[];
   readonly question: LiveQuestion | null;
   readonly closed: boolean;
@@ -72,10 +75,17 @@ function readRoomState(payload: unknown): RoomStatePayload | null {
   return payload as RoomStatePayload;
 }
 
+function readRevealMode(value: unknown): RevealMode {
+  return Object.values(RevealMode).includes(value as RevealMode)
+    ? (value as RevealMode)
+    : DEFAULT_REVEAL_MODE;
+}
+
 function readQuestion(payload: unknown): {
   question: LiveQuestion;
   closed: boolean;
   allowChanges: boolean;
+  phase: RoomPhase;
 } | null {
   const entry = record(payload);
   const question = entry === null ? null : record(entry["question"]);
@@ -93,6 +103,10 @@ function readQuestion(payload: unknown): {
     question: entry["question"] as LiveQuestion,
     closed: entry["closed"] === true,
     allowChanges: entry["allowChanges"] === true,
+    phase:
+      entry["phase"] === RoomPhase.Answers
+        ? RoomPhase.Answers
+        : RoomPhase.Question,
   };
 }
 
@@ -135,6 +149,7 @@ export async function createPlayer(
     joined: false,
     error: null,
     phase: RoomPhase.Lobby,
+    revealMode: DEFAULT_REVEAL_MODE,
     players: [],
     question: null,
     closed: false,
@@ -172,6 +187,7 @@ export async function createPlayer(
       update({
         players: payload.players,
         phase: payload.phase,
+        revealMode: readRevealMode(payload.revealMode),
         error: state.joined
           ? null
           : "The host did not let you in. The room may be full, or the quiz has started.",
@@ -188,6 +204,7 @@ export async function createPlayer(
       error: null,
       players: payload.players,
       phase: payload.phase,
+      revealMode: readRevealMode(payload.revealMode),
     });
     settleJoin(null);
   }
@@ -209,7 +226,7 @@ export async function createPlayer(
           allowChanges: shown.allowChanges,
           submitted: false,
           reveal: null,
-          phase: RoomPhase.Question,
+          phase: shown.phase,
         });
       }
       return;
@@ -222,9 +239,13 @@ export async function createPlayer(
       const reveal = readReveal(payload);
       if (reveal !== null) {
         // The reveal carries the board, so a reconnect needs no second message.
+        // In the answer pass it is content, and the pass goes on.
         update({
           reveal,
-          phase: RoomPhase.Reveal,
+          phase:
+            state.phase === RoomPhase.Answers
+              ? RoomPhase.Answers
+              : RoomPhase.Reveal,
           closed: true,
           leaderboard: reveal.leaderboard,
         });
@@ -291,7 +312,11 @@ export async function createPlayer(
     },
     submit(response) {
       const question = state.question;
-      if (question === null || state.submitted) {
+      if (
+        question === null ||
+        state.submitted ||
+        state.phase !== RoomPhase.Question
+      ) {
         return;
       }
       room.send(

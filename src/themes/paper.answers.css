@@ -1,37 +1,28 @@
-/* Paper, part two: answers, fields, notes, controls. Built into paper.css. */
+/* Paper, part two: answers, fields, media, notes. Built into paper.css. */
 
 /* Answers: cream cards, honey numbers, one good shadow. */
 .pq-answers {
-  display: grid;
-  gap: 0.65rem;
-  width: 100%;
-  max-width: 56rem;
-  margin: clamp(1rem, 3vh, 2rem) auto 0;
-  padding: 0;
-  list-style: none;
-}
+  max-width: var(--pq-max-slide);
+  margin: var(--pq-gap-lg) auto 0;
 
-@media (min-width: 60rem) {
-  .pq-answers {
+  @media (min-width: 60rem) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.8rem 1rem;
-  }
+    gap: var(--pq-gap) var(--pq-gap-lg);
 
-  .pq-answers > li:only-child {
-    grid-column: 1 / -1;
+    > li:only-child {
+      grid-column: 1 / -1;
+    }
   }
 }
 
 .pq-answer {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  width: 100%;
+  gap: var(--pq-gap);
   min-height: 3.35rem;
-  padding: 0.8rem 1.05rem;
-  border: 1px solid var(--pq-line);
+  padding: var(--pq-gap) var(--pq-gap-lg);
   border-radius: var(--pq-r-organic);
-  background: var(--pq-slide);
   box-shadow: var(--pq-shadow-1);
   color: var(--pq-ink);
   font: inherit;
@@ -42,41 +33,66 @@
     transform 140ms,
     box-shadow 140ms,
     border-color 140ms;
-}
 
-.pq-answer:hover {
-  border-color: var(--pq-line-strong);
-  box-shadow: var(--pq-shadow-2);
-  transform: translateY(-1px) rotate(-0.35deg);
-}
+  /* Room for the points bubble only when there is one to make room for. */
+  &:has(.pq-answer-score) {
+    padding-right: 3.2rem;
+  }
 
-.pq-answer:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 3px;
-}
+  &:not(.pq-answer-static):hover {
+    border-color: var(--pq-line-strong);
+    box-shadow: var(--pq-shadow-2);
+    transform: translateY(-1px) rotate(-0.35deg);
+  }
 
-.pq-answer[data-pq-selected="true"] {
-  border-color: var(--pq-accent);
-  background: color-mix(in srgb, var(--pq-accent) 9%, var(--pq-slide));
-  box-shadow:
-    inset 0 0 0 2px var(--pq-accent),
-    var(--pq-shadow-1);
-}
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 3px;
+  }
 
-.pq-answer-number {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50% 45% 50% 48%;
-  background: var(--pq-round-shade, var(--pq-honey-soft));
-  color: var(--pq-accent-ink, #3b2e14);
-  font-family: var(--pq-font-label);
-  font-weight: 700;
-  font-size: 0.85em;
-  font-variant-numeric: tabular-nums;
-  text-transform: uppercase;
+  &[data-pq-selected="true"] {
+    border-color: var(--pq-accent);
+    background: color-mix(in srgb, var(--pq-accent) 9%, var(--pq-slide));
+    box-shadow:
+      inset 0 0 0 2px var(--pq-accent),
+      var(--pq-shadow-1);
+  }
+
+  &[data-pq-correct="true"] {
+    border-color: var(--pq-right);
+    background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
+    box-shadow:
+      inset 0 0 0 2px var(--pq-right),
+      var(--pq-shadow-1);
+    animation: pq-pop 180ms ease-out;
+
+    .pq-answer-number {
+      border-radius: var(--pq-r-pill);
+      background: var(--pq-fern);
+      color: var(--pq-code-bg);
+    }
+
+    .pq-mark {
+      color: var(--pq-right);
+    }
+  }
+
+  &[data-pq-correct="false"] {
+    opacity: 0.5;
+
+    &:not(.pq-answer-static) {
+      box-shadow: none;
+      transform: scale(0.985);
+    }
+
+    .pq-answer-number {
+      text-decoration: line-through;
+    }
+
+    .pq-mark {
+      color: var(--pq-wrong);
+    }
+  }
 }
 
 /* Answer mode: cards, not buttons. A room reads them out loud. */
@@ -84,21 +100,26 @@
   cursor: default;
 }
 
-.pq-answer-static:hover {
-  transform: none;
-  box-shadow: var(--pq-shadow-1);
-  border-color: var(--pq-line);
+.pq-answer-number,
+.pq-answer-score {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.pq-answer-static[data-pq-correct="true"] {
-  border-color: var(--pq-right);
-  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
-  opacity: 1;
-  transform: none;
-}
-
-.pq-answer-static[data-pq-correct="false"] {
-  opacity: 0.55;
+.pq-answer-number {
+  flex: 0 0 auto;
+  border-radius: 50% 45% 50% 48%;
+  background: var(--pq-round-shade, var(--pq-honey-soft));
+  color: var(--pq-accent-ink, var(--pq-ink));
+  font-weight: 700;
+  font-size: 0.85em;
+  text-transform: uppercase;
 }
 
 .pq-answer-text {
@@ -106,66 +127,21 @@
   white-space: pre-wrap;
 }
 
-.pq-answer[data-pq-correct="true"] {
-  border-color: var(--pq-right);
-  background: color-mix(in srgb, var(--pq-fern) 16%, var(--pq-slide));
-  box-shadow:
-    inset 0 0 0 2px var(--pq-right),
-    var(--pq-shadow-1);
-  animation: pq-pop 180ms ease-out;
-}
-
-.pq-answer[data-pq-correct="true"] .pq-answer-number {
-  background: var(--pq-fern);
-  color: #1d2a16;
-}
-
-.pq-answer[data-pq-correct="false"] {
-  opacity: 0.45;
-  transform: scale(0.985);
-  box-shadow: none;
-}
-
-.pq-answer[data-pq-correct="false"] .pq-answer-number {
-  text-decoration: line-through;
-}
-
 .pq-mark {
   font-weight: 700;
 }
 
 /* Points earned by this answer, in the corner, like V2. */
-.pq-answer {
-  position: relative;
-  padding-right: 3.2rem;
-}
-
 .pq-answer-score {
   position: absolute;
   top: -0.5rem;
   right: -0.4rem;
-  display: inline-grid;
-  place-items: center;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0 0.4rem;
+  padding: 0 var(--pq-gap-sm);
   border: 2px solid var(--pq-slide);
-  border-radius: 999rem;
+  border-radius: var(--pq-r-pill);
   background: var(--pq-fern);
   box-shadow: var(--pq-shadow-1);
-  color: #14200f;
-  font-family: var(--pq-font-label);
-  font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.pq-answer[data-pq-correct="true"] .pq-mark {
-  color: var(--pq-right);
-}
-
-.pq-answer[data-pq-correct="false"] .pq-mark {
-  color: var(--pq-wrong);
+  color: var(--pq-code-bg);
 }
 
 @keyframes pq-pop {
@@ -183,12 +159,43 @@
 .pq-split {
   display: grid;
   gap: var(--pq-space);
+  align-items: center;
+  flex: 1 1 auto;
   width: 100%;
   max-width: 72rem;
   margin-inline: auto;
+  padding-top: var(--pq-gap);
+
+  /* A split stacks on a phone and splits on a desk. */
+  @media (min-width: 60rem) {
+    &:not(.pq-split-single) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .pq-split-right {
+      padding-left: var(--pq-space);
+      border-left: 1px dashed var(--pq-line);
+    }
+  }
+
+  /* Half a slide already has a column; a grid inside it does not need two. */
+  .pq-answers {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
+  }
+
+  .pq-media-list {
+    margin-top: 0;
+  }
+}
+
+.pq-split-single {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   flex: 1 1 auto;
-  align-items: center;
-  padding: clamp(0.5rem, 2vh, 1.25rem) 0 0;
+  max-width: var(--pq-max-slide);
+  margin-inline: auto;
 }
 
 .pq-split-left,
@@ -199,89 +206,29 @@
   min-width: 0;
 }
 
-.pq-split-single {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1 1 auto;
-  max-width: 56rem;
-  margin-inline: auto;
-}
-
-@media (min-width: 60rem) {
-  .pq-split:not(.pq-split-single) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .pq-split-right {
-    padding-left: var(--pq-space);
-    border-left: 1px dashed var(--pq-line);
-  }
-}
-
-.pq-split-right .pq-answers {
-  margin-top: 0;
-}
-
-/* One answer per row inside a half. Two columns in 550px is a squeeze. */
-.pq-split .pq-answers {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.6rem;
-}
-
-.pq-split-right .pq-media-list {
-  margin-top: 0;
-}
-
-.pq-screen-question .pq-meta-strip {
-  border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
-}
-
-/* Comments read like a note under the question, not another heading. */
-.pq-comments {
-  max-width: 46ch;
-  margin: clamp(0.7rem, 2vh, 1.1rem) auto 0;
-  color: var(--pq-muted);
-  text-align: center;
-  font-size: 1.02rem;
-}
-
 .pq-comments p {
   margin: 0;
 }
 
 /* Typed answers sit on a line, like a form on paper. They share the question's
- * column, so an input lines up with the cards beside it instead of hanging off
- * to one side of the text above it. */
+ * column, so an input lines up with the cards beside it. */
 .pq-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
   max-width: 100%;
-  margin: clamp(0.9rem, 2.6vh, 1.6rem) auto 0;
-}
-
-.pq-field-label {
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  margin: var(--pq-gap-lg) auto 0;
 }
 
 .pq-input {
-  width: 100%;
-  max-width: 100%;
   min-height: 3rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--pq-line);
-  border-radius: var(--pq-r-md);
-  background: var(--pq-slide);
   color: var(--pq-ink);
   font: inherit;
   line-height: 1.4;
-  box-shadow: inset 0 1px 2px rgb(74 58 30 / 0.08);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--pq-ink) 8%, transparent);
+
+  &:focus-visible {
+    outline: var(--pq-focus);
+    outline-offset: 1px;
+  }
 }
 
 /* The answer box is read from across a room; a settings field is not. */
@@ -289,89 +236,84 @@
   font-size: 1.25rem;
 }
 
-.pq-input:focus-visible {
-  outline: 3px solid var(--pq-accent);
-  outline-offset: 1px;
-}
-
 .pq-input-number {
   max-width: 12rem;
 }
 
 .pq-cloze {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.9rem;
-  margin-top: clamp(1rem, 3vh, 1.8rem);
+  margin-top: var(--pq-gap-lg);
+
+  /* Blanks share the row instead of sitting in fixed boxes at one end. */
+  .pq-field {
+    flex: 1 1 12rem;
+    width: auto;
+    margin: 0;
+  }
 }
 
-/* Blanks share the row instead of sitting in fixed little boxes at one end. */
-.pq-cloze .pq-field {
-  flex: 1 1 12rem;
-  width: auto;
+.pq-answers-plain {
+  margin: var(--pq-gap-lg) 0 0;
+  padding-left: var(--pq-gap-lg);
+  font-size: var(--pq-text-md);
+}
+
+.pq-media-list {
+  margin-top: var(--pq-gap-lg);
+}
+
+.pq-media {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  justify-items: center;
   max-width: 100%;
   margin: 0;
 }
 
-.pq-answers-plain {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin: 1.4rem 0 0;
-  padding-left: 1.4rem;
-  color: var(--pq-muted);
-  font-size: 1.1rem;
-}
-
-.pq-media-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: clamp(1rem, 3vh, 1.8rem);
-}
-
-.pq-media-list img,
-.pq-media-list video {
+.pq-media img,
+.pq-media video {
   max-width: 100%;
   max-height: 55vh;
   border-radius: var(--pq-r-md);
   box-shadow: var(--pq-shadow-1);
 }
 
-.pq-hints {
-  max-width: 46ch;
-  margin: clamp(0.9rem, 2.6vh, 1.5rem) auto 0;
-  padding: 0.75rem 1rem;
-  border-left: 3px solid var(--pq-honey);
-  border-radius: 0 var(--pq-r-md) var(--pq-r-md) 0;
-  background: color-mix(in srgb, var(--pq-honey) 14%, transparent);
-  text-align: left;
+.pq-media audio {
+  width: min(100%, 26rem);
 }
 
-.pq-hints ul {
-  margin: 0;
-  padding-left: 1.2rem;
-}
-
-/* V2's comment slot: plain words under the question, no box of its own. Only
-   the answer reveal brings it, so it sits where the eye already is. */
-.pq-explanation {
-  max-width: 46ch;
-  margin: clamp(0.7rem, 2vh, 1.2rem) auto 0;
-  font-family: var(--pq-font-heading);
+.pq-media-credit {
+  font-size: var(--pq-text-xs);
   font-style: italic;
-  font-size: 1.05rem;
   text-align: center;
 }
 
-.pq-explanation::before {
-  content: "";
-  display: block;
-  width: 3rem;
-  margin: 0 auto 0.6rem;
-  border-top: 2px dotted var(--pq-fern);
+.pq-media-embed iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--pq-r-md);
+}
+
+.pq-media-link {
+  color: var(--pq-accent);
+  word-break: break-all;
+}
+
+.pq-media-missing {
+  padding: var(--pq-gap-lg);
+  color: var(--pq-muted);
+  text-align: center;
+}
+
+.pq-media-missing-text {
+  margin: 0;
+  color: var(--pq-ink);
+  font-weight: 600;
+}
+
+.pq-media-missing-hint {
+  margin: var(--pq-gap-sm) 0 0;
+  font-size: var(--pq-text-sm);
 }
 
 /* Markdown images, in a question or an answer. Small enough to share a card. */
@@ -387,26 +329,51 @@
 .pq-answer .pq-media {
   margin: 0;
   pointer-events: none;
+
+  img,
+  video {
+    max-height: 5.5rem;
+    border-radius: var(--pq-r-sm);
+  }
 }
 
-.pq-answer .pq-media img,
-.pq-answer .pq-media video {
-  max-height: 5.5rem;
-  max-width: 100%;
-  border-radius: var(--pq-r-sm);
+.pq-hints {
+  max-width: var(--pq-max-text);
+  margin: var(--pq-gap-lg) auto 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--pq-honey);
+  border-radius: 0 var(--pq-r-md) var(--pq-r-md) 0;
+  background: color-mix(in srgb, var(--pq-honey) 14%, transparent);
+  text-align: left;
+
+  ul {
+    margin: 0;
+    padding-left: 1.2rem;
+  }
 }
 
-.pq-answer .pq-media audio {
-  max-width: 100%;
+/* V2's comment slot: plain words under the question, no box of its own. Only
+   the answer reveal brings it, so it sits where the eye already is. */
+.pq-explanation {
+  max-width: var(--pq-max-text);
+  margin: var(--pq-gap) auto 0;
+  font-family: var(--pq-font-heading);
+  font-style: italic;
+  font-size: var(--pq-text-md);
+  text-align: center;
+
+  &::before {
+    content: "";
+    display: block;
+    width: 3rem;
+    margin: 0 auto 0.6rem;
+    border-top: 2px dotted var(--pq-fern);
+  }
 }
 
 /* Sources, quiet, under the explanation. V2 put them in small print too. */
 .pq-sources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  max-width: 46ch;
+  max-width: var(--pq-max-text);
   margin: 0.55rem auto 0;
-  color: var(--pq-muted);
-  font-size: 0.82rem;
+  font-size: var(--pq-text-xs);
 }

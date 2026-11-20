@@ -16,9 +16,8 @@
   </head>
   <body>
     <div id="quiz"></div>
-
     <script type="module">
-      import { createQuiz, mountQuiz } from "../dist/v3/player.js";
+      import { Quiz } from "../dist/v3/player.js";
 
       const text = `
 # The Wayward Melody Demo
@@ -45,9 +44,9 @@ Answers => 1969
 Type => Cloze
 `;
 
-      const quiz = createQuiz({ config: { seed: "music-night" } });
-      mountQuiz(quiz, document.querySelector("#quiz"));
-      await quiz.load({ type: "text", text, file: "demo.trivia" });
+      // One line. The text loads itself and the quiz mounts itself into
+      // `#quiz`; leave the id out and it appends to the body instead.
+      new Quiz({ text, file: "demo.trivia", id: "quiz", seed: "music-night" });
     </script>
   </body>
 </html>

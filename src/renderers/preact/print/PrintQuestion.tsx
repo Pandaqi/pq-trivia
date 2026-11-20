@@ -5,6 +5,7 @@
 
 import type { JSX } from "preact";
 import { parseInline } from "../../../core/format/inline";
+import { numberPrefix } from "../../../core/format/numbering";
 import { answerRefs } from "../../../core/model/answers";
 import {
   isOpenType,
@@ -13,10 +14,11 @@ import {
 } from "../../../core/model/question";
 import type { SessionState } from "../../../core/session/session";
 import type { MediaOptions } from "../../../core/values/media";
-import { toMediaViewModel } from "../../../core/session/viewModel";
+import { toMediaViewModel, typeHintOf } from "../../../core/session/viewModel";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { useT } from "../i18n";
+import { typeHintText } from "../typeHint";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -29,7 +31,9 @@ export function PrintQuestion({
   showAnswers,
   face = null,
   answerLines = false,
+  typeHints = false,
   media = {},
+  numbers = true,
 }: {
   readonly question: QuestionModel;
   readonly index: number;
@@ -40,7 +44,11 @@ export function PrintQuestion({
   readonly face?: "front" | "back" | null;
   /** Ruled space to write on. Off unless the host asks for it. */
   readonly answerLines?: boolean;
+  /** `PrintTypeHints => false` leaves the paper with the question only. */
+  readonly typeHints?: boolean;
   readonly media?: MediaOptions;
+  /** `QuestionNumbers => false` leaves the title bare. */
+  readonly numbers?: boolean;
 }): JSX.Element {
   const t = useT();
   const [title = "", ...body] = question.text.map((value) => value.text);
@@ -56,6 +64,10 @@ export function PrintQuestion({
   const front = face === "front";
   const back = face === "back";
   const reveal = back || (face === null && showAnswers);
+  const hint = typeHintOf(question);
+  // The answer side and an answers-only sheet do not need the rule again.
+  const hintText =
+    typeHints && !reveal && hint !== null ? typeHintText(t, hint) : null;
 
   const answers = (
     <ul class="pq-answers">
@@ -107,8 +119,10 @@ export function PrintQuestion({
       <div class={split && !front ? "pq-split" : "pq-split pq-split-single"}>
         <div class="pq-split-left">
           <h2 class="pq-title">
+            {numberPrefix(index + 1, numbers)}
             <Inline nodes={parseInline(title).nodes} />
           </h2>
+          {hintText === null ? null : <p class="pq-type-hint">{hintText}</p>}
           {body.length === 0 ? null : (
             <p class="pq-body">
               <Inline nodes={parseInline(body.join("\n")).nodes} />

@@ -12,6 +12,7 @@ import type { ComponentChildren } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
 import { PlayMode } from "../../../core/session/session";
 import type { QuestionModel } from "../../../core/model/question";
+import { numberPrefix } from "../../../core/format/numbering";
 import { roundAccent, roundAccentInk } from "../components/roundAccent";
 import { PrintForm, type FormRound } from "./PrintForm";
 import { PrintGrade } from "./PrintGrade";
@@ -136,6 +137,7 @@ export function PrintSheet({
     (variant === "auto" && state.mode === PlayMode.Answers);
   const indexOf = (question: QuestionModel): number =>
     questions.indexOf(question);
+  const numbers = quiz.config.questionNumbers !== false;
 
   const question = (
     item: QuestionModel,
@@ -150,7 +152,12 @@ export function PrintSheet({
       showAnswers={showAnswers || state.revealed.includes(item.id)}
       face={face}
       answerLines={quiz.config.printAnswerLines === true}
+      typeHints={
+        quiz.config.questionTypeHints !== false &&
+        quiz.config.printTypeHints !== false
+      }
       media={quiz.config}
+      numbers={numbers}
     />
   );
 
@@ -227,6 +234,7 @@ export function PrintSheet({
               rounds={rounds}
               compact={options.formStyle === "compact"}
               roundPageBreak={options.roundPageBreak === true}
+              numbers={numbers}
             />
           ) : (
             <PrintGrade
@@ -234,6 +242,7 @@ export function PrintSheet({
               rounds={rounds}
               compact={options.formStyle === "compact"}
               roundPageBreak={options.roundPageBreak === true}
+              numbers={numbers}
             />
           )}
         </>
@@ -262,7 +271,7 @@ export function PrintSheet({
                   </div>
                 </Page>
               ))
-            : plan.rounds.map((round) => {
+            : plan.rounds.map((round, roundIndex) => {
                 const items = questions.filter(
                   (item) => item.round === round.id,
                 );
@@ -278,7 +287,10 @@ export function PrintSheet({
                       questionId={round.id}
                     >
                       <p class="pq-round-number">{t("printRound")}</p>
-                      <h2 class="pq-round-name">{round.name}</h2>
+                      <h2 class="pq-round-name">
+                        {numberPrefix(roundIndex + 1, numbers)}
+                        {round.name}
+                      </h2>
                       <p class="pq-round-stats">
                         {t("printStats", {
                           questions: `${items.length} ${t(

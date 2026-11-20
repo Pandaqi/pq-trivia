@@ -30,11 +30,14 @@ export function PrintGrade({
   rounds,
   compact,
   roundPageBreak,
+  numbers = true,
 }: {
   readonly questions: readonly QuestionModel[];
   readonly rounds: readonly FormRound[];
   readonly compact: boolean;
   readonly roundPageBreak: boolean;
+  /** Use the numbers the question pages show. Off falls back to per round. */
+  readonly numbers?: boolean;
 }): JSX.Element {
   const t = useT();
   return (
@@ -75,7 +78,9 @@ export function PrintGrade({
               <tbody>
                 {items.map((question, index) => (
                   <tr key={question.id}>
-                    <td class="pq-grade-number">{index + 1}</td>
+                    <td class="pq-grade-number">
+                      {numbers ? questions.indexOf(question) + 1 : index + 1}
+                    </td>
                     <td>
                       {question.text.map((value) => value.text).join(" ")}
                     </td>

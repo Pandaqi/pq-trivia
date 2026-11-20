@@ -5,6 +5,7 @@
  * what a page contains.
  */
 
+import { numberPrefix } from "../format/numbering";
 import { answerRefs } from "../model/answers";
 import type { QuizMeta } from "../model/quiz";
 import type { QuestionModel } from "../model/question";
@@ -63,6 +64,8 @@ export interface PrintModelOptions {
   readonly includeExplanations?: boolean;
   /** Same folder, link prefixes and formats the player uses. */
   readonly media?: MediaOptions;
+  /** `QuestionNumbers => false` prints bare titles. On when unset. */
+  readonly numbers?: boolean;
 }
 
 function printsOnPaper(question: QuestionModel): boolean {
@@ -76,6 +79,7 @@ function questionFor(
   index: number,
   plan: QuizPlan,
   options: PrintModelOptions,
+  number: number,
 ): PrintQuestion {
   const showCorrect =
     options.variant === "answers" || options.variant === "grade";
@@ -88,7 +92,7 @@ function questionFor(
     index,
     id: question.id,
     type: question.type,
-    title,
+    title: `${numberPrefix(number, options.numbers !== false)}${title}`,
     body,
     answers: refs.map((ref) => ({
       text: ref.value.text,
@@ -124,6 +128,12 @@ export function buildPrintModel(
 ): PrintDocument {
   plan = visiblePlan(plan);
   const perPage = options.perPage ?? 1;
+  // Number like the player does: count what actually prints, in order.
+  const numberById = new Map(
+    plan.questions
+      .filter(printsOnPaper)
+      .map((question, index) => [question.id, index + 1]),
+  );
   const pages: PrintPage[] = [];
   let number = 0;
 
@@ -147,15 +157,27 @@ export function buildPrintModel(
 
   push(PrintPageKind.Cover, meta.title, meta.description, null, []);
 
-  for (const round of plan.rounds) {
-    push(PrintPageKind.Round, round.name, round.secret, round.name, []);
+  for (const [roundIndex, round] of plan.rounds.entries()) {
+    push(
+      PrintPageKind.Round,
+      `${numberPrefix(roundIndex + 1, options.numbers !== false)}${round.name}`,
+      round.secret,
+      round.name,
+      [],
+    );
     const items = plan.questions.filter(
       (question) => question.round === round.id && printsOnPaper(question),
     );
     for (let index = 0; index < items.length; index += perPage) {
       const slice = items.slice(index, index + perPage);
       const printed = slice.map((question) =>
-        questionFor(question, plan.questions.indexOf(question), plan, options),
+        questionFor(
+          question,
+          plan.questions.indexOf(question),
+          plan,
+          options,
+          numberById.get(question.id) ?? 0,
+        ),
       );
       const first = printed[0];
       push(

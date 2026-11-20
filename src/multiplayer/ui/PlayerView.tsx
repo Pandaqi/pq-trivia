@@ -2,10 +2,17 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { QuestionType } from "../../core/model/question";
 import type { Response } from "../../core/session/responses";
 import type { PlayerRoom } from "../player";
-import { RoomPhase, type LiveQuestion, type RevealPayload } from "../types";
-import { Leaderboard } from "./parts";
+import {
+  RevealMode,
+  RoomPhase,
+  type LivePlayer,
+  type LiveQuestion,
+  type RevealPayload,
+} from "../types";
+import { Leaderboard, RevealPanel } from "./parts";
 import { PlayerAnswer } from "./PlayerAnswer";
 
 function usePlayer(player: PlayerRoom): number {
@@ -19,15 +26,22 @@ function usePlayer(player: PlayerRoom): number {
 
 function QuestionBody({
   question,
+  kicker,
 }: {
   readonly question: LiveQuestion;
+  readonly kicker: string;
 }): JSX.Element {
+  const section = question.type === QuestionType.Section;
+  const round = question.roundName === null ? "" : ` · ${question.roundName}`;
+  const points = ` · ${question.points} ${
+    question.points === 1 ? "point" : "points"
+  }`;
   return (
     <section class="pq-live-question">
       <p class="pq-live-meta">
-        Question {question.index + 1} of {question.total}
-        {question.roundName === null ? "" : ` · ${question.roundName}`}
-        {` · ${question.points} ${question.points === 1 ? "point" : "points"}`}
+        {section
+          ? (question.roundName ?? "Round")
+          : `${kicker} ${question.index + 1} of ${question.total}${round}${points}`}
       </p>
       <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
         {question.title}
@@ -46,32 +60,34 @@ function QuestionBody({
   );
 }
 
-function Reveal({
+/** Answer mode on the phone: the question, then the host's answers. */
+function AnswerPass({
+  question,
   reveal,
-  selfId,
+  players,
+  self,
 }: {
-  readonly reveal: RevealPayload;
-  readonly selfId: string | null;
+  readonly question: LiveQuestion;
+  readonly reveal: RevealPayload | null;
+  readonly players: readonly LivePlayer[];
+  readonly self: string | null;
 }): JSX.Element {
-  const mine = selfId === null ? undefined : reveal.results[selfId];
   return (
-    <section class="pq-live-reveal" aria-label="Answer">
-      <p class="pq-live-kicker">The answer</p>
-      <p class="pq-live-answer">{reveal.correct.join(" / ")}</p>
-      {reveal.explanation === null ? null : (
-        <p class="pq-explanation">{reveal.explanation}</p>
-      )}
-      {mine === undefined ? (
-        <p class="pq-live-hint">You did not answer this one.</p>
-      ) : (
-        <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
-          <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
-          {mine.late ? "Late. No points." : `${mine.points} points`}
-          {mine.given.length === 0 ? "" : ` · you said: ${mine.given}`}
+    <>
+      <QuestionBody question={question} kicker="Answers" />
+      {reveal === null ? (
+        <p class="pq-live-hint" role="status">
+          The host is showing the answers.
         </p>
+      ) : (
+        <RevealPanel
+          reveal={reveal}
+          players={players}
+          selfId={self}
+          showEveryone
+        />
       )}
-      <Leaderboard rows={reveal.leaderboard} selfId={selfId} />
-    </section>
+    </>
   );
 }
 
@@ -121,12 +137,34 @@ export function PlayerView({
     );
   }
 
+  if (state.phase === RoomPhase.Answers) {
+    return (
+      <main class="pq-screen pq-live-screen">
+        <p class="pq-live-kicker">Room {state.code}</p>
+        <AnswerPass
+          question={question}
+          reveal={reveal}
+          players={state.players}
+          self={state.id}
+        />
+      </main>
+    );
+  }
+
+  const section = question.type === QuestionType.Section;
   return (
     <main class="pq-screen pq-live-screen">
       <p class="pq-live-kicker">Room {state.code}</p>
-      <QuestionBody question={question} />
+      <QuestionBody
+        question={question}
+        kicker={section ? "Round" : "Question"}
+      />
 
-      {reveal === null ? (
+      {section ? (
+        <p class="pq-live-hint" role="status">
+          The next question is coming. Keep an eye on the big screen.
+        </p>
+      ) : reveal === null ? (
         <>
           <PlayerAnswer
             question={question}
@@ -145,7 +183,12 @@ export function PlayerView({
           ) : null}
         </>
       ) : (
-        <Reveal reveal={reveal} selfId={state.id} />
+        <RevealPanel
+          reveal={reveal}
+          players={state.players}
+          selfId={state.id}
+          showEveryone={state.revealMode === RevealMode.Pass}
+        />
       )}
     </main>
   );

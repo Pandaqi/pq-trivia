@@ -102,6 +102,14 @@ export const CONFIG_HEADER_ROWS = [
   },
   { attribute: "LanguageDefault", key: "languageDefault", kind: "text" },
 
+  // Staged reveals, for a whole quiz at once.
+  { attribute: "DefaultSteps", key: "defaultSteps", kind: "list" },
+  {
+    attribute: "DefaultStepTransition",
+    key: "defaultStepTransition",
+    kind: "text",
+  },
+
   // Interface switches.
   { attribute: "HideErrors", key: "hideErrors", kind: "boolean" },
   { attribute: "HideDefaultStyles", key: "hideDefaultStyles", kind: "boolean" },
@@ -119,6 +127,7 @@ export const CONFIG_HEADER_ROWS = [
     key: "printAnswerLines",
     kind: "boolean",
   },
+  { attribute: "PrintTypeHints", key: "printTypeHints", kind: "boolean" },
   { attribute: "EnableSafety", key: "enableSafety", kind: "boolean" },
   { attribute: "EnableMouse", key: "enableMouse", kind: "boolean" },
   { attribute: "DisableKeys", key: "disableKeys", kind: "boolean" },
@@ -128,6 +137,12 @@ export const CONFIG_HEADER_ROWS = [
   { attribute: "Toolbar", key: "toolbar", kind: "list" },
   { attribute: "AnswerLabels", key: "answerLabels", kind: "text" },
   { attribute: "MetadataIcons", key: "metadataIcons", kind: "boolean" },
+  {
+    attribute: "QuestionTypeHints",
+    key: "questionTypeHints",
+    kind: "boolean",
+  },
+  { attribute: "QuestionNumbers", key: "questionNumbers", kind: "boolean" },
   { attribute: "AllowInput", key: "allowInput", kind: "boolean" },
   { attribute: "CodeHighlight", key: "codeHighlight", kind: "boolean" },
   { attribute: "AllowScripts", key: "allowScripts", kind: "boolean" },
@@ -191,7 +206,7 @@ export const CONFIG_CODE_ONLY = [
   },
   {
     key: "id",
-    why: "V3 mounts one quiz per element; V2 container IDs are gone.",
+    why: "The player mounts into this element. A shared quiz file should not pick its own place on the page.",
   },
   { key: "language", why: "The `Language` header sets the current language." },
   {

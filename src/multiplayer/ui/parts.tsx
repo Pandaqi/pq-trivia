@@ -2,7 +2,13 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import type { LeaderRow, LivePlayer } from "../types";
+import type {
+  LeaderRow,
+  LivePlayer,
+  PlayerResult,
+  RevealItem,
+  RevealPayload,
+} from "../types";
 
 type QrMatrix = readonly (readonly boolean[])[];
 
@@ -17,7 +23,7 @@ function JoinQr({ link }: { readonly link: string }): JSX.Element | null {
   // screen is the only place that needs it, so it loads on its own.
   useEffect(() => {
     let live = true;
-    void import("uqr")
+    void import("./qr")
       .then(({ encode }) => {
         if (live) {
           setMatrix(encode(link, { ecc: "M", border: 3 }).data);
@@ -139,6 +145,79 @@ export function Leaderboard({
           </li>
         ))}
       </ol>
+    </section>
+  );
+}
+
+/**
+ * What the reveal shows. One question or a whole round; a personal verdict or
+ * everyone's answers, which is the point of the paper mode.
+ */
+export function RevealPanel({
+  reveal,
+  players,
+  selfId = null,
+  showEveryone = false,
+}: {
+  readonly reveal: RevealPayload;
+  readonly players: readonly LivePlayer[];
+  readonly selfId?: string | null | undefined;
+  readonly showEveryone?: boolean;
+}): JSX.Element {
+  const mineOf = (item: RevealItem): PlayerResult | undefined =>
+    selfId === null ? undefined : item.results[selfId];
+  const single = reveal.items.length === 1;
+  return (
+    <section class="pq-live-reveal" aria-label="Answers">
+      {reveal.items.map((item) => {
+        const mine = mineOf(item);
+        return (
+          <div class="pq-live-reveal-item" key={item.questionId}>
+            {single ? null : (
+              <p class="pq-live-kicker">Question {item.index + 1}</p>
+            )}
+            <p class="pq-live-answer">{item.correct.join(" / ") || "—"}</p>
+            {item.explanation === null ? null : (
+              <p class="pq-explanation">{item.explanation}</p>
+            )}
+            {showEveryone ? (
+              <ol class="pq-live-rows">
+                {players.map((player) => {
+                  const result = item.results[player.id];
+                  return (
+                    <li
+                      key={player.id}
+                      data-pq-self={player.id === selfId ? "true" : undefined}
+                      data-pq-correct={String(result?.correct === true)}
+                    >
+                      <span class="pq-live-name">{player.name}</span>
+                      <span class="pq-live-given">
+                        {result === undefined || result.given.length === 0
+                          ? "—"
+                          : result.given}
+                      </span>
+                      <span class="pq-live-score">
+                        {result === undefined
+                          ? ""
+                          : result.correct
+                            ? `+${result.points}`
+                            : "0"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : mine === undefined ? null : (
+              <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
+                <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
+                {mine.late ? "Late. No points." : `${mine.points} points`}
+                {mine.given.length === 0 ? "" : ` · you said: ${mine.given}`}
+              </p>
+            )}
+          </div>
+        );
+      })}
+      <Leaderboard rows={reveal.leaderboard} selfId={selfId} />
     </section>
   );
 }

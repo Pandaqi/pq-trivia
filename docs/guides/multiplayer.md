@@ -58,6 +58,53 @@ On a phone:
 Without a name or a code in the URL, the player shows a name form. The room
 code comes from `?pq-live=ABCD`.
 
+## When the answers come out
+
+Four modes. The host picks one when the room opens.
+
+| `revealMode`   | The reveal happens                                  |
+| -------------- | --------------------------------------------------- |
+| `Question`     | After every question. The classic.                  |
+| `Round`        | After the last question of a round.                 |
+| `End`          | At the end of the quiz. Scores only, no answers.    |
+| `Pass`         | Never during play, then a second pass in answer mode. |
+
+```js
+import { LiveRole, RevealMode, mountLive } from "./multiplayer.js";
+
+mountLive({
+  target: document.querySelector("#host"),
+  role: LiveRole.Host,
+  code: "ABCD",
+  quiz,
+  transport,
+  revealMode: RevealMode.Round,
+});
+```
+
+`Pass` is the paper version. Everybody plays the whole quiz without a peek.
+Then the host walks back through it and the phones show every answer next to
+every name. Marking sheets at the table, with the sheets already collected.
+
+A custom host UI needs two calls. Both know the mode, so neither needs to
+count questions:
+
+```js
+host.reveal(); // what the mode allows. Nothing when nothing is due.
+host.next(); // next question, next reveal, the answer pass, or the end.
+```
+
+Round cards go to the phones too, so a player never sits on a frozen screen
+between rounds. The host's lobby has both settings: a **Reveal** select and a
+**round cards** checkbox. A custom host calls them directly, and both are
+ignored after the first question, because changing either would move the flow
+positions under everyone:
+
+```js
+host.setRevealMode(RevealMode.Round);
+host.setSections(false); // keep the round title on the projector only
+```
+
 ## What a player receives
 
 A question, its answers, its media and its points. Not the correct answers.

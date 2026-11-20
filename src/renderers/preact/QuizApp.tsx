@@ -195,6 +195,11 @@ export function QuizApp({
         return;
       }
       event.preventDefault();
+      // A staged question eats the first "next". The last step passes through
+      // to the usual navigation, so the key never feels stuck.
+      if (name === "next" && quiz.nextStep()) {
+        return;
+      }
       if (name === "media") {
         const media =
           root.current?.querySelector<HTMLMediaElement>("audio, video");

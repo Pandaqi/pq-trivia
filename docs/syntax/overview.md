@@ -139,6 +139,50 @@ Answers => photo.jpg | intro.mp3 | A text answer
 Images lazy-load. Audio and video never autoplay with sound. `alt` is checked
 in strict mode.
 
+## Steps
+
+A question can arrive in parts:
+
+```txt
+### Which year is this clip from?
+Media => intro.mp4
+Answers => 1969 | 1972 | 1975
+Steps => media | question | answers
+```
+
+- Step one shows the video. Step two brings in the question. Step three brings in
+  the answers.
+- A part stays. Step three still shows the video.
+- Parts: `media`, `question`, `answers`, `comments`, `hints`, `sources`,
+  `explanation`.
+- `all` means everything that is left: `Steps => media | all`.
+- A part you do not name joins the last step, so the screen always ends complete.
+- No `Steps`? Everything appears at once, exactly like before.
+
+Put an animation between two parts to say how the next one comes in:
+
+```txt
+Steps => media | fade | question | slide-up | answers
+```
+
+The name stays in force until another one changes it, so one `fade` at the front
+covers the rest. These are the same names `Transition` takes: `fade`,
+`slide-up`, `slide-left`, `slide-right`, `zoom-in`, `zoom-out`, `flip-x`,
+`wipe`, `blur-in`, `shake`, `pulse`, `none`.
+
+One list for the whole quiz lives in the header:
+
+```txt
+DefaultSteps => media | question | answers
+DefaultStepTransition => fade
+```
+
+A question's own `Steps` wins over `DefaultSteps`.
+
+To move on: the **Next step** button, the next-question key, or a video that
+finishes playing. Revealing the answer shows everything at once, so nobody waits
+through three clicks.
+
 ## Masks
 
 ```txt
@@ -230,5 +274,5 @@ Includes are a CLI preprocessor. The browser never fetches a surprise file.
 
 ## Every attribute
 
-The [reference](/syntax/reference) is generated from `attributeRegistry.ts`.
+The [reference](reference.html) is generated from `attributeRegistry.ts`.
 Same source as the docs and the tooling, so it cannot drift.

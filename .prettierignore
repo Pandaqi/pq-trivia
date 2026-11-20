@@ -1,0 +1,8 @@
+# The build owns these. Formatting them only makes noise in `bun run fmt:check`.
+dist/
+
+# Prose and tables are written by hand. Bun's formatter rewrites Markdown
+# tables to its own width, so a padded table comes back padded; leaving
+# Markdown out of the formatter means the tables stay exactly as authored
+# and generated docs are not rewritten either.
+*.md

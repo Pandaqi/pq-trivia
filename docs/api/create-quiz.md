@@ -18,9 +18,28 @@ const quiz = createQuiz({
 ```ts
 import { Quiz } from "pq-trivia";
 
-const quiz = new Quiz({ seed: "quiz-night", shuffleQuestions: false });
-await quiz.load({ type: "text", text });
+const quiz = new Quiz({ text, id: "quiz", seed: "quiz-night" });
 ```
+
+Text goes in the constructor and loads itself. `id` names the element to mount
+into, like V2, and that is the whole setup: no `mountQuiz` afterwards. Leave it out and the quiz appends a block to the body, so a page
+with nothing but a script tag still works. `quiz.destroy()` takes the mount
+down again.
+
+`await quiz.loading` waits for the load. It is always a promise, already
+resolved when the constructor started nothing.
+
+Any other input rides along as `load`:
+
+```ts
+new Quiz({ load: { type: "inline", data: embeddedJson }, id: "quiz" });
+```
+
+Set neither and the quiz waits for `quiz.load()`, like before. Give both `text`
+and `load` and `load` wins.
+
+The same class without the mount lives in `pq-trivia/core`; `mountQuiz(quiz,
+element)` still picks the element by hand, and `<pq-quiz>` still exists.
 
 `new Quiz({ ... })` takes every config key inline, or in `config`. It is the
 same object `createQuiz` returns: the constructor is a thin shell around the
@@ -65,6 +84,8 @@ costs extra at runtime. Import the class or the function, whichever reads better
 | `hotkeys` / `hotkeysForbidden` / `toolbar`                                    | none               | keys and visible buttons                                                     |
 | `answerLabels`                                                                | `letters`          | `letters`, `lowercase`, `numbers`, `roman` or `none`                         |
 | `metadataIcons`                                                               | `true`             | icons in the question header                                                 |
+| `questionTypeHints`                                                           | `true`             | "This is an open question." under the title                                  |
+| `printTypeHints`                                                              | `true`             | the same line under the question on paper                                    |
 | `allowInput`                                                                  | `true`             | offer interactive play on the start screen                                   |
 | `mediaAutoPlay` / `loadExternalMediaAsIframe`                                 | `false`            | media behaviour                                                              |
 | `url` / `subFolderMedia`                                                      | none               | root and folder for relative media                                           |

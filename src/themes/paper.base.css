@@ -1,18 +1,17 @@
 /*
  * Paper — the default theme.
  *
- * Two ideas from V2, kept: a question is a slide, and the answer is the biggest
- * thing on it. One idea from the rest of the studio: paper, not glass. Warm
- * cream, ink, fern and honey, slightly uneven corners, a soft shadow instead of
- * a hard border. Rough edges, natural tones, nothing stark.
+ * Two layers and nothing else: one token block, then a small vocabulary of
+ * pieces (label, note, card, row, stack, list, table). A component below says
+ * what makes it different; it never respells a piece. Restyle the tokens and
+ * the whole theme follows.
  *
- * Colours are sampled from Pandaqi's own palette so a quiz night looks like the
- * rest of the shelf. Everything here is a token. Override the tokens, keep the
- * layout.
+ * Light and dark are one palette, paired with `light-dark()`. The switch on
+ * `<html>` only sets `color-scheme`.
  */
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
 
   --pq-font-heading:
     "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
@@ -20,117 +19,73 @@
   --pq-font-label: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
   --pq-font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  --pq-ink: #2f2a33;
-  --pq-muted: #5f585e;
-  --pq-paper: #faf5ea;
-  --pq-paper-deep: #f2e9d9;
-  --pq-slide: #fffdf7;
-  --pq-line: #d9d0be;
-  --pq-line-strong: #b9ad99;
-  --pq-strip: #2f2a33;
-  --pq-strip-ink: #fbf7ee;
+  /* Ink and paper. Sampled from Pandaqi's own palette. */
+  --pq-ink: light-dark(#2f2a33, #f3ebdd);
+  --pq-muted: light-dark(#5f585e, #b9b0a4);
+  --pq-paper: light-dark(#faf5ea, #1d2522);
+  --pq-paper-deep: light-dark(#f2e9d9, #141a18);
+  --pq-slide: light-dark(#fffdf7, #24302a);
+  --pq-line: light-dark(#d9d0be, #46564a);
+  --pq-line-strong: light-dark(#b9ad99, #63755f);
+  --pq-strip: light-dark(#2f2a33, #121815);
+  --pq-strip-ink: light-dark(#fbf7ee, #f3ebdd);
 
-  --pq-accent: #6f4b98;
-  --pq-accent-ink: #fffdf7;
+  --pq-accent: light-dark(#6f4b98, #c6a8e8);
+  --pq-accent-ink: light-dark(#fffdf7, #1d2522);
   --pq-honey: #f5c65d;
-  --pq-honey-soft: #fbe7b4;
-  --pq-fern: #839c66;
-  --pq-fern-soft: #dce6cc;
-  --pq-berry: #a9556b;
-  --pq-sparkle: #f0b93f;
-  --pq-right: #3e7a4c;
-  --pq-wrong: #a03a3a;
+  --pq-honey-soft: light-dark(#fbe7b4, #4a3d20);
+  --pq-fern: light-dark(#839c66, #a8c48a);
+  --pq-fern-soft: light-dark(#dce6cc, #2f3d2a);
+  --pq-berry: light-dark(#a9556b, #e39aa9);
+  --pq-right: light-dark(#3e7a4c, #8cc4a0);
+  --pq-wrong: light-dark(#a03a3a, #e79a92);
+  --pq-warn: light-dark(#8a5a12, #e9c47a);
+  --pq-code-bg: #221f26;
+  --pq-code-ink: #f6f1e6;
+  --pq-scan: #fff;
+  --pq-veil: light-dark(rgb(20 16 24 / 0.45), rgb(0 0 0 / 0.6));
 
+  /* Shape. */
   --pq-r-sm: 0.4rem;
   --pq-r-md: 0.75rem;
-  --pq-r-lg: 1.15rem;
   --pq-r-organic: 1.15rem 0.85rem 1.3rem 0.9rem;
   --pq-r-pill: 999rem;
-
+  --pq-line-w: 1px;
+  --pq-border: var(--pq-line-w) solid var(--pq-line);
+  --pq-border-strong: 1.5px solid var(--pq-line-strong);
+  --pq-focus: 3px solid var(--pq-accent);
   --pq-shadow-1:
-    0 1px 2px rgb(74 58 30 / 0.1), 0 2px 6px -3px rgb(74 58 30 / 0.1);
-  --pq-shadow-2: 0 10px 26px -16px rgb(74 58 30 / 0.55);
-  --pq-tilt: -1.1deg;
+    0 1px 2px light-dark(rgb(74 58 30 / 0.1), rgb(0 0 0 / 0.35)),
+    0 2px 6px -3px light-dark(rgb(74 58 30 / 0.1), rgb(0 0 0 / 0.35));
+  --pq-shadow-2: 0 10px 26px -16px
+    light-dark(rgb(74 58 30 / 0.55), rgb(0 0 0 / 0.7));
 
-  --pq-space: clamp(1rem, 2.6vw, 2.25rem);
+  /* Space and type. Every size is a clamp, so nothing needs a breakpoint. */
+  --pq-gap-sm: 0.4rem;
+  --pq-gap: 0.75rem;
+  --pq-gap-lg: 1.15rem;
+  --pq-tap: 2.75rem;
+  --pq-bar: 0.35rem;
+  --pq-space: clamp(0.9rem, 2.6vw, 2.25rem);
+  --pq-text-xs: clamp(0.68rem, 0.66rem + 0.1vw, 0.78rem);
+  --pq-text-sm: clamp(0.85rem, 0.83rem + 0.1vw, 0.95rem);
+  --pq-text-md: clamp(1rem, 0.97rem + 0.15vw, 1.08rem);
   --pq-title-size: clamp(1.9rem, 4.6vw, 3.5rem);
   --pq-answer-size: clamp(1.05rem, 1.9vw, 1.55rem);
+  --pq-max-text: 46ch;
+  --pq-max-slide: 56rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-
-    --pq-ink: #f3ebdd;
-    --pq-muted: #b9b0a4;
-    --pq-paper: #1d2522;
-    --pq-paper-deep: #141a18;
-    --pq-slide: #24302a;
-    --pq-line: #46564a;
-    --pq-line-strong: #63755f;
-    --pq-strip: #121815;
-    --pq-strip-ink: #f3ebdd;
-
-    --pq-accent: #c6a8e8;
-    --pq-accent-ink: #1d2522;
-    --pq-honey: #f5c65d;
-    --pq-honey-soft: #4a3d20;
-    --pq-fern: #a8c48a;
-    --pq-fern-soft: #2f3d2a;
-    --pq-berry: #e39aa9;
-    --pq-right: #8cc4a0;
-    --pq-wrong: #e79a92;
-
-    --pq-shadow-2: 0 12px 30px -18px rgb(0 0 0 / 0.7);
-  }
-}
-
-/* Colour mode as a switch. `auto` removes the attribute; these two force it. */
+/* Colour mode as a switch. `auto` removes the attribute, so the OS decides. */
 :root[data-pq-mode="light"] {
   color-scheme: light;
-  --pq-ink: #2f2a33;
-  --pq-muted: #5f585e;
-  --pq-paper: #faf5ea;
-  --pq-paper-deep: #f2e9d9;
-  --pq-slide: #fffdf7;
-  --pq-line: #d9d0be;
-  --pq-line-strong: #b9ad99;
-  --pq-strip: #2f2a33;
-  --pq-strip-ink: #fbf7ee;
-  --pq-accent: #6f4b98;
-  --pq-accent-ink: #fffdf7;
-  --pq-honey-soft: #fbe7b4;
-  --pq-fern: #839c66;
-  --pq-fern-soft: #dce6cc;
-  --pq-berry: #a9556b;
-  --pq-right: #3e7a4c;
-  --pq-wrong: #a03a3a;
-  --pq-shadow-2: 0 10px 26px -16px rgb(74 58 30 / 0.55);
 }
 
 :root[data-pq-mode="dark"] {
   color-scheme: dark;
-  --pq-ink: #f3ebdd;
-  --pq-muted: #b9b0a4;
-  --pq-paper: #1d2522;
-  --pq-paper-deep: #141a18;
-  --pq-slide: #24302a;
-  --pq-line: #46564a;
-  --pq-line-strong: #63755f;
-  --pq-strip: #121815;
-  --pq-strip-ink: #f3ebdd;
-  --pq-accent: #c6a8e8;
-  --pq-accent-ink: #1d2522;
-  --pq-honey-soft: #4a3d20;
-  --pq-fern: #a8c48a;
-  --pq-fern-soft: #2f3d2a;
-  --pq-berry: #e39aa9;
-  --pq-right: #8cc4a0;
-  --pq-wrong: #e79a92;
-  --pq-shadow-2: 0 12px 30px -18px rgb(0 0 0 / 0.7);
 }
 
-/* High contrast: black on white, thicker borders, no soft edges. */
+/* High contrast: black on white, thicker lines, no soft edges. */
 :root[data-pq-mode="high-contrast"] {
   color-scheme: light;
   --pq-ink: #000;
@@ -140,6 +95,7 @@
   --pq-slide: #fff;
   --pq-line: #000;
   --pq-line-strong: #000;
+  --pq-line-w: 2px;
   --pq-strip: #000;
   --pq-strip-ink: #fff;
   --pq-accent: #0033cc;
@@ -151,12 +107,199 @@
   --pq-berry: #8a0000;
   --pq-right: #005c25;
   --pq-wrong: #8a0000;
+  --pq-warn: #6b4300;
+  --pq-shadow-1: none;
   --pq-shadow-2: none;
 }
 
-.pq-quiz {
+/* --- The vocabulary --------------------------------------------------- */
+
+/* A small caps label. Strips, kickers, legends, field names. */
+.pq-kicker,
+.pq-meta-strip,
+.pq-band,
+.pq-field-label,
+.pq-stats dt,
+.pq-settings-group legend,
+.pq-settings > summary,
+.pq-review-head,
+.pq-insert-button,
+.pq-media-kind,
+.pq-live-kicker,
+.pq-meta-strip .pq-settings-toggle {
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Everything that is a note, not a headline. */
+.pq-section-stats,
+.pq-description,
+.pq-byline,
+.pq-type-hint,
+.pq-body,
+.pq-comments,
+.pq-answers-plain,
+.pq-media-credit,
+.pq-sources,
+.pq-facts,
+.pq-settings-note,
+.pq-keys,
+.pq-suggestion,
+.pq-timer-value,
+.pq-timer-note,
+.pq-sort-rank,
+.pq-match-pair,
+.pq-match-hint,
+.pq-field-label,
+.pq-score-max,
+.pq-review-explanation,
+.pq-review-sources,
+.pq-empty,
+.pq-resume-note,
+.pq-resume-when,
+.pq-intro,
+.pq-credits,
+.pq-step-count,
+.pq-theme-note,
+.pq-media-kind,
+.pq-table caption,
+.pq-table thead th,
+.pq-live-kicker,
+.pq-live-meta,
+.pq-live-hint,
+.pq-live-count,
+.pq-live-rank {
+  color: var(--pq-muted);
+}
+
+/* A bordered note on the paper. Answers, fields, settings, review cards. */
+.pq-answer,
+.pq-input,
+.pq-sort-item,
+.pq-match-item,
+.pq-match-static-item,
+.pq-sort-button,
+.pq-review-card,
+.pq-resume,
+.pq-widget-frame,
+.pq-settings,
+.pq-settings-group,
+.pq-stats div,
+.pq-problems-panel,
+.pq-media-missing,
+.pq-live-code,
+.pq-live-settings {
+  border: var(--pq-border);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-slide);
+}
+
+/* The ones that sit a shade deeper, so a group reads as one block. */
+.pq-settings,
+.pq-settings-group,
+.pq-stats div,
+.pq-resume,
+.pq-live-settings {
+  background: var(--pq-paper-deep);
+}
+
+.pq-media-missing {
+  border-style: dashed;
+}
+
+/* A line of things: buttons, chips, filters, sources, blanks, media. */
+.pq-toolbar,
+.pq-toolbar-row,
+.pq-insert,
+.pq-stats,
+.pq-start-actions,
+.pq-resume-actions,
+.pq-load-questions,
+.pq-chip-list,
+.pq-filters,
+.pq-sources,
+.pq-cloze,
+.pq-media-list,
+.pq-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pq-gap);
+}
+
+/* A column of things. */
+.pq-field,
+.pq-settings-group,
+.pq-theme-picker,
+.pq-live-settings,
+.pq-live-roster,
+.pq-live-progress,
+.pq-live-board,
+.pq-live-reveal,
+.pq-live-reveal-item,
+.pq-live-join,
+.pq-live-join form,
+.pq-live-question {
+  display: grid;
+  gap: var(--pq-gap);
+  width: 100%;
+}
+
+/* A stack of cards with no markers. Answers, sort, match, review, people. */
+.pq-answers,
+.pq-sort,
+.pq-match-column,
+.pq-review,
+.pq-live-players,
+.pq-live-rows,
+.pq-live-board ol {
+  display: grid;
+  gap: var(--pq-gap);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Every table: summary, review parts, the media appendix. */
+.pq-table,
+.pq-review-parts,
+.pq-media-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pq-text-sm);
+  text-align: left;
+}
+
+.pq-table th,
+.pq-table td,
+.pq-review-parts th,
+.pq-review-parts td,
+.pq-media-table th,
+.pq-media-table td {
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  border-bottom: var(--pq-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* --- Shell ------------------------------------------------------------ */
+
+.pq-quiz,
+.pq-quiz *,
+.pq-quiz *::before,
+.pq-quiz *::after,
+.pq-print-only *,
+.pq-print-only *::before,
+.pq-print-only *::after {
   box-sizing: border-box;
-  /* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
+}
+
+/* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
+.pq-quiz {
   position: relative;
   height: 100vh;
   height: 100dvh;
@@ -167,34 +310,31 @@
   background-image:
     radial-gradient(
       circle at 1px 1px,
-      rgb(47 42 51 / 0.045) 1px,
+      color-mix(in srgb, var(--pq-ink) 5%, transparent) 1px,
       transparent 0
     ),
-    radial-gradient(circle at 7px 11px, rgb(47 42 51 / 0.03) 1px, transparent 0);
+    radial-gradient(
+      circle at 7px 11px,
+      color-mix(in srgb, var(--pq-ink) 3%, transparent) 1px,
+      transparent 0
+    );
   background-size:
     26px 26px,
     41px 37px;
   color: var(--pq-ink);
   font-family: var(--pq-font-body);
-  font-size: 1rem;
+  font-size: var(--pq-text-md);
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
-}
-
-.pq-quiz *,
-.pq-quiz *::before,
-.pq-quiz *::after,
-.pq-print-only *,
-.pq-print-only *::before,
-.pq-print-only *::after {
-  box-sizing: border-box;
 }
 
 .pq-screen {
   display: flex;
   flex-direction: column;
+  gap: var(--pq-space);
   height: 100%;
   min-height: 0;
+  padding-inline: var(--pq-space);
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -211,44 +351,39 @@
   background-size: cover;
 }
 
-.pq-screen-question,
-.pq-screen-section,
-.pq-screen-end,
-.pq-screen-message {
-  padding: 0 var(--pq-space);
-}
-
-/* A quiz is one page. The question sits in the middle of it, like V2. */
+/* A quiz is one page. The question sits at the top of it, like V2. */
 .pq-screen-question {
   justify-content: flex-start;
 }
 
-.pq-screen-section {
+.pq-screen-section,
+.pq-screen-start {
   justify-content: safe center;
-  gap: var(--pq-space);
+}
+
+.pq-screen-section {
   text-align: center;
+}
+
+.pq-screen-start {
+  padding: var(--pq-space);
 }
 
 .pq-section-body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: clamp(0.7rem, 2vh, 1.3rem);
+  gap: var(--pq-gap);
   width: min(100%, 52rem);
   margin: auto;
   padding: clamp(1rem, 4vh, 3rem) 0;
 }
 
-.pq-screen-section .pq-title {
-  font-size: clamp(2.4rem, 7vw, 4.5rem);
-}
-
 .pq-section-stats,
 .pq-section-secret {
   margin: 0;
-  color: var(--pq-muted);
   font-family: var(--pq-font-label);
-  font-size: 0.95rem;
+  font-size: var(--pq-text-sm);
   letter-spacing: 0.04em;
 }
 
@@ -260,123 +395,56 @@
   color: var(--pq-ink);
   font-family: var(--pq-font-heading);
   font-style: italic;
-  font-size: 1.15rem;
-}
-
-.pq-screen-section .pq-comments,
-.pq-screen-section .pq-body {
-  margin-inline: auto;
-  font-size: 1.1rem;
-}
-
-.pq-screen-start {
-  justify-content: center;
-  /* Safe centering keeps the top reachable when the content is taller. */
-  justify-content: safe center;
-  gap: var(--pq-space);
-  padding: var(--pq-space);
+  font-size: var(--pq-text-md);
 }
 
 /* Fill the window means fill the window: no desk, no sheet edge, no gutter.
  * The sheet on the desk belongs to the inline layout, where the quiz shares
  * the page with other things. */
-.pq-quiz[data-pq-layout="viewport"] {
-  padding: 0;
-}
+.pq-quiz[data-pq-layout="inline"] {
+  height: auto;
+  min-height: 20rem;
+  padding: clamp(0.5rem, 2vw, 1.75rem);
+  overflow: visible;
 
-.pq-quiz[data-pq-layout="viewport"] > .pq-screen {
-  width: 100%;
-  max-width: none;
-  margin-inline: 0;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-@media screen and (min-width: 48rem) {
-  .pq-quiz[data-pq-layout="inline"] {
-    padding: clamp(0.75rem, 2vw, 1.75rem);
-  }
-
-  .pq-quiz[data-pq-layout="inline"] .pq-screen {
+  .pq-screen {
     width: min(100%, 78rem);
-    min-height: 0;
+    height: auto;
+    min-height: 20rem;
     margin-inline: auto;
-    border: 1px solid var(--pq-line);
+    overflow: clip;
+    border: var(--pq-border);
     border-radius: var(--pq-r-organic);
     box-shadow: var(--pq-shadow-2);
   }
 }
 
-/* Inline: the quiz is a block in a page, not the whole page. */
-.pq-quiz[data-pq-layout="inline"] {
-  height: auto;
-  min-height: 20rem;
-  overflow: visible;
+/* One screen, no scrolling: the layout gives back the room it does not need.
+ * One token block instead of eight rules fighting the same spacing. */
+.pq-quiz[data-pq-layout="viewport"] {
+  --pq-gap-sm: 0.3rem;
+  --pq-gap: 0.55rem;
+  --pq-gap-lg: 0.85rem;
 }
 
-.pq-quiz[data-pq-layout="inline"] .pq-screen {
-  height: auto;
-  min-height: 20rem;
-  overflow: clip;
-}
-
-/* Filling the window means one screen with no scrolling. The inline layout
- * keeps the roomy rhythm; here every gap gives something back. */
-.pq-quiz[data-pq-layout="viewport"] .pq-meta-strip {
-  padding-block: 0.42rem;
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-header {
-  padding-top: clamp(0.45rem, 1.6vh, 1rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-kicker {
-  margin-bottom: 0.35rem;
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-body {
-  margin-top: clamp(0.4rem, 1.2vh, 0.8rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-screen-start {
-  gap: clamp(0.45rem, 1.5vh, 0.9rem);
-  padding: clamp(0.7rem, 2.4vh, 1.6rem) var(--pq-space);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-split {
-  padding-top: clamp(0.2rem, 0.8vh, 0.5rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-answers {
-  margin-top: clamp(0.4rem, 1.4vh, 0.9rem);
-}
-
-.pq-quiz[data-pq-layout="viewport"] .pq-toolbar {
-  padding: clamp(0.35rem, 1.1vh, 0.7rem) 0
-    calc(clamp(0.75rem, 2.2vh, 1.4rem) + env(safe-area-inset-bottom, 0px));
-}
+/* --- Strip and heading ------------------------------------------------ */
 
 /* V2's strip, warmed up. A host reads it at a glance across a room. */
 .pq-meta-strip {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.35rem 1.1rem;
+  gap: 0.3rem var(--pq-gap-lg);
   margin: 0 calc(var(--pq-space) * -1);
-  padding: 0.55rem var(--pq-space);
+  padding: var(--pq-gap-sm) var(--pq-space);
   background: var(--pq-strip);
   color: var(--pq-strip-ink);
-  font-family: var(--pq-font-label);
-  font-size: clamp(0.68rem, 1vw, 0.8rem);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
 }
 
-.pq-meta-strip > .pq-points {
+.pq-points {
   margin-left: auto;
-  padding-left: 0.7rem;
-  border-left: 1px solid rgb(255 253 247 / 0.3);
+  padding-left: var(--pq-gap);
+  border-left: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   color: var(--pq-honey);
   font-variant-numeric: tabular-nums;
 }
@@ -394,19 +462,19 @@
   filter: saturate(0.7);
 }
 
+/* A question slide wears the round's colour. */
 .pq-screen-question .pq-meta-strip {
+  border-bottom: 4px solid var(--pq-round-accent, var(--pq-accent));
   background: var(--pq-round-shade, var(--pq-strip));
   color: var(--pq-accent-ink, var(--pq-strip-ink));
-}
 
-.pq-screen-question .pq-meta-strip > .pq-points {
-  border-left-color: color-mix(in srgb, currentColor 35%, transparent);
-  color: inherit;
+  .pq-points {
+    color: inherit;
+  }
 }
 
 .pq-count {
   font-variant-numeric: tabular-nums;
-  opacity: 0.9;
 }
 
 .pq-header {
@@ -416,14 +484,9 @@
 
 .pq-kicker {
   display: inline-block;
-  margin: 0 0 0.6rem;
+  margin: 0 0 var(--pq-gap);
   padding-bottom: 0.15rem;
   border-bottom: 2px dotted var(--pq-round-accent, var(--pq-honey));
-  color: var(--pq-muted);
-  font-family: var(--pq-font-label);
-  font-size: 0.72rem;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
 }
 
 .pq-title {
@@ -435,33 +498,40 @@
   text-wrap: balance;
 }
 
-.pq-screen-start .pq-title {
-  font-size: clamp(2.2rem, 6vw, 4rem);
+.pq-screen-start .pq-title,
+.pq-screen-section .pq-title {
+  font-size: clamp(2.2rem, 6.5vw, 4.2rem);
 }
 
-.pq-title:focus {
-  outline: none;
-}
-
+/* One reading column for every quiet paragraph under a heading. */
 .pq-description,
-.pq-byline {
-  margin: 0.7rem auto 0;
-  max-width: 42ch;
-  color: var(--pq-muted);
+.pq-byline,
+.pq-type-hint,
+.pq-body,
+.pq-comments {
+  margin: var(--pq-gap) auto 0;
+  max-width: var(--pq-max-text);
   text-align: center;
 }
 
 .pq-description {
   font-family: var(--pq-font-heading);
+  font-size: var(--pq-text-md);
   font-style: italic;
-  font-size: 1.1rem;
+}
+
+.pq-byline,
+.pq-type-hint {
+  margin-top: var(--pq-gap-sm);
+  font-size: var(--pq-text-sm);
+}
+
+/* V2's "This is an open question." line: there when you look for it, never in
+   the way of the question itself. */
+.pq-type-hint {
+  font-style: italic;
 }
 
 .pq-body {
-  margin: clamp(0.8rem, 2vh, 1.3rem) auto 0;
-  max-width: 46ch;
-  color: var(--pq-muted);
-  text-align: center;
-  font-size: 1.05rem;
   white-space: pre-wrap;
 }
