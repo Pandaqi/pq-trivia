@@ -40,6 +40,14 @@ wizard.destroy(); // gives the page back
 The text is the model. A form edit rewrites that block's text. A text edit
 reparses, and the forms follow. There is no hidden state to lose.
 
+The preview is the real player, loaded as its own chunk the first time you open
+it. `editor.js` stays small; a host that never previews never downloads the
+player twice. Pass `previewOpen: false` to start with that pane closed.
+
+It also leaves your caret alone (`mountQuiz`'s `focusScreens: false`) and reopens
+the question you were on after each edit, so a tweak never throws you back to
+the start screen.
+
 ## Editing
 
 - Text fields commit on blur or Enter. Selects and checkboxes commit at once.

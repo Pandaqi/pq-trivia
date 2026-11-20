@@ -30,9 +30,13 @@ const BUDGETS: Readonly<Record<string, number>> = {
   "pq-trivia.js": 105,
   "pq-trivia.min.js": 115,
   "pq-trivia.core.min.js": 42,
-  // The wizard carries the player, because its preview is the real thing. So
-  // its budget is a player plus the forms: 77.3 KB measured, plus air.
-  "editor.js": 95,
+  // The wizard itself. The player arrives as a lazy chunk, so this number is
+  // the forms and the buffer, never the quiz screen.
+  "editor.js": 60,
+  // What editor.js shares with the preview chunk: Preact and the store.
+  "chunk-editor.js": 20,
+  // The player, fetched only when a preview opens.
+  "chunk-preview.js": 80,
   // The separate live bundle. Preact is already in the player, but a host page
   // that only runs a lobby should not need the whole player.
   "multiplayer.js": 32,

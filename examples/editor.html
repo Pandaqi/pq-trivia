@@ -8,22 +8,37 @@
     <style>
       body {
         margin: 0;
+        background: var(--pq-paper);
+        color: var(--pq-ink);
         font-family: system-ui, sans-serif;
       }
-      .pq-wizard-note {
-        max-width: 56rem;
-        margin: 1rem auto 0;
-        padding: 0 1rem;
-        font-size: 0.9rem;
-        opacity: 0.75;
+      .pq-wizard-top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.5rem 1rem;
+        padding: 1rem 1.5rem 0;
+      }
+      .pq-wizard-top h1 {
+        margin: 0;
+        font-size: 1.1rem;
+        letter-spacing: 0.01em;
+      }
+      .pq-wizard-top p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--pq-muted);
       }
     </style>
   </head>
   <body>
-    <p class="pq-wizard-note">
-      Build it first: <code>bun run build:editor</code>. Then write a quiz here
-      and press Save.
-    </p>
+    <header class="pq-wizard-top">
+      <h1>PQ-Trivia wizard</h1>
+      <p>
+        Build it first with <code>bun run build:editor</code>. Then write, give
+        it a look, and press Save.
+      </p>
+    </header>
     <!-- The bundle mounts into this one element. Nothing else to wire. -->
     <div data-pq-wizard></div>
     <script type="module" src="../dist/v3/editor.js"></script>

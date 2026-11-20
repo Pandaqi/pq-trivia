@@ -303,7 +303,7 @@ Only two real dependencies. `trystero` is optional and only imported by the mult
 | `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                      | ≤ 32 KB           |
 | `dist/v3/chunk-qr.js`           | ESM, lazy                                 | the join QR encoder, fetched by the lobby only               | ≤ 8 KB            |
 | `dist/v3/animations.js`         | ESM                                       | full animation set                                           | ≤ 10 KB           |
-| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 95 KB, separate |
+| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 60 KB, separate |
 | `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`               | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.

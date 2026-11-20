@@ -2,8 +2,9 @@
  * The form pane. Fields come from the attribute registry, so a new attribute
  * shows up here without touching this file.
  *
- * Answers and media get their own widgets: those are the two places an author
- * edits ten times a minute.
+ * Two things get their own widget, because they are the two places an author
+ * edits ten times a minute: answers and media. A round or a start screen has
+ * neither, so those rows disappear with the type.
  */
 
 import type { JSX } from "preact";
@@ -18,18 +19,19 @@ import {
   moveSlide,
   removeAnswer,
   removeMedia,
-  setMediaAt,
   removeSlide,
   setAnswerAt,
   setFieldValue,
+  setMediaAt,
   setValuesField,
   toggleCorrect,
   valuesFor,
 } from "../commands";
 import { FIELD_GROUPS, fieldsInGroup, HEADER_FIELDS } from "../fields";
 import type { EditorOptions } from "../mount";
-import { HEADER_INDEX, slideAt } from "../slides";
+import { HEADER_INDEX, SLIDE_KIND_LABELS, slideAt } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
+import type { SlideInfo } from "../slides";
 import { DraftText, FieldRow, FieldShell, Select } from "./Field";
 import { ListEditor } from "./ListEditor";
 
@@ -39,13 +41,23 @@ export interface FormPaneProps {
   readonly options: EditorOptions;
 }
 
-/** Types where `Correct` means nothing, or is set by the player instead. */
-const NO_CORRECT: ReadonlySet<string> = new Set([
+/** Types that never take answers: they are pages, not questions. */
+const SCREENS: ReadonlySet<string> = new Set([
   QuestionType.Section,
   QuestionType.Start,
   QuestionType.End,
+]);
+
+/** Types where `Correct` means nothing. */
+const NO_CORRECT: ReadonlySet<string> = new Set([
+  ...SCREENS,
   QuestionType.Custom,
 ]);
+
+/** The default type has no line of its own, so the list leaves it out. */
+const TYPE_OPTIONS = QUESTION_TYPES.filter(
+  (type) => type !== QuestionType.Open,
+);
 
 const ANSWER_HINTS: Readonly<Record<string, string>> = {
   [QuestionType.Open]:
@@ -57,6 +69,26 @@ const ANSWER_HINTS: Readonly<Record<string, string>> = {
   [QuestionType.Match]: "Write each pair as Left ~ Right.",
   [QuestionType.Cloze]: "One answer per [blank], or groups split by ||.",
 };
+
+function textLabel(type: string): string {
+  if (type === QuestionType.Section) {
+    return "Round name";
+  }
+  if (SCREENS.has(type)) {
+    return "Screen text";
+  }
+  return "Question text";
+}
+
+function textHint(type: string): string {
+  if (type === QuestionType.Section) {
+    return "The heading on its own screen at the start of the round.";
+  }
+  if (SCREENS.has(type)) {
+    return "The big line. Inline formatting works here.";
+  }
+  return "Inline formatting works here. [blank] is a cloze gap.";
+}
 
 export function FormPane({
   store,
@@ -86,12 +118,13 @@ function HeaderForm({
   readonly store: EditorStore;
   readonly snapshot: EditorSnapshot;
 }): JSX.Element {
+  const empty = snapshot.slides.length === 1;
   return (
     <section class="pq-editor-panel" aria-label="Quiz settings">
       <h2>Quiz settings</h2>
       <p class="pq-editor-hint">
-        These lines sit above the first question. Leave a field empty to remove
-        its line.
+        The title sits in the toolbar. These lines go above the first question;
+        leave a field empty to remove its line.
       </p>
       {HEADER_FIELDS.map((field) => (
         <FieldRow
@@ -103,6 +136,11 @@ function HeaderForm({
           }
         />
       ))}
+      {empty ? (
+        <p class="pq-editor-hint">
+          No slides yet. Use <strong>+ Question</strong> in the toolbar.
+        </p>
+      ) : null}
     </section>
   );
 }
@@ -113,13 +151,14 @@ function BlockForm({
   options,
   index,
 }: FormPaneProps & { readonly index: number }): JSX.Element {
-  const slide = slideAt(snapshot.slides, index);
+  const slide: SlideInfo | undefined = slideAt(snapshot.slides, index);
   const type =
     valuesFor(snapshot, index, "Type")[0]?.toLowerCase() ?? QuestionType.Open;
   const question = valuesFor(snapshot, index, "Question")[0] ?? "";
   const answers = valuesFor(snapshot, index, "Answers");
   const correct = valuesFor(snapshot, index, "Correct");
   const media = valuesFor(snapshot, index, "Media");
+  const isScreen = SCREENS.has(type);
   const showCorrect = !NO_CORRECT.has(type);
 
   const addMediaClick = (): void => {
@@ -143,35 +182,53 @@ function BlockForm({
 
   return (
     <section class="pq-editor-panel" aria-label="Slide editor">
-      <h2>{slide?.label ?? "Slide"}</h2>
-
-      <div class="pq-editor-actions">
-        <button
-          type="button"
-          onClick={() => moveSlide(store, index, -1)}
-          disabled={index === 0}
-        >
-          Move up
-        </button>
-        <button
-          type="button"
-          onClick={() => moveSlide(store, index, 1)}
-          disabled={index >= snapshot.slides.length - 2}
-        >
-          Move down
-        </button>
-        <button type="button" onClick={() => duplicateSlide(store, index)}>
-          Duplicate
-        </button>
-        <button type="button" onClick={() => removeSlide(store, index)}>
-          Remove
-        </button>
+      <div class="pq-editor-panel-head">
+        <h2>
+          <span class="pq-editor-kind">
+            {slide === undefined ? "Slide" : SLIDE_KIND_LABELS[slide.kind]}
+          </span>
+          {slide?.label ?? "Slide"}
+        </h2>
+        <div class="pq-editor-actions">
+          <button
+            type="button"
+            class="pq-editor-button"
+            onClick={() => moveSlide(store, index, -1)}
+            disabled={index === 0}
+            title="Alt+↑"
+          >
+            ↑
+          </button>
+          <button
+            type="button"
+            class="pq-editor-button"
+            onClick={() => moveSlide(store, index, 1)}
+            disabled={index >= snapshot.slides.length - 2}
+            title="Alt+↓"
+          >
+            ↓
+          </button>
+          <button
+            type="button"
+            class="pq-editor-button"
+            onClick={() => duplicateSlide(store, index)}
+          >
+            Duplicate
+          </button>
+          <button
+            type="button"
+            class="pq-editor-button"
+            onClick={() => removeSlide(store, index)}
+          >
+            Remove
+          </button>
+        </div>
       </div>
 
       <FieldShell
         id="pq-editor-question"
-        label="Question text"
-        description="Inline formatting works here. [blank] is a cloze gap."
+        label={textLabel(type)}
+        description={textHint(type)}
       >
         <DraftText
           id="pq-editor-question"
@@ -182,44 +239,50 @@ function BlockForm({
         />
       </FieldShell>
 
-      <FieldShell id="pq-editor-type" label="Type">
+      <FieldShell
+        id="pq-editor-type"
+        label="Type"
+        description="What this block is. Open asks for typed text; the rest show answers."
+      >
         <Select
           id="pq-editor-type"
           value={type === QuestionType.Open ? "" : type}
-          options={QUESTION_TYPES}
-          emptyLabel="(open)"
+          options={TYPE_OPTIONS}
+          emptyLabel="open (default)"
           onChange={(value) => setFieldValue(store, index, "Type", value)}
         />
       </FieldShell>
 
-      <FieldShell
-        id="pq-editor-answers"
-        label="Answers"
-        description={ANSWER_HINTS[type] ?? ""}
-      >
-        <ListEditor
+      {isScreen ? null : (
+        <FieldShell
           id="pq-editor-answers"
-          values={answers}
-          {...(showCorrect
-            ? {
-                correct,
-                onToggleCorrect: (value: string) =>
-                  toggleCorrect(store, index, value),
-              }
-            : {})}
-          onChange={(at, value) => setAnswerAt(store, index, at, value)}
-          onAdd={() => addAnswer(store, index)}
-          onRemove={(at) => removeAnswer(store, index, at)}
-          onMove={(at, delta) => moveAnswer(store, index, at, delta)}
-          addLabel="Add answer"
-          emptyText="No answers yet. Open questions can skip this."
-        />
-      </FieldShell>
+          label="Answers"
+          description={ANSWER_HINTS[type] ?? ""}
+        >
+          <ListEditor
+            id="pq-editor-answers"
+            values={answers}
+            {...(showCorrect
+              ? {
+                  correct,
+                  onToggleCorrect: (value: string) =>
+                    toggleCorrect(store, index, value),
+                }
+              : {})}
+            onChange={(at, value) => setAnswerAt(store, index, at, value)}
+            onAdd={() => addAnswer(store, index)}
+            onRemove={(at) => removeAnswer(store, index, at)}
+            onMove={(at, delta) => moveAnswer(store, index, at, delta)}
+            addLabel="Add answer"
+            emptyText="No answers yet. Open questions can skip this."
+          />
+        </FieldShell>
+      )}
 
       <FieldShell
         id="pq-editor-media"
         label="Media"
-        description="A file copied into media/, or any path you like."
+        description="Pick a file to copy it into media/, or add any path you like."
       >
         <ListEditor
           id="pq-editor-media"
@@ -231,7 +294,11 @@ function BlockForm({
           addLabel="Add file"
           emptyText="No media on this slide."
           extra={
-            <button type="button" onClick={() => addMedia(store, index, "")}>
+            <button
+              type="button"
+              class="pq-editor-button"
+              onClick={() => addMedia(store, index, "")}
+            >
               Add path
             </button>
           }
@@ -244,7 +311,7 @@ function BlockForm({
           return null;
         }
         return (
-          <details key={group}>
+          <details class="pq-editor-more" key={group}>
             <summary>{label}</summary>
             {fields.map((field) => (
               <FieldRow

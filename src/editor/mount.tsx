@@ -23,8 +23,14 @@ export interface PickedMedia {
   readonly copied: boolean;
 }
 
-/** Start a live player against this text. Returns its teardown. */
-export type PreviewHook = (text: string, host: HTMLElement) => () => void;
+/** A mounted player: new text in, teardown out. */
+export interface PreviewInstance {
+  load(text: string): void;
+  destroy(): void;
+}
+
+/** Start a live player against this text. */
+export type PreviewHook = (text: string, host: HTMLElement) => PreviewInstance;
 
 export interface EditorOptions {
   /** Starting text. Ignored when a store is passed. */
@@ -36,7 +42,10 @@ export interface EditorOptions {
   readonly onSaveToFolder?:
     ((name: string, text: string) => Promise<boolean>) | undefined;
   readonly onPickMedia?: (() => Promise<PickedMedia | null>) | undefined;
+  /** Live player on the right. On when a preview hook exists. */
   readonly preview?: PreviewHook | undefined;
+  /** Start with the preview pane open. Default true when a hook exists. */
+  readonly previewOpen?: boolean | undefined;
 }
 
 export interface MountedEditor {

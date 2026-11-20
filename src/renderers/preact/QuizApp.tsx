@@ -92,9 +92,15 @@ function ScreenView({
 export function QuizApp({
   quiz,
   timerSound,
+  focusScreens = true,
 }: {
   readonly quiz: Quiz;
   readonly timerSound?: TimerSound | undefined;
+  /**
+   * Put focus on each new screen's heading. On for a page of its own, off when
+   * the player sits inside another app that owns the caret.
+   */
+  readonly focusScreens?: boolean | undefined;
 }): JSX.Element {
   const [snapshot, setSnapshot] = useState(() => ({
     state: quiz.state,
@@ -277,9 +283,11 @@ export function QuizApp({
   }, [quiz, settingsOpen]);
 
   useEffect(() => {
-    root.current?.querySelector<HTMLElement>("[data-pq-heading]")?.focus();
+    if (focusScreens) {
+      root.current?.querySelector<HTMLElement>("[data-pq-heading]")?.focus();
+    }
     preloadNextQuestion(quiz);
-  }, [quiz, snapshot.screen]);
+  }, [quiz, snapshot.screen, focusScreens]);
 
   // `screen` is an object, so its identity changes every draw; kind and index
   // are what actually moves the header.

@@ -275,7 +275,8 @@ async function build(languages: readonly string[]): Promise<boolean> {
       minify: true,
       sourcemap: "external",
       // Entries keep their own name. A chunk is named after the module that
-      // pulled it in (`chunk-qr.js`), so docs and a network panel can name it.
+      // pulled it in (`chunk-preview.js`), or after the entry for the entry's
+      // own dynamic imports (`chunk-editor.js`), so a network panel can name it.
       naming: {
         entry: `[dir]/${iifeName ?? `${entry.name}.[ext]`}`,
         chunk: "chunk-[name].[ext]",

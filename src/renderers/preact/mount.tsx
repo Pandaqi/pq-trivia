@@ -39,6 +39,11 @@ export interface MountOptions {
   readonly printOptions?: PrintOptions;
   /** Remember answers between reloads. On by default. */
   readonly attempts?: boolean;
+  /**
+   * Focus each new screen's heading. On for a quiz that owns the page. A
+   * preview inside an editor turns it off, so the caret stays where it was.
+   */
+  readonly focusScreens?: boolean;
 }
 
 const PRINT_VARIANTS: Readonly<Record<PrintKind, PrintVariant>> = {
@@ -54,7 +59,14 @@ export function mountQuiz(
   target: Element,
   options: MountOptions = {},
 ): MountedQuiz {
-  render(h(QuizApp, { quiz, timerSound: browserTimerSound }), target);
+  render(
+    h(QuizApp, {
+      quiz,
+      timerSound: browserTimerSound,
+      focusScreens: options.focusScreens !== false,
+    }),
+    target,
+  );
 
   // The title, language, charset and viewport come from the quiz, not the page.
   applyHeadFromQuiz(quiz);

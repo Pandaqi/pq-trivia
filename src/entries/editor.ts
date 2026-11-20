@@ -16,16 +16,16 @@ import {
   type EditorOptions,
   type MountedEditor,
   type PickedMedia,
+  type PreviewInstance,
 } from "../editor";
-import { createQuiz } from "../core/quiz/create";
 import { downloadText, fileSlug } from "../platform/browser/download";
-import { mountQuiz } from "../renderers/preact/mount";
 
 export type {
   EditorFile,
   EditorOptions,
   MountedEditor,
   PickedMedia,
+  PreviewInstance,
 } from "../editor";
 export {
   EditorStore,
@@ -99,6 +99,8 @@ export interface WizardOptions {
   readonly onSave?: ((name: string, text: string) => void) | undefined;
   readonly onOpen?: (() => Promise<EditorFile | null>) | undefined;
   readonly preview?: EditorOptions["preview"];
+  /** Start with the player pane closed. Handy on a small screen. */
+  readonly previewOpen?: boolean | undefined;
 }
 
 const WIZARD_FOLDER_ID = "pq-trivia-wizard";
@@ -267,19 +269,33 @@ async function pickMedia(): Promise<PickedMedia | null> {
 function saveDownload(name: string, text: string): void {
   downloadText(`${fileSlug(name)}.trivia`, text, PLAIN_MIME);
 }
-
-/** The real player, against the buffer. The tab title goes back afterwards. */
-function previewQuiz(text: string, host: HTMLElement): () => void {
-  const title = document.title;
-  const quiz = createQuiz();
-  void quiz.load({ type: "text", text, file: "preview.trivia" });
-  const mounted = mountQuiz(quiz, host, { attempts: false, printSheet: false });
-  void quiz.loading.then(() => {
-    document.title = title;
+/**
+ * The player arrives as its own chunk, the first time a preview is needed.
+ *
+ * The wizard is a text tool. Carrying the whole player in `editor.js` would
+ * charge every author for a preview they may never open. Text that arrives
+ * before the chunk does is kept, so the pane opens on the current draft.
+ */
+function previewQuiz(text: string, host: HTMLElement): PreviewInstance {
+  let current = text;
+  let cancelled = false;
+  let live: PreviewInstance | null = null;
+  void import("../renderers/preview").then(({ mountPreview }) => {
+    if (cancelled) {
+      return;
+    }
+    live = mountPreview(current, host, { keepHead: true });
   });
-  return () => {
-    mounted.destroy();
-    quiz.destroy();
+  return {
+    load(next) {
+      current = next;
+      live?.load(next);
+    },
+    destroy() {
+      cancelled = true;
+      live?.destroy();
+      live = null;
+    },
   };
 }
 
@@ -296,6 +312,9 @@ export function mountQuizWizard(
     onSaveToFolder: saveToFolder,
     onPickMedia: pickMedia,
     preview: options.preview ?? previewQuiz,
+    ...(options.previewOpen === undefined
+      ? {}
+      : { previewOpen: options.previewOpen }),
   });
 }
 

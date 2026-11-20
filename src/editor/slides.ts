@@ -19,6 +19,14 @@ export enum SlideKind {
   End = "end",
 }
 
+export const SLIDE_KIND_LABELS: Readonly<Record<SlideKind, string>> = {
+  [SlideKind.Header]: "Header",
+  [SlideKind.Start]: "Start",
+  [SlideKind.Round]: "Round",
+  [SlideKind.Question]: "Question",
+  [SlideKind.End]: "End",
+};
+
 export interface SlideInfo {
   /** -1 for the header, otherwise the block index. */
   readonly index: number;

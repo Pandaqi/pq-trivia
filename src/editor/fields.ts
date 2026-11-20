@@ -102,13 +102,8 @@ export interface HeaderFieldSpec {
   readonly description: string;
 }
 
+/** Title is not here: it lives in the toolbar, where you name the file. */
 export const HEADER_FIELDS: readonly HeaderFieldSpec[] = [
-  {
-    key: "Title",
-    label: "Title",
-    kind: FieldKind.Text,
-    description: "The name on the start screen and in the page title.",
-  },
   {
     key: "Description",
     label: "Description",

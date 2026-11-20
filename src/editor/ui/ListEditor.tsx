@@ -63,6 +63,8 @@ export function ListEditor({
                 id={`${id}-correct-${index}`}
                 checked={marks.correct.includes(value)}
                 onChange={() => marks.onToggleCorrect(value)}
+                aria-label={`Correct: ${value}`}
+                title="Mark as correct"
               />
             )}
             <DraftText

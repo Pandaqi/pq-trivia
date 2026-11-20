@@ -58,7 +58,7 @@ describe("the wizard", () => {
   });
 
   test("adding a question writes a new block", async () => {
-    button("Add question")?.click();
+    button("+ Question")?.click();
     await tick();
     expect(host.querySelectorAll(".pq-editor-slide").length).toBe(4);
     expect(mounted.text()).toContain("New question");

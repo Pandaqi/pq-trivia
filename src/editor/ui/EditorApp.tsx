@@ -1,4 +1,4 @@
-/** Three panes and a status line. The whole wizard, in one place. */
+/** Three panes, a preview and a status line. The whole wizard, in one place. */
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
@@ -18,7 +18,9 @@ export interface EditorAppProps {
 
 export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
   const snapshot = useEditor(store);
-  const [previewOpen, setPreviewOpen] = useState(options.preview !== undefined);
+  const [previewOpen, setPreviewOpen] = useState(
+    options.preview !== undefined && options.previewOpen !== false,
+  );
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {
@@ -51,10 +53,14 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
     };
   }, [store]);
 
-  const problems = snapshot.slides.reduce(
-    (total, slide) => total + slide.problems.length,
+  const total = snapshot.slides.reduce(
+    (count, slide) => count + slide.problems.length,
     0,
   );
+  const selected = snapshot.slides.find(
+    (slide) => slide.index === snapshot.selected,
+  );
+  const first = selected?.problems[0];
 
   return (
     <div class="pq-editor">
@@ -75,12 +81,23 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
         ) : null}
       </div>
 
-      <div class="pq-editor-status" role="status" aria-live="polite">
-        <span>
-          {problems === 1 ? "1 problem" : `${problems} problems`} in this file.
+      <div class="pq-editor-status">
+        <span class={total === 0 ? "pq-editor-good" : "pq-editor-bad"}>
+          {total === 0 ? "No problems" : countLabel(total)}
         </span>
-        <span>{snapshot.note ?? "Autosaved nowhere. Use Save."}</span>
+        {first === undefined ? null : (
+          <span class="pq-editor-bad">
+            {first.code} {first.message}
+          </span>
+        )}
+        <span class="pq-editor-note" role="status" aria-live="polite">
+          {snapshot.note ?? "Nothing saved yet. Save writes a .trivia file."}
+        </span>
       </div>
     </div>
   );
+}
+
+function countLabel(total: number): string {
+  return total === 1 ? "1 problem" : `${total} problems`;
 }

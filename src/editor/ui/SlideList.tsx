@@ -1,23 +1,19 @@
 /** The slide list. Click to select, Alt+↑/↓ to reorder. */
 
+function plural(count: number, word: string): string {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
 import type { JSX } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import { moveSlide } from "../commands";
-import { HEADER_INDEX, problemCount, SlideKind } from "../slides";
+import { problemCount, SLIDE_KIND_LABELS, SlideKind } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 
 export interface SlideListProps {
   readonly store: EditorStore;
   readonly snapshot: EditorSnapshot;
 }
-
-const KIND_LABELS: Readonly<Record<SlideKind, string>> = {
-  [SlideKind.Header]: "Header",
-  [SlideKind.Start]: "Start",
-  [SlideKind.Round]: "Round",
-  [SlideKind.Question]: "Question",
-  [SlideKind.End]: "End",
-};
 
 export function SlideList({ store, snapshot }: SlideListProps): JSX.Element {
   const buttons = useRef(new Map<number, HTMLButtonElement>());
@@ -49,8 +45,15 @@ export function SlideList({ store, snapshot }: SlideListProps): JSX.Element {
     move(index, event.key === "ArrowUp" ? -1 : 1);
   };
 
+  const questions = snapshot.slides.filter(
+    (slide) => slide.kind === SlideKind.Question,
+  ).length;
+  const rounds = snapshot.slides.filter(
+    (slide) => slide.kind === SlideKind.Round,
+  ).length;
+
   return (
-    <nav class="pq-editor-panel" aria-label="Slides">
+    <nav class="pq-editor-panel pq-editor-slide-list" aria-label="Slides">
       <h2>Slides</h2>
       <ol class="pq-editor-slides">
         {snapshot.slides.map((slide) => {
@@ -73,7 +76,7 @@ export function SlideList({ store, snapshot }: SlideListProps): JSX.Element {
                 onKeyDown={(event) => keydown(event, slide.index)}
               >
                 <span class="pq-editor-slide-kind">
-                  {KIND_LABELS[slide.kind]}
+                  {SLIDE_KIND_LABELS[slide.kind]}
                 </span>
                 <span class="pq-editor-slide-label">{slide.label}</span>
                 {problems > 0 ? (
@@ -94,24 +97,9 @@ export function SlideList({ store, snapshot }: SlideListProps): JSX.Element {
       <p class="pq-editor-hint">
         Alt+↑ and Alt+↓ move the selected slide. The header stays put.
       </p>
-      {snapshot.selected === HEADER_INDEX ? null : (
-        <div class="pq-editor-actions">
-          <button
-            type="button"
-            onClick={() => move(snapshot.selected, -1)}
-            disabled={snapshot.selected <= 0}
-          >
-            Move up
-          </button>
-          <button
-            type="button"
-            onClick={() => move(snapshot.selected, 1)}
-            disabled={snapshot.selected >= snapshot.slides.length - 2}
-          >
-            Move down
-          </button>
-        </div>
-      )}
+      <p class="pq-editor-hint">
+        {plural(questions, "question")} · {plural(rounds, "round")}
+      </p>
     </nav>
   );
 }

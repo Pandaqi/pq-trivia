@@ -18,6 +18,7 @@ export {
   type MountedEditor,
   type PickedMedia,
   type PreviewHook,
+  type PreviewInstance,
 } from "./mount";
 export {
   readText,
