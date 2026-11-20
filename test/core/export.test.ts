@@ -12,7 +12,11 @@ import { toStandaloneHtml } from "../../src/core/export/standalone";
 import { gradeAttempt } from "../../src/core/grading/report";
 import { buildQuiz } from "../../src/core/model/quiz";
 import { planQuiz } from "../../src/core/plan/plan";
-import { createAttempt, AttemptJournal } from "../../src/core/session/attempts";
+import {
+  ATTEMPT_MAX_AGE_MS,
+  createAttempt,
+  AttemptJournal,
+} from "../../src/core/session/attempts";
 import { ResponseKind } from "../../src/core/session/responses";
 import { PlayMode } from "../../src/core/session/session";
 import { ScreenKind } from "../../src/core/session/viewModel";
@@ -175,6 +179,7 @@ describe("other exporters", () => {
 describe("attempts", () => {
   test("the newest unfinished attempt comes back", async () => {
     const journal = new AttemptJournal(new MemoryStorage(), "test-quiz");
+    const now = Date.now();
     const config = {
       seed: "export-seed",
       shuffleQuestions: false,
@@ -194,7 +199,7 @@ describe("attempts", () => {
         ...fields,
         index: 1,
         status: "playing",
-        savedAt: 10,
+        savedAt: now - 2000,
       }),
     );
     await journal.save(
@@ -202,7 +207,7 @@ describe("attempts", () => {
         ...fields,
         index: 2,
         status: "playing",
-        savedAt: 200,
+        savedAt: now - 1000,
       }),
     );
     await journal.save(
@@ -210,13 +215,41 @@ describe("attempts", () => {
         ...fields,
         index: 3,
         status: "finished",
-        savedAt: 300,
+        savedAt: now,
       }),
     );
     const resumable = await journal.resumable();
     expect(resumable?.index).toBe(2);
     expect((await journal.history()).length).toBe(3);
     await journal.clear();
+    expect(await journal.history()).toEqual([]);
+  });
+
+  test("a day-old attempt is forgotten and removed", async () => {
+    const journal = new AttemptJournal(new MemoryStorage(), "stale-quiz");
+    await journal.save(
+      createAttempt(
+        "stale-quiz",
+        "Stale",
+        {
+          seed: "",
+          shuffleQuestions: false,
+          shuffleRounds: false,
+          mode: "questions",
+          restricted: false,
+        },
+        {
+          index: 1,
+          status: "playing",
+          responses: {},
+          startedAt: 1,
+          endedAt: null,
+          report: null,
+          savedAt: Date.now() - ATTEMPT_MAX_AGE_MS - 1000,
+        },
+      ),
+    );
+    expect(await journal.resumable()).toBeNull();
     expect(await journal.history()).toEqual([]);
   });
 
@@ -240,7 +273,7 @@ describe("attempts", () => {
           startedAt: 1,
           endedAt: null,
           report: null,
-          savedAt: 5,
+          savedAt: Date.now(),
         },
       ),
     );

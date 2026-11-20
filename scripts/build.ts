@@ -231,6 +231,10 @@ async function build(languages: readonly string[]): Promise<boolean> {
       outdir: OUT_DIR,
       target: "browser",
       format: iifeName === undefined ? entry.format : "iife",
+      // Dynamic imports (the QR encoder) become their own file instead of
+      // riding along in a bundle most lobbies never need. Only the ESM
+      // entries can split; the IIFE ones are one file by design.
+      splitting: iifeName === undefined,
       minify: true,
       sourcemap: "external",
       naming: `[dir]/${iifeName ?? `${entry.name}.[ext]`}`,

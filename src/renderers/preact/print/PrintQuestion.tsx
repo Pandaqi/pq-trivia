@@ -28,6 +28,7 @@ export function PrintQuestion({
   roundName,
   showAnswers,
   face = null,
+  answerLines = false,
   media = {},
 }: {
   readonly question: QuestionModel;
@@ -37,6 +38,8 @@ export function PrintQuestion({
   readonly roundName: string | null;
   readonly showAnswers: boolean;
   readonly face?: "front" | "back" | null;
+  /** Ruled space to write on. Off unless the host asks for it. */
+  readonly answerLines?: boolean;
   readonly media?: MediaOptions;
 }): JSX.Element {
   const t = useT();
@@ -113,7 +116,7 @@ export function PrintQuestion({
           )}
           {hasMedia && isChoice && !front ? answers : null}
           {isChoice && front ? answers : null}
-          {typed && !reveal ? (
+          {typed && !reveal && answerLines ? (
             <div class="pq-field">
               <span class="pq-field-label">{t("printAnswer")}</span>
               <span class="pq-print-line" />

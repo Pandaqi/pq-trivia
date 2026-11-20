@@ -124,20 +124,42 @@ describe("next checks", () => {
     { type: "load/success", plan },
     0,
   );
-  const playing = sessionReducer(
+  const typing = sessionReducer(
     sessionReducer(loaded, { type: "nav/next" }, 0),
+    { type: "interactive/set", interactive: true },
+    0,
+  );
+  const playing = sessionReducer(
+    typing,
     { type: "mode/set", mode: PlayMode.Answers },
     0,
   );
 
-  test("required asks for something in answers mode", () => {
-    const check = nextCheck(playing, InteractivePolicy.Required);
+  test("required asks for something in interactive play", () => {
+    const check = nextCheck(typing, InteractivePolicy.Required);
     expect(check.issues.length).toBe(1);
     expect(check.blocked).toBe(false);
   });
 
   test("permissive never blocks", () => {
-    const check = nextCheck(playing, InteractivePolicy.Permissive);
+    const check = nextCheck(typing, InteractivePolicy.Permissive);
+    expect(check.issues).toEqual([]);
+  });
+
+  test("read-aloud play has no fields, so it never asks", () => {
+    const check = nextCheck(
+      sessionReducer(
+        typing,
+        { type: "interactive/set", interactive: false },
+        0,
+      ),
+      InteractivePolicy.Required,
+    );
+    expect(check.issues).toEqual([]);
+  });
+
+  test("answer mode is presentation, not input", () => {
+    const check = nextCheck(playing, InteractivePolicy.Required);
     expect(check.issues).toEqual([]);
   });
 });

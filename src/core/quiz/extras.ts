@@ -39,6 +39,7 @@ export interface ExtrasContext {
 type Extras = Pick<
   QuizApi,
   | "reveal"
+  | "toggleReveal"
   | "revealHint"
   | "expireTimer"
   | "timerRemaining"
@@ -97,6 +98,25 @@ export function createExtras(ctx: ExtrasContext): Extras {
       ),
     );
     return true;
+  };
+
+  /** V2's `a`: show the answer, press again and it goes away. */
+  const toggleReveal = (): boolean => {
+    const current = currentQuestion(ctx.state());
+    if (current === null || ctx.isRestricted()) {
+      return false;
+    }
+    if (ctx.state().revealed.includes(current.id)) {
+      ctx.apply(
+        sessionReducer(
+          ctx.state(),
+          { type: "hide", questionId: current.id },
+          Date.now(),
+        ),
+      );
+      return true;
+    }
+    return reveal();
   };
 
   const revealHint = (): boolean => {
@@ -267,6 +287,7 @@ export function createExtras(ctx: ExtrasContext): Extras {
 
   return {
     reveal,
+    toggleReveal,
     revealHint,
     expireTimer,
     timerRemaining,

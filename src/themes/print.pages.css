@@ -23,8 +23,12 @@
     --pq-space: 0;
   }
 
+  /* The page box is whatever the printer is set to: A4, Letter, portrait,
+     landscape, a label. Every sheet below is 100% of it, so nothing here
+     needs to know a single millimetre. */
   html,
   body {
+    height: 100%;
     margin: 0;
     padding: 0;
     background: #fff;
@@ -37,6 +41,7 @@
 
   .pq-print-only {
     display: block;
+    height: 100%;
   }
 
   .pq-print-hide,
@@ -52,6 +57,7 @@
   }
 
   .pq-print-sheet {
+    height: 100%;
     color: #000;
     font-family: var(--pq-font-body);
     font-size: 10.5pt;
@@ -65,11 +71,13 @@
     min-width: 0;
   }
 
-  /* One page each, in a fixed A4 box. fit.ts shrinks a page that is too tall. */
+  /* One question, one sheet. The box is the printable area itself, so nothing
+     can land on a second page. fit.ts shrinks whatever is too tall. */
   .pq-print-page {
     position: relative;
     display: block;
-    height: var(--pq-print-page-height, 273mm);
+    width: 100%;
+    height: 100%;
     min-height: 0;
     margin: 0;
     padding: 0;
@@ -77,6 +85,35 @@
     break-after: page;
     break-inside: avoid;
     background: #fff;
+  }
+
+  /* Forms, answer sheets and the media list are documents, not slides. They
+     flow, and the browser splits them over pages where it likes. */
+  .pq-print-flow {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 0 8mm;
+    padding: 0;
+    overflow: visible;
+    break-inside: auto;
+  }
+
+  .pq-print-flow-inner {
+    display: block;
+  }
+
+  .pq-print-flow table {
+    break-inside: auto;
+  }
+
+  /* A header row on every page of a long table. */
+  .pq-print-flow thead {
+    display: table-header-group;
+  }
+
+  .pq-print-flow tr {
+    break-inside: avoid;
   }
 
   .pq-print-page-inner {
@@ -97,10 +134,6 @@
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
-  }
-
-  .pq-print-page:last-child {
-    break-after: auto;
   }
 
   /* Cover. */

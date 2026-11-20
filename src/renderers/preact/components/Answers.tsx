@@ -4,7 +4,7 @@ import type { JSX } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import { parseInline } from "../../../core/format/inline";
 import { QuestionType } from "../../../core/model/question";
-import { derivedRng, shuffleWith } from "../../../core/plan/shuffle";
+import { derivedRng, shuffleAway } from "../../../core/plan/shuffle";
 import type { Quiz } from "../../../core/session/quiz";
 import type { ResponseIssue } from "../../../core/session/policies";
 import {
@@ -285,8 +285,17 @@ function SortInput({
 }: InputProps): JSX.Element {
   const t = useT();
   const stored = response.kind === ResponseKind.Sort ? response.order : [];
-  const authorOrder = screen.answers.map((answer) => answer.id);
-  const order = stored.length === 0 ? authorOrder : stored;
+  // The authored order is the correct order. Showing it would hand out the
+  // answer for free, so an untouched question starts shuffled.
+  const startOrder = useMemo(
+    () =>
+      shuffleAway(
+        screen.answers.map((answer) => answer.id),
+        derivedRng(screen.id, "sort-start"),
+      ),
+    [screen],
+  );
+  const order = stored.length === 0 ? startOrder : stored;
   const textOf = new Map(
     screen.answers.map((answer) => [answer.id, answer.text]),
   );
@@ -373,7 +382,7 @@ function MatchInput({
   const lefts = parsed.map((pair) => pair[0]);
   const rights = useMemo(
     () =>
-      shuffleWith(
+      shuffleAway(
         parsed.map((pair) => pair[1]),
         derivedRng(screen.id, "match-right"),
       ),

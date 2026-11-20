@@ -32,9 +32,9 @@ export function PrintForm({
   const t = useT();
   return (
     <section
-      class={`pq-print-page pq-print-form${compact ? " pq-form-compact" : ""}`}
+      class={`pq-print-flow pq-print-form${compact ? " pq-form-compact" : ""}`}
     >
-      <div class="pq-print-page-inner">
+      <div class="pq-print-flow-inner">
         {rounds.map((round) => {
           const items = questions.filter(
             (question) => question.round === round.id,

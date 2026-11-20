@@ -61,7 +61,19 @@ function ReviewCard({
           <span aria-hidden="true">{statusMark(question)}</span> {status}
         </p>
       </div>
-      <p class="pq-review-title">{question.title}</p>
+      {/* The question itself is the way back. A "question type" link was
+          never the thing you wanted to click. */}
+      <button
+        type="button"
+        class="pq-review-title pq-review-open"
+        title={t("openQuestion")}
+        onClick={() => {
+          quiz.hideResults();
+          quiz.goTo(question.planIndex);
+        }}
+      >
+        {question.title}
+      </button>
 
       {question.parts.length === 0 ? null : (
         <table class="pq-review-parts">
@@ -95,17 +107,6 @@ function ReviewCard({
           ))}
         </p>
       )}
-
-      <button
-        type="button"
-        class="pq-link"
-        onClick={() => {
-          quiz.hideResults();
-          quiz.goTo(question.planIndex);
-        }}
-      >
-        {t("openQuestion")}
-      </button>
     </li>
   );
 }

@@ -7,6 +7,31 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+
+/**
+ * The button that opens this panel. It lives in the question strip and floats
+ * in the corner everywhere else, so it is one component with one look.
+ */
+export function SettingsToggle({
+  open,
+  onToggle,
+  label,
+}: {
+  readonly open: boolean;
+  readonly onToggle: () => void;
+  readonly label: string;
+}): JSX.Element {
+  return (
+    <button
+      type="button"
+      class="pq-settings-toggle"
+      aria-expanded={open}
+      onClick={onToggle}
+    >
+      {label}
+    </button>
+  );
+}
 import {
   AnswerLabels,
   ThemeMode,
@@ -361,6 +386,20 @@ export function SettingsPanel({
             {t("printMediaOnly")}
           </button>
         </div>
+        <label class="pq-check">
+          <input
+            type="checkbox"
+            checked={quiz.config.printAnswerLines === true}
+            onChange={(event) => {
+              quiz.configure({
+                printAnswerLines: event.currentTarget.checked,
+              });
+            }}
+          />
+          {t("printAnswerLines")}
+        </label>
+        <p class="pq-settings-note">{t("printAnswerLinesNote")}</p>
+        <p class="pq-settings-note">{t("printNote")}</p>
         <CopyNote what={copied} />
       </fieldset>
 

@@ -177,11 +177,15 @@
   }
 }
 
-/* Two halves, like V2: question left, media or answers right. */
+/* Two halves, like V2: question left, media or answers right. A split gets a
+ * wider column than a single question, but it still gets a column. Without a
+ * cap the halves run to the edges of a projector. */
 .pq-split {
   display: grid;
   gap: var(--pq-space);
   width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
   flex: 1 1 auto;
   align-items: center;
   padding: clamp(0.5rem, 2vh, 1.25rem) 0 0;
@@ -246,14 +250,16 @@
   margin: 0;
 }
 
-/* Typed answers sit on a line, like a form on paper. */
+/* Typed answers sit on a line, like a form on paper. They share the question's
+ * column, so an input lines up with the cards beside it instead of hanging off
+ * to one side of the text above it. */
 .pq-field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
   width: 100%;
-  max-width: 32rem;
-  margin: clamp(1rem, 3vh, 1.8rem) auto 0;
+  max-width: 100%;
+  margin: clamp(0.9rem, 2.6vh, 1.6rem) auto 0;
 }
 
 .pq-field-label {
@@ -266,14 +272,21 @@
 
 .pq-input {
   width: 100%;
-  padding: 0.7rem 0.9rem;
+  max-width: 100%;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
   border: 1px solid var(--pq-line);
   border-radius: var(--pq-r-md);
   background: var(--pq-slide);
   color: var(--pq-ink);
   font: inherit;
-  font-size: 1.25rem;
+  line-height: 1.4;
   box-shadow: inset 0 1px 2px rgb(74 58 30 / 0.08);
+}
+
+/* The answer box is read from across a room; a settings field is not. */
+.pq-screen-question .pq-field .pq-input {
+  font-size: 1.25rem;
 }
 
 .pq-input:focus-visible {
@@ -293,15 +306,19 @@
   margin-top: clamp(1rem, 3vh, 1.8rem);
 }
 
+/* Blanks share the row instead of sitting in fixed little boxes at one end. */
 .pq-cloze .pq-field {
-  max-width: 14rem;
+  flex: 1 1 12rem;
+  width: auto;
+  max-width: 100%;
   margin: 0;
 }
 
 .pq-answers-plain {
   display: block;
-  max-width: 40rem;
-  margin-top: 1.4rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 1.4rem 0 0;
   padding-left: 1.4rem;
   color: var(--pq-muted);
   font-size: 1.1rem;
@@ -323,8 +340,7 @@
   box-shadow: var(--pq-shadow-1);
 }
 
-.pq-hints,
-.pq-explanation {
+.pq-hints {
   max-width: 46ch;
   margin: clamp(0.9rem, 2.6vh, 1.5rem) auto 0;
   padding: 0.75rem 1rem;
@@ -339,12 +355,23 @@
   padding-left: 1.2rem;
 }
 
+/* V2's comment slot: plain words under the question, no box of its own. Only
+   the answer reveal brings it, so it sits where the eye already is. */
 .pq-explanation {
-  border-left-color: var(--pq-fern);
-  background: color-mix(in srgb, var(--pq-fern) 14%, transparent);
+  max-width: 46ch;
+  margin: clamp(0.7rem, 2vh, 1.2rem) auto 0;
   font-family: var(--pq-font-heading);
   font-style: italic;
   font-size: 1.05rem;
+  text-align: center;
+}
+
+.pq-explanation::before {
+  content: "";
+  display: block;
+  width: 3rem;
+  margin: 0 auto 0.6rem;
+  border-top: 2px dotted var(--pq-fern);
 }
 
 /* Markdown images, in a question or an answer. Small enough to share a card. */

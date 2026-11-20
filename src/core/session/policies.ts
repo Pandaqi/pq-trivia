@@ -241,8 +241,11 @@ export function nextCheck(
     return { issues: [], blocked: false };
   }
   const response = state.responses[question.id] ?? defaultResponse(question);
+  // Only interactive play has fields to fill. A read-aloud quiz has nothing to
+  // type in, so "you must answer first" would block the presenter forever.
+  // Answer mode is presentation too: the answers are on screen already.
   const issues =
-    state.mode === PlayMode.Answers
+    state.interactive && state.mode === PlayMode.Questions
       ? responseIssues(question, response, policy)
       : [];
   if (

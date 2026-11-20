@@ -69,8 +69,8 @@ export function PrintMedia({
   });
 
   return (
-    <section class="pq-print-page pq-print-media">
-      <div class="pq-print-page-inner">
+    <section class="pq-print-flow pq-print-media">
+      <div class="pq-print-flow-inner">
         <h1 class="pq-print-media-title">{t("printMediaOnly")}</h1>
         {entries.length === 0 ? (
           <p class="pq-description">{t("printMediaNone")}</p>

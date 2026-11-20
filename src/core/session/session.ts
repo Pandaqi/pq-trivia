@@ -82,6 +82,7 @@ export type SessionAction =
     }
   | { readonly type: "hint/reveal"; readonly questionId: string }
   | { readonly type: "reveal"; readonly questionId: string }
+  | { readonly type: "hide"; readonly questionId: string }
   | { readonly type: "language/set"; readonly language: string }
   | { readonly type: "timer/expire"; readonly questionId: string }
   | { readonly type: "results/show"; readonly report: GradeReport }
@@ -288,6 +289,16 @@ export function sessionReducer(
         ? state
         : { ...state, revealed: [...state.revealed, action.questionId] };
 
+    // Hiding again. V2's `a` toggles both ways and a host notices when it does
+    // not.
+    case "hide":
+      return state.revealed.includes(action.questionId)
+        ? {
+            ...state,
+            revealed: state.revealed.filter((id) => id !== action.questionId),
+          }
+        : state;
+
     case "language/set":
       return { ...state, language: action.language };
 
@@ -320,6 +331,9 @@ export function sessionReducer(
               : SessionStatus.Ready,
         startedAt: action.startedAt,
         endedAt: action.endedAt,
+        // Only an interactive play is ever saved, so resuming one keeps typing
+        // and keeps saving.
+        interactive: true,
         showingResults: false,
         report: null,
       };

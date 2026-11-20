@@ -171,6 +171,49 @@ describe("createQuiz", () => {
     quiz.destroy();
   });
 
+  test("the reveal toggle puts the answer away again", async () => {
+    const quiz = createQuiz();
+    await quiz.load({ type: "text", text });
+    // The start screen has no question, so there is nothing to toggle.
+    expect(quiz.toggleReveal()).toBe(false);
+
+    quiz.next();
+    quiz.next();
+    const id =
+      quiz.state.plan?.questions.find(
+        (question) => question.type !== QuestionType.Section,
+      )?.id ?? "";
+
+    // V2's `a`: show, press again, gone, press again, back.
+    expect(quiz.toggleReveal()).toBe(true);
+    expect(quiz.state.revealed).toContain(id);
+    const shown = quiz.currentScreen();
+    if (shown?.kind !== ScreenKind.Question) {
+      throw new Error("expected a question screen");
+    }
+    expect(shown.revealed).toBe(true);
+
+    expect(quiz.toggleReveal()).toBe(true);
+    expect(quiz.state.revealed).not.toContain(id);
+    const hidden = quiz.currentScreen();
+    if (hidden?.kind !== ScreenKind.Question) {
+      throw new Error("expected a question screen");
+    }
+    expect(hidden.revealed).toBe(false);
+
+    expect(quiz.toggleReveal()).toBe(true);
+    expect(quiz.state.revealed).toContain(id);
+
+    // `reveal()` is the sticky one the host calls: it never takes it back.
+    expect(quiz.reveal()).toBe(false);
+    expect(quiz.state.revealed).toContain(id);
+    expect(quiz.toggleReveal()).toBe(true);
+    expect(quiz.state.revealed).not.toContain(id);
+    expect(quiz.reveal()).toBe(true);
+    expect(quiz.state.revealed).toContain(id);
+    quiz.destroy();
+  });
+
   test("an empty file is an error, not an empty quiz", async () => {
     const quiz = createQuiz();
     await quiz.load({ type: "text", text: "\n\n// nothing here\n" });

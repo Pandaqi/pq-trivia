@@ -5,6 +5,16 @@ reveals, the leaderboard moves.
 
 The live code lives in its own bundle. The default player does not contain it.
 
+## The QR needs its chunk
+
+The lobby draws a QR of the join link. The encoder (`uqr`) is not inside
+`multiplayer.js`: it sits next to it as a `chunk-*.js`, fetched the first time
+a lobby opens.
+
+Copy the whole `dist/v3/` folder, not just `multiplayer.js`. Without the chunk
+everything still works — the code and the link are right there — but there is
+no QR to scan.
+
 ## Two transports
 
 | Transport          | Reach                    | Setup                           |

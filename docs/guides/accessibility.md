@@ -27,12 +27,24 @@ the honest one.
 
 ## Keyboard
 
-| Key                 | Action          |
-| ------------------- | --------------- |
-| `Tab` / `Shift+Tab` | move            |
-| `→` / `←`           | next / previous |
-| `r`                 | reveal          |
-| `h`                 | hint            |
+| Key                 | Action                               |
+| ------------------- | ------------------------------------ |
+| `Tab` / `Shift+Tab` | move                                 |
+| `→` / `↑`           | next question                        |
+| `←` / `↓`           | previous question                    |
+| `.` / `>`           | next round                           |
+| `,` / `<`           | previous round                       |
+| `a` / `r`           | show the answer, press again to hide |
+| `m`                 | questions / answers                  |
+| `h`                 | hint                                 |
+| `f`                 | fullscreen the media                 |
+| `l`                 | next language                        |
+| `Enter` / `Space`   | play or pause media                  |
+| `+` / `-`           | font size                            |
+| `Home` / `Escape`   | start / end                          |
+
+V2 hands know these; every key here is V2's own. `Hotkeys` and
+`HotkeysForbidden` remap or switch them off.
 
 The timer is announced, not just drawn. A countdown that only exists visually
 is a countdown half the room cannot hear.

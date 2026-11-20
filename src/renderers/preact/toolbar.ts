@@ -19,11 +19,13 @@ export interface ToolbarAction {
   readonly icon: string;
 }
 
+// Left to right, the way the buttons read: back a round, back a question,
+// forward a question, forward a round.
 export const TOOLBAR_ACTIONS: readonly ToolbarAction[] = [
-  { id: "prev", labelKey: "previous", icon: "←" },
   { id: "prev-round", labelKey: "prevRound", icon: "⇤" },
-  { id: "next-round", labelKey: "nextRound", icon: "⇥" },
+  { id: "prev", labelKey: "previous", icon: "←" },
   { id: "next", labelKey: "next", icon: "→" },
+  { id: "next-round", labelKey: "nextRound", icon: "⇥" },
   { id: "font-minus", labelKey: "fontMinus", icon: "A−" },
   { id: "font-plus", labelKey: "fontPlus", icon: "A+" },
   { id: "reveal", labelKey: "showAnswer", icon: "✓" },
@@ -33,16 +35,14 @@ export const TOOLBAR_ACTIONS: readonly ToolbarAction[] = [
   { id: "end", labelKey: "endQuiz", icon: "⏭" },
 ];
 
+// Five buttons, with the reveal in the middle. A host's hand falls there.
+// Everything else is one click away in Settings.
 export const DEFAULT_TOOLBAR_ACTIONS: readonly string[] = [
   "prev",
-  "prev-round",
-  "next-round",
-  "next",
   "font-minus",
-  "font-plus",
   "reveal",
-  "hint",
-  "mode",
+  "font-plus",
+  "next",
 ];
 
 export function pinnedActions(quiz: Quiz): readonly string[] {

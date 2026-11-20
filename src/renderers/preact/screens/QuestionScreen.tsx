@@ -13,7 +13,7 @@ import type { TimerSound } from "../../../core/session/timers";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { Actions } from "../components/Actions";
 import { Answers } from "../components/Answers";
-import { ReadOnlyAnswers } from "./ReadOnlyAnswers";
+import { QuestionOptions, ReadOnlyAnswers } from "./ReadOnlyAnswers";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { ScriptWidget } from "../components/ScriptWidget";
@@ -126,11 +126,14 @@ export function QuestionScreen({
   screen,
   state,
   timerSound,
+  settings = null,
 }: {
   readonly quiz: Quiz;
   readonly screen: QuestionViewModel;
   readonly state: SessionState;
   readonly timerSound?: TimerSound | undefined;
+  /** The settings button, when this screen has a strip to put it in. */
+  readonly settings?: JSX.Element | null;
 }): JSX.Element {
   const t = useT();
   const response = state.responses[screen.id];
@@ -161,11 +164,13 @@ export function QuestionScreen({
     Math.max(screen.roundQuestionCount, 1),
   );
   const icons = quiz.config.metadataIcons !== false;
-  const showInputs =
-    screen.interactive && state.mode === PlayMode.Questions && !screen.revealed;
-  const showAnswers =
-    screen.answers.length > 0 &&
-    (state.mode === PlayMode.Answers || screen.revealed);
+  // Question mode still shows the options. A host reads them out; hiding them
+  // until "show answer" makes the question impossible to play.
+  const asking = state.mode === PlayMode.Questions && !screen.revealed;
+  const showInputs = screen.interactive && asking;
+  const showAnswers = screen.answers.length > 0 && !asking;
+  const showOptions =
+    !screen.interactive && asking && screen.answers.length > 0;
   const answers =
     showInputs && response !== undefined ? (
       <Answers
@@ -176,6 +181,8 @@ export function QuestionScreen({
       />
     ) : showAnswers ? (
       <ReadOnlyAnswers quiz={quiz} screen={screen} />
+    ) : showOptions ? (
+      <QuestionOptions quiz={quiz} screen={screen} />
     ) : null;
 
   const className = [
@@ -194,6 +201,10 @@ export function QuestionScreen({
   const split = hasMedia || (manyAnswers && answers !== null);
   const answersLeft = hasMedia && answers !== null;
   const answersRight = !hasMedia && manyAnswers && answers !== null;
+  // One column, one input: an open question, a range, a list, a cloze. Without
+  // this the input was built and then never placed anywhere. Which is how an
+  // interactive quiz ended up with no box to type in.
+  const answersInline = answers !== null && !answersLeft && !answersRight;
 
   return (
     <main
@@ -267,6 +278,7 @@ export function QuestionScreen({
             })}
           </span>
         )}
+        {settings}
       </p>
 
       <div class={split ? "pq-split" : "pq-split pq-split-single"}>
@@ -295,7 +307,24 @@ export function QuestionScreen({
             allowed={quiz.config.allowScripts === true}
           />
 
+          {answersInline ? answers : null}
           {answersLeft ? answers : null}
+
+          {/* V2 put the comment, the hints and the sources right under the
+              question. A box above the toolbar was my idea, not a good one. */}
+          {screen.explanation === null ? null : (
+            <p class="pq-explanation">
+              <Inline nodes={screen.explanation} />
+            </p>
+          )}
+
+          {screen.sources.length === 0 ? null : (
+            <p class="pq-sources">
+              {screen.sources.map((source, index) => (
+                <span key={index}>{source}</span>
+              ))}
+            </p>
+          )}
 
           {hintCount === 0 ? null : (
             <aside class="pq-hints" aria-label={t("hints")}>
@@ -328,20 +357,6 @@ export function QuestionScreen({
           </div>
         )}
       </div>
-
-      {screen.explanation === null ? null : (
-        <p class="pq-explanation">
-          <Inline nodes={screen.explanation} />
-        </p>
-      )}
-
-      {screen.sources.length === 0 ? null : (
-        <p class="pq-sources">
-          {screen.sources.map((source, index) => (
-            <span key={index}>{source}</span>
-          ))}
-        </p>
-      )}
 
       {quiz.config.disableUI === true ? null : (
         <footer class="pq-toolbar">

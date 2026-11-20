@@ -7,7 +7,10 @@
   justify-content: center;
   gap: 0.55rem;
   margin-top: auto;
-  padding: var(--pq-space) 0 calc(var(--pq-space) * 0.75);
+  /* Room under the buttons. A row of pills touching the window edge looks
+     like it fell off. */
+  padding: var(--pq-space) 0
+    calc(var(--pq-space) * 0.75 + env(safe-area-inset-bottom, 0px));
 }
 
 .pq-toolbar button,
@@ -86,6 +89,25 @@
   transform: translateY(1px);
 }
 
+/* The home screen's numbers, one quiet line. */
+.pq-facts {
+  margin: 0;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Insert a file or a theme folder: dashed pills on one line. */
+.pq-insert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 .pq-stats {
   display: flex;
   flex-wrap: wrap;
@@ -130,14 +152,19 @@
 .pq-progress span {
   display: block;
   height: 100%;
-  background: linear-gradient(90deg, var(--pq-honey), var(--pq-fern));
+  /* The round's own colour, so the progress bar belongs to the round. */
+  background: linear-gradient(
+    90deg,
+    var(--pq-round-accent, var(--pq-accent, var(--pq-honey))),
+    var(--pq-fern)
+  );
 }
 
-/* The settings button lives in a corner on every screen. */
+/* Screens with no strip: the top-right corner, where nothing else sits. */
 .pq-settings-toggle {
-  position: fixed;
-  top: 0.75rem;
-  right: 0.75rem;
+  position: absolute;
+  top: 0.7rem;
+  right: max(var(--pq-space), 0.75rem);
   z-index: 20;
   min-height: 2.4rem;
   padding: 0.4rem 0.95rem;
@@ -152,6 +179,29 @@
 
 .pq-settings-toggle:hover {
   border-color: var(--pq-ink);
+}
+
+/* A question slide has a strip. The button joins it, after the points, and
+   looks like it belongs there instead of like a widget dropped on top. */
+.pq-meta-strip .pq-settings-toggle {
+  position: static;
+  min-height: 0;
+  margin-left: 0.15rem;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: var(--pq-r-pill);
+  background: transparent;
+  color: inherit;
+  font-family: var(--pq-font-label);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+
+.pq-meta-strip .pq-settings-toggle:hover {
+  border-color: currentColor;
+  background: color-mix(in srgb, currentColor 16%, transparent);
 }
 
 .pq-settings-backdrop {

@@ -157,6 +157,7 @@
 .pq-quiz {
   box-sizing: border-box;
   /* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
+  position: relative;
   height: 100vh;
   height: 100dvh;
   min-height: 0;
@@ -251,8 +252,12 @@
   letter-spacing: 0.04em;
 }
 
+/* The round colour is decoration here, not text ink. A mustard heading on
+ * cream is unreadable; the theme's own text colour always works. */
 .pq-section-secret {
-  color: var(--pq-round-accent, var(--pq-accent));
+  padding-bottom: 0.15rem;
+  border-bottom: 2px dotted var(--pq-round-accent, var(--pq-accent));
+  color: var(--pq-ink);
   font-family: var(--pq-font-heading);
   font-style: italic;
   font-size: 1.15rem;
@@ -272,13 +277,28 @@
   padding: var(--pq-space);
 }
 
-/* On a wide screen the slide becomes a sheet on the desk. */
+/* Fill the window means fill the window: no desk, no sheet edge, no gutter.
+ * The sheet on the desk belongs to the inline layout, where the quiz shares
+ * the page with other things. */
+.pq-quiz[data-pq-layout="viewport"] {
+  padding: 0;
+}
+
+.pq-quiz[data-pq-layout="viewport"] > .pq-screen {
+  width: 100%;
+  max-width: none;
+  margin-inline: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 @media screen and (min-width: 48rem) {
-  .pq-quiz {
+  .pq-quiz[data-pq-layout="inline"] {
     padding: clamp(0.75rem, 2vw, 1.75rem);
   }
 
-  .pq-screen {
+  .pq-quiz[data-pq-layout="inline"] .pq-screen {
     width: min(100%, 78rem);
     min-height: 0;
     margin-inline: auto;
@@ -299,6 +319,42 @@
   height: auto;
   min-height: 20rem;
   overflow: clip;
+}
+
+/* Filling the window means one screen with no scrolling. The inline layout
+ * keeps the roomy rhythm; here every gap gives something back. */
+.pq-quiz[data-pq-layout="viewport"] .pq-meta-strip {
+  padding-block: 0.42rem;
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-header {
+  padding-top: clamp(0.45rem, 1.6vh, 1rem);
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-kicker {
+  margin-bottom: 0.35rem;
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-body {
+  margin-top: clamp(0.4rem, 1.2vh, 0.8rem);
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-screen-start {
+  gap: clamp(0.45rem, 1.5vh, 0.9rem);
+  padding: clamp(0.7rem, 2.4vh, 1.6rem) var(--pq-space);
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-split {
+  padding-top: clamp(0.2rem, 0.8vh, 0.5rem);
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-answers {
+  margin-top: clamp(0.4rem, 1.4vh, 0.9rem);
+}
+
+.pq-quiz[data-pq-layout="viewport"] .pq-toolbar {
+  padding: clamp(0.35rem, 1.1vh, 0.7rem) 0
+    calc(clamp(0.75rem, 2.2vh, 1.4rem) + env(safe-area-inset-bottom, 0px));
 }
 
 /* V2's strip, warmed up. A host reads it at a glance across a room. */
@@ -362,7 +418,7 @@
   display: inline-block;
   margin: 0 0 0.6rem;
   padding-bottom: 0.15rem;
-  border-bottom: 2px dotted var(--pq-honey);
+  border-bottom: 2px dotted var(--pq-round-accent, var(--pq-honey));
   color: var(--pq-muted);
   font-family: var(--pq-font-label);
   font-size: 0.72rem;

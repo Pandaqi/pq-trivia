@@ -6,7 +6,7 @@
     padding: 2mm 3mm;
     border: 0;
     background: var(--pq-round-accent, #111) !important;
-    color: #fff !important;
+    color: var(--pq-accent-ink, #fff) !important;
     font-size: 8.5pt;
     letter-spacing: 0.08em;
     print-color-adjust: exact;
@@ -14,8 +14,8 @@
   }
 
   .pq-meta-strip > .pq-points {
-    border-left-color: #fff;
-    color: #fff;
+    border-left-color: currentColor;
+    color: inherit;
   }
 
   .pq-meta-author,
@@ -53,8 +53,20 @@
     flex: 1 1 auto;
   }
 
+  /* Nothing on the left means the whole slide is centred, both ways. The
+     digital quiz does this; the paper should too. */
   .pq-split-single {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pq-split-single > .pq-split-left {
+    align-items: center;
+    justify-content: center;
   }
 
   .pq-split-left,
@@ -157,7 +169,7 @@
     height: 5.5mm;
     border-radius: 50%;
     background: var(--pq-round-accent, #111) !important;
-    color: #fff !important;
+    color: var(--pq-accent-ink, #fff) !important;
     font-size: 8pt;
     font-weight: 700;
     print-color-adjust: exact;
@@ -199,7 +211,7 @@
     padding: 0 1mm;
     border-radius: 999rem;
     background: var(--pq-round-accent, #111) !important;
-    color: #fff !important;
+    color: var(--pq-accent-ink, #fff) !important;
     font-size: 8pt;
     font-weight: 700;
     font-variant-numeric: tabular-nums;

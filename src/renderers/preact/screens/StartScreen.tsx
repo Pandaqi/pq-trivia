@@ -17,11 +17,11 @@ import { Problems } from "../components/Problems";
 import { useT } from "../i18n";
 import { showsButton } from "../toolbar";
 
-/** Pick a theme folder from disk, mid-start-screen. Opt-in per quiz. */
+/** Pick a theme folder from disk, mid-start-screen. On unless turned off. */
 function ThemePicker({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
   const t = useT();
   const [note, setNote] = useState<string | null>(null);
-  if (quiz.config.themeUpload !== true) {
+  if (quiz.config.themeUpload === false || quiz.config.disableUI === true) {
     return null;
   }
   const load = async (files: readonly File[]): Promise<void> => {
@@ -42,7 +42,7 @@ function ThemePicker({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
   };
   return (
     <section class="pq-theme-picker" aria-label={t("themeLoad")}>
-      <label class="pq-link">
+      <label class="pq-link pq-insert-button">
         {t("themeLoad")}
         <input
           type="file"
@@ -90,9 +90,76 @@ async function findOnlineFiles(quiz: Quiz): Promise<readonly QuizSourceFile[]> {
   return files;
 }
 
+/** Short date and time, in whatever locale the browser speaks. */
+function whenLabel(savedAt: number): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(savedAt));
+  } catch {
+    return new Date(savedAt).toLocaleString();
+  }
+}
+
+/** Open a quiz file from disk. Works from `file://`, which is the point. */
+function InsertQuizFile({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
+  const t = useT();
+  const [note, setNote] = useState<string | null>(null);
+  if (quiz.config.disableUI === true) {
+    return null;
+  }
+
+  const load = async (file: File): Promise<void> => {
+    try {
+      const text = await file.text();
+      if (file.name.toLowerCase().endsWith(".json")) {
+        await quiz.load({ type: "inline", data: JSON.parse(text) });
+      } else {
+        await quiz.load({ type: "text", text, file: file.name });
+      }
+      setNote(null);
+    } catch (error) {
+      setNote(
+        t("insertError", {
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      );
+    }
+  };
+
+  return (
+    <>
+      <label class="pq-link pq-insert-button">
+        {t("insertQuiz")}
+        <input
+          type="file"
+          hidden
+          accept=".trivia,.txt,.json,text/plain,application/json"
+          onChange={(event) => {
+            const input = event.currentTarget;
+            const file = input.files?.[0];
+            if (file === undefined) {
+              return;
+            }
+            void load(file).finally(() => {
+              input.value = "";
+            });
+          }}
+        />
+      </label>
+      {note === null ? null : (
+        <p class="pq-theme-note" role="status">
+          {note}
+        </p>
+      )}
+    </>
+  );
+}
+
 /**
- * V2's load screen, minus the upload: a prepared quiz in the page, and files
- * found next to it on a server. Both sit above the theme folder button.
+ * V2's load screen: a prepared quiz in the page, files found next to it on a
+ * server, a file from disk, and a theme folder.
  */
 function LoadQuestions({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
   const t = useT();
@@ -245,6 +312,17 @@ export function StartScreen({
 }): JSX.Element {
   const t = useT();
   const date = quiz.config.dateCreation;
+  const facts = [
+    `${screen.questionCount} ${t(
+      screen.questionCount === 1 ? "question_one" : "question_other",
+    )}`,
+    `${screen.roundCount} ${t(
+      screen.roundCount === 1 ? "round_one" : "round_other",
+    )}`,
+  ];
+  if (screen.seed.length > 0) {
+    facts.push(t("printSeed", { seed: screen.seed }));
+  }
 
   const begin = (mode: PlayMode, interactive: boolean): void => {
     quiz.setMode(mode);
@@ -293,20 +371,8 @@ export function StartScreen({
         </div>
       )}
 
-      <dl class="pq-stats">
-        <div>
-          <dt>{t("questions")}</dt>
-          <dd>{screen.questionCount}</dd>
-        </div>
-        <div>
-          <dt>{t("rounds")}</dt>
-          <dd>{screen.roundCount}</dd>
-        </div>
-        <div>
-          <dt>{t("seed")}</dt>
-          <dd>{screen.seed.length === 0 ? t("none") : screen.seed}</dd>
-        </div>
-      </dl>
+      {/* One quiet line, like the key hints. Three big boxes ate the screen. */}
+      <p class="pq-facts">{[...facts].join(" · ")}</p>
 
       <LanguagePicker quiz={quiz} />
 
@@ -342,6 +408,9 @@ export function StartScreen({
               total: screen.resume.total,
             })}
           </p>
+          <p class="pq-resume-when">
+            {t("resumeWhen", { time: whenLabel(screen.resume.savedAt) })}
+          </p>
           <div class="pq-resume-actions">
             <button
               type="button"
@@ -358,7 +427,10 @@ export function StartScreen({
       )}
 
       <LoadQuestions quiz={quiz} />
-      <ThemePicker quiz={quiz} />
+      <section class="pq-insert" aria-label={t("loadHeading")}>
+        <InsertQuizFile quiz={quiz} />
+        <ThemePicker quiz={quiz} />
+      </section>
 
       {quiz.config.hideErrors === true ? null : (
         <Problems diagnostics={quiz.diagnostics()} />

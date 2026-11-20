@@ -4,11 +4,7 @@ import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getTheme, subscribeTheme } from "../../platform/browser/theme";
 import type { ViewRenderer } from "../../core/session/registry";
-import {
-  PlayMode,
-  SessionStatus,
-  type SessionState,
-} from "../../core/session/session";
+import { SessionStatus, type SessionState } from "../../core/session/session";
 import type { TimerSound } from "../../core/session/timers";
 import type { Quiz } from "../../core/session/quiz";
 import {
@@ -25,118 +21,11 @@ import { LockedScreen } from "./screens/LockedScreen";
 import { MessageScreen } from "./screens/MessageScreen";
 import { QuestionScreen } from "./screens/QuestionScreen";
 import { ResultsScreen } from "./screens/ResultsScreen";
+import { actionFor, isTyping, keyMap } from "./keys";
 import { changeFontScale, showsButton } from "./toolbar";
-import { SettingsOverlay } from "./screens/SettingsPanel";
+import { SettingsOverlay, SettingsToggle } from "./screens/SettingsPanel";
 import { StartScreen } from "./screens/StartScreen";
-
-const TYPING_TAGS: ReadonlySet<string> = new Set([
-  "INPUT",
-  "TEXTAREA",
-  "SELECT",
-]);
-
-function isTyping(target: EventTarget | null): boolean {
-  const element = target as HTMLElement | null;
-  return (
-    element !== null &&
-    (TYPING_TAGS.has(element.tagName) || element.isContentEditable)
-  );
-}
-
-type Action = (quiz: Quiz) => void;
-
-/** V2's keys, with `hotkeys` and `hotkeysForbidden` on top. */
-const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
-  next: ["ArrowRight", "ArrowDown"],
-  prev: ["ArrowLeft", "ArrowUp"],
-  nextRound: [".", ">"],
-  prevRound: [",", "<"],
-  reveal: ["r", "a"],
-  hint: ["h"],
-  mode: ["m"],
-  end: ["Escape"],
-  start: ["Home"],
-  language: ["l"],
-  media: ["Enter", " "],
-  fontUp: ["+", "="],
-  fontDown: ["-", "_"],
-};
-
-function actionFor(name: string): Action | null {
-  switch (name) {
-    case "next":
-      return (target) => void target.next();
-    case "prev":
-      return (target) => void target.prev();
-    case "nextRound":
-      return (target) => void target.nextRound();
-    case "prevRound":
-      return (target) => void target.prevRound();
-    case "reveal":
-      return (target) => void target.reveal();
-    case "hint":
-      return (target) => void target.revealHint();
-    case "mode":
-      return (target) =>
-        void target.setMode(
-          target.state.mode === PlayMode.Answers
-            ? PlayMode.Questions
-            : PlayMode.Answers,
-        );
-    case "end":
-      return (target) => {
-        const plan = target.state.plan;
-        if (plan !== null) {
-          target.goTo(plan.questions.length);
-        }
-      };
-    case "start":
-      return (target) => target.goTo(-1);
-    case "language":
-      return (target) => {
-        const languages = target.languages();
-        if (languages.length < 2) {
-          return;
-        }
-        const index = languages.indexOf(target.state.language ?? "");
-        target.setLanguage(languages[(index + 1) % languages.length] ?? "");
-      };
-    case "media":
-      return () => undefined;
-    default:
-      return null;
-  }
-}
-
-function keyMap(config: Quiz["config"]): Map<string, string> {
-  const map = new Map<string, string>();
-  const forbidden = new Set(config.hotkeysForbidden ?? []);
-  for (const [name, keys] of Object.entries(DEFAULT_KEYS)) {
-    if (forbidden.has(name)) {
-      continue;
-    }
-    for (const key of keys) {
-      map.set(key, name);
-    }
-  }
-  const aliases: Readonly<Record<string, string>> = {
-    "font-size-plus": "fontUp",
-    "font-size-min": "fontDown",
-    "next-section": "nextRound",
-    "prev-section": "prevRound",
-    fullscreen: "media",
-  };
-  for (const [raw, keys] of Object.entries(config.hotkeys ?? {})) {
-    const name = aliases[raw] ?? raw;
-    if (forbidden.has(name) || forbidden.has(raw)) {
-      continue;
-    }
-    for (const key of typeof keys === "string" ? [keys] : keys) {
-      map.set(key, name);
-    }
-  }
-  return map;
-}
+import { QuestionType } from "../../core/model/question";
 
 /** A host view: whatever DOM they return lands in a plain host element. */
 function CustomView({
@@ -168,11 +57,13 @@ function ScreenView({
   screen,
   state,
   timerSound,
+  settings = null,
 }: {
   readonly quiz: Quiz;
   readonly screen: ScreenViewModel;
   readonly state: SessionState;
   readonly timerSound?: TimerSound | undefined;
+  readonly settings?: JSX.Element | null;
 }): JSX.Element {
   const override = quiz.views.get(screen.kind);
   if (override !== undefined) {
@@ -188,6 +79,7 @@ function ScreenView({
           screen={screen}
           state={state}
           timerSound={timerSound}
+          settings={settings}
         />
       );
     case ScreenKind.End:
@@ -315,6 +207,21 @@ export function QuizApp({
         }
         return;
       }
+      if (name === "fullscreen") {
+        // V2's `f`: a lightbox for an image, real fullscreen for video. The
+        // element API does both, and the browser owns the way back out.
+        const media =
+          root.current?.querySelector<HTMLElement>("img, video") ?? null;
+        if (media === null) {
+          return;
+        }
+        if (document.fullscreenElement !== null) {
+          void document.exitFullscreen().catch(() => undefined);
+          return;
+        }
+        void media.requestFullscreen?.().catch(() => undefined);
+        return;
+      }
       if (name === "fontUp" || name === "fontDown") {
         changeFontScale(root.current, name === "fontUp" ? 0.1 : -0.1);
         return;
@@ -369,6 +276,8 @@ export function QuizApp({
     preloadNextQuestion(quiz);
   }, [quiz, snapshot.screen]);
 
+  // `screen` is an object, so its identity changes every draw; kind and index
+  // are what actually moves the header.
   const screen = snapshot.screen;
   const layoutMode =
     storedLayoutMode() ??
@@ -407,6 +316,21 @@ export function QuizApp({
     screen.kind !== ScreenKind.Results &&
     quiz.state.plan !== null &&
     quiz.state.plan.total === 0;
+  // A question slide has a strip of its own, so the button joins it. Every
+  // other screen gets the floating copy in the corner, where nothing sits.
+  const inStrip =
+    settingsAllowed &&
+    screen.kind === ScreenKind.Question &&
+    screen.type !== QuestionType.Section &&
+    quiz.views.get(screen.kind) === undefined;
+  const settingsButton = settingsAllowed ? (
+    <SettingsToggle
+      open={settingsOpen}
+      onToggle={() => setSettingsOpen((value) => !value)}
+      label={quiz.t("settings")}
+    />
+  ) : null;
+
   const label =
     screen.kind === ScreenKind.Question
       ? screen.number > 0
@@ -436,16 +360,7 @@ export function QuizApp({
           {quiz.t("emptyQuiz")}
         </p>
       ) : null}
-      {settingsAllowed ? (
-        <button
-          type="button"
-          class="pq-settings-toggle"
-          aria-expanded={settingsOpen}
-          onClick={() => setSettingsOpen((value) => !value)}
-        >
-          {quiz.t("settings")}
-        </button>
-      ) : null}
+      {settingsAllowed && !inStrip ? settingsButton : null}
 
       <UiContext.Provider value={quiz.t}>
         <CodeHighlightContext.Provider
@@ -456,6 +371,7 @@ export function QuizApp({
             screen={screen}
             state={snapshot.state}
             timerSound={timerSound}
+            settings={inStrip ? settingsButton : null}
           />
           {settingsOpen ? (
             <SettingsOverlay

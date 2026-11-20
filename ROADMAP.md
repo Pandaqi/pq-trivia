@@ -1,7 +1,7 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
 > **Working title:** _PQ-Trivia V3 — Trivia Syntax_
-> **Status:** Phases 0–7 shipped. The player, the Paper theme, `<pq-quiz>`,
+> **Status:** Phases 0–8 shipped. The player, the Paper theme, `<pq-quiz>`,
 > grading with results and resume, flow control, includes, sandboxed scripts,
 > timers, animations, the exporters and the CLI are all in the tree.
 > Interactive mode also encrypts answers (AES-GCM behind an injected key),
@@ -9,9 +9,10 @@
 > on request, pins host buttons from Settings, downloads JSON or a handout,
 > and packs a folder that plays offline (`bun run pack`, plus a service
 > worker when hosted).
-> Phases 6–7 shipped: worker parsing, the IndexedDB cache, live rooms, and a
-> VitePress docs site with a generated attribute reference. Phase 8 is down to
-> the parts a person must do: publish, tag, deploy, announce.
+> Phases 6–8 shipped: worker parsing, the IndexedDB cache, live rooms (with a
+> join QR a phone can scan) and a VitePress docs site with a generated
+> attribute reference. What is left is the part a person must do: publish, tag,
+> deploy, announce.
 > **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
@@ -1150,7 +1151,7 @@ Players → host: `join`, `answer:submit`, `ready`, `pong`.
 
 - **Host:** "Play live" → 4-letter code (no ambiguous characters) → big URL + QR → lobby → start → answer counter → reveal → leaderboard → podium.
 - **Player:** link or code → name → waiting → question (big tap targets) → submitted → reveal → leaderboard → final.
-- **QR:** generated locally. A tiny encoder in our own code, or skip the QR. No external service.
+- **QR:** the join link encoded locally with `uqr`, drawn as one SVG path from the module matrix. No image, no network, no external service.
 - **Media:** thumbnails from the manifest. No autoplay with sound. "Play on my phone" button.
 - **Accessibility:** same components as the player. Live regions. Haptics optional.
 - The whole `encodeURIComponent` situation with room codes: 4 characters, uppercase, no O/0 or I/1.
@@ -1714,43 +1715,18 @@ docs/
 
 Sizes are for one focused developer. Not deadlines.
 
-Phases 0–7 are shipped. The specification above describes what exists; this list starts at what is left.
+Phases 0–8 are shipped. The specification above describes what exists; this
+list starts at what is left.
 
-### Phase 6 — Performance and polish — shipped
-
-- Worker parser in `browser.js` plus `parse.worker.js`: 1 MB threshold, sync fallback, timeout.
-- Lazy media, retry placeholder, captions, poster, `srcset`, credit, next-image preload.
-- No sync XHR, no `HEAD` probing. Explicit files, optional manifest, `file://` detection with a useful sentence.
-- IndexedDB text cache: ETag revalidation, 200 MB LRU, quota eviction, memory fallback.
-- `bun run bench`: 10k questions parse and build in 439 ms, plan 15 ms, grade 141 ms on the old laptop.
-- Timer milestones announced to screen readers at 30, 10 and 0 seconds.
-
-What is left for a person: mount/destroy 100× in a real browser, and the
-three-browser offline and manual accessibility passes. Both need eyes, not CI.
-
-### Phase 7 — Multiplayer — shipped
-
-- Transport abstraction, BroadcastChannel adapter, optional Trystero adapter, in-memory network for tests.
-- Lobby, room code, join link, roster, host controls, phone view, leaderboard, reconnect token.
-- Protocol v1: allowlisted question payloads, host-owned state, message ids, late flags, 250 ms rate limit.
-- Two-client tests: join, show, submit, reveal, stranger, late answer, reconnect.
-- Separate entry. The default player build contains none of it.
-- Guide, privacy note, `examples/multiplayer.html`.
-
-What is left for a person: two real devices over Trystero on a real network,
-and a look at the lobby UI on a phone. No QR code; the link and the four-letter
-code do the job without another dependency.
-
-### Phase 8 — Launch — tooling done, publishing is human
-
-Done: the VitePress site in `docs/` with a generated attribute reference, the
-migration guide, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`, README with
-badges and sizes, `bun run release:dry`, checksums, and the release and docs
-workflows.
+What is left for a person, not for CI: mount/destroy 100× in a real browser,
+the three-browser offline and manual accessibility passes, two real devices
+over Trystero on a real network, a look at the lobby on a phone, and publishing
+the release itself.
 
 ### Phase 9 — QuizWizard (stretch, M–L, after 3.0)
 
-**Only if Phases 0–8 land.** The plan makes it cheap. It is still a product.
+**Only after Phases 0–8 have landed in real use.** The plan makes it cheap.
+It is still a product.
 
 - `editor` entry + separate bundle. Build flag, default off.
 - Slide list, generated forms, text pane, preview.
@@ -1792,7 +1768,7 @@ end, tick it. Nothing here is promised for 3.0.
 - [ ] **Audio and video clips (S).** No new type: give `Media` a `PlayLimit` and controls. Count plays in the attempt.
 - [ ] **Wager (M).** `Wager => true`. Bet 0 to max before the reveal, store it in the session, show risk on the report.
 - [ ] **Diagram labels (M).** Drag labels onto targets. Shares the Hotspot click layer, so build Hotspot first.
-- [ ] **Buzzer (L).** First correct answer wins. Needs Phase 7 transport. Do not fake it with timers.
+- [ ] **Buzzer (L).** First correct answer wins. Needs the live-room transport. Do not fake it with timers.
 
 **Answer interfaces**
 
@@ -1809,7 +1785,7 @@ end, tick it. Nothing here is promised for 3.0.
 **Play and host**
 
 - [ ] **Team mode (M).** Team name before Start, responses per team, a scoreboard between rounds. Keep solo mode the default.
-- [ ] **Host view (M).** Two windows on one machine via `BroadcastChannel` first, then Phase 7 for real devices. The host sees answers; the player view never does.
+- [ ] **Host view (M).** Two windows on one machine via `BroadcastChannel` first, then the live rooms for real devices. The host sees answers; the player view never does.
 - [ ] **Streaks and multipliers (S).** Three in a row, cap at 2×. Report shows the multiplier. Tests for the cap.
 - [ ] **Lifelines (M).** 50/50, extra time, ask the room. Each costs points. Restricted mode disables them.
 - [ ] **Round timer (S).** A timer for the whole round, not one question. Reuses `timers.ts`.
@@ -1831,8 +1807,6 @@ end, tick it. Nothing here is promised for 3.0.
 
 **Technical and distribution**
 
-- [ ] **Worker parsing (M).** Phase 6. Keeps 10k questions off the main thread.
-- [ ] **IndexedDB media cache (M).** Phase 6. Survives a refresh and respects quota.
 - [ ] **Service worker update prompt (S).** The pack has a cache; add "new version, reload".
 - [ ] **Transcripts and captions (S).** Audio rounds without captions exclude people. Plain text under the player.
 - [ ] **Screen-reader timer announcements (S).** 30, 10 and 0 seconds, once each.
@@ -1841,7 +1815,7 @@ end, tick it. Nothing here is promised for 3.0.
 - [ ] **Attempt analytics export (M).** Per-question stats across a class, as CSV.
 - [ ] **Plugin API (L).** Register a question type from outside core. Only after two new types prove the seams.
 
-**Order I would pick:** the S items in Question types and Answer interfaces first (a week of small wins), then Hotspot and Matrix, then team mode and host view once Phase 7 exists.
+**Order I would pick:** the S items in Question types and Answer interfaces first (a week of small wins), then Hotspot and Matrix, then team mode and host view once live rooms are in daily use.
 
 ### Dependencies
 
@@ -1865,51 +1839,51 @@ Phase 10 can start any time after Phase 5. Its items do not depend on 8 or 9.
 
 ## 19. Todo traceability
 
-| #   | Todo                                                    | Spec           | Phase       |
-| --- | ------------------------------------------------------- | -------------- | ----------- |
-| T1  | Bun build into `dist`, archive old versions, call it V3 | §14.1–14.4     | 0           |
-| T2  | Preact vs Svelte vs Web Components                      | §4.1           | 0, 2        |
-| T3  | CSS classes per question                                | §5.3, §5.8     | 4           |
-| T4  | Default layouts                                         | §7.3           | 4           |
-| T5  | Full background color per question                      | §5.8           | 4           |
-| T6  | Default to no backgrounds on print                      | §5.3, §7.6     | 4           |
-| T7  | Inline `[class]` / `[style]`                            | §5.5           | 4           |
-| T8  | Turn off default output, plain nodes                    | §6.4           | 2           |
-| T9  | `onQuestionLoad` with full info                         | §6.4           | 2           |
-| T10 | Default display is just a callback                      | §6.4           | 2           |
-| T11 | Clean public API, signals                               | §6             | 2           |
-| T12 | Modular pure functions, no side effects                 | §4.2           | 1           |
-| T13 | Import only what you need                               | §4.4           | 1–2         |
-| T14 | Stay fast with many questions and media                 | §11.3, Phase 6 | 6           |
-| T15 | Big animation library, no bundle bloat                  | §7.5           | 4           |
-| T16 | A few animations by default                             | §7.5           | 4           |
-| T17 | Animations in syntax, theme and API                     | §5.3, §7.5     | 4           |
-| T18 | Better default look                                     | §7.4           | 2           |
-| T19 | Errors centered, auto-fade                              | §13.1          | 2           |
-| T20 | No duplicate errors                                     | §13.1          | 2           |
-| T21 | More visible problem messages                           | §13.1          | 1–2         |
-| T22 | Distinct section pages                                  | §7.4           | 2           |
-| T23 | Interactive play, grade, results                        | §8             | 3           |
-| T24 | Nice error when continuing empty                        | §8.2           | 3           |
-| T25 | Compare real and given answers, optional                | §8.5           | 3           |
-| T26 | Multiplayer via Trystero, optional                      | §9             | 7           |
-| T27 | Timer tick sound                                        | §10.6          | 4           |
-| T28 | Toolbar pinning via config                              | §10.7          | 4           |
-| T29 | Code display, optional highlighter                      | §10.4          | 4           |
-| T30 | Executable JS in questions                              | §5.10          | 4           |
-| T31 | `Start` / `End` types                                   | §5.7           | 4           |
-| T32 | `Match` type                                            | §5.7           | 4           |
-| T33 | Unlockable rounds                                       | §5.9           | 4 (or 3.2)  |
-| T34 | GitHub page: badges, images, examples                   | §14.6, §16     | 8           |
-| T35 | CI/CD tagging and release                               | §14.5          | 0, 5–8      |
-| T36 | Docs split by topic                                     | §16.1          | 5–8         |
-| T37 | Test `PlaceBefore/After/At`                             | §15.1          | 1           |
-| T38 | Test toolbar buttons                                    | §15.3          | 2           |
-| T39 | Test manual `Language`                                  | §15.1          | 1–2         |
-| T40 | Icons, banner, styling                                  | §7.4           | 2           |
-| T41 | _(Discarded)_ language switch before load               | §1.3           | —           |
-| T42 | _(Discarded)_ background music                          | §1.3           | —           |
-| T43 | **QuizWizard: build and edit a quiz in the UI** (new)   | §10.5          | 9 (stretch) |
+| #   | Todo                                                    | Spec       | Phase       |
+| --- | ------------------------------------------------------- | ---------- | ----------- |
+| T1  | Bun build into `dist`, archive old versions, call it V3 | §14.1–14.4 | 0           |
+| T2  | Preact vs Svelte vs Web Components                      | §4.1       | 0, 2        |
+| T3  | CSS classes per question                                | §5.3, §5.8 | 4           |
+| T4  | Default layouts                                         | §7.3       | 4           |
+| T5  | Full background color per question                      | §5.8       | 4           |
+| T6  | Default to no backgrounds on print                      | §5.3, §7.6 | 4           |
+| T7  | Inline `[class]` / `[style]`                            | §5.5       | 4           |
+| T8  | Turn off default output, plain nodes                    | §6.4       | 2           |
+| T9  | `onQuestionLoad` with full info                         | §6.4       | 2           |
+| T10 | Default display is just a callback                      | §6.4       | 2           |
+| T11 | Clean public API, signals                               | §6         | 2           |
+| T12 | Modular pure functions, no side effects                 | §4.2       | 1           |
+| T13 | Import only what you need                               | §4.4       | 1–2         |
+| T14 | Stay fast with many questions and media                 | §11.3      | 6           |
+| T15 | Big animation library, no bundle bloat                  | §7.5       | 4           |
+| T16 | A few animations by default                             | §7.5       | 4           |
+| T17 | Animations in syntax, theme and API                     | §5.3, §7.5 | 4           |
+| T18 | Better default look                                     | §7.4       | 2           |
+| T19 | Errors centered, auto-fade                              | §13.1      | 2           |
+| T20 | No duplicate errors                                     | §13.1      | 2           |
+| T21 | More visible problem messages                           | §13.1      | 1–2         |
+| T22 | Distinct section pages                                  | §7.4       | 2           |
+| T23 | Interactive play, grade, results                        | §8         | 3           |
+| T24 | Nice error when continuing empty                        | §8.2       | 3           |
+| T25 | Compare real and given answers, optional                | §8.5       | 3           |
+| T26 | Multiplayer via Trystero, optional                      | §9         | 7           |
+| T27 | Timer tick sound                                        | §10.6      | 4           |
+| T28 | Toolbar pinning via config                              | §10.7      | 4           |
+| T29 | Code display, optional highlighter                      | §10.4      | 4           |
+| T30 | Executable JS in questions                              | §5.10      | 4           |
+| T31 | `Start` / `End` types                                   | §5.7       | 4           |
+| T32 | `Match` type                                            | §5.7       | 4           |
+| T33 | Unlockable rounds                                       | §5.9       | 4 (or 3.2)  |
+| T34 | GitHub page: badges, images, examples                   | §14.6, §16 | 8           |
+| T35 | CI/CD tagging and release                               | §14.5      | 0, 5–8      |
+| T36 | Docs split by topic                                     | §16.1      | 5–8         |
+| T37 | Test `PlaceBefore/After/At`                             | §15.1      | 1           |
+| T38 | Test toolbar buttons                                    | §15.3      | 2           |
+| T39 | Test manual `Language`                                  | §15.1      | 1–2         |
+| T40 | Icons, banner, styling                                  | §7.4       | 2           |
+| T41 | _(Discarded)_ language switch before load               | §1.3       | —           |
+| T42 | _(Discarded)_ background music                          | §1.3       | —           |
+| T43 | **QuizWizard: build and edit a quiz in the UI** (new)   | §10.5      | 9 (stretch) |
 
 ---
 

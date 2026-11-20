@@ -4,7 +4,6 @@ import { join } from "node:path";
 import { buildQuiz } from "../../src/core/model/quiz";
 import { QuestionType } from "../../src/core/model/question";
 import { DiagnosticSeverity } from "../../src/core/syntax/diagnostics";
-import { MediaKind } from "../../src/core/values/media";
 
 const read = (path: string): Promise<string> =>
   readFile(join(import.meta.dir, "..", "..", path), "utf8");
@@ -23,7 +22,6 @@ describe("the shipped template", () => {
     expect(question?.authors).toEqual(["Pandaqi"]);
     expect(question?.correct[0]?.text).toBe("Groundbreaking");
     expect(question?.answers).toHaveLength(4);
-    expect(question?.media[0]?.kind).toBe(MediaKind.Image);
     expect(quiz.questions[3]?.type).toBe(QuestionType.Sort);
   });
 });

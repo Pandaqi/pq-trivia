@@ -46,7 +46,8 @@
 
       // One code, two tabs. BroadcastChannel works in one browser without a
       // server; swap in createTrysteroTransport for two real devices.
-      const code = "DEMO";
+      // No O or 0 in a room code, so "DEMO" would be rejected. "PLAY" is legal.
+      const code = "PLAY";
       const transport = createBroadcastTransport();
 
       const text = `

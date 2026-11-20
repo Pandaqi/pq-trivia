@@ -27,6 +27,7 @@ export const nl: TranslationTable = {
   endQuiz: "Einde",
   hint: "Hint",
   showAnswer: "Toon antwoord",
+  hideAnswer: "Verberg antwoord",
   timeUp: "De tijd is om. Antwoorden blijven open.",
   print: "Printen",
   back: "Terug",
@@ -118,8 +119,9 @@ export const nl: TranslationTable = {
   keyReveal: "toon antwoord",
   keyHint: "hint",
   resumeTitle: "Je hebt een onafgemaakte poging",
+  resumeWhen: "Laatst gespeeld {time}. Een dag bewaard, daarna vergeten.",
   resumeNote: "{answered} van {total} beantwoord. Je antwoorden staan er nog.",
-  themeLoad: "Laad een themamap",
+  themeLoad: "Voeg een themamap in",
   themeLoaded: "Thema geladen: {label}",
   themeError: "Die map kon niet worden geladen: {message}",
 
@@ -162,7 +164,7 @@ export const nl: TranslationTable = {
   settingsAppearance: "Weergave",
   settingsLayout: "Paginaformaat",
   layoutViewport: "Vul het venster",
-  layoutInline: "Pas in de pagina",
+  layoutInline: "Inline in de pagina",
   settingsLayoutNote:
     "Vullen houdt de quiz één scherm hoog. Lange inhoud scrolt binnenin. Passen laat de quiz met de pagina meegroeien. Je keuze wordt onthouden.",
   themeMode: "Kleurmodus",
@@ -179,8 +181,15 @@ export const nl: TranslationTable = {
   copiedWhat: "{what} gekopieerd.",
   save: "Klaar",
   loadHeading: "Vragen laden",
+  insertQuiz: "Voeg een quizbestand in",
+  printAnswerLines: "Schrijflijnen bij open vragen",
+  printAnswerLinesNote:
+    "Standaard uit. Maakt van een open vraag iets om op te schrijven, met een lijn eronder.",
+  insertError: "Dat bestand laadde niet: {message}",
   loadBuiltin: "Speel de ingebouwde vragen",
   loadOnline: "Laad online vragen ({count})",
+  printNote:
+    "Gebruikt het printvenster van je browser. Kies daar Opslaan als PDF om een bestand te krijgen.",
   printQuestions: "Print vragen",
   printAnswers: "Print antwoorden",
   printAnswerSheet: "Print antwoordblad",
@@ -222,6 +231,7 @@ export const nl: TranslationTable = {
   printStats: "{questions} · {points} · {rounds}",
   printRound: "Ronde",
 
+  endReadAloud: "Speel nu de antwoorden door en zie wie won.",
   answeredOf: "Je beantwoordde {answered} van {total} vragen.",
   thatIsAll: "Dat was het",
   scorePoints: "{points} van {max} punten",

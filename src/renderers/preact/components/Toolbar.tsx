@@ -29,10 +29,13 @@ export function Toolbar({ quiz, screen, onNext }: ToolbarProps): JSX.Element {
   const atEnd = state.index >= total;
   const isQuestion =
     screen !== undefined && screen.type !== QuestionType.Section;
+  const revealed = screen?.revealed === true;
+  // The button toggles, so it stays while the answer is up. Otherwise you show
+  // the answer once and can never put it away again.
   const canReveal =
     isQuestion &&
-    screen?.revealable === true &&
-    quiz.config.restricted !== true;
+    quiz.config.restricted !== true &&
+    (revealed || screen?.revealable === true);
   const hintCount = screen?.hints.revealed.length ?? 0;
   const canHint =
     isQuestion && screen !== undefined && hintCount < screen.hints.total;
@@ -65,7 +68,7 @@ export function Toolbar({ quiz, screen, onNext }: ToolbarProps): JSX.Element {
         changeFontScale(root, -0.1);
         break;
       case "reveal":
-        quiz.reveal();
+        quiz.toggleReveal();
         break;
       case "hint":
         quiz.revealHint();
@@ -120,21 +123,26 @@ export function Toolbar({ quiz, screen, onNext }: ToolbarProps): JSX.Element {
 
   return (
     <div class="pq-toolbar-row">
-      {shown.map((action) => (
-        <button
-          key={action.id}
-          type="button"
-          class={action.id === "next" ? "pq-primary pq-next" : undefined}
-          data-pq-action={action.id}
-          title={t(action.labelKey)}
-          onClick={(event) => run(action, event.currentTarget)}
-        >
-          <span class="pq-action-icon" aria-hidden="true">
-            {action.icon}
-          </span>
-          <span class="pq-action-label">{t(action.labelKey)}</span>
-        </button>
-      ))}
+      {shown.map((action) => {
+        // The reveal button says what it will do next, like V2's.
+        const labelKey =
+          action.id === "reveal" && revealed ? "hideAnswer" : action.labelKey;
+        return (
+          <button
+            key={action.id}
+            type="button"
+            class={action.id === "next" ? "pq-primary pq-next" : undefined}
+            data-pq-action={action.id}
+            title={t(labelKey)}
+            onClick={(event) => run(action, event.currentTarget)}
+          >
+            <span class="pq-action-icon" aria-hidden="true">
+              {action.icon}
+            </span>
+            <span class="pq-action-label">{t(labelKey)}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }

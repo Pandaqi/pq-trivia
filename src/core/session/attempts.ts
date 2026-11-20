@@ -13,6 +13,8 @@ import type { StorageAdapter } from "./storage";
 export const ATTEMPT_SCHEMA_VERSION = 1;
 const PREFIX = "pq:attempt:";
 const HISTORY_LIMIT = 5;
+/** A day. After that an unfinished run is clutter, not unfinished business. */
+export const ATTEMPT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export interface TimerApi {
   readonly schedule: (callback: () => void, ms: number) => unknown;
@@ -129,6 +131,12 @@ export function saveAttempt(
   ) {
     return;
   }
+  // Only a real play-through is worth resuming. Reading the answers, or
+  // stepping through the questions without typing anything, leaves no promise
+  // to keep, so nothing is saved and nothing is offered the next morning.
+  if (!state.interactive) {
+    return;
+  }
   journal.saveSoon(() =>
     createAttempt(journal.quizKey, title, config, {
       index: state.index,
@@ -164,10 +172,22 @@ export class AttemptJournal {
     return this.#quizKey;
   }
 
-  /** Newest attempt that has not been finished. */
+  /** Newest attempt that is neither finished nor a day old. */
   async resumable(): Promise<AttemptRecord | null> {
     const all = await this.history();
-    return all.find((entry) => entry.status !== "finished") ?? null;
+    const cutoff = Date.now() - ATTEMPT_MAX_AGE_MS;
+    for (const entry of all) {
+      if (entry.status === SessionStatus.Finished) {
+        continue;
+      }
+      if (entry.savedAt < cutoff) {
+        // Forget it, and take it out of storage while we are here.
+        await this.#storage.remove(keyOf(this.#quizKey, entry.savedAt));
+        continue;
+      }
+      return entry;
+    }
+    return null;
   }
 
   async latest(): Promise<AttemptRecord | null> {

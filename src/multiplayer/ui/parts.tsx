@@ -1,8 +1,67 @@
 /** Shared pieces: the room code, the roster, the leaderboard. */
 
 import type { JSX } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import type { LeaderRow, LivePlayer } from "../types";
+
+type QrMatrix = readonly (readonly boolean[])[];
+
+/**
+ * The join link as a QR code: one path, drawn from the module matrix.
+ * Generated locally, no network, no image, nothing to load.
+ */
+function JoinQr({ link }: { readonly link: string }): JSX.Element | null {
+  const [matrix, setMatrix] = useState<QrMatrix | null>(null);
+
+  // The encoder is the heaviest thing in this bundle and a lobby on a desk
+  // screen is the only place that needs it, so it loads on its own.
+  useEffect(() => {
+    let live = true;
+    void import("uqr")
+      .then(({ encode }) => {
+        if (live) {
+          setMatrix(encode(link, { ecc: "M", border: 3 }).data);
+        }
+      })
+      .catch(() => {
+        // No encoder, no QR. The code and the link still do the job.
+        if (live) {
+          setMatrix(null);
+        }
+      });
+    return () => {
+      live = false;
+    };
+  }, [link]);
+
+  if (matrix === null) {
+    return null;
+  }
+
+  const size = matrix.length;
+  let path = "";
+  for (let y = 0; y < size; y += 1) {
+    const row = matrix[y] ?? [];
+    for (let x = 0; x < size; x += 1) {
+      if (row[x] === true) {
+        path += `M${x} ${y}h1v1h-1z`;
+      }
+    }
+  }
+
+  return (
+    <svg
+      class="pq-live-qr"
+      viewBox={`0 0 ${size} ${size}`}
+      role="img"
+      aria-label={`Scan to join: ${link}`}
+      shape-rendering="crispEdges"
+    >
+      <rect width={size} height={size} fill="#fff" />
+      <path d={path} fill="#000" />
+    </svg>
+  );
+}
 
 export function CodeCard({
   code,
@@ -18,8 +77,9 @@ export function CodeCard({
       <p class="pq-live-link">
         <a href={link}>{link}</a>
       </p>
+      <JoinQr link={link} />
       <p class="pq-live-hint">
-        Type the code at the same page, or open the link on a phone.
+        Scan the code, or type it at the same page. Either way: a phone.
       </p>
     </section>
   );

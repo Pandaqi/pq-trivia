@@ -30,7 +30,9 @@ const BUDGETS: Readonly<Record<string, number>> = {
   "pq-trivia.min.js": 60,
   "pq-trivia.core.min.js": 26,
   // The separate live bundle. Preact is already in the player, but a host page
-  // that only runs a lobby should not need the whole player.
+  // that only runs a lobby should not need the whole player. The join QR is
+  // generated in the browser by `uqr`, which loads as its own chunk: a lobby
+  // that never shows a QR never downloads the encoder.
   "multiplayer.js": 22,
   // Optional extras: worker parser, IndexedDB cache, manifest loading.
   "browser.js": 8,

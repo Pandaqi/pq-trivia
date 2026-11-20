@@ -27,6 +27,7 @@ export const en: TranslationTable = {
   endQuiz: "End",
   hint: "Hint",
   showAnswer: "Show answer",
+  hideAnswer: "Hide answer",
   timeUp: "Time is up. Answers stay open.",
   print: "Print",
   back: "Back",
@@ -119,7 +120,8 @@ export const en: TranslationTable = {
   keyHint: "hint",
   resumeTitle: "You have an unfinished attempt",
   resumeNote: "{answered} of {total} answered. Your answers are still here.",
-  themeLoad: "Load a theme folder",
+  resumeWhen: "Last played {time}. Kept for a day, then forgotten.",
+  themeLoad: "Insert a theme folder",
   themeLoaded: "Loaded theme: {label}",
   themeError: "That folder did not load: {message}",
 
@@ -162,7 +164,7 @@ export const en: TranslationTable = {
   settingsAppearance: "Appearance",
   settingsLayout: "Page size",
   layoutViewport: "Fill the window",
-  layoutInline: "Fit the page",
+  layoutInline: "Fit inline",
   settingsLayoutNote:
     "Fill keeps the quiz one screen high. Long content scrolls inside. Fit lets it grow with the page. Your choice is remembered.",
   themeMode: "Colour mode",
@@ -179,8 +181,15 @@ export const en: TranslationTable = {
   copiedWhat: "Copied {what}.",
   save: "Done",
   loadHeading: "Load questions",
+  insertQuiz: "Insert a quiz file",
+  printAnswerLines: "Ruled lines on written answers",
+  printAnswerLinesNote:
+    "Off by default. Turns an open question into something to write on, with a line under it.",
+  insertError: "That file did not load: {message}",
   loadBuiltin: "Play the built-in questions",
   loadOnline: "Load online questions ({count})",
+  printNote:
+    "Uses the browser's own print dialog. Choose Save as PDF there to get a file.",
   printQuestions: "Print questions",
   printAnswers: "Print answers",
   printAnswerSheet: "Print answer sheet",
@@ -223,6 +232,7 @@ export const en: TranslationTable = {
   printRound: "Round",
 
   answeredOf: "You answered {answered} of {total} questions.",
+  endReadAloud: "Now play through the answers and see who won.",
   thatIsAll: "That's all",
   scorePoints: "{points} of {max} points",
 

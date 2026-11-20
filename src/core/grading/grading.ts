@@ -84,27 +84,38 @@ function gradeRange(question: QuestionModel, response: Response): GradeResult {
   const won =
     given !== null && expected !== null && Math.abs(given - expected) <= margin;
   const maxPoints = questionMaxScore(question);
+  // Skipped means skipped. Showing "your answer: —" and "correct answer: 1989"
+  // for a question nobody touched is noise on the results page.
+  if (given === null) {
+    return {
+      questionId: question.id,
+      answered: false,
+      correct: false,
+      kind: GradeKind.Unanswered,
+      points: 0,
+      maxPoints,
+      parts: [],
+      normalizedGiven: [],
+      normalizedCorrect: expected === null ? [] : [String(expected)],
+    };
+  }
   return {
     questionId: question.id,
-    answered: given !== null,
+    answered: true,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : given === null
-        ? GradeKind.Unanswered
-        : GradeKind.Wrong,
+    kind: won ? GradeKind.Correct : GradeKind.Wrong,
     points: won ? maxPoints : 0,
     maxPoints,
     parts: [
       part(
         "Number",
         margin === 0 ? expectedText : `${expectedText} ± ${margin}`,
-        given === null ? "" : String(given),
+        String(given),
         won,
         maxPoints,
       ),
     ],
-    normalizedGiven: given === null ? [] : [String(given)],
+    normalizedGiven: [String(given)],
     normalizedCorrect: expected === null ? [] : [String(expected)],
   };
 }
@@ -331,7 +342,7 @@ export function gradeQuestion(
   options: GradeOptions = {},
 ): GradeResult {
   const mode = modeOf(question, options);
-  if (isEmptyResponse(response) && question.type !== QuestionType.Range) {
+  if (isEmptyResponse(response)) {
     const maxPoints = questionMaxScore(question);
     return {
       questionId: question.id,

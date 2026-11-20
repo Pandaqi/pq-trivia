@@ -5,10 +5,6 @@
     display: block;
   }
 
-  .pq-print-form > .pq-print-page-inner {
-    justify-content: flex-start;
-  }
-
   /* Typed questions get a line to write on, not an empty cell. */
   .pq-form-line {
     display: block;
@@ -19,6 +15,12 @@
 
   .pq-form-new-page {
     break-before: page;
+  }
+
+  /* A page break inside a table is fine. Between rows it is not. */
+  .pq-form tr,
+  .pq-grade tr {
+    break-inside: avoid;
   }
 
   /* Compact form: fewer millimetres per row. */
@@ -119,10 +121,6 @@
     display: block;
   }
 
-  .pq-print-grade > .pq-print-page-inner {
-    justify-content: flex-start;
-  }
-
   .pq-grade-correct {
     width: 62mm;
     font-weight: 700;
@@ -165,7 +163,9 @@
     text-decoration: underline;
   }
 }
+/* No `size`: the page is whatever the print dialog says, and the sheets
+   stretch to it. A fixed A4 landscape sheet on Letter paper is how you get
+   clipped slides and a stray blank page. */
 @page {
-  size: A4 landscape;
   margin: 12mm;
 }

@@ -47,7 +47,8 @@ export function createNavigation(deps: NavigationDeps): Navigation {
     if (state.plan === null) {
       return { ok: false, reason: "blocked" };
     }
-    if (index < 0 || index > state.plan.questions.length) {
+    // -1 is the start screen, so it is a real destination.
+    if (index < -1 || index > state.plan.questions.length) {
       return { ok: false, reason: "blocked" };
     }
     if (deps.config().restricted === true && index < state.index) {

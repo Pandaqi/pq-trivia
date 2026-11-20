@@ -114,6 +114,11 @@ export const CONFIG_HEADER_ROWS = [
   { attribute: "LayoutMode", key: "layoutMode", kind: "text" },
   { attribute: "ThemeDisabled", key: "themeDisabled", kind: "boolean" },
   { attribute: "ThemeUpload", key: "themeUpload", kind: "boolean" },
+  {
+    attribute: "PrintAnswerLines",
+    key: "printAnswerLines",
+    kind: "boolean",
+  },
   { attribute: "EnableSafety", key: "enableSafety", kind: "boolean" },
   { attribute: "EnableMouse", key: "enableMouse", kind: "boolean" },
   { attribute: "DisableKeys", key: "disableKeys", kind: "boolean" },

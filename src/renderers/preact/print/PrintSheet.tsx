@@ -2,16 +2,17 @@
  * The print sheet: cover, round pages, question pages, flash cards, or a form.
  *
  * Layout follows the old exports: a coloured bar per round, question left,
- * media or answers right, tinted option blocks with letters. Every page has a
- * fixed A4 box; fit.ts shrinks what is too tall and reports what it cannot.
+ * media or answers right, tinted option blocks with letters. Every page fills
+ * the printable area, whatever size that is; fit.ts shrinks what is too tall
+ * and reports what it cannot.
  */
 
-import type { JSX } from "preact";
+import { Fragment, type JSX } from "preact";
 import type { ComponentChildren } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
 import { PlayMode } from "../../../core/session/session";
 import type { QuestionModel } from "../../../core/model/question";
-import { roundAccent } from "../components/roundAccent";
+import { roundAccent, roundAccentInk } from "../components/roundAccent";
 import { PrintForm, type FormRound } from "./PrintForm";
 import { PrintGrade } from "./PrintGrade";
 import { PrintMedia } from "./PrintMedia";
@@ -28,11 +29,14 @@ function pointsOf(questions: readonly QuestionModel[]): number {
 function Page({
   className = "",
   accent,
+  accentInk,
   questionId,
   children,
 }: {
   readonly className?: string;
   readonly accent?: string;
+  /** Text colour measured against `accent`, so a pale round stays readable. */
+  readonly accentInk?: string;
   readonly questionId?: string;
   readonly children: ComponentChildren;
 }): JSX.Element {
@@ -40,7 +44,11 @@ function Page({
     <section
       class={`pq-print-page ${className}`.trim()}
       data-pq-question={questionId}
-      style={accent === undefined ? undefined : `--pq-round-accent:${accent}`}
+      style={
+        accent === undefined
+          ? undefined
+          : `--pq-round-accent:${accent};--pq-accent-ink:${accentInk ?? "#fffdf7"}`
+      }
     >
       <div class="pq-print-page-inner">{children}</div>
     </section>
@@ -108,9 +116,15 @@ export function PrintSheet({
     return <div class="pq-print-sheet" />;
   }
 
-  const accentFor = (roundId: string | null): string => {
+  const colourFor = (
+    roundId: string | null,
+  ): { accent: string; ink: string } => {
     const index = plan.rounds.findIndex((round) => round.id === roundId);
-    return roundAccent(index < 0 ? null : index + 1);
+    const number = index < 0 ? null : index + 1;
+    return {
+      accent: roundAccent(number, plan.seed),
+      ink: roundAccentInk(number, plan.seed),
+    };
   };
   const roundName = (roundId: string | null): string | null =>
     plan.rounds.find((round) => round.id === roundId)?.name ?? null;
@@ -135,6 +149,7 @@ export function PrintSheet({
       roundName={roundName(item.round)}
       showAnswers={showAnswers || state.revealed.includes(item.id)}
       face={face}
+      answerLines={quiz.config.printAnswerLines === true}
       media={quiz.config}
     />
   );
@@ -144,7 +159,8 @@ export function PrintSheet({
       className="pq-print-question"
       key={item.id}
       questionId={item.id}
-      accent={accentFor(item.round)}
+      accent={colourFor(item.round).accent}
+      accentInk={colourFor(item.round).ink}
     >
       {question(item, null)}
     </Page>
@@ -181,7 +197,8 @@ export function PrintSheet({
             className="pq-print-card"
             key={`${item.id}-front`}
             questionId={item.id}
-            accent={accentFor(item.round)}
+            accent={colourFor(item.round).accent}
+            accentInk={colourFor(item.round).ink}
           >
             <p class="pq-card-label">{t("printQuestion")}</p>
             {question(item, "front")}
@@ -190,7 +207,8 @@ export function PrintSheet({
             className="pq-print-card"
             key={`${item.id}-back`}
             questionId={item.id}
-            accent={accentFor(item.round)}
+            accent={colourFor(item.round).accent}
+            accentInk={colourFor(item.round).ink}
           >
             <p class="pq-card-label">{t("printAnswer")}</p>
             {question(item, "back")}
@@ -233,7 +251,9 @@ export function PrintSheet({
                     {items.map((item) => (
                       <div class="pq-print-tile" key={item.id}>
                         <div
-                          style={`--pq-round-accent:${accentFor(item.round)}`}
+                          style={`--pq-round-accent:${
+                            colourFor(item.round).accent
+                          };--pq-accent-ink:${colourFor(item.round).ink}`}
                         >
                           {question(item, null)}
                         </div>
@@ -250,10 +270,11 @@ export function PrintSheet({
                   return null;
                 }
                 return (
-                  <div key={round.id}>
+                  <Fragment key={round.id}>
                     <Page
                       className="pq-print-round"
-                      accent={accentFor(round.id)}
+                      accent={colourFor(round.id).accent}
+                      accentInk={colourFor(round.id).ink}
                       questionId={round.id}
                     >
                       <p class="pq-round-number">{t("printRound")}</p>
@@ -278,7 +299,7 @@ export function PrintSheet({
                       )}
                     </Page>
                     {items.map(page)}
-                  </div>
+                  </Fragment>
                 );
               })}
         </>

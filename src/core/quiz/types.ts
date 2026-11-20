@@ -220,8 +220,13 @@ export interface QuizConfig {
   readonly codeHighlight?: boolean;
   /** A theme folder or stylesheet, like V2's `theme`. Page-relative. */
   readonly theme?: string;
-  /** Show "Load theme folder" on the start screen. Off by default. */
+  /** Show "Insert a theme folder" on the start screen. On unless turned off. */
   readonly themeUpload?: boolean;
+  /**
+   * Ruled space on written-answer questions in print. Off by default: most
+   * quizzes want the question, not a worksheet.
+   */
+  readonly printAnswerLines?: boolean;
   /** Light, dark or high contrast. `auto` follows the system. */
   readonly themeMode?: ThemeMode;
   /**
@@ -297,6 +302,8 @@ export interface QuizApi {
   setResponse(questionId: string, response: Response): void;
   /** Manual reveal. False when restricted or already shown. */
   reveal(): boolean;
+  /** Show the answer or put it away again. V2's `a`. */
+  toggleReveal(): boolean;
   revealHint(): boolean;
   expireTimer(): void;
   timerRemaining(now?: number): number | null;

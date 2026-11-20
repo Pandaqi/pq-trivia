@@ -21,6 +21,9 @@ export function EndScreen({
   readonly screen: EndViewModel;
 }): JSX.Element {
   const t = useT();
+  // Nothing was typed in, so there is nothing to grade. Read-aloud play is a
+  // presentation, not a test.
+  const canGrade = quiz.state.interactive;
   return (
     <main class="pq-screen pq-screen-end">
       <header class="pq-header">
@@ -29,10 +32,12 @@ export function EndScreen({
           {screen.title || t("untitled")}
         </h1>
         <p class="pq-description">
-          {t("answeredOf", {
-            answered: screen.answered,
-            total: screen.questionCount,
-          })}
+          {canGrade
+            ? t("answeredOf", {
+                answered: screen.answered,
+                total: screen.questionCount,
+              })
+            : t("endReadAloud")}
         </p>
         {screen.comments.length === 0 ? null : (
           <div class="pq-intro">
@@ -89,7 +94,7 @@ export function EndScreen({
               {t("playAgain")}
             </button>
           ) : null}
-          {allowed(screen.buttons, "grade") ? (
+          {canGrade && allowed(screen.buttons, "grade") ? (
             <button type="button" onClick={() => quiz.showResults()}>
               {t("seeResults")}
             </button>
