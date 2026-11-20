@@ -8,8 +8,8 @@ import {
 import { answerRefs } from "../model/answers";
 import { ResponseKind, type Response } from "../session/responses";
 import { matchText, normalizeText } from "./normalize";
-import { closePoints, part, round2, scoringPoints } from "./parts";
-import { GradeKind, type GradeOptions, type GradeResult } from "./types";
+import { closePoints, gradeKind, part, round2, scoringPoints } from "./parts";
+import type { GradeOptions, GradeResult } from "./types";
 
 const PAIR_SYMBOL = "~";
 
@@ -70,13 +70,11 @@ export function gradeList(
     questionId: question.id,
     answered: given.some((item) => item.trim().length > 0),
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : given.every((item) => item.trim().length === 0)
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(
+      won,
+      given.some((item) => item.trim().length > 0),
+      points,
+    ),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -111,13 +109,7 @@ export function gradeSort(
     questionId: question.id,
     answered: given.length > 0,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : given.length === 0
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, given.length > 0, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -169,13 +161,7 @@ export function gradeRank(
     questionId: question.id,
     answered,
     correct: all,
-    kind: all
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(all, answered, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -226,13 +212,7 @@ export function gradeMatch(
     questionId: question.id,
     answered: given.length > 0,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : given.length === 0
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, given.length > 0, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,

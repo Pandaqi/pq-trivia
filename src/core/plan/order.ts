@@ -12,7 +12,11 @@ import {
 } from "../syntax/diagnostics";
 import type { QuestionModel } from "../model/question";
 
-type Placement = "before" | "after";
+/** Which side of the target a placed question lands on. */
+enum Placement {
+  Before = "before",
+  After = "after",
+}
 
 function moveTo(
   items: QuestionModel[],
@@ -31,7 +35,9 @@ function moveTo(
   }
   const targetAfterRemoval = items.findIndex((item) => item.id === targetId);
   const insertAt =
-    placement === "before" ? targetAfterRemoval : targetAfterRemoval + 1;
+    placement === Placement.Before
+      ? targetAfterRemoval
+      : targetAfterRemoval + 1;
   items.splice(Math.max(0, insertAt), 0, moved);
   return true;
 }
@@ -81,7 +87,7 @@ export function applyPlacement(
         );
         continue;
       }
-      moveTo(items, question.id, target, "before");
+      moveTo(items, question.id, target, Placement.Before);
     }
     for (const target of question.placeAfter) {
       if (!known.has(target)) {
@@ -96,7 +102,7 @@ export function applyPlacement(
         );
         continue;
       }
-      moveTo(items, question.id, target, "after");
+      moveTo(items, question.id, target, Placement.After);
     }
   }
 

@@ -129,20 +129,20 @@ function csvRecords(source: string): readonly { text: string; line: number }[] {
       text += char;
       continue;
     }
-    if (char === "\r" || char === "\n") {
-      if (quoted) {
-        text += "\n";
-      } else {
-        if (char === "\r" && source.charAt(index + 1) === "\n") {
-          index += 1;
-        }
-        cut();
-        startedAt = line + 1;
-      }
-      line += 1;
+    if (char !== "\r" && char !== "\n") {
+      text += char;
       continue;
     }
-    text += char;
+    line += 1;
+    if (quoted) {
+      text += "\n";
+      continue;
+    }
+    if (char === "\r" && source.charAt(index + 1) === "\n") {
+      index += 1;
+    }
+    cut();
+    startedAt = line;
   }
   cut();
   return records;

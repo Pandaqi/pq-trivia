@@ -8,7 +8,11 @@
 
 import { InlineKind, parseInline, type InlineNode } from "../format/inline";
 import { answerRefs } from "../model/answers";
-import { OrderMode, type QuestionModel } from "../model/question";
+import {
+  OrderMode,
+  ScoringMethod,
+  type QuestionModel,
+} from "../model/question";
 import { derivedRng, shuffleWith } from "../plan/shuffle";
 import {
   mediaForConfig,
@@ -57,16 +61,14 @@ export function buildAnswers(
       : declared;
   const parts = Math.max(question.correct.length, 1);
   const pointsPerAnswer =
-    question.scoring === "partial"
+    question.scoring === ScoringMethod.Partial
       ? Math.round((question.score / parts) * 10) / 10
       : question.score;
+  const isCorrect = (text: string): boolean =>
+    question.negate ? !correctTexts.has(text) : correctTexts.has(text);
 
   return refs.map((ref) => {
-    const correct = showAnswers
-      ? question.negate
-        ? !correctTexts.has(ref.value.text)
-        : correctTexts.has(ref.value.text)
-      : null;
+    const correct = showAnswers ? isCorrect(ref.value.text) : null;
     const descriptor = parseMediaDescriptor(ref.value.text);
     const resolved = mediaForConfig(descriptor, mediaOptions);
     const isMedia = !ref.value.keepAsIs && resolved.kind !== MediaKind.File;

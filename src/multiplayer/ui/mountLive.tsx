@@ -6,6 +6,10 @@
 
 import { h, render, type JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { resolveLanguage, translator } from "../../i18n/dictionary";
+import { LIVE_LOCALES } from "../../i18n/liveLocales";
+import { UiContext, useT } from "../../renderers/preact/i18n";
+import type { Translate } from "../../i18n/types";
 import type { Quiz } from "../../core/session/quiz";
 import { codeFromUrl, isRoomCode, joinUrl, normalizeRoomCode } from "../code";
 import { createHost, type HostRoom } from "../host";
@@ -33,6 +37,8 @@ export interface MountLiveOptions {
   readonly watching?: boolean;
   /** The group this phone answers for. `?team=Red` does the same. */
   readonly team?: string;
+  /** Interface language. Defaults to the page, then the browser. */
+  readonly language?: string;
 }
 
 export interface MountedLive {
@@ -40,6 +46,10 @@ export interface MountedLive {
   player: PlayerRoom | null;
   destroy(): void;
 }
+
+const LIVE_KEYS: ReadonlySet<string> = new Set(
+  Object.values(LIVE_LOCALES).flatMap((table) => Object.keys(table)),
+);
 
 const TOKEN_PREFIX = "pq-live-token:";
 
@@ -63,8 +73,21 @@ function writeToken(code: string, token: string | null): void {
   }
 }
 
-function describe(reason: unknown): string {
-  return reason instanceof Error ? reason.message : String(reason);
+const LIVE_ERROR_KEYS: Readonly<Record<string, string>> = {
+  "Load a quiz before opening a room.": "liveLoadFirst",
+  "No host answered. Check the code.": "liveNoHost",
+  liveNoHost: "liveNoHost",
+};
+
+/** Known failures get interface copy. The rest stays a diagnostic. */
+function describe(reason: unknown, t: Translate): string {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  const key = LIVE_ERROR_KEYS[message];
+  if (key !== undefined) {
+    return t(key);
+  }
+  console.warn("Live room failed:", message);
+  return t("liveConnectionFailed");
 }
 
 function safeBroadcast(): RoomTransport | null {
@@ -110,6 +133,7 @@ function LiveShell({
   readonly options: MountLiveOptions;
   readonly handle: MountedLive;
 }): JSX.Element {
+  const t = useT();
   const code = currentCode(options);
   const watching = options.watching === true || watchingFromUrl();
   const team = options.team ?? teamFromUrl();
@@ -124,16 +148,16 @@ function LiveShell({
       return;
     }
     if (options.quiz === undefined) {
-      setError("Load a quiz before going live.");
+      setError(t("liveLoadFirst"));
       return;
     }
     if (!isRoomCode(code)) {
-      setError("A room code is four letters or digits. No O, 0, I or 1.");
+      setError(t("liveRoomCodeRule"));
       return;
     }
     const transport = options.transport ?? safeBroadcast();
     if (transport === null) {
-      setError("This browser has no BroadcastChannel. Pass a transport.");
+      setError(t("liveNoBroadcast"));
       return;
     }
     let cancelled = false;
@@ -156,7 +180,7 @@ function LiveShell({
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(describe(reason));
+          setError(describe(reason, t));
         }
       });
     return () => {
@@ -172,12 +196,12 @@ function LiveShell({
       return;
     }
     if (!isRoomCode(code)) {
-      setError("A room code is four letters or digits. No O, 0, I or 1.");
+      setError(t("liveRoomCodeRule"));
       return;
     }
     const transport = options.transport ?? safeBroadcast();
     if (transport === null) {
-      setError("This browser has no BroadcastChannel. Pass a transport.");
+      setError(t("liveNoBroadcast"));
       return;
     }
     let cancelled = false;
@@ -201,7 +225,7 @@ function LiveShell({
       })
       .catch((reason: unknown) => {
         if (!cancelled) {
-          setError(describe(reason));
+          setError(describe(reason, t));
         }
       });
     return () => {
@@ -227,10 +251,10 @@ function LiveShell({
     return (
       <main class="pq-screen pq-live-screen">
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          Opening the room
+          {t("liveOpening")}
         </h1>
         {error === null ? (
-          <p class="pq-body">Warming up the lobby…</p>
+          <p class="pq-body">{t("liveWarming")}</p>
         ) : (
           <p class="pq-issue" role="alert">
             {error}
@@ -260,10 +284,10 @@ function LiveShell({
   return (
     <main class="pq-screen pq-live-screen">
       <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-        Joining {code}
+        {t("liveJoining", { code })}
       </h1>
       {error === null ? (
-        <p class="pq-body">Knocking on the door…</p>
+        <p class="pq-body">{t("liveKnocking")}</p>
       ) : (
         <>
           <p class="pq-issue" role="alert">
@@ -274,7 +298,7 @@ function LiveShell({
             class="pq-primary"
             onClick={() => setAttempt((current) => current + 1)}
           >
-            Try again
+            {t("tryAgain")}
           </button>
         </>
       )}
@@ -292,6 +316,20 @@ export function mountLive(options: MountLiveOptions): MountedLive {
       handle.player?.leave();
     },
   };
-  render(h(LiveShell, { options, handle }), options.target);
+  const language = resolveLanguage(
+    options.language ?? options.quiz?.config.language,
+  );
+  const liveT = translator(language, LIVE_LOCALES);
+  const quizT = options.quiz?.t;
+  // Live copy comes from the live table; everything else keeps the quiz's own
+  // language and host overrides.
+  const t: Translate = (key, params) =>
+    quizT === undefined || LIVE_KEYS.has(key)
+      ? liveT(key, params)
+      : quizT(key, params);
+  render(
+    h(UiContext.Provider, { value: t }, h(LiveShell, { options, handle })),
+    options.target,
+  );
   return handle;
 }

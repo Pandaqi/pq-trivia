@@ -2,7 +2,7 @@
 
 import type { TranslationTable } from "../types";
 
-export const nl: TranslationTable = {
+const base: TranslationTable = {
   untitled: "Naamloze quiz",
   by: "door {author}",
   questions: "Vragen",
@@ -230,6 +230,15 @@ export const nl: TranslationTable = {
   printAnswers: "Print antwoorden",
   printAnswerSheet: "Print antwoordblad",
   printAnswerForm: "Print antwoordformulier",
+  mediaWord: "Media",
+  printTileOverflow:
+    "Een dia op printpagina {page} heeft {needed}px nodig, maar er past op de kleinste leesbare maat maar {available}px. Hij wordt afgekapt. Maak die vraag korter, of print minder dia's per pagina.",
+  printTileShrunk:
+    "Een dia op printpagina {page} is verkleind naar {percent}%. Dat is kleiner dan we willen. Maak die vraag korter, of print minder dia's per pagina.",
+  printPageOverflow:
+    "Printpagina {page} heeft {needed}px nodig, maar er past op de kleinste leesbare maat maar {available}px. Hij wordt afgekapt. Maak de vraag korter, of print minder dia's per pagina.",
+  printPageShrunk:
+    "Printpagina {page} is verkleind naar {percent}% om te passen. Dat is kleiner dan we willen. Maak de vraag korter, of print minder dia's per pagina.",
   printMediaOnly: "Print alleen media",
   printMediaNone: "Deze quiz heeft geen media.",
   printNotes: "Notities",
@@ -353,3 +362,701 @@ export const nl: TranslationTable = {
   teamsNote: "Eén scherm, of één telefoon per team in een live room.",
   scoreboard: "Stand",
 };
+
+const live: TranslationTable = {
+  // Live room.
+  liveSettings: "Live-instellingen",
+  liveReveal: "Onthullen",
+  liveRevealQuestion: "Na elke vraag",
+  liveRevealRound: "Na elke ronde",
+  liveRevealEnd: "Aan het einde",
+  liveRevealPass: "Tweede ronde, met antwoorden",
+  liveRoundCards: "Rondekaarten op de telefoons",
+  liveAnswersIn: "Antwoorden binnen",
+  liveAnsweredOf: "{answered} van {total} hebben geantwoord",
+  liveIn: "binnen",
+  liveStaked: "{points} ingezet",
+  liveCloseAnswers: "Sluit antwoorden",
+  liveEndQuiz: "Beëindig quiz",
+  liveFinish: "Klaar",
+  liveNextAnswer: "Volgend antwoord",
+  liveAnswerPass: "Antwoordenronde",
+  liveNextQuestion: "Volgende vraag",
+  liveShowAnswers: "Toon antwoorden",
+  liveRevealRoundAction: "Onthul ronde",
+  liveRevealAction: "Onthul",
+  liveLiveQuiz: "Live quiz",
+  liveTheAnswers: "De antwoorden",
+  liveLiveQuestion: "Live vraag",
+  liveAnswersWord: "Antwoorden",
+  liveAnswersOf: "Antwoorden {index} van {total}",
+  liveRoundScreen: "Een rondekaart. De telefoons tonen dezelfde kaart.",
+  liveBuzzedFirst: "{name} was het eerst.",
+  liveStartQuiz: "Start de quiz",
+  liveWaiting: "Wachten op spelers",
+  liveRoomAria: "Doe mee met deze kamer",
+  liveRoomCode: "Kamercode",
+  liveScanHint:
+    "Scan de code, of typ hem op dezelfde pagina. Hoe dan ook: een telefoon.",
+  liveScanToJoin: "Scan om mee te doen: {link}",
+  liveBadge: "Live · {code}",
+  livePlayersAria: "Spelers",
+  livePlayers: "Spelers",
+  liveNobody: "Nog niemand. Zet de code op het grote scherm.",
+  liveOffline: "offline",
+  liveLeaderboardAria: "Stand",
+  liveLeaderboard: "Stand",
+  liveAnswersAria: "Antwoorden",
+  liveQuestionNumber: "Vraag {number}",
+  liveLate: "Te laat.",
+  liveYouSaid: "jij zei: {text}",
+  liveJoinAria: "Doe mee met de kamer",
+  liveRoom: "Kamer {code}",
+  livePickName: "Kies een naam",
+  liveYourName: "Jouw naam",
+  liveJoin: "Meedoen",
+  liveOpening: "De kamer gaat open",
+  liveWarming: "De lobby warmt op…",
+  liveJoining: "Meedoen met {code}",
+  liveKnocking: "Er wordt aangeklopt…",
+  liveLoadFirst: "Laad eerst een quiz voordat je live gaat.",
+  liveRoomCodeRule:
+    "Een kamercode is vier letters of cijfers. Geen O, 0, I of 1.",
+  liveNoBroadcast:
+    "Deze browser heeft geen BroadcastChannel. Geef een transport mee.",
+  liveConnecting: "Verbinden met de host…",
+  liveNoHost: "Geen host gevonden. Controleer de code.",
+  liveConnectionFailed: "De kamer kon niet verbinden. Probeer het opnieuw.",
+  liveThatIsQuiz: "Dat was de quiz",
+  liveYouAreIn: "Je bent erin",
+  liveWaitingHost: "Wachten tot de host een vraag toont.",
+  liveNextSoon:
+    "De volgende vraag komt eraan. Houd het grote scherm in de gaten.",
+  liveWatching: "Je kijkt mee. Op dit scherm is niets te beantwoorden.",
+  liveAnswersClosed: "De antwoorden zijn gesloten.",
+  liveBuzz: "Buzzer",
+  liveYouBuzzed: "Jij was het eerst. Antwoord hardop.",
+  liveShowingAnswers: "De host toont de antwoorden.",
+  liveWagerUpTo: "Zet tot {max} {unit} in",
+  liveSentStake:
+    "Verstuurd met {points} {unit} op het spel. Wacht op de onthulling.",
+  liveSent: "Verstuurd. Wacht op de onthulling.",
+  liveLockIn: "Zet vast",
+  livePickOne: "Kies er één",
+  liveBackToQuiz: "Terug naar de quiz",
+};
+
+const editor: TranslationTable = {
+  // Wizard.
+  paneSlides: "Dia's",
+  paneDetails: "Details",
+  paneSyntax: "Syntax",
+  panePreview: "Voorbeeld",
+  editorFile: "Bestand",
+  editorNewQuiz: "Nieuwe quiz",
+  editorOpenFile: "Open bestand…",
+  editorOpenFolder: "Open map…",
+  editorSaveFolder: "Bewaar in map…",
+  editorQuizTitle: "Quiztitel",
+  editorUntitled: "Naamloze quiz",
+  editorPanes: "Panelen",
+  editorHistory: "Geschiedenis",
+  editorUndo: "Ongedaan maken",
+  editorRedo: "Opnieuw",
+  editorAddSlide: "Dia toevoegen",
+  editorAddQuestion: "+ Vraag",
+  editorAddRound: "+ Ronde",
+  editorInsertAfter: "Voeg toe na de geselecteerde dia",
+  editorSave: "Bewaar",
+  editorSaveTitle: "Bewaar deze quiz als .trivia-bestand",
+  editorNoPreview: "Deze pagina heeft geen voorbeeldfunctie",
+  editorTogglePane: "Toon of verberg het paneel {pane}",
+  editorOpened: "{name} geopend.",
+  editorWritten: "Naar de open map geschreven.",
+  editorNoFolder: "Geen map open. Gebruik Bewaar.",
+  editorSaved: "Bewaard. Eén .trivia-bestand, verder niets.",
+  editorCopiedMedia: "{name} naar media/ gekopieerd.",
+  editorMediaPath: "{name} is alleen een pad. Zet het bestand naast de quiz.",
+  editorParsed: "Het hele bestand opnieuw gelezen.",
+  editorNoProblems: "Geen problemen",
+  editorNothingSaved: "Nog niets bewaard.",
+  editorResize: "Sleep de rand om te verdelen. Dubbelklik om te herstellen.",
+  editorQuizSettings: "Quizinstellingen",
+  editorQuizSettingsNote:
+    "Deze regels staan boven de eerste vraag. Maak een veld leeg om de regel te laten vallen.",
+  editorNoSlides: "Nog geen dia's. Gebruik {button} in de werkbalk.",
+  editorSlideEditor: "Dia bewerken",
+  editorSlide: "Dia",
+  editorDuplicate: "Kopieer",
+  editorRemove: "Verwijder",
+  editorRoundName: "Rondenaam",
+  editorScreenText: "Schermtekst",
+  editorQuestionText: "Vraagtekst",
+  editorTextHintRound: "De kop op een eigen scherm aan het begin van de ronde.",
+  editorTextHintScreen: "De grote regel. Inline-opmaak werkt.",
+  editorTextHintQuestion: "Inline-opmaak werkt. [blank] is een cloze-gat.",
+  editorType: "Type",
+  editorTypeNote:
+    "Open vraagt om getypte tekst. De rest toont antwoordkaarten.",
+  editorOpenDefault: "open (standaard)",
+  editorAnswers: "Antwoorden",
+  editorMedia: "Media",
+  editorAddAnswer: "Antwoord toevoegen",
+  editorAddFile: "Bestand toevoegen",
+  editorAddPath: "Pad toevoegen",
+  editorNoMedia: "Geen media op deze dia.",
+  editorOpenAnswers: "Open vragen mogen dit overslaan.",
+  editorGroupContent: "Inhoud",
+  editorGroupDisplay: "Weergave",
+  editorGroupMeta: "Meta",
+  editorGroupFlow: "Verloop",
+  editorAddField: "{what} toevoegen",
+  editorNothingYet: "Nog niets.",
+  editorDefault: "(standaard)",
+  editorMarkCorrect: "Markeer als juist",
+  editorCorrectOf: "Juist: {value}",
+  editorRemoveItem: "{value} verwijderen",
+  editorMoveUp: "{value} omhoog",
+  editorMoveDown: "{value} omlaag",
+  editorSyntax: "Trivia Syntax",
+  editorSyntaxNote:
+    "Wijzigingen landen bij blur of Toepassen. De tekst wint altijd: de formulieren worden eruit opgebouwd.",
+  editorTextScope: "Tekstbereik",
+  editorThisSlide: "Deze dia",
+  editorWholeFile: "Heel bestand",
+  editorAllBlocks: "Elk blok, zoals geschreven",
+  editorThisBlock: "Dit blok, zoals geschreven",
+  editorApply: "Toepassen",
+  editorReset: "Herstel",
+  editorPreview: "Voorbeeld",
+  editorSlides: "Dia's",
+  editorSlidesNote:
+    "Sleep een dia, of gebruik Alt+↑ en Alt+↓. De quizkop blijft staan.",
+  editorSlideCount: "{questions} · {rounds}",
+  editorNoText: "(geen tekst)",
+  editorMediaNote:
+    "Kies een bestand om het naar media/ te kopiëren. Een pad werkt ook.",
+  editorResizeAria: "Verdel {left} en {right}",
+  editorSlideRemoved: "Dia verwijderd.",
+  editorSlideShapeChanged:
+    "Die dia heeft nu meer of minder blokken. Controleer de lijst.",
+  editorMoveUpTitle: "Omhoog",
+  editorMoveDownTitle: "Omlaag",
+  editorKindHeader: "Kop",
+  editorKindStart: "Start",
+  editorKindRound: "Ronde",
+  editorKindQuestion: "Vraag",
+  editorKindEnd: "Einde",
+
+  // Hulp bij attributen, in de bubbels van de wizard.
+  descQuestion: "Start een vraagblok.",
+  descType: "Wat voor vraag dit is.",
+  descAnswers: "Opties of verwachte antwoorden.",
+  descCorrect:
+    "Welke antwoorden tellen. Standaard het eerste, of alles bij list, sort, match en cloze.",
+  descRange: "Foutmarge. Impliceert Type => Range.",
+  descID: "Vaste verwijzing voor vertalingen, opslag en verloop.",
+  descSection: "Koppel deze vraag aan een ronde.",
+  descPlaceAt:
+    "Alleen rondes: zet deze ronde op een vaste plek, vanaf één geteld.",
+  descPlaceBefore: "Zet dit blok vóór de opgegeven ID's.",
+  descPlaceAfter: "Zet dit blok na de opgegeven ID's.",
+  descAnswersOrder: "Antwoorden behouden of schudden.",
+  descMediaOrder: "Media behouden of schudden.",
+  descButtons: "Start- en eindschermen: welke knoppen je toont, in volgorde.",
+  descTimer: "Tijdslimiet. 90, 1:30 en 1m30s werken allemaal.",
+  descMedia: "Een bestand om te tonen, af te spelen of te linken.",
+  descCategory: "Onderwerptags.",
+  descAuthor: "Wie het schreef.",
+  descScore: "Punten voor een juist antwoord.",
+  descScoring:
+    "Hoe punten worden gegeven: alles-of-niets, gedeeltelijk of per juist antwoord.",
+  descGrading:
+    "Hoe streng tekstantwoorden worden vergeleken: exact, genormaliseerd of fuzzy.",
+  descFuzzyDistance: "Maximale bewerkingsafstand voor fuzzy beoordeling.",
+  descAlsoAccept: "Gelijkwaardige antwoorden.",
+  descReject: "Expliciet foute antwoorden. Gaat vóór fuzzy.",
+  descExplanation: "Getoond na de onthulling en in de resultaten.",
+  descComment: "Getoond aan spelers.",
+  descHints: "Eén voor één onthuld.",
+  descSources: "Waar het antwoord vandaan komt.",
+  descDescription: "Samenvatting voor schermlezers.",
+  descAlt: "Terugval-alt-tekst voor media.",
+  descVariant: "Tag voor een korte of alternatieve versie.",
+  descSyncAll: "Kopieer ontbrekende eigenschappen uit de andere taal.",
+  descSecret: "Alleen rondes: verborgen thema.",
+  descFormatText: "Inline-opmaak verwerken.",
+  descHiddenAtPlay: "Sla dit blok over tijdens het spelen.",
+  descHiddenAtExport: "Laat dit blok weg uit exports.",
+  descClass: "Extra CSS-klassen op het scherm.",
+  descLayout: "Benoemde layout. CSS doet de rest.",
+  descBackground: "color:..., image:..., gradient:..., none.",
+  descColorScheme: "Benoemd kleurenschema.",
+  descTransition: "Binnenkomende schermanimatie.",
+  descReveal: "Animatie bij het onthullen van antwoorden.",
+  descSteps:
+    "Onthul één deel tegelijk: media, vraag, antwoorden, opmerkingen, hints, bronnen, uitleg, of alles. Een animatienaam tussen twee delen zet de overgang voor wat volgt.",
+  descStepTransition:
+    "Standaardanimatie tussen stappen. Vervagen als niemand iets zegt.",
+  descPrint: "hide, background, no-background, notes.",
+  descDirection: "Tekstrichting: auto, ltr of rtl.",
+  descHeight: "Hoogte voor een eigen scriptwidget.",
+  descPrintFallback:
+    "Statische tekst voor print als een widget niet kan worden geprint.",
+  descCredits: "Eindscherm: wie deze quiz maakte.",
+  descLanguage: "Taalcode van de inhoud.",
+  descTranslation: "Expliciete link naar een andere taal.",
+  descUnlock: "Ronde-ID waarop dit blok wacht.",
+  descWhen: "Kleine conditiegrammatica. Geen eval.",
+  descContinue: "Wanneer de speler verder mag.",
+  descInclude: "Pad[#selector] om samen te voegen vóór het plannen.",
+  descScript: "Widgetbestand in een sandbox.",
+  descNotes:
+    "Notities voor de presentator. Alleen host. Nooit in het spelersmodel, nooit op papier.",
+  descPool: "Alleen rondes: trek zoveel vragen uit de ronde, met seed.",
+  descDifficulty:
+    "Hoe moeilijk het is, 1 tot 5. Gebruikt om een pool te balanceren.",
+  descVariants:
+    "Eén regel per slot. `{1}`, `{2}` in de tekst nemen de waarde voor dat slot.",
+  descRoundTimer: "Alleen rondes: één timer voor de hele ronde.",
+  descWager:
+    "Wed tot je score, nooit meer dan de punten van de vraag. Goed wint de inzet, fout verliest hem, en een score zakt nooit onder nul.",
+  descHeaderDescription: "Eén regel over de quiz.",
+  descHeaderAuthor: "Wie het schreef.",
+  descHeaderTheme: "Naam van een themamap, of een pad ernaartoe.",
+  descHeaderLanguage: "Tweeletterige code voor de taal van de inhoud.",
+  descHeaderLanguages:
+    "Elke taal waarin de quiz bestaat, gescheiden door een streep.",
+  descHeaderDate: "Waarvoor de quiz is.",
+  descHeaderSeed: "Dezelfde seed, dezelfde schudding, elke keer.",
+  descTolerance: "Hoeveel een getal mag afwijken.",
+  descUnit: "Eenheid na een getal.",
+  descSlider: "Toon een schuif met dit bereik.",
+  descHitRadius: "Hoe dichtbij een klik op een afbeelding moet zijn.",
+  descNegate: "Keer het antwoord om: waar wordt onwaar.",
+  descFeedback: "Tekst na een antwoord.",
+  descSuggest: "Antwoorden waaruit de speler kan kiezen.",
+  descRows: "Eén rij per regel.",
+  descScale: "Labels voor een schaal.",
+  descMultiple: "Meer dan één antwoord toestaan.",
+  descParts: "Splits het antwoord in delen.",
+  descBuckets: "Groepen om antwoorden in te sorteren.",
+  descTargets: "Doelen om te raken.",
+  descPlayLimit: "Hoe vaak media mag afspelen.",
+  descBuzzer: "Toon een buzzer bij deze vraag.",
+  editorCorrectHintOpen:
+    "Eén geaccepteerd antwoord per rij. AlsoAccept voegt alternatieven toe.",
+  editorCorrectHintChoice: "Vink elke optie aan die als juist telt.",
+  editorCorrectHintList:
+    "Vink de antwoorden aan die een speler moet geven, in willekeurige volgorde.",
+  editorCorrectHintSort:
+    "Schrijf ze in de juiste volgorde. De speler sorteert ze.",
+  editorCorrectHintRange: "Het verwachte getal. Range bepaalt de marge.",
+  editorCorrectHintMatch: "Schrijf elk paar als Links ~ Rechts.",
+  editorCorrectHintCloze:
+    "Eén antwoord per [blank], of groepen gescheiden door ||.",
+  editorShortcutUndo: "Ctrl+Z",
+  editorShortcutRedo: "Ctrl+Shift+Z",
+  editorAltUp: "Alt+↑",
+  editorAltDown: "Alt+↓",
+};
+
+function nlDiagnosticCopy(
+  pairs: readonly (readonly [string, string])[],
+): TranslationTable {
+  return Object.fromEntries(
+    pairs.map(([text, value]) => [`diag:${text}`, value]),
+  );
+}
+
+const diagnostics: TranslationTable = {
+  ...nlDiagnosticCopy([
+    [
+      '"{0}" and "{1}" look like the same question ({2}% alike).',
+      '"{0}" en "{1}" lijken op dezelfde vraag ({2}% gelijk).',
+    ],
+    ['"{0}" has an empty block.', '"{0}" heeft een leeg blok.'],
+    ['"{0}" has an empty list.', '"{0}" heeft een lege lijst.'],
+    [
+      '"{0}" has an unknown part or transition "{1}".',
+      '"{0}" heeft een onbekend onderdeel of overgang "{1}".',
+    ],
+    [
+      '"{0}" has an unknown value "{1}".',
+      '"{0}" heeft een onbekende waarde "{1}".',
+    ],
+    ['"{0}" has no point in "{1}".', '"{0}" heeft geen punt in "{1}".'],
+    [
+      '"{0}" is not placed in a known bucket.',
+      '"{0}" staat niet in een bekende bak.',
+    ],
+    ['"{0}" needs a value.', '"{0}" heeft een waarde nodig.'],
+    [
+      '"{0}" should be a duration, not "{1}".',
+      '"{0}" moet een duur zijn, niet "{1}".',
+    ],
+    [
+      '"{0}" should be a number, not "{1}".',
+      '"{0}" moet een getal zijn, niet "{1}".',
+    ],
+    [
+      '"{0}" should be true or false, not "{1}".',
+      '"{0}" moet waar of onwaar zijn, niet "{1}".',
+    ],
+    [
+      '"{0}" should be two numbers, like {1}..{2}, not "{3}".',
+      '"{0}" moet twee getallen zijn, zoals {1}..{2}, niet "{3}".',
+    ],
+    [
+      '"{0}" should be {1} to {2}, not "{3}".',
+      '"{0}" moet {1} tot {2} zijn, niet "{3}".',
+    ],
+    [
+      "A block comment was never closed.",
+      "Een blokopmerking is nooit gesloten.",
+    ],
+    ["A block heading has no key.", "Een blokkop heeft geen sleutel."],
+    [
+      "A classification question has no place for its items.",
+      "Een classificatievraag heeft geen plek voor haar items.",
+    ],
+    [
+      "A classification question needs at least two buckets.",
+      "Een classificatievraag heeft minstens twee bakken nodig.",
+    ],
+    [
+      "A cloze question has no [blank] markers.",
+      "Een cloze-vraag heeft geen [blank]-markeringen.",
+    ],
+    ["A code fence was never closed.", "Een codeblok is nooit gesloten."],
+    [
+      "A diagram question needs labels to place.",
+      "Een diagramvraag heeft labels nodig om te plaatsen.",
+    ],
+    [
+      "A diagram question needs targets on its image.",
+      "Een diagramvraag heeft doelen op haar afbeelding nodig.",
+    ],
+    [
+      "A hotspot question needs an image to click on.",
+      "Een hotspotvraag heeft een afbeelding nodig om op te klikken.",
+    ],
+    [
+      "A hotspot question needs at least one point, like `{0}`.",
+      "Een hotspotvraag heeft minstens één punt nodig, zoals `{0}`.",
+    ],
+    [
+      "A match question needs at least two pairs.",
+      "Een matchvraag heeft minstens twee paren nodig.",
+    ],
+    [
+      "A match question with more than {0} pairs is hard to play.",
+      "Een matchvraag met meer dan {0} paren is lastig te spelen.",
+    ],
+    [
+      "A matrix question needs a scale with at least two options.",
+      "Een matrixvraag heeft een schaal met minstens twee opties nodig.",
+    ],
+    [
+      "A matrix question needs at least one row.",
+      "Een matrixvraag heeft minstens één rij nodig.",
+    ],
+    [
+      "A parts question needs at least one part.",
+      "Een parts-vraag heeft minstens één onderdeel nodig.",
+    ],
+    ["A question block has no text.", "Een vraagblok heeft geen tekst."],
+    ["A quiz title heading has no text.", "Een quiztitel heeft geen tekst."],
+    [
+      "A range question has no Range margin.",
+      "Een rangevraag heeft geen Range-marge.",
+    ],
+    ["A round header has no name.", "Een rondekop heeft geen naam."],
+    [
+      "A second End block replaced the first.",
+      "Een tweede End-blok verving het eerste.",
+    ],
+    [
+      "A second Start block replaced the first.",
+      "Een tweede Start-blok verving het eerste.",
+    ],
+    [
+      "A second title starts a second quiz, and a file holds one.",
+      "Een tweede titel begint een tweede quiz, en een bestand houdt er één.",
+    ],
+    [
+      "A {0} question needs at least two answers.",
+      "Een {0}-vraag heeft minstens twee antwoorden nodig.",
+    ],
+    [
+      "An estimate question has no Tolerance, so only the exact number counts.",
+      "Een schattingsvraag heeft geen Tolerance, dus alleen het exacte getal telt.",
+    ],
+    [
+      "An estimate question needs one number as its answer.",
+      "Een schattingsvraag heeft één getal als antwoord nodig.",
+    ],
+    [
+      'An event handler for "{0}" threw: {1}',
+      'Een event-handler voor "{0}" gooide een fout: {1}',
+    ],
+    [
+      "An odd-one-out question needs at least two answers.",
+      "Een odd-one-out-vraag heeft minstens twee antwoorden nodig.",
+    ],
+    [
+      'Author "{0}" is not in possibleAuthors.',
+      'Auteur "{0}" staat niet in possibleAuthors.',
+    ],
+    [
+      'Cannot parse this line: "{0}".',
+      'Deze regel kan niet worden gelezen: "{0}".',
+    ],
+    [
+      'Category "{0}" is not in possibleCategories.',
+      'Categorie "{0}" staat niet in possibleCategories.',
+    ],
+    [
+      'Class name "{0}" is not allowed.',
+      'Klassenaam "{0}" is niet toegestaan.',
+    ],
+    [
+      "Cloze has {0} blanks but only {1} answers.",
+      "Cloze heeft {0} gaten maar slechts {1} antwoorden.",
+    ],
+    [
+      'Correct answer "{0}" is not one of the answers.',
+      'Het juiste antwoord "{0}" staat niet bij de antwoorden.',
+    ],
+    ["Could not load the quiz: {0}", "Kon de quiz niet laden: {0}"],
+    ["Embedded JSON has no questions.", "Ingebedde JSON heeft geen vragen."],
+    [
+      'Embedded answer "{0}" is not in the answer list.',
+      'Ingebed antwoord "{0}" staat niet in de antwoordenlijst.',
+    ],
+    ["Flow condition: {0}", "Flow-voorwaarde: {0}"],
+    [
+      "Formatting marker {0} was never closed.",
+      "Opmaakmarkering {0} is nooit gesloten.",
+    ],
+    [
+      'Hotspot point "{0}" sits outside {1} to {2} percent.',
+      'Hotspotpunt "{0}" ligt buiten {1} tot {2} procent.',
+    ],
+    [
+      'Image source "{0}" is not allowed.',
+      'Afbeeldingsbron "{0}" is niet toegestaan.',
+    ],
+    ['Inline style "{0}" was dropped.', 'Inline-stijl "{0}" is weggevallen.'],
+    [
+      "Line {0} is neither a heading, a bullet nor a note, so it was skipped.",
+      "Regel {0} is geen kop, opsomming of notitie, dus overgeslagen.",
+    ],
+    [
+      "Line {0}: a second title starts a second quiz.",
+      "Regel {0}: een tweede titel begint een tweede quiz.",
+    ],
+    ['Link target "{0}" is not allowed.', 'Linkdoel "{0}" is niet toegestaan.'],
+    [
+      'Match pair "{0}" has no ~ separator.',
+      'Matchpaar "{0}" heeft geen ~-scheiding.',
+    ],
+    [
+      'No question type is registered for "{0}".',
+      'Geen vraagtype geregistreerd voor "{0}".',
+    ],
+    [
+      "No reasons are accepted, so any reason earns the second half.",
+      "Er worden geen redenen geaccepteerd, dus elke reden krijgt de tweede helft.",
+    ],
+    ['No round is called "{0}".', 'Geen ronde heet "{0}".'],
+    [
+      'PlaceAfter points at "{0}", which does not exist.',
+      'PlaceAfter wijst naar "{0}", dat niet bestaat.',
+    ],
+    [
+      'PlaceBefore points at "{0}", which does not exist.',
+      'PlaceBefore wijst naar "{0}", dat niet bestaat.',
+    ],
+    ['Question "{0}" has no text.', 'Vraag "{0}" heeft geen tekst.'],
+    ["Quiz is empty.", "De quiz is leeg."],
+    [
+      'Round "{0}" asks for {1} of its {2} questions, so it keeps them all.',
+      'Ronde "{0}" vraagt {1} van haar {2} vragen, dus ze houdt ze allemaal.',
+    ],
+    ['Round "{0}" has no questions.', 'Ronde "{0}" heeft geen vragen.'],
+    ["Row {0} has no question text.", "Rij {0} heeft geen vraagtekst."],
+    [
+      'Row {0}: "{1}" is not a column this importer knows.',
+      'Rij {0}: "{1}" is geen kolom die deze importeur kent.',
+    ],
+    [
+      "The first row needs a `{0}` column.",
+      "De eerste rij heeft een `{0}`-kolom nodig.",
+    ],
+    [
+      "There are {0} parts but only {1} answers.",
+      "Er zijn {0} onderdelen maar slechts {1} antwoorden.",
+    ],
+    [
+      "This question has no accepted answers, so nothing can be graded.",
+      "Deze vraag heeft geen geaccepteerde antwoorden, dus niets kan worden beoordeeld.",
+    ],
+    ['Two questions share the ID "{0}".', 'Twee vragen delen de ID "{0}".'],
+    ['Unknown attribute "{0}".', 'Onbekend attribuut "{0}".'],
+    ['Unknown question type "{0}".', 'Onbekend vraagtype "{0}".'],
+    [
+      "`{0}` should have one line per row, in the same order.",
+      "`{0}` moet één regel per rij hebben, in dezelfde volgorde.",
+    ],
+    [
+      "Add */ where the comment ends.",
+      "Voeg */ toe waar de opmerking eindigt.",
+    ],
+    ["Add `{0}`.", "Voeg `{0}` toe."],
+    [
+      "Add a Question block, or check that settings do not hide every round.",
+      "Voeg een Question-blok toe, of kijk of instellingen elke ronde verbergen.",
+    ],
+    ["Add a Question line.", "Voeg een Question-regel toe."],
+    [
+      "Add answers, or use || to give each blank its own list.",
+      "Voeg antwoorden toe, of gebruik || voor elk gat een eigen lijst.",
+    ],
+    [
+      "Add questions under it, or remove the header.",
+      "Voeg vragen eronder toe, of haal de kop weg.",
+    ],
+    ["Allowed: {0}.", "Toegestaan: {0}."],
+    [
+      "Allowed: {0}. Falling back to open.",
+      "Toegestaan: {0}. Terug naar open.",
+    ],
+    [
+      "Call quiz.registerQuestionType before loading the quiz.",
+      "Roep quiz.registerQuestionType aan voor het laden.",
+    ],
+    [
+      "Check the file was exported by PQ-Trivia v3.",
+      "Controleer of het bestand door PQ-Trivia v3 is geëxporteerd.",
+    ],
+    [
+      "Close it, or write {0} for literal text.",
+      "Sluit het, of schrijf {0} voor letterlijke tekst.",
+    ],
+    ["Close it with ```.", "Sluit het met ```."],
+    ["Did you mean {0}?", "Bedoelde je {0}?"],
+    [
+      "Fix the spelling, or add it to Answers.",
+      "Corrigeer de spelling, of zet het bij Answers.",
+    ],
+    ["Give one of them its own ID.", "Geef er één een eigen ID."],
+    [
+      "If they are, keep one. If not, change the wording a little. Pair: {0}.",
+      "Als dat zo is, houd er één. Zo niet, wijzig de tekst. Paar: {0}.",
+    ],
+    [
+      "Keep one title, or split the quiz into two files.",
+      "Houd één titel, of splits de quiz in twee bestanden.",
+    ],
+    [
+      "Lower `{0}`, or add more questions.",
+      "Verlaag `{0}`, of voeg meer vragen toe.",
+    ],
+    [
+      'One file holds one quiz. Keep "{0}" at the top, or import the rest on its own.',
+      'Een bestand houdt één quiz. Houd "{0}" bovenaan, of importeer de rest apart.',
+    ],
+    ["Pair: {0}.", "Paar: {0}."],
+    ["Parts: {0}. Transitions: {1}.", "Onderdelen: {0}. Overgangen: {1}."],
+    [
+      "Parts: {0} or all. Transitions: {1}.",
+      "Onderdelen: {0} of all. Overgangen: {1}.",
+    ],
+    ["Put the value after =>.", "Zet de waarde na =>."],
+    [
+      "Start a question with `{0}`, an answer with `{1}`.",
+      "Begin een vraag met `{0}`, een antwoord met `{1}`.",
+    ],
+    [
+      "Start a round with `{0}`, or fix the Section value.",
+      "Begin een ronde met `{0}`, of corrigeer de Section-waarde.",
+    ],
+    ["Try {0}.", "Probeer {0}."],
+    ["Try 90, 1:30 or 1m30s.", "Probeer 90, 1:30 of 1m30s."],
+    ["Try 3, or easy, medium, hard.", "Probeer 3, of easy, medium, hard."],
+    ["Try: question,answer,type,score", "Probeer: question,answer,type,score"],
+    [
+      "Use a local file, http, https or a #fragment.",
+      "Gebruik een lokaal bestand, http, https of een #fragment.",
+    ],
+    [
+      "Use http, https, mailto, tel or #anchor.",
+      "Gebruik http, https, mailto, tel of #anchor.",
+    ],
+    [
+      "Use letters, numbers and dashes, starting with a letter.",
+      "Gebruik letters, cijfers en streepjes, begin met een letter.",
+    ],
+    [
+      "Use || to give each part its own answers.",
+      "Gebruik || om elk onderdeel eigen antwoorden te geven.",
+    ],
+    [
+      "Use true, false, yes, no, on or off.",
+      "Gebruik true, false, yes, no, on of off.",
+    ],
+    [
+      "Write `{0}`, or continue a list on its own line.",
+      "Schrijf `{0}`, of ga verder met een lijst op een eigen regel.",
+    ],
+    [
+      "Write `{0}`, then one value per line.",
+      "Schrijf `{0}`, dan één waarde per regel.",
+    ],
+    ["Write `{0}`, in percent.", "Schrijf `{0}`, in procent."],
+    ["Write `{0}` in Correct.", "Schrijf `{0}` in Correct."],
+    ["Write `{0}`.", "Schrijf `{0}`."],
+    [
+      "Write the question after the ### shorthand, or use Question => text.",
+      "Schrijf de vraag na de ###-verkorting, of gebruik Question => tekst.",
+    ],
+  ]),
+  diagUnknown: "Probleem {code}.",
+  diagUnknownAttribute: "Onbekend attribuut.",
+  diagInvalidLine: "Die regel kon niet worden gelezen.",
+  diagEmptyList: "Een waarde of lijst is leeg.",
+  diagInvalidBoolean: "Verwacht waar of onwaar.",
+  diagInvalidNumber: "Verwacht een getal.",
+  diagInvalidDuration: "Verwacht een duur.",
+  diagInvalidValue: "Onbekende waarde.",
+  diagMissingQuestion: "De tekst of kop van een vraag ontbreekt.",
+  diagMissingAnswers: "Het aantal antwoorden klopt niet.",
+  diagDuplicateId: "Dubbele ID.",
+  diagUnclosedComment: "Een opmerking is nooit gesloten.",
+  diagUnknownType: "Onbekend vraagtype.",
+  diagCorrectNotInAnswers: "Het juiste antwoord staat niet bij de antwoorden.",
+  diagInvalidInline: "Ongeldige inline-opmaak.",
+  diagUnsafeLink: "Die link is niet toegestaan.",
+  diagInvalidStyle: "Ongeldige stijl.",
+  diagUnknownRound: "Onbekende ronde.",
+  diagDuplicateQuestion: "Dubbele vraag.",
+  diagNearDuplicate: "Twee vragen lijken bijna hetzelfde.",
+  diagPlanConflict: "Het plan spreekt zichzelf tegen.",
+  diagUnknownPlacement: "Een plaatsing wijst naar een ontbrekende vraag.",
+  diagOpenReference: "Open de referentie",
+};
+
+const loader: TranslationTable = {
+  loaderFileProtocol:
+    "Browsers blokkeren het lezen van quizbestanden via file://. Zet de quiztekst in de pagina, of serveer de map via http (bun run preview).",
+  loaderJson: "{source} lijkt JSON, maar het parseert niet.",
+  loaderFetch: "Kon {url} niet ophalen ({status}).",
+  loaderNoFiles: 'Geen vraagbestanden gevonden voor "{pattern}".',
+};
+
+export const nlBase = base;
+export const nlLive = live;
+export const nlEditor = editor;
+export const nlDiagnostics = diagnostics;
+export const nlLoader = loader;

@@ -4,6 +4,7 @@ import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { QuestionType } from "../../core/model/question";
 import { ResponseKind, type Response } from "../../core/session/responses";
+import { useT } from "../../renderers/preact/i18n";
 import type { LiveQuestion } from "../types";
 
 interface InputProps {
@@ -38,6 +39,7 @@ function ChoiceInput({
   disabled,
   onSubmit,
 }: InputProps): JSX.Element {
+  const t = useT();
   const [selected, setSelected] = useState<readonly string[]>([]);
   useEffect(() => setSelected([]), [question.id]);
 
@@ -74,7 +76,7 @@ function ChoiceInput({
         })}
       </ul>
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={disabled || selected.length === 0}
         onClick={() => onSubmit({ kind: ResponseKind.Choice, selected })}
       />
@@ -83,12 +85,13 @@ function ChoiceInput({
 }
 
 function OpenInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const [text, setText] = useState("");
   useEffect(() => setText(""), [question.id]);
   return (
     <>
       <label class="pq-field">
-        <span class="pq-field-label">Your answer</span>
+        <span class="pq-field-label">{t("answerPlaceholder")}</span>
         <input
           class="pq-input"
           type="text"
@@ -99,7 +102,7 @@ function OpenInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         />
       </label>
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={disabled || text.trim().length === 0}
         onClick={() => onSubmit({ kind: ResponseKind.Open, text })}
       />
@@ -108,13 +111,14 @@ function OpenInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
 }
 
 function RangeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const [value, setValue] = useState("");
   useEffect(() => setValue(""), [question.id]);
   const parsed = Number(value.replace(",", "."));
   return (
     <>
       <label class="pq-field">
-        <span class="pq-field-label">Number</span>
+        <span class="pq-field-label">{t("numberPlaceholder")}</span>
         <input
           class="pq-input pq-input-number"
           type="number"
@@ -125,7 +129,7 @@ function RangeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         />
       </label>
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={
           disabled || value.trim().length === 0 || !Number.isFinite(parsed)
         }
@@ -136,13 +140,14 @@ function RangeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
 }
 
 function ListInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const [text, setText] = useState("");
   useEffect(() => setText(""), [question.id]);
   const items = text.split("\n").map((item) => item.trim());
   return (
     <>
       <label class="pq-field">
-        <span class="pq-field-label">One answer per line</span>
+        <span class="pq-field-label">{t("listPlaceholder")}</span>
         <textarea
           class="pq-input"
           rows={4}
@@ -152,7 +157,7 @@ function ListInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         />
       </label>
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={disabled || items.every((item) => item.length === 0)}
         onClick={() => onSubmit({ kind: ResponseKind.List, items })}
       />
@@ -161,6 +166,7 @@ function ListInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
 }
 
 function ClozeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const [blanks, setBlanks] = useState<readonly string[]>([]);
   useEffect(
     () => setBlanks(Array.from({ length: question.blanks }, () => "")),
@@ -177,7 +183,9 @@ function ClozeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
     <>
       {blanks.map((blank, index) => (
         <label key={index} class="pq-field pq-field-inline">
-          <span class="pq-field-label">Blank {index + 1}</span>
+          <span class="pq-field-label">
+            {t("blank", { number: index + 1 })}
+          </span>
           <input
             class="pq-input"
             type="text"
@@ -189,7 +197,7 @@ function ClozeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         </label>
       ))}
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={
           disabled || blanks.every((blank) => blank.trim().length === 0)
         }
@@ -200,6 +208,7 @@ function ClozeInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
 }
 
 function SortInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const [order, setOrder] = useState<readonly string[]>([]);
   useEffect(
     () => setOrder(question.answers.map((answer) => answer.id)),
@@ -235,7 +244,7 @@ function SortInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
             <button
               type="button"
               class="pq-sort-button"
-              aria-label={`Move ${textOf.get(id) ?? id} up`}
+              aria-label={t("moveUp", { text: textOf.get(id) ?? id })}
               disabled={disabled || index === 0}
               onClick={() => move(index, -1)}
             >
@@ -244,7 +253,7 @@ function SortInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
             <button
               type="button"
               class="pq-sort-button"
-              aria-label={`Move ${textOf.get(id) ?? id} down`}
+              aria-label={t("moveDown", { text: textOf.get(id) ?? id })}
               disabled={disabled || index === order.length - 1}
               onClick={() => move(index, 1)}
             >
@@ -254,7 +263,7 @@ function SortInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         ))}
       </ol>
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={disabled}
         onClick={() => onSubmit({ kind: ResponseKind.Sort, order })}
       />
@@ -263,6 +272,7 @@ function SortInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
 }
 
 function MatchInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
+  const t = useT();
   const parsed = question.answers.map((answer) => {
     const at = answer.text.indexOf("~");
     return at < 0
@@ -292,7 +302,7 @@ function MatchInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
               }))
             }
           >
-            <option value="">Pick one</option>
+            <option value="">{t("livePickOne")}</option>
             {rights.map((right) => (
               <option key={right} value={right}>
                 {right}
@@ -302,7 +312,7 @@ function MatchInput({ question, disabled, onSubmit }: InputProps): JSX.Element {
         </label>
       ))}
       <SubmitButton
-        label="Lock it in"
+        label={t("liveLockIn")}
         disabled={disabled || parsed.some((pair) => !picked[pair.left])}
         onClick={() =>
           onSubmit({

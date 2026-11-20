@@ -11,6 +11,27 @@ export interface CsvOptions {
   readonly delimiter?: string;
 }
 
+/** The status column. One word per row, never a sentence. */
+enum CsvStatus {
+  Correct = "correct",
+  NoIdea = "no idea",
+  Wrong = "wrong",
+  Skipped = "skipped",
+}
+
+function statusOf(question: GradeReport["questions"][number]): CsvStatus {
+  if (question.correct) {
+    return CsvStatus.Correct;
+  }
+  if (question.noIdea) {
+    return CsvStatus.NoIdea;
+  }
+  if (question.answered) {
+    return CsvStatus.Wrong;
+  }
+  return CsvStatus.Skipped;
+}
+
 const NEEDS_QUOTES = /[",\n\r]/;
 
 export function escapeCsv(value: string, delimiter = ","): string {
@@ -63,13 +84,7 @@ export function gradesCsv(
           question.type,
           String(question.points),
           String(question.maxPoints),
-          question.correct
-            ? "correct"
-            : question.noIdea
-              ? "no idea"
-              : question.answered
-                ? "wrong"
-                : "skipped",
+          statusOf(question),
           question.confidence ?? "",
           question.wager === null ? "" : String(question.wager),
           question.parts.map((part) => part.given).join(" | "),

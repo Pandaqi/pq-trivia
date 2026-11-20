@@ -10,6 +10,7 @@
  * the page and the cells would scale the same text twice.
  */
 
+import type { Translate } from "../../../i18n/types";
 import type { PrintProblem } from "./printTypes";
 
 /** Below this the type is too small for a printed page. Warn instead. */
@@ -68,6 +69,7 @@ function fitBox(
 export function fitPrintPages(
   root: ParentNode,
   onProblem?: (problem: PrintProblem) => void,
+  t: Translate = (key) => key,
 ): FitSummary {
   const pages = [...root.querySelectorAll<HTMLElement>(".pq-print-page")];
   const problems: PrintProblem[] = [];
@@ -119,9 +121,11 @@ export function fitPrintPages(
             "overflow",
             tileFit.neededPx,
             tileFit.availablePx,
-            `A slide on print page ${index + 1} needs ${Math.round(tileFit.neededPx)}px ` +
-              `but only ${Math.round(tileFit.availablePx)}px fit at the smallest readable size. ` +
-              "It would be clipped. Shorten that question, or print fewer slides per page.",
+            t("printTileOverflow", {
+              page: index + 1,
+              needed: Math.round(tileFit.neededPx),
+              available: Math.round(tileFit.availablePx),
+            }),
           );
           break;
         }
@@ -130,10 +134,10 @@ export function fitPrintPages(
             "readability",
             tileFit.neededPx,
             tileFit.availablePx,
-            `A slide on print page ${index + 1} was shrunk to ${Math.round(
-              tileFit.zoom * 100,
-            )}%. That is smaller than we like. Shorten that question, ` +
-              "or print fewer slides per page.",
+            t("printTileShrunk", {
+              page: index + 1,
+              percent: Math.round(tileFit.zoom * 100),
+            }),
           );
         }
       }
@@ -150,17 +154,21 @@ export function fitPrintPages(
         "overflow",
         result.neededPx,
         result.availablePx,
-        `Print page ${index + 1} needs ${Math.round(result.neededPx)}px but only ` +
-          `${Math.round(result.availablePx)}px fit at the smallest readable size. ` +
-          "It would be clipped. Shorten the question, or print fewer slides per page.",
+        t("printPageOverflow", {
+          page: index + 1,
+          needed: Math.round(result.neededPx),
+          available: Math.round(result.availablePx),
+        }),
       );
     } else if (result.zoom < READABLE_MIN) {
       report(
         "readability",
         result.neededPx,
         result.availablePx,
-        `Print page ${index + 1} was shrunk to ${Math.round(result.zoom * 100)}% to fit. ` +
-          "That is smaller than we like. Shorten the question, or print fewer slides per page.",
+        t("printPageShrunk", {
+          page: index + 1,
+          percent: Math.round(result.zoom * 100),
+        }),
       );
     }
   });

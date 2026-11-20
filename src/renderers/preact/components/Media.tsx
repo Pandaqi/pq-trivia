@@ -5,7 +5,7 @@ import { useEffect, useState } from "preact/hooks";
 import { fetchText } from "../../../platform/browser/fetchText";
 import { MediaKind } from "../../../core/values/media";
 import type { MediaViewModel } from "../../../core/session/viewModel";
-import { useT } from "../i18n";
+import { useT, type Translate } from "../i18n";
 
 function Missing({
   path,
@@ -40,6 +40,21 @@ function Credit({
  * Plain text under the player. Fetched when someone opens it, never before.
  * A transcript is the cheap version of captions, and better than nothing.
  */
+/** One paragraph: the failure, the wait, or the words. Never two at once. */
+function transcriptText(
+  failed: boolean,
+  text: string | null,
+  t: Translate,
+): JSX.Element {
+  if (failed) {
+    return <p class="pq-transcript-text">{t("transcriptMissing")}</p>;
+  }
+  if (text === null) {
+    return <p class="pq-transcript-text">{t("loading")}</p>;
+  }
+  return <p class="pq-transcript-text">{text}</p>;
+}
+
 function Transcript({ path }: { readonly path: string }): JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -73,13 +88,7 @@ function Transcript({ path }: { readonly path: string }): JSX.Element {
       onToggle={(event) => setOpen(event.currentTarget.open)}
     >
       <summary>{t("transcript")}</summary>
-      {failed ? (
-        <p class="pq-transcript-text">{t("transcriptMissing")}</p>
-      ) : text === null ? (
-        <p class="pq-transcript-text">{t("loading")}</p>
-      ) : (
-        <p class="pq-transcript-text">{text}</p>
-      )}
+      {transcriptText(failed, text, t)}
     </details>
   );
 }

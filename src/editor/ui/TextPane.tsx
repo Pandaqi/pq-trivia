@@ -11,6 +11,7 @@ import { setSlideText, setWholeText } from "../commands";
 import { HEADER_INDEX } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 import { blockTextAt, headerText } from "../text";
+import { useEditorT } from "./i18n";
 import { NoteHead } from "./NoteHead";
 
 export enum TextTab {
@@ -27,6 +28,7 @@ const CODE_ID = "pq-editor-syntax";
 const ROWS = 20;
 
 export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
+  const t = useEditorT();
   const [tab, setTab] = useState(TextTab.Slide);
   const source = sourceFor(snapshot, tab);
   const [draft, setDraft] = useState(source);
@@ -47,19 +49,20 @@ export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
   };
 
   return (
-    <section class="pq-editor-panel" aria-label="Trivia Syntax">
-      <NoteHead
-        label="Trivia Syntax"
-        note="Edits land on blur or Apply. The text always wins: the forms are rebuilt from it."
-      />
-      <div class="pq-editor-tabs" role="tablist" aria-label="Text scope">
+    <section class="pq-editor-panel" aria-label={t("editorSyntax")}>
+      <NoteHead label={t("editorSyntax")} note={t("editorSyntaxNote")} />
+      <div
+        class="pq-editor-tabs"
+        role="tablist"
+        aria-label={t("editorTextScope")}
+      >
         <button
           type="button"
           role="tab"
           aria-selected={tab === TextTab.Slide}
           onClick={() => setTab(TextTab.Slide)}
         >
-          This slide
+          {t("editorThisSlide")}
         </button>
         <button
           type="button"
@@ -67,14 +70,12 @@ export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
           aria-selected={tab === TextTab.File}
           onClick={() => setTab(TextTab.File)}
         >
-          Whole file
+          {t("editorWholeFile")}
         </button>
       </div>
 
       <label class="pq-editor-label" for={CODE_ID}>
-        {tab === TextTab.File
-          ? "Every block, as written"
-          : "This block, as written"}
+        {tab === TextTab.File ? t("editorAllBlocks") : t("editorThisBlock")}
       </label>
       <textarea
         id={CODE_ID}
@@ -88,10 +89,10 @@ export function TextPane({ store, snapshot }: TextPaneProps): JSX.Element {
 
       <div class="pq-editor-actions">
         <button type="button" onClick={commit}>
-          Apply
+          {t("editorApply")}
         </button>
         <button type="button" onClick={() => setDraft(source)}>
-          Reset
+          {t("editorReset")}
         </button>
       </div>
     </section>

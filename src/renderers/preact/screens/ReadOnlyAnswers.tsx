@@ -19,6 +19,7 @@ import { Media } from "../components/Media";
 import { answerLabel } from "../components/answerLabels";
 import { Feedback } from "../../forms/fields";
 import { useT } from "../i18n";
+import { markKey, markOf } from "../../../core/values/marks";
 
 export function ReadOnlyAnswers({
   quiz,
@@ -56,13 +57,11 @@ export function ReadOnlyAnswers({
           )}
           {answer.correct === null ? null : (
             <span class="pq-mark" aria-hidden="true">
-              {answer.correct ? "✓" : "✗"}
+              {markOf(answer.correct)}
             </span>
           )}
           {answer.correct === null ? null : (
-            <span class="pq-visually-hidden">
-              {answer.correct ? t("correct") : t("notCorrect")}
-            </span>
+            <span class="pq-visually-hidden">{t(markKey(answer.correct))}</span>
           )}
         </li>
       ))}

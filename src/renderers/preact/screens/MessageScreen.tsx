@@ -3,6 +3,7 @@
 import type { JSX } from "preact";
 import type { Diagnostic } from "../../../core/syntax/diagnostics";
 import { useT } from "../i18n";
+import { ProblemRow } from "../components/Problems";
 
 export function MessageScreen({
   title,
@@ -24,12 +25,7 @@ export function MessageScreen({
       ) : (
         <ul class="pq-problems">
           {messages.slice(0, 8).map((message, index) => (
-            <li key={index}>
-              <strong>{message.code}</strong> {message.message}
-              {message.suggestion === undefined ? null : (
-                <span class="pq-suggestion"> {message.suggestion}</span>
-              )}
-            </li>
+            <ProblemRow key={index} diagnostic={message} />
           ))}
         </ul>
       )}

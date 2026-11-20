@@ -6,6 +6,7 @@
  */
 
 import { inlineToPlainText, parseInline } from "../core/format/inline";
+import type { Translate } from "../i18n/types";
 import type { Diagnostic } from "../core/syntax/diagnostics";
 import type { AstAttribute } from "../core/syntax/ast";
 import { firstValue } from "./text";
@@ -19,13 +20,28 @@ export enum SlideKind {
   End = "end",
 }
 
-export const SLIDE_KIND_LABELS: Readonly<Record<SlideKind, string>> = {
-  [SlideKind.Header]: "Header",
-  [SlideKind.Start]: "Start",
-  [SlideKind.Round]: "Round",
-  [SlideKind.Question]: "Question",
-  [SlideKind.End]: "End",
+export const SLIDE_KIND_KEYS: Readonly<Record<SlideKind, string>> = {
+  [SlideKind.Header]: "editorKindHeader",
+  [SlideKind.Start]: "editorKindStart",
+  [SlideKind.Round]: "editorKindRound",
+  [SlideKind.Question]: "editorKindQuestion",
+  [SlideKind.End]: "editorKindEnd",
 };
+
+/** The kind's name in the page's language. */
+export function slideKindLabel(t: Translate, kind: SlideKind): string {
+  return t(SLIDE_KIND_KEYS[kind]);
+}
+
+/** What the row says. A slide without text still needs a name. */
+export function slideLabel(t: Translate, slide: SlideInfo): string {
+  if (slide.label.length > 0) {
+    return slide.label;
+  }
+  return slide.kind === SlideKind.Header
+    ? t("editorQuizSettings")
+    : t("editorNoText");
+}
 
 export interface SlideInfo {
   /** -1 for the header, otherwise the block index. */
@@ -90,7 +106,7 @@ export function listSlides(doc: EditorDoc): SlideInfo[] {
     {
       index: HEADER_INDEX,
       kind: SlideKind.Header,
-      label: titleOf(doc) || "Quiz settings",
+      label: titleOf(doc),
       type: "header",
       round: null,
       problems: problemsIn(doc, HEADER_INDEX),
@@ -103,7 +119,7 @@ export function listSlides(doc: EditorDoc): SlideInfo[] {
       firstValue(question.attributes, "Type") ?? "open"
     ).toLowerCase();
     const kind = KIND_BY_TYPE[type] ?? SlideKind.Question;
-    const text = questionText(question.attributes) || "(no text)";
+    const text = questionText(question.attributes);
     if (kind === SlideKind.Round) {
       round = text;
     }

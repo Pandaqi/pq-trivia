@@ -2,19 +2,18 @@
 
 import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
+import { pluralKey } from "../../core/values/marks";
 import { moveSlide, moveSlideTo } from "../commands";
 import {
   problemCount,
-  SLIDE_KIND_LABELS,
   SlideKind,
+  slideKindLabel,
+  slideLabel,
   type SlideInfo,
 } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
+import { useEditorT } from "./i18n";
 import { NoteHead } from "./NoteHead";
-
-function plural(count: number, word: string): string {
-  return `${count} ${word}${count === 1 ? "" : "s"}`;
-}
 
 /** Rounds sit one step in, their questions two. The rest sit flush. */
 function depthOf(slide: SlideInfo): number {
@@ -39,6 +38,7 @@ export function SlideList({
   snapshot,
   onSelect,
 }: SlideListProps): JSX.Element {
+  const t = useEditorT();
   const buttons = useRef(new Map<number, HTMLButtonElement>());
   const wanted = useRef<number | null>(null);
   const [dragging, setDragging] = useState<number | null>(null);
@@ -122,14 +122,15 @@ export function SlideList({
   const last = snapshot.slides[snapshot.slides.length - 1]?.index ?? -1;
 
   return (
-    <nav class="pq-editor-panel pq-editor-slide-list" aria-label="Slides">
-      <NoteHead
-        label="Slides"
-        note="Drag a slide, or Alt+↑ and Alt+↓. The quiz header stays put."
-      />
+    <nav
+      class="pq-editor-panel pq-editor-slide-list"
+      aria-label={t("editorSlides")}
+    >
+      <NoteHead label={t("editorSlides")} note={t("editorSlidesNote")} />
       <ol class="pq-editor-slides">
         {snapshot.slides.map((slide) => {
           const active = slide.index === snapshot.selected;
+          const label = slideLabel(t, slide);
           const problems = problemCount(slide);
           const fixed = slide.kind === SlideKind.Header;
           const target = dragging !== null && over === slide.index && !fixed;
@@ -167,13 +168,18 @@ export function SlideList({
                   onKeyDown={(event) => keydown(event, slide.index)}
                 >
                   <span class="pq-editor-slide-kind">
-                    {SLIDE_KIND_LABELS[slide.kind]}
+                    {slideKindLabel(t, slide.kind)}
                   </span>
-                  <span class="pq-editor-slide-label">{slide.label}</span>
+                  <span class="pq-editor-slide-label">{label}</span>
                   {problems > 0 ? (
                     <span
                       class="pq-editor-badge"
-                      aria-label={`${problems} problems`}
+                      aria-label={t(
+                        problems === 1
+                          ? "problemsReopen"
+                          : "problemsReopenPlural",
+                        { count: problems },
+                      )}
                     >
                       {problems}
                     </span>
@@ -186,8 +192,8 @@ export function SlideList({
                     <button
                       type="button"
                       class="pq-editor-move-button"
-                      aria-label={`Move "${slide.label}" up`}
-                      title="Move up"
+                      aria-label={t("moveUp", { text: label })}
+                      title={t("editorMoveUpTitle")}
                       disabled={slide.index <= 0}
                       onClick={() => move(slide.index, -1)}
                     >
@@ -196,8 +202,8 @@ export function SlideList({
                     <button
                       type="button"
                       class="pq-editor-move-button"
-                      aria-label={`Move "${slide.label}" down`}
-                      title="Move down"
+                      aria-label={t("moveDown", { text: label })}
+                      title={t("editorMoveDownTitle")}
                       disabled={slide.index >= last}
                       onClick={() => move(slide.index, 1)}
                     >
@@ -211,7 +217,14 @@ export function SlideList({
         })}
       </ol>
       <p class="pq-editor-hint">
-        {plural(questions, "question")} · {plural(rounds, "round")}
+        {t("editorSlideCount", {
+          questions: `${questions} ${t(
+            pluralKey(questions, "question_one", "question_other"),
+          )}`,
+          rounds: `${rounds} ${t(
+            pluralKey(rounds, "round_one", "round_other"),
+          )}`,
+        })}
       </p>
     </nav>
   );

@@ -3,9 +3,12 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { QuestionType } from "../../core/model/question";
+import { pluralKey } from "../../core/values/marks";
 import type { HostRoom } from "../host";
-import { RevealMode, RoomPhase } from "../types";
+import { RevealMode, RoomPhase, type LivePlayer } from "../types";
 import { teamStyle } from "../../shared/teamColours";
+import { useT } from "../../renderers/preact/i18n";
+import type { Translate } from "../../i18n/types";
 import {
   CodeCard,
   Leaderboard,
@@ -13,6 +16,8 @@ import {
   RevealPanel,
   Roster,
 } from "./parts";
+
+type HostState = ReturnType<HostRoom["state"]>;
 
 function useHost(host: HostRoom): number {
   const [version, setVersion] = useState(0);
@@ -28,21 +33,192 @@ function nextLabel(
   mode: RevealMode,
   inAnswers: boolean,
   last: boolean,
+  t: Translate,
 ): string {
   if (inAnswers) {
-    return last ? "Finish" : "Next answer";
+    return last ? t("liveFinish") : t("liveNextAnswer");
   }
   if (last) {
-    return mode === RevealMode.Pass ? "Answer pass" : "Finish";
+    return mode === RevealMode.Pass ? t("liveAnswerPass") : t("liveFinish");
   }
-  return "Next question";
+  return t("liveNextQuestion");
 }
 
-function revealLabel(mode: RevealMode, inAnswers: boolean): string {
+function revealLabel(
+  mode: RevealMode,
+  inAnswers: boolean,
+  t: Translate,
+): string {
   if (inAnswers) {
-    return "Show answers";
+    return t("liveShowAnswers");
   }
-  return mode === RevealMode.Round ? "Reveal round" : "Reveal";
+  return mode === RevealMode.Round
+    ? t("liveRevealRoundAction")
+    : t("liveRevealAction");
+}
+
+/** The room's phase in three words. */
+function phaseKicker(lobby: boolean, inAnswers: boolean, t: Translate): string {
+  if (lobby) {
+    return t("liveLiveQuiz");
+  }
+  return inAnswers ? t("liveTheAnswers") : t("liveLiveQuestion");
+}
+
+/** Where the room is, and which round it is in. */
+function metaLine(
+  state: HostState,
+  section: boolean,
+  inAnswers: boolean,
+  roundName: string | null | undefined,
+  t: Translate,
+): string {
+  if (section) {
+    return roundName ?? t("roundWord");
+  }
+  if (state.index < 0) {
+    const unit = pluralKey(state.total, "question_one", "question_other");
+    return `${state.total} ${t(unit)}`;
+  }
+  const base = inAnswers
+    ? t("liveAnswersOf", { index: state.index + 1, total: state.total })
+    : t("questionOf", { index: state.index + 1, total: state.total });
+  return roundName == null ? base : `${base} · ${roundName}`;
+}
+
+/** Lobby: the code, the roster, and the two settings that matter now. */
+function LobbyPanel({
+  host,
+  state,
+  mode,
+}: {
+  readonly host: HostRoom;
+  readonly state: HostState;
+  readonly mode: RevealMode;
+}): JSX.Element {
+  const t = useT();
+  return (
+    <>
+      <Roster players={state.players} />
+      <section class="pq-live-settings" aria-label={t("liveSettings")}>
+        <label class="pq-field">
+          <span class="pq-field-label">{t("liveReveal")}</span>
+          <select
+            class="pq-input"
+            value={mode}
+            onChange={(event) =>
+              host.setRevealMode(event.currentTarget.value as RevealMode)
+            }
+          >
+            <option value={RevealMode.Question}>
+              {t("liveRevealQuestion")}
+            </option>
+            <option value={RevealMode.Round}>{t("liveRevealRound")}</option>
+            <option value={RevealMode.End}>{t("liveRevealEnd")}</option>
+            <option value={RevealMode.Pass}>{t("liveRevealPass")}</option>
+          </select>
+        </label>
+        <label class="pq-check">
+          <input
+            type="checkbox"
+            checked={state.sections}
+            onChange={(event) => host.setSections(event.currentTarget.checked)}
+          />
+          {t("liveRoundCards")}
+        </label>
+      </section>
+    </>
+  );
+}
+
+/** Who is in, who is quiet, and what they put on the line. */
+function ProgressPanel({
+  seated,
+  answered,
+}: {
+  readonly seated: readonly LivePlayer[];
+  readonly answered: number;
+}): JSX.Element {
+  const t = useT();
+  return (
+    <section class="pq-live-progress" aria-label={t("liveAnswersIn")}>
+      <p class="pq-live-count">
+        {t("liveAnsweredOf", { answered, total: seated.length })}
+      </p>
+      <div class="pq-live-groups">
+        {playerGroups(seated).map((group) => (
+          <div class="pq-live-group" key={group.name ?? "solo"}>
+            {group.name === null ? null : (
+              <p class="pq-live-team-head" style={teamStyle(group.colour)}>
+                {group.name}
+              </p>
+            )}
+            <ul class="pq-live-players">
+              {group.rows.map((player) => (
+                <li
+                  key={player.id}
+                  data-pq-ready={player.answered ? "true" : "false"}
+                >
+                  <span>{player.name}</span>
+                  <span class="pq-live-score">
+                    {player.answered ? t("liveIn") : "…"}
+                    {player.stake === null
+                      ? ""
+                      : ` · ${t("liveStaked", { points: player.stake })}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** The buttons that move a live room forward. One per possible next step. */
+function HostControls({
+  host,
+  phase,
+  section,
+  canReveal,
+  mode,
+  inAnswers,
+  last,
+}: {
+  readonly host: HostRoom;
+  readonly phase: RoomPhase;
+  readonly section: boolean;
+  readonly canReveal: boolean;
+  readonly mode: RevealMode;
+  readonly inAnswers: boolean;
+  readonly last: boolean;
+}): JSX.Element {
+  const t = useT();
+  return (
+    <>
+      {phase === RoomPhase.Question && !section ? (
+        <button type="button" onClick={() => host.close()}>
+          {t("liveCloseAnswers")}
+        </button>
+      ) : null}
+      {canReveal ? (
+        <button type="button" class="pq-primary" onClick={() => host.reveal()}>
+          {revealLabel(mode, inAnswers, t)}
+        </button>
+      ) : null}
+      <button
+        type="button"
+        class={canReveal ? "" : "pq-primary"}
+        onClick={() => host.next()}
+      >
+        {nextLabel(mode, inAnswers, last, t)}
+      </button>
+      <button type="button" onClick={() => host.end()}>
+        {t("liveEndQuiz")}
+      </button>
+    </>
+  );
 }
 
 export function HostView({
@@ -53,6 +229,7 @@ export function HostView({
   readonly joinLink: string;
 }): JSX.Element {
   useHost(host);
+  const t = useT();
   const state = host.state();
   const question = host.question();
   const reveal = host.lastReveal();
@@ -71,111 +248,38 @@ export function HostView({
     ((phase === RoomPhase.Question && mode !== RevealMode.Pass) ||
       (inAnswers && mode === RevealMode.Pass));
 
+  const body = (): JSX.Element => {
+    if (lobby) {
+      return <LobbyPanel host={host} state={state} mode={mode} />;
+    }
+    if (section) {
+      return (
+        <p class="pq-live-hint" role="status">
+          {t("liveRoundScreen")}
+        </p>
+      );
+    }
+    return <ProgressPanel seated={seated} answered={answered} />;
+  };
+
   return (
     <main class="pq-screen pq-live-screen">
       <header class="pq-live-head">
-        <p class="pq-live-kicker">
-          {lobby ? "Live quiz" : inAnswers ? "The answers" : "Live question"}
-        </p>
+        <p class="pq-live-kicker">{phaseKicker(lobby, inAnswers, t)}</p>
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          {lobby ? "Waiting for players" : (question?.title ?? "Live quiz")}
+          {lobby ? t("liveWaiting") : (question?.title ?? t("liveLiveQuiz"))}
         </h1>
         {lobby ? <CodeCard code={state.code} link={joinLink} /> : null}
         <p class="pq-live-meta">
-          {section
-            ? (question?.roundName ?? "Round")
-            : state.index >= 0
-              ? `${inAnswers ? "Answers" : "Question"} ${state.index + 1} of ${
-                  state.total
-                }`
-              : `${state.total} ${
-                  state.total === 1 ? "question" : "questions"
-                }`}
-          {section ||
-          question?.roundName === null ||
-          question?.roundName === undefined
-            ? ""
-            : ` · ${question.roundName}`}
+          {metaLine(state, section, inAnswers, question?.roundName, t)}
         </p>
       </header>
 
-      {lobby ? (
-        <>
-          <Roster players={state.players} />
-          <section class="pq-live-settings" aria-label="Live settings">
-            <label class="pq-field">
-              <span class="pq-field-label">Reveal</span>
-              <select
-                class="pq-input"
-                value={mode}
-                onChange={(event) =>
-                  host.setRevealMode(event.currentTarget.value as RevealMode)
-                }
-              >
-                <option value={RevealMode.Question}>
-                  After every question
-                </option>
-                <option value={RevealMode.Round}>After every round</option>
-                <option value={RevealMode.End}>At the end</option>
-                <option value={RevealMode.Pass}>
-                  Second pass, with answers
-                </option>
-              </select>
-            </label>
-            <label class="pq-check">
-              <input
-                type="checkbox"
-                checked={state.sections}
-                onChange={(event) =>
-                  host.setSections(event.currentTarget.checked)
-                }
-              />
-              Round cards on the phones
-            </label>
-          </section>
-        </>
-      ) : section ? (
-        <p class="pq-live-hint" role="status">
-          A round screen. The phones show the same card.
-        </p>
-      ) : (
-        <section class="pq-live-progress" aria-label="Answers in">
-          <p class="pq-live-count">
-            {answered} of {seated.length} answered
-          </p>
-          <div class="pq-live-groups">
-            {playerGroups(seated).map((group) => (
-              <div class="pq-live-group" key={group.name ?? "solo"}>
-                {group.name === null ? null : (
-                  <p class="pq-live-team-head" style={teamStyle(group.colour)}>
-                    {group.name}
-                  </p>
-                )}
-                <ul class="pq-live-players">
-                  {group.rows.map((player) => (
-                    <li
-                      key={player.id}
-                      data-pq-ready={player.answered ? "true" : "false"}
-                    >
-                      <span>{player.name}</span>
-                      <span class="pq-live-score">
-                        {player.answered ? "in" : "…"}
-                        {player.stake === null
-                          ? ""
-                          : ` · staked ${player.stake}`}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {body()}
 
       {state.buzz === null || phase !== RoomPhase.Question ? null : (
         <p class="pq-live-hint pq-live-buzz" role="status">
-          {state.buzz.name} buzzed first.
+          {t("liveBuzzedFirst", { name: state.buzz.name })}
         </p>
       )}
 
@@ -207,36 +311,19 @@ export function HostView({
             disabled={state.players.length === 0}
             onClick={() => host.start()}
           >
-            Start the quiz
+            {t("liveStartQuiz")}
           </button>
         ) : null}
         {lobby || phase === RoomPhase.Ended ? null : (
-          <>
-            {phase === RoomPhase.Question && !section ? (
-              <button type="button" onClick={() => host.close()}>
-                Close answers
-              </button>
-            ) : null}
-            {canReveal ? (
-              <button
-                type="button"
-                class="pq-primary"
-                onClick={() => host.reveal()}
-              >
-                {revealLabel(mode, inAnswers)}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              class={canReveal ? "" : "pq-primary"}
-              onClick={() => host.next()}
-            >
-              {nextLabel(mode, inAnswers, last)}
-            </button>
-            <button type="button" onClick={() => host.end()}>
-              End quiz
-            </button>
-          </>
+          <HostControls
+            host={host}
+            phase={phase}
+            section={section}
+            canReveal={canReveal}
+            mode={mode}
+            inAnswers={inAnswers}
+            last={last}
+          />
         )}
       </footer>
     </main>

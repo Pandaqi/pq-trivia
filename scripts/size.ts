@@ -25,27 +25,31 @@ const OUT_DIR = join(ROOT, "dist", "v3");
 const BUDGETS: Readonly<Record<string, number>> = {
   "core.js": 40,
   // Core plus `createQuiz`. Not in the spec budget list, but worth watching.
-  "headless.js": 55,
-  "player.js": 100,
+  "headless.js": 61,
+  "player.js": 106,
   "pq-trivia.js": 105,
   // Phase 10 added pools, variants, streaks, lifelines, teams and the score
-  // rules. Measured 120.2 after that, so the number carries some air.
-  "pq-trivia.min.js": 125,
+  // rules. Measured 127.4 after the full diagnostic copy, so the number carries
+  // some air.
+  "pq-trivia.min.js": 129,
   "pq-trivia.core.min.js": 42,
   // The wizard itself. The player arrives as a lazy chunk, so this number is
   // the forms and the buffer, never the quiz screen.
   "editor.js": 60,
-  // What editor.js shares with the preview chunk: Preact and the store.
-  "chunk-editor.js": 20,
+  // What editor.js shares with the preview chunk: Preact, the store and the
+  // wizard's copy in every language. Measured 34.8 with the full diagnostic
+  // copy.
+  "chunk-editor.js": 36,
   // The player, fetched only when a preview opens.
   "chunk-preview.js": 80,
   // The separate live bundle. Preact is already in the player, but a host page
-  // that only runs a lobby should not need the whole player.
-  "multiplayer.js": 32,
+  // that only runs a lobby should not need the whole player. Measured 41.3
+  // after room and diagnostic strings moved into the locale files.
+  "multiplayer.js": 43,
   // The join QR, split out. A lobby that never shows one never downloads it.
   "chunk-qr.js": 8,
   // Optional extras: worker parser, IndexedDB cache, manifest loading.
-  "browser.js": 12,
+  "browser.js": 14,
   "parse.worker.js": 8,
   "animations.js": 10,
 };

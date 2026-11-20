@@ -5,10 +5,28 @@ import {
   ScoringMethod,
   type QuestionModel,
 } from "../model/question";
-import type { GradePart } from "./types";
+import { GradeKind, type GradePart } from "./types";
 
 export function round2(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+/**
+ * The one place that names an outcome. Every grader ends here, so a partial
+ * answer cannot be called wrong by one type and correct by another.
+ */
+export function gradeKind(
+  correct: boolean,
+  answered: boolean,
+  points: number,
+): GradeKind {
+  if (correct) {
+    return GradeKind.Correct;
+  }
+  if (!answered) {
+    return GradeKind.Unanswered;
+  }
+  return points > 0 ? GradeKind.Partial : GradeKind.Wrong;
 }
 
 export function part(

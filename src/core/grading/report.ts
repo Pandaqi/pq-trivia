@@ -45,15 +45,21 @@ export enum WagerRisk {
   High = "high",
 }
 
+/** A wager at or above this share of the question is a high risk. */
+const WAGER_HIGH_SHARE = 0.75;
+/** Between medium and high. Below it, the stake is small. */
+const WAGER_MEDIUM_SHARE = 0.4;
+
+/** A wager at or above this share of the question is a high risk. */
 export function wagerRiskOf(wager: number, maxPoints: number): WagerRisk {
   if (maxPoints <= 0 || wager <= 0) {
     return WagerRisk.Low;
   }
   const share = wager / maxPoints;
-  if (share >= 0.75) {
+  if (share >= WAGER_HIGH_SHARE) {
     return WagerRisk.High;
   }
-  if (share >= 0.4) {
+  if (share >= WAGER_MEDIUM_SHARE) {
     return WagerRisk.Medium;
   }
   return WagerRisk.Low;
@@ -172,17 +178,22 @@ function percentOf(points: number, maxPoints: number): number {
   return Math.round((points / maxPoints) * 1000) / 10;
 }
 
+/** Where each band starts, as a percentage of the maximum. */
+const EXCELLENT_FROM = 90;
+const GOOD_FROM = 70;
+const FAIR_FROM = 50;
+
 export function bandOf(percent: number, maxPoints: number): GradeBand {
   if (maxPoints <= 0) {
     return GradeBand.Empty;
   }
-  if (percent >= 90) {
+  if (percent >= EXCELLENT_FROM) {
     return GradeBand.Excellent;
   }
-  if (percent >= 70) {
+  if (percent >= GOOD_FROM) {
     return GradeBand.Good;
   }
-  if (percent >= 50) {
+  if (percent >= FAIR_FROM) {
     return GradeBand.Fair;
   }
   return GradeBand.Practice;

@@ -128,6 +128,12 @@ export function SettingsPanel({
     });
   };
 
+  const emptyNote = empty ? (
+    <p class="pq-settings-note pq-warning" role="status">
+      {t("emptyQuiz")}
+    </p>
+  ) : null;
+
   return (
     <>
       {teamsOn ? (
@@ -197,11 +203,7 @@ export function SettingsPanel({
               {round.name}
             </label>
           ))}
-          {empty ? (
-            <p class="pq-settings-note pq-warning" role="status">
-              {t("emptyQuiz")}
-            </p>
-          ) : null}
+          {emptyNote}
         </fieldset>
       )}
 

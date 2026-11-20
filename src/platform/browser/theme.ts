@@ -13,6 +13,7 @@ import {
   backgroundFor,
   fontOptions,
   parseThemeSettings,
+  type ThemeFont,
   type ThemeSettings,
 } from "../../core/quiz/theme";
 
@@ -34,6 +35,33 @@ function safeText(value: string): string {
   return value.replaceAll('"', '\\"');
 }
 
+/** A font that will not load is not worth losing the theme over. */
+function loadFaces(
+  doc: Document | null,
+  fonts: readonly ThemeFont[],
+  resolve: (path: string) => string,
+  faces: FontFace[],
+): void {
+  const Font = typeof FontFace === "undefined" ? null : FontFace;
+  if (doc === null || Font === null) {
+    return;
+  }
+  for (const font of fonts) {
+    try {
+      const face = new Font(
+        font.family,
+        `url("${safeText(resolve(font.file))}")`,
+        fontOptions(font),
+      );
+      doc.fonts.add(face);
+      faces.push(face);
+      void face.load().catch(() => undefined);
+    } catch {
+      // Try the next font.
+    }
+  }
+}
+
 function createRuntime(
   settings: ThemeSettings,
   resolve: (path: string) => string,
@@ -52,24 +80,7 @@ function createRuntime(
   }
 
   const faces: FontFace[] = [];
-  const fonts = typeof FontFace === "undefined" ? null : FontFace;
-  if (doc !== null && fonts !== null) {
-    for (const font of settings.fonts) {
-      const options = fontOptions(font);
-      try {
-        const face = new fonts(
-          font.family,
-          `url("${safeText(resolve(font.file))}")`,
-          options,
-        );
-        doc.fonts.add(face);
-        faces.push(face);
-        void face.load().catch(() => undefined);
-      } catch {
-        // A font that will not load is not worth losing the theme over.
-      }
-    }
-  }
+  loadFaces(doc, settings.fonts, resolve, faces);
 
   const bodyFont = settings.fonts.find((font) => font.slot === "body");
   const headingFont = settings.fonts.find((font) => font.slot === "heading");

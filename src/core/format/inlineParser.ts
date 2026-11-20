@@ -292,11 +292,14 @@ class InlineParser {
       const char = this.#text.charAt(cursor);
       if (char === "(") {
         depth += 1;
-      } else if (char === ")") {
-        depth -= 1;
-        if (depth === 0) {
-          return cursor;
-        }
+        continue;
+      }
+      if (char !== ")") {
+        continue;
+      }
+      depth -= 1;
+      if (depth === 0) {
+        return cursor;
       }
     }
     return -1;

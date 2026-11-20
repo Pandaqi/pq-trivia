@@ -8,12 +8,13 @@
 import type { ComponentChildren, JSX } from "preact";
 import { useRef } from "preact/hooks";
 import { addSlide, setFieldValue, SlideTemplate, valuesFor } from "../commands";
-import { EditorPane, PANE_LABELS, PANE_ORDER } from "../layout";
+import { EditorPane, paneLabel, PANE_ORDER } from "../layout";
 import type { EditorFile, EditorOptions } from "../mount";
 import { HEADER_INDEX } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 import { STARTER_TEXT } from "../store";
 import { DraftText, FieldShell } from "./Field";
+import { useEditorT } from "./i18n";
 
 export interface ToolbarProps {
   readonly store: EditorStore;
@@ -52,18 +53,26 @@ function Menu({
   );
 }
 
-export function Toolbar({
+/** File work: new, open, open a folder, write back. Hidden when none is set. */
+function FileMenu({
   store,
-  snapshot,
   options,
-  panes,
-  hasPreview,
-  onTogglePane,
-}: ToolbarProps): JSX.Element {
-  const title =
-    valuesFor(snapshot, HEADER_INDEX, "Title")[0] ??
-    valuesFor(snapshot, HEADER_INDEX, "Quiz")[0] ??
-    "";
+  title,
+  text,
+}: {
+  readonly store: EditorStore;
+  readonly options: EditorOptions;
+  readonly title: string;
+  readonly text: string;
+}): JSX.Element | null {
+  const t = useEditorT();
+  const hasFileActions =
+    options.onOpen !== undefined ||
+    options.onOpenFolder !== undefined ||
+    options.onSaveToFolder !== undefined;
+  if (!hasFileActions) {
+    return null;
+  }
 
   const open = (
     reader: (() => Promise<EditorFile | null>) | undefined,
@@ -76,38 +85,67 @@ export function Toolbar({
         return;
       }
       store.reset(file.text);
-      store.say(`Opened ${file.name}.`);
+      store.say(t("editorOpened", { name: file.name }));
     });
-  };
-
-  const save = (): void => {
-    options.onSave?.(title, snapshot.text);
-    store.say("Saved. One .trivia file, nothing else.");
   };
 
   const saveToFolder = (): void => {
-    void options.onSaveToFolder?.(title, snapshot.text).then((ok) => {
-      store.say(
-        ok
-          ? "Written to the open folder."
-          : "No folder open. Use Save instead.",
-      );
+    void options.onSaveToFolder?.(title, text).then((ok) => {
+      store.say(ok ? t("editorWritten") : t("editorNoFolder"));
     });
   };
 
-  const hasFileActions =
-    options.onOpen !== undefined ||
-    options.onOpenFolder !== undefined ||
-    options.onSaveToFolder !== undefined;
+  return (
+    <Menu label={t("editorFile")}>
+      <button type="button" onClick={() => store.update(STARTER_TEXT, 0)}>
+        {t("editorNewQuiz")}
+      </button>
+      {options.onOpen === undefined ? null : (
+        <button type="button" onClick={() => open(options.onOpen)}>
+          {t("editorOpenFile")}
+        </button>
+      )}
+      {options.onOpenFolder === undefined ? null : (
+        <button type="button" onClick={() => open(options.onOpenFolder)}>
+          {t("editorOpenFolder")}
+        </button>
+      )}
+      {options.onSaveToFolder === undefined ? null : (
+        <button type="button" onClick={saveToFolder}>
+          {t("editorSaveFolder")}
+        </button>
+      )}
+    </Menu>
+  );
+}
+
+export function Toolbar({
+  store,
+  snapshot,
+  options,
+  panes,
+  hasPreview,
+  onTogglePane,
+}: ToolbarProps): JSX.Element {
+  const t = useEditorT();
+  const title =
+    valuesFor(snapshot, HEADER_INDEX, "Title")[0] ??
+    valuesFor(snapshot, HEADER_INDEX, "Quiz")[0] ??
+    "";
+
+  const save = (): void => {
+    options.onSave?.(title, snapshot.text);
+    store.say(t("editorSaved"));
+  };
 
   return (
     <div class="pq-editor-bar">
       <div class="pq-editor-bar-name">
-        <FieldShell id={TITLE_ID} label="Quiz title">
+        <FieldShell id={TITLE_ID} label={t("editorQuizTitle")}>
           <DraftText
             id={TITLE_ID}
             value={title}
-            placeholder="Untitled quiz"
+            placeholder={t("editorUntitled")}
             onCommit={(value) =>
               setFieldValue(store, HEADER_INDEX, "Title", value)
             }
@@ -116,7 +154,7 @@ export function Toolbar({
       </div>
 
       <div class="pq-editor-groups">
-        <div class="pq-editor-group" role="group" aria-label="Panes">
+        <div class="pq-editor-group" role="group" aria-label={t("editorPanes")}>
           {PANE_ORDER.map((pane) => {
             const on = panes.includes(pane);
             const unavailable = pane === EditorPane.Preview && !hasPreview;
@@ -129,94 +167,80 @@ export function Toolbar({
                 disabled={unavailable}
                 title={
                   unavailable
-                    ? "No preview hook on this page"
-                    : `Show or hide the ${PANE_LABELS[pane]} pane`
+                    ? t("editorNoPreview")
+                    : t("editorTogglePane", { pane: paneLabel(t, pane) })
                 }
                 onClick={() => onTogglePane(pane)}
               >
-                {PANE_LABELS[pane]}
+                {paneLabel(t, pane)}
               </button>
             );
           })}
         </div>
 
-        <div class="pq-editor-group" role="group" aria-label="History">
+        <div
+          class="pq-editor-group"
+          role="group"
+          aria-label={t("editorHistory")}
+        >
           <button
             type="button"
             class="pq-editor-button"
             onClick={() => store.undo()}
             disabled={!snapshot.canUndo}
-            title="Ctrl+Z"
+            title={t("editorShortcutUndo")}
           >
-            Undo
+            {t("editorUndo")}
           </button>
           <button
             type="button"
             class="pq-editor-button"
             onClick={() => store.redo()}
             disabled={!snapshot.canRedo}
-            title="Ctrl+Shift+Z"
+            title={t("editorShortcutRedo")}
           >
-            Redo
+            {t("editorRedo")}
           </button>
         </div>
 
-        <div class="pq-editor-group" role="group" aria-label="Add a slide">
+        <div
+          class="pq-editor-group"
+          role="group"
+          aria-label={t("editorAddSlide")}
+        >
           <button
             type="button"
             class="pq-editor-button"
             onClick={() => addSlide(store, SlideTemplate.Question)}
-            title="Insert after the selected slide"
+            title={t("editorInsertAfter")}
           >
-            + Question
+            {t("editorAddQuestion")}
           </button>
           <button
             type="button"
             class="pq-editor-button"
             onClick={() => addSlide(store, SlideTemplate.Round)}
-            title="Insert after the selected slide"
+            title={t("editorInsertAfter")}
           >
-            + Round
+            {t("editorAddRound")}
           </button>
         </div>
 
-        <div class="pq-editor-group" role="group" aria-label="File">
-          {hasFileActions ? (
-            <Menu label="File">
-              <button
-                type="button"
-                onClick={() => store.update(STARTER_TEXT, 0)}
-              >
-                New quiz
-              </button>
-              {options.onOpen === undefined ? null : (
-                <button type="button" onClick={() => open(options.onOpen)}>
-                  Open file…
-                </button>
-              )}
-              {options.onOpenFolder === undefined ? null : (
-                <button
-                  type="button"
-                  onClick={() => open(options.onOpenFolder)}
-                >
-                  Open folder…
-                </button>
-              )}
-              {options.onSaveToFolder === undefined ? null : (
-                <button type="button" onClick={saveToFolder}>
-                  Save to folder…
-                </button>
-              )}
-            </Menu>
-          ) : null}
+        <div class="pq-editor-group" role="group" aria-label={t("editorFile")}>
+          <FileMenu
+            store={store}
+            options={options}
+            title={title}
+            text={snapshot.text}
+          />
           {options.onSave === undefined ? null : (
             <button
               type="button"
               class="pq-editor-primary"
               onClick={save}
-              title="Download this quiz as a .trivia file"
+              title={t("editorSaveTitle")}
             >
-              Save
+              {t("editorSave")}
             </button>
           )}
         </div>

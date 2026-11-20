@@ -14,6 +14,12 @@ import {
 } from "../../core/session/viewModel";
 import { CodeHighlightContext } from "./components/CodeBlock";
 import { UiContext } from "./i18n";
+import {
+  DIAGNOSTIC_KEYS,
+  DIAGNOSTIC_LOCALES,
+} from "../../i18n/diagnosticLocales";
+import { resolveLanguage, translator } from "../../i18n/dictionary";
+import type { Translate } from "../../i18n/types";
 import { preloadNextQuestion } from "../../platform/browser/preload";
 import { storedLayoutMode } from "../../platform/browser/storage/layoutMode";
 import { EndScreen } from "./screens/EndScreen";
@@ -26,6 +32,23 @@ import { changeFontScale, showsButton } from "./toolbar";
 import { SettingsOverlay, SettingsToggle } from "./screens/SettingsPanel";
 import { StartScreen } from "./screens/StartScreen";
 import { QuestionType } from "../../core/model/question";
+
+/** The line above the quiz: where you are, in words. */
+function screenLabel(quiz: Quiz, screen: ScreenViewModel): string {
+  if (screen.kind === ScreenKind.Question) {
+    if (screen.number <= 0) {
+      return quiz.t("roundWord");
+    }
+    return quiz.t("questionOf", { index: screen.number, total: screen.total });
+  }
+  if (screen.kind === ScreenKind.Start) {
+    return screen.title || quiz.t("untitled");
+  }
+  if (screen.kind === ScreenKind.Results) {
+    return quiz.t("resultsLabel", { percent: screen.report.percent });
+  }
+  return quiz.t("endLabel");
+}
 
 /** A host view: whatever DOM they return lands in a plain host element. */
 function CustomView({
@@ -106,6 +129,12 @@ export function QuizApp({
     state: quiz.state,
     screen: quiz.currentScreen(),
   }));
+  const diagnosticT = translator(
+    resolveLanguage(snapshot.state.language ?? quiz.config.language),
+    DIAGNOSTIC_LOCALES,
+  );
+  const t: Translate = (key, params) =>
+    DIAGNOSTIC_KEYS.has(key) ? diagnosticT(key, params) : quiz.t(key, params);
   const root = useRef<HTMLDivElement>(null);
   const appliedTheme = useRef<ReturnType<typeof getTheme>>(null);
   const [themeVersion, setThemeVersion] = useState(0);
@@ -313,9 +342,11 @@ export function QuizApp({
         ? quiz.t("loadFailed")
         : quiz.t("noQuiz");
     return (
-      <div class="pq-quiz" ref={root} data-pq-layout={layoutMode}>
-        <MessageScreen title={title} messages={quiz.diagnostics()} />
-      </div>
+      <UiContext.Provider value={t}>
+        <div class="pq-quiz" ref={root} data-pq-layout={layoutMode}>
+          <MessageScreen title={title} messages={quiz.diagnostics()} />
+        </div>
+      </UiContext.Provider>
     );
   }
 
@@ -344,19 +375,7 @@ export function QuizApp({
     />
   ) : null;
 
-  const label =
-    screen.kind === ScreenKind.Question
-      ? screen.number > 0
-        ? quiz.t("questionOf", {
-            index: screen.number,
-            total: screen.total,
-          })
-        : quiz.t("roundWord")
-      : screen.kind === ScreenKind.Start
-        ? screen.title || quiz.t("untitled")
-        : screen.kind === ScreenKind.Results
-          ? quiz.t("resultsLabel", { percent: screen.report.percent })
-          : quiz.t("endLabel");
+  const label = screenLabel(quiz, screen);
 
   return (
     <div
@@ -375,7 +394,7 @@ export function QuizApp({
       ) : null}
       {settingsAllowed && !inStrip ? settingsButton : null}
 
-      <UiContext.Provider value={quiz.t}>
+      <UiContext.Provider value={t}>
         <CodeHighlightContext.Provider
           value={quiz.config.codeHighlight === true}
         >

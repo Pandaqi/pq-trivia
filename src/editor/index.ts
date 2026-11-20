@@ -77,8 +77,9 @@ export {
 export {
   EditorPane,
   MIN_PANE_WIDTH,
-  PANE_LABELS,
+  PANE_LABEL_KEYS,
   PANE_ORDER,
+  paneLabel,
   defaultLayout,
   startLayout,
   writeLayout,

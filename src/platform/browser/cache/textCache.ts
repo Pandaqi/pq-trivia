@@ -190,6 +190,21 @@ export function browserTextCache(
     return opening;
   }
 
+  /** Drop half the cache, then write once more. True when the write stuck. */
+  async function retryAfterQuota(
+    entry: TextEntry,
+    limit: number,
+  ): Promise<boolean> {
+    try {
+      const db = await database();
+      await trim(db, Math.floor(limit / 2));
+      await writeOne(db, entry, entry.key);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   return {
     async get(key) {
       if (unusable) {
@@ -217,13 +232,7 @@ export function browserTextCache(
           return;
         }
         // Full. Drop half, try once more. Then give up quietly.
-        try {
-          const db = await database();
-          await trim(db, Math.floor(maxBytes / 2));
-          await writeOne(db, entry, entry.key);
-        } catch {
-          unusable = true;
-        }
+        unusable = !(await retryAfterQuota(entry, maxBytes));
       }
     },
     async delete(key) {

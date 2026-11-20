@@ -7,10 +7,13 @@
  */
 
 import { h, render } from "preact";
+import { resolveLanguage, translator } from "../i18n/dictionary";
+import { EDITOR_LOCALES } from "../i18n/editorLocales";
 import type { EditorLayout } from "./layout";
 import { createEditorStore, type EditorStore } from "./store";
 import { EDITOR_CSS } from "./styles";
 import { EditorApp } from "./ui/EditorApp";
+import { EditorContext } from "./ui/i18n";
 
 export interface EditorFile {
   readonly name: string;
@@ -66,6 +69,8 @@ export interface EditorOptions {
   readonly layout?: EditorLayout | undefined;
   /** Keep the panes and widths for the next visit. Default true. */
   readonly rememberLayout?: boolean | undefined;
+  /** Interface language. Defaults to the page, then the browser. */
+  readonly language?: string | undefined;
 }
 
 export interface MountedEditor {
@@ -100,7 +105,11 @@ export function mountEditor(
   if (doc !== null) {
     ensureStyles(doc);
   }
-  render(h(EditorApp, { store, options }), target);
+  const t = translator(resolveLanguage(options.language), EDITOR_LOCALES);
+  render(
+    h(EditorContext.Provider, { value: t }, h(EditorApp, { store, options })),
+    target,
+  );
   return {
     store,
     text: () => store.snapshot().text,

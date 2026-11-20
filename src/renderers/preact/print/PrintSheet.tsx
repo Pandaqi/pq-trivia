@@ -20,6 +20,7 @@ import { PrintMedia } from "./PrintMedia";
 import { PrintQuestion } from "./PrintQuestion";
 import type { PrintOptions } from "./printTypes";
 import { useT } from "../i18n";
+import { pluralKey } from "../../../core/values/marks";
 
 export type { PrintOptions, PrintProblem, PrintVariant } from "./printTypes";
 
@@ -178,28 +179,34 @@ export function PrintSheet({
     chunks.push(questions.slice(index, index + perPage));
   }
 
-  return (
+  const frame = (body: JSX.Element): JSX.Element => (
     <div
       class="pq-print-sheet"
       data-pq-variant={variant}
       data-pq-per-page={String(perPage)}
       data-pq-flash={flash ? "true" : "false"}
     >
-      {variant === "media" ? (
-        <>
-          <Cover
-            quiz={quiz}
-            questions={questions}
-            rounds={plan.rounds.length}
-          />
-          <PrintMedia
-            questions={questions}
-            roundName={roundName}
-            media={quiz.config}
-          />
-        </>
-      ) : flash ? (
-        questions.flatMap((item) => [
+      {body}
+    </div>
+  );
+
+  if (variant === "media") {
+    return frame(
+      <>
+        <Cover quiz={quiz} questions={questions} rounds={plan.rounds.length} />
+        <PrintMedia
+          questions={questions}
+          roundName={roundName}
+          media={quiz.config}
+        />
+      </>,
+    );
+  }
+
+  if (flash) {
+    return frame(
+      <>
+        {questions.flatMap((item) => [
           <Page
             className="pq-print-card"
             key={`${item.id}-front`}
@@ -220,102 +227,105 @@ export function PrintSheet({
             <p class="pq-card-label">{t("printAnswer")}</p>
             {question(item, "back")}
           </Page>,
-        ])
-      ) : variant === "form" || variant === "grade" ? (
-        <>
-          <Cover
-            quiz={quiz}
-            questions={questions}
-            rounds={plan.rounds.length}
-          />
-          {variant === "form" ? (
-            <PrintForm
-              questions={questions}
-              rounds={rounds}
-              compact={options.formStyle === "compact"}
-              roundPageBreak={options.roundPageBreak === true}
-              numbers={numbers}
-            />
-          ) : (
-            <PrintGrade
-              questions={questions}
-              rounds={rounds}
-              compact={options.formStyle === "compact"}
-              roundPageBreak={options.roundPageBreak === true}
-              numbers={numbers}
-            />
-          )}
-        </>
+        ])}
+      </>,
+    );
+  }
+
+  if (variant === "form" || variant === "grade") {
+    const paper =
+      variant === "form" ? (
+        <PrintForm
+          questions={questions}
+          rounds={rounds}
+          compact={options.formStyle === "compact"}
+          roundPageBreak={options.roundPageBreak === true}
+          numbers={numbers}
+        />
       ) : (
-        <>
-          <Cover
-            quiz={quiz}
-            questions={questions}
-            rounds={plan.rounds.length}
-          />
-          {perPage > 1
-            ? chunks.map((items, chunkIndex) => (
-                <Page className="pq-print-group" key={chunkIndex}>
-                  <div class="pq-print-grid" data-pq-per-page={String(perPage)}>
-                    {items.map((item) => (
-                      <div class="pq-print-tile" key={item.id}>
-                        <div
-                          style={`--pq-round-accent:${
-                            colourFor(item.round).accent
-                          };--pq-accent-ink:${colourFor(item.round).ink}`}
-                        >
-                          {question(item, null)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Page>
-              ))
-            : plan.rounds.map((round, roundIndex) => {
-                const items = questions.filter(
-                  (item) => item.round === round.id,
-                );
-                if (items.length === 0) {
-                  return null;
-                }
-                return (
-                  <Fragment key={round.id}>
-                    <Page
-                      className="pq-print-round"
-                      accent={colourFor(round.id).accent}
-                      accentInk={colourFor(round.id).ink}
-                      questionId={round.id}
+        <PrintGrade
+          questions={questions}
+          rounds={rounds}
+          compact={options.formStyle === "compact"}
+          roundPageBreak={options.roundPageBreak === true}
+          numbers={numbers}
+        />
+      );
+    return frame(
+      <>
+        <Cover quiz={quiz} questions={questions} rounds={plan.rounds.length} />
+        {paper}
+      </>,
+    );
+  }
+
+  return frame(
+    <>
+      <Cover quiz={quiz} questions={questions} rounds={plan.rounds.length} />
+      {perPage > 1
+        ? chunks.map((items, chunkIndex) => (
+            <Page className="pq-print-group" key={chunkIndex}>
+              <div class="pq-print-grid" data-pq-per-page={String(perPage)}>
+                {items.map((item) => (
+                  <div class="pq-print-tile" key={item.id}>
+                    <div
+                      style={`--pq-round-accent:${
+                        colourFor(item.round).accent
+                      };--pq-accent-ink:${colourFor(item.round).ink}`}
                     >
-                      <p class="pq-round-number">{t("printRound")}</p>
-                      <h2 class="pq-round-name">
-                        {numberPrefix(roundIndex + 1, numbers)}
-                        {round.name}
-                      </h2>
-                      <p class="pq-round-stats">
-                        {t("printStats", {
-                          questions: `${items.length} ${t(
-                            items.length === 1
-                              ? "question_one"
-                              : "question_other",
-                          )}`,
-                          points: `${pointsOf(items)} ${t(
-                            pointsOf(items) === 1 ? "point_one" : "point_other",
-                          )}`,
-                          rounds: "",
-                        })}
-                      </p>
-                      {round.secret === null ? null : (
-                        <p class="pq-round-secret">
-                          {t("theme", { theme: round.secret })}
-                        </p>
-                      )}
-                    </Page>
-                    {items.map(page)}
-                  </Fragment>
-                );
-              })}
-        </>
-      )}
-    </div>
+                      {question(item, null)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Page>
+          ))
+        : plan.rounds.map((round, roundIndex) => {
+            const items = questions.filter((item) => item.round === round.id);
+            if (items.length === 0) {
+              return null;
+            }
+            const secretNote =
+              round.secret === null ? null : (
+                <p class="pq-round-secret">
+                  {t("theme", { theme: round.secret })}
+                </p>
+              );
+            const points = pointsOf(items);
+            return (
+              <Fragment key={round.id}>
+                <Page
+                  className="pq-print-round"
+                  accent={colourFor(round.id).accent}
+                  accentInk={colourFor(round.id).ink}
+                  questionId={round.id}
+                >
+                  <p class="pq-round-number">{t("printRound")}</p>
+                  <h2 class="pq-round-name">
+                    {numberPrefix(roundIndex + 1, numbers)}
+                    {round.name}
+                  </h2>
+                  <p class="pq-round-stats">
+                    {t("printStats", {
+                      questions: `${items.length} ${t(
+                        pluralKey(
+                          items.length,
+                          "question_one",
+                          "question_other",
+                        ),
+                      )}`,
+                      points: `${points} ${t(
+                        pluralKey(points, "point_one", "point_other"),
+                      )}`,
+                      rounds: "",
+                    })}
+                  </p>
+                  {secretNote}
+                </Page>
+                {items.map(page)}
+              </Fragment>
+            );
+          })}
+    </>,
   );
 }

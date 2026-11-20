@@ -30,6 +30,31 @@ import {
   parseHeaderConfig,
 } from "../syntax/configAttributes";
 
+/** A file without `Syntax =>` is V3. The number is informational today. */
+const DEFAULT_SYNTAX = 3;
+
+/** A second `## Name` with the same name reuses the round it already made. */
+function reuseRound(
+  rounds: { secret: string | null; source: QuestionModel | null }[],
+  roundByName: ReadonlyMap<string, number>,
+  name: string,
+  built: QuestionModel,
+): number | null {
+  const existing = roundByName.get(name.toLowerCase());
+  if (existing === undefined) {
+    return null;
+  }
+  const round = rounds[existing];
+  if (round !== undefined) {
+    rounds[existing] = {
+      ...round,
+      secret: round.secret ?? built.secret,
+      source: built,
+    };
+  }
+  return existing;
+}
+
 export interface QuizMeta {
   readonly title: string;
   readonly syntax: number;
@@ -119,7 +144,7 @@ function buildMeta(header: readonly AstAttribute[]): QuizMeta {
           .filter((part) => part.length > 0);
 
   const syntaxRaw = headerValue(header, "Syntax");
-  const syntax = syntaxRaw !== undefined ? Number(syntaxRaw) : 3;
+  const syntax = syntaxRaw !== undefined ? Number(syntaxRaw) : DEFAULT_SYNTAX;
 
   const title =
     headerValue(header, "Title") ?? headerValue(header, "Quiz") ?? "";
@@ -127,7 +152,7 @@ function buildMeta(header: readonly AstAttribute[]): QuizMeta {
 
   return {
     title,
-    syntax: Number.isFinite(syntax) ? syntax : 3,
+    syntax: Number.isFinite(syntax) ? syntax : DEFAULT_SYNTAX,
     language: headerValue(header, "Language") ?? null,
     languages,
     theme: headerValue(header, "Theme") ?? null,
@@ -252,16 +277,9 @@ export function buildQuizFromParsed(
         plainText(built.text.map((value) => value.text).join(" ")) || built.id;
       const id =
         firstAttributeValue(node.attributes, "ID") ?? stableId("r", [name]);
-      const existing = roundByName.get(name.toLowerCase());
-      if (existing !== undefined) {
+      const existing = reuseRound(rounds, roundByName, name, built);
+      if (existing !== null) {
         currentRound = existing;
-        const round = rounds[existing];
-        if (round) {
-          if (round.secret === null && built.secret !== null) {
-            round.secret = built.secret;
-          }
-          round.source = built;
-        }
         continue;
       }
       const index =

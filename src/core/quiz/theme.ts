@@ -95,6 +95,25 @@ function splitList(value: string): string[] {
     .filter((part) => part.length > 0);
 }
 
+/** Lines under a heading: fonts and backgrounds collect, the rest is a key. */
+function addGrouped(
+  group: string,
+  line: string,
+  add: (key: string, value: string) => void,
+  backgrounds: string[],
+): void {
+  const name = group.toLowerCase();
+  if (name === "font" || name === "fonts") {
+    add("font", line);
+    return;
+  }
+  if (name === "background" || name === "backgrounds") {
+    backgrounds.push(line);
+    return;
+  }
+  add(group, line);
+}
+
 export function parseThemeSettings(text: string): ThemeSettings {
   const issues: string[] = [];
   let label = "Custom theme";
@@ -209,16 +228,7 @@ export function parseThemeSettings(text: string): ThemeSettings {
       continue;
     }
     if (group !== null) {
-      if (lower(group) === "font" || lower(group) === "fonts") {
-        add("font", trimmed);
-      } else if (
-        lower(group) === "background" ||
-        lower(group) === "backgrounds"
-      ) {
-        backgrounds.push(trimmed);
-      } else {
-        add(group, trimmed);
-      }
+      addGrouped(group, trimmed, add, backgrounds);
       continue;
     }
     issues.push(`Cannot parse theme line "${trimmed}".`);

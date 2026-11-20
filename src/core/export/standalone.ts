@@ -128,12 +128,15 @@ function renderQuestion(question: PrintQuestion, answers: boolean): string {
     answers && question.explanation !== null
       ? `<p class="explanation">${renderText(question.explanation)}</p>`
       : "";
+  const listClass = answers ? "answers with-answers" : "answers";
+  const answerList =
+    choices.length === 0 ? "" : `<ol class="${listClass}">${choices}</ol>`;
   return `<article class="question">
   <p class="qmeta">Question ${question.index + 1}${question.roundName === null ? "" : ` · ${escapeHtml(question.roundName)}`} · ${question.points} ${question.points === 1 ? "point" : "points"}</p>
   <h2>${renderText(question.title)}</h2>
   ${question.body.map((line) => `<p>${renderText(line)}</p>`).join("")}
   ${media}
-  ${choices.length === 0 ? "" : `<ol class="answers${answers ? " with-answers" : ""}">${choices}</ol>`}
+  ${answerList}
   ${hints}
   ${explanation}
 </article>`;

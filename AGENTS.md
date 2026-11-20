@@ -36,6 +36,7 @@ Adds replay protection to the multiplayer lobby
 - **Core has no DOM.** `src/core/**` must compile with `lib: ["ES2022"]`.
 - **Keep tests cheap.** The dev machine is a 15-year-old laptop. Whole suite under 10 seconds. No coverage gates.
 - **Offline and plain text stay first-class.** No backend. Trivia Syntax is the only authoring format.
+- **No hardcoded user-facing text. Ever.** Every label, heading, button, hint, placeholder, `aria-label`, `alt`, status, error and empty state goes through `t()` or `useT()`. The copy lives in one file per language under `src/i18n/locales/`. Every language changes in the same commit. Do not put interface text in a component, a helper or a status message.
 - **One documentation home.** Add to `docs/`. Do not spawn new markdown files.
 
 ## Where things are

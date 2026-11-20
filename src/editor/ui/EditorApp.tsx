@@ -6,19 +6,25 @@ import {
   columnTemplate,
   dragPair,
   EditorPane,
-  PANE_LABELS,
+  paneLabel,
   startLayout,
   togglePane,
   writeLayout,
   type EditorLayout,
 } from "../layout";
 import type { EditorOptions, PreviewPlace } from "../mount";
+import type { Translate } from "../../i18n/types";
+import {
+  diagnosticMessage,
+  diagnosticSuggestion,
+} from "../../i18n/diagnostics";
 import type { EditorSnapshot, EditorStore } from "../store";
 import { FormPane } from "./FormPane";
 import { PreviewPane } from "./PreviewPane";
 import { SlideList } from "./SlideList";
 import { TextPane } from "./TextPane";
 import { Toolbar } from "./Toolbar";
+import { useEditorT } from "./i18n";
 import { useEditor } from "./useStore";
 
 export interface EditorAppProps {
@@ -67,6 +73,7 @@ function paneBody(pane: EditorPane, props: PaneProps): JSX.Element | null {
 }
 
 export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
+  const t = useEditorT();
   const snapshot = useEditor(store);
   const hasPreview = options.preview !== undefined;
   const remember = options.rememberLayout !== false;
@@ -204,18 +211,18 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
     (slide) => slide.index === snapshot.selected,
   );
   const first = selected?.problems[0];
+  const firstSuggestion =
+    first === undefined ? null : diagnosticSuggestion(t, first);
   // The line is what the player can match on: it adds screens of its own.
+  const start =
+    selected === undefined
+      ? 0
+      : (snapshot.doc.blocks[selected.index]?.start ?? 0);
+  const line = selected !== undefined && selected.index < 0 ? 0 : start;
   const place: PreviewPlace | null =
     selected === undefined
       ? null
-      : {
-          kind: selected.kind,
-          index: selected.index,
-          line:
-            selected.index < 0
-              ? 0
-              : (snapshot.doc.blocks[selected.index]?.start ?? 0),
-        };
+      : { kind: selected.kind, index: selected.index, line };
   const panes = layout.panes;
 
   return (
@@ -250,8 +257,11 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
                   class="pq-editor-grip"
                   role="separator"
                   aria-orientation="vertical"
-                  aria-label={`Resize ${PANE_LABELS[pane]} and ${PANE_LABELS[next]}`}
-                  title="Drag to resize. Double-click to reset."
+                  aria-label={t("editorResizeAria", {
+                    left: paneLabel(t, pane),
+                    right: paneLabel(t, next),
+                  })}
+                  title={t("editorResize")}
                   onPointerDown={beginDrag(pane, next)}
                   onDblClick={() => apply({ ...layout, sizes: {} })}
                 />
@@ -263,21 +273,24 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
 
       <div class="pq-editor-status">
         <span class={total === 0 ? "pq-editor-good" : "pq-editor-bad"}>
-          {total === 0 ? "No problems" : countLabel(total)}
+          {total === 0 ? t("editorNoProblems") : countLabel(total, t)}
         </span>
         {first === undefined ? null : (
           <span class="pq-editor-bad">
-            {first.code} {first.message}
+            {first.code} {diagnosticMessage(t, first)}
+            {firstSuggestion === null ? null : <> {firstSuggestion}</>}
           </span>
         )}
         <span class="pq-editor-note-line" role="status" aria-live="polite">
-          {snapshot.note ?? "Nothing saved yet."}
+          {snapshot.note === null ? t("editorNothingSaved") : t(snapshot.note)}
         </span>
       </div>
     </div>
   );
 }
 
-function countLabel(total: number): string {
-  return total === 1 ? "1 problem" : `${total} problems`;
+function countLabel(total: number, t: Translate): string {
+  return t(total === 1 ? "problemsFound" : "problemsFoundPlural", {
+    count: total,
+  });
 }

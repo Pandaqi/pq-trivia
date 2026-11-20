@@ -332,7 +332,7 @@ export async function createPlayer(
       return new Promise((resolve, reject) => {
         const timer = setTimeout(() => {
           pending = null;
-          update({ error: "No host answered. Check the code." });
+          update({ error: "liveNoHost" });
           reject(new Error("No host answered. Check the code."));
         }, timeoutMs);
         pending = { resolve, reject, timer };

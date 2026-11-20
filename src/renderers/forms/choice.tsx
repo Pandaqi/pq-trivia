@@ -12,6 +12,7 @@ import { useT } from "../preact/i18n";
 import { answerLabel } from "../preact/components/answerLabels";
 import { AnswerText, Feedback, FieldError, messageFor } from "./fields";
 import type { InputProps } from "./fields";
+import { markKey, markOf, pluralKey } from "../../core/values/marks";
 
 function AnswerButton({
   quiz,
@@ -61,7 +62,7 @@ function AnswerButton({
           class="pq-answer-score"
           aria-label={t("pointsLabel", {
             points: answer.points,
-            unit: t(answer.points === 1 ? "point_one" : "point_other"),
+            unit: t(pluralKey(answer.points, "point_one", "point_other")),
           })}
         >
           +{answer.points}
@@ -69,13 +70,11 @@ function AnswerButton({
       )}
       {answer.correct === null ? null : (
         <span class="pq-mark" aria-hidden="true">
-          {answer.correct ? "✓" : "✗"}
+          {markOf(answer.correct)}
         </span>
       )}
       {answer.correct === null ? null : (
-        <span class="pq-visually-hidden">
-          {answer.correct ? t("correct") : t("notCorrect")}
-        </span>
+        <span class="pq-visually-hidden">{t(markKey(answer.correct))}</span>
       )}
     </button>
   );

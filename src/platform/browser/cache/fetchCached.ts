@@ -7,6 +7,7 @@
 
 import { fetchText } from "../fetchText";
 import type { TextCache } from "./textCache";
+import type { Translate } from "../../../i18n/types";
 
 function revalidate(
   url: string,
@@ -40,13 +41,14 @@ function revalidate(
 export async function fetchTextCached(
   url: string,
   cache: TextCache,
+  t?: Translate,
 ): Promise<string> {
   const hit = await cache.get(url);
   if (hit !== null) {
     revalidate(url, hit.text, hit.etag, cache);
     return hit.text;
   }
-  const text = await fetchText(url);
+  const text = await fetchText(url, t);
   await cache.set({ key: url, text, etag: null, storedAt: Date.now() });
   return text;
 }

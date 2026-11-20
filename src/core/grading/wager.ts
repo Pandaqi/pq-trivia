@@ -45,6 +45,14 @@ export function stakingLimit(maxPoints: number, bank: number): number {
   );
 }
 
+/** Nothing at stake is no swing. A lost stake comes straight off the score. */
+function swingOf(stake: number, correct: boolean): number {
+  if (stake === 0) {
+    return 0;
+  }
+  return correct ? stake : -stake;
+}
+
 export function settleWager(input: WagerInput): WagerResult {
   const stake =
     input.allowed && input.answered
@@ -53,7 +61,7 @@ export function settleWager(input: WagerInput): WagerResult {
           stakingLimit(input.maxPoints, input.bank),
         )
       : 0;
-  const swing = stake === 0 ? 0 : input.correct ? stake : -stake;
+  const swing = swingOf(stake, input.correct);
   const earned = round2(
     Math.max(input.points + swing, -Math.max(input.bank, 0)),
   );

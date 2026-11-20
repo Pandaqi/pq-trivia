@@ -10,11 +10,12 @@ import {
   formatDuration,
   GradeBand,
   ReportFilter,
+  WagerRisk,
   type QuestionReport,
 } from "../../../core/grading/report";
 import type { Quiz } from "../../../core/session/quiz";
 import type { ResultsViewModel } from "../../../core/session/viewModel";
-import { useT } from "../i18n";
+import { useT, type Translate } from "../i18n";
 import { Scoreboard } from "../components/Teams";
 
 const BAND_KEYS: Readonly<Record<string, string>> = {
@@ -44,6 +45,63 @@ function statusMark(question: QuestionReport): string {
   return question.answered ? "✗" : "–";
 }
 
+/** One word for the outcome. The mark already says the rest. */
+function statusLabel(t: Translate, question: QuestionReport): string {
+  if (question.correct) {
+    return t("correct");
+  }
+  if (question.answered) {
+    return t("wrong");
+  }
+  return t("skipped");
+}
+
+/** A partial answer loses the stake too: only a full correct answer pays it. */
+function wagerOutcome(question: QuestionReport): string {
+  return question.answered && question.correct ? "wagerWon" : "wagerLost";
+}
+
+function hasFlags(question: QuestionReport): boolean {
+  return (
+    question.noIdea || question.confidence !== null || question.wager !== null
+  );
+}
+
+/** The small print under a card: no idea, confidence, wager. */
+function ReviewFlags({
+  question,
+}: {
+  readonly question: QuestionReport;
+}): JSX.Element {
+  const t = useT();
+  const confidence =
+    question.confidence === null ? null : (
+      <li class="pq-flag">
+        {t("confidenceWord")}:{" "}
+        {t(CONFIDENCE_KEYS[question.confidence] ?? question.confidence)}
+      </li>
+    );
+  const wager =
+    question.wager === null ? null : (
+      <li class="pq-flag">
+        {t("wagerResult", {
+          wager: question.wager,
+          risk: t(RISK_KEYS[question.wagerRisk ?? WagerRisk.Low] ?? "riskLow"),
+          outcome: t(wagerOutcome(question)),
+        })}
+      </li>
+    );
+  return (
+    <ul class="pq-review-flags">
+      {question.noIdea ? (
+        <li class="pq-flag pq-flag-noidea">{t("noIdea")}</li>
+      ) : null}
+      {confidence}
+      {wager}
+    </ul>
+  );
+}
+
 function ReviewCard({
   quiz,
   question,
@@ -52,11 +110,7 @@ function ReviewCard({
   readonly question: QuestionReport;
 }): JSX.Element {
   const t = useT();
-  const status = question.correct
-    ? t("correct")
-    : question.answered
-      ? t("wrong")
-      : t("skipped");
+  const status = statusLabel(t, question);
   return (
     <li
       class="pq-review-card"
@@ -112,36 +166,7 @@ function ReviewCard({
         </table>
       )}
 
-      {question.noIdea ||
-      question.confidence !== null ||
-      question.wager !== null ? (
-        <ul class="pq-review-flags">
-          {question.noIdea ? (
-            <li class="pq-flag pq-flag-noidea">{t("noIdea")}</li>
-          ) : null}
-          {question.confidence === null ? null : (
-            <li class="pq-flag">
-              {t("confidenceWord")}:{" "}
-              {t(CONFIDENCE_KEYS[question.confidence] ?? question.confidence)}
-            </li>
-          )}
-          {question.wager === null ? null : (
-            <li class="pq-flag">
-              {t("wagerResult", {
-                wager: question.wager,
-                risk: t(RISK_KEYS[question.wagerRisk ?? "low"] ?? "riskLow"),
-                // A partial answer loses the stake too: only a full correct
-                // answer pays it out.
-                outcome: t(
-                  question.answered && question.correct
-                    ? "wagerWon"
-                    : "wagerLost",
-                ),
-              })}
-            </li>
-          )}
-        </ul>
-      ) : null}
+      {hasFlags(question) ? <ReviewFlags question={question} /> : null}
 
       {question.explanation === null ? null : (
         <p class="pq-review-explanation">{question.explanation}</p>

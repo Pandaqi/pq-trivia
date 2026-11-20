@@ -46,19 +46,21 @@ export const FIFTY_FIFTY_REMOVES = 2;
 /** One step back. More than that is a rewind, and a rewind is cheating. */
 export const UNDO_DEPTH = 1;
 
+/** Punctuation and case are not part of the name. */
+const LIFELINE_ALIASES: Readonly<Record<string, Lifeline>> = {
+  "5050": Lifeline.FiftyFifty,
+  fiftyfifty: Lifeline.FiftyFifty,
+  extratime: Lifeline.ExtraTime,
+  time: Lifeline.ExtraTime,
+  asktheroom: Lifeline.AskRoom,
+  askroom: Lifeline.AskRoom,
+  ask: Lifeline.AskRoom,
+};
+
 /** `ask-the-room`, `ask room` and `askroom` are the same lifeline. */
 export function parseLifeline(raw: string): Lifeline | null {
   const key = raw.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (key === "5050") {
-    return Lifeline.FiftyFifty;
-  }
-  if (key === "extratime" || key === "time") {
-    return Lifeline.ExtraTime;
-  }
-  if (key === "asktheroom" || key === "askroom" || key === "ask") {
-    return Lifeline.AskRoom;
-  }
-  return null;
+  return LIFELINE_ALIASES[key] ?? null;
 }
 
 /** What the host allows. Restricted mode allows nothing. */

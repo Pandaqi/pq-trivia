@@ -13,6 +13,57 @@ function allowed(buttons: readonly string[], id: string): boolean {
   return buttons.length === 0 || buttons.includes(id);
 }
 
+/** The way out of the end screen: back, answers, again, or the results. */
+function EndActions({
+  quiz,
+  screen,
+  canGrade,
+}: {
+  readonly quiz: Quiz;
+  readonly screen: EndViewModel;
+  readonly canGrade: boolean;
+}): JSX.Element {
+  const t = useT();
+  return (
+    <>
+      {allowed(screen.buttons, "start") ? (
+        <button type="button" onClick={() => quiz.goToStart()}>
+          {t("backToStart")}
+        </button>
+      ) : null}
+      {allowed(screen.buttons, "answers") ? (
+        <button
+          type="button"
+          class="pq-primary"
+          onClick={() => {
+            quiz.setMode(PlayMode.Answers);
+            quiz.restart();
+            quiz.next();
+          }}
+        >
+          {t("throughAnswers")}
+        </button>
+      ) : null}
+      {allowed(screen.buttons, "restart") ? (
+        <button
+          type="button"
+          onClick={() => {
+            quiz.restart();
+            quiz.next();
+          }}
+        >
+          {t("playAgain")}
+        </button>
+      ) : null}
+      {canGrade && allowed(screen.buttons, "grade") ? (
+        <button type="button" onClick={() => quiz.showResults()}>
+          {t("seeResults")}
+        </button>
+      ) : null}
+    </>
+  );
+}
+
 export function EndScreen({
   quiz,
   screen,
@@ -65,40 +116,7 @@ export function EndScreen({
       {quiz.config.disableUI === true ? null : (
         <footer class="pq-toolbar">
           <Actions quiz={quiz} />
-          {allowed(screen.buttons, "start") ? (
-            <button type="button" onClick={() => quiz.goToStart()}>
-              {t("backToStart")}
-            </button>
-          ) : null}
-          {allowed(screen.buttons, "answers") ? (
-            <button
-              type="button"
-              class="pq-primary"
-              onClick={() => {
-                quiz.setMode(PlayMode.Answers);
-                quiz.restart();
-                quiz.next();
-              }}
-            >
-              {t("throughAnswers")}
-            </button>
-          ) : null}
-          {allowed(screen.buttons, "restart") ? (
-            <button
-              type="button"
-              onClick={() => {
-                quiz.restart();
-                quiz.next();
-              }}
-            >
-              {t("playAgain")}
-            </button>
-          ) : null}
-          {canGrade && allowed(screen.buttons, "grade") ? (
-            <button type="button" onClick={() => quiz.showResults()}>
-              {t("seeResults")}
-            </button>
-          ) : null}
+          <EndActions quiz={quiz} screen={screen} canGrade={canGrade} />
         </footer>
       )}
     </main>

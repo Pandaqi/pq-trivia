@@ -12,6 +12,8 @@ import {
   type QuizManifest,
 } from "../../core/quiz/manifest";
 import type { Quiz } from "../../core/session/quiz";
+import { loaderT } from "../../i18n/loader";
+import type { Translate } from "../../i18n/types";
 import { fetchTextCached } from "./cache/fetchCached";
 import type { TextCache } from "./cache/textCache";
 import { fetchText } from "./fetchText";
@@ -21,6 +23,10 @@ export const FILE_PROTOCOL_HINT =
 
 export interface LoadSourceOptions {
   readonly cache?: TextCache;
+}
+
+function quizLoaderT(quiz: Quiz): Translate {
+  return loaderT(quiz.state.language ?? quiz.config.language);
 }
 
 export function isFileProtocol(url?: string): boolean {
@@ -78,6 +84,42 @@ export interface QuizFileSearch {
   readonly limit?: number;
 }
 
+/** Every listed name, up to the first one that does not answer. */
+async function readNamedFiles(
+  names: readonly string[],
+  load: (url: string) => Promise<string>,
+  resolve: (name: string) => string,
+): Promise<QuizSourceFile[]> {
+  const files: QuizSourceFile[] = [];
+  for (const name of names) {
+    try {
+      files.push({ name, text: await load(resolve(name)) });
+    } catch {
+      break;
+    }
+  }
+  return files;
+}
+
+/** The first extension that answers for this number, or null. */
+async function readNumberedFile(
+  pattern: string,
+  index: number,
+  extensions: readonly string[],
+  load: (url: string) => Promise<string>,
+  resolve: (name: string) => string,
+): Promise<QuizSourceFile | null> {
+  for (const extension of extensions) {
+    const name = `${pattern}-${index}.${extension}`;
+    try {
+      return { name, text: await load(resolve(name)) };
+    } catch {
+      // Try the next extension.
+    }
+  }
+  return null;
+}
+
 /**
  * V2's auto-search: exact names, or `questions-0.trivia`, `questions-1` …
  * until a number is missing. Nothing is parsed here; a miss is just a miss.
@@ -98,14 +140,7 @@ export async function findQuizFiles(
     .filter((name) => name.length > 0);
 
   if (names.length > 0) {
-    for (const name of names) {
-      try {
-        files.push({ name, text: await read(resolve(name)) });
-      } catch {
-        break;
-      }
-    }
-    return files;
+    return readNamedFiles(names, read, resolve);
   }
 
   const extensions = (search.extensions ?? ["trivia", "txt", "md"])
@@ -114,16 +149,13 @@ export async function findQuizFiles(
   const pattern = search.pattern ?? "questions";
   const limit = search.limit ?? 50;
   for (let index = 0; index < limit; index += 1) {
-    let found: QuizSourceFile | null = null;
-    for (const extension of extensions) {
-      const name = `${pattern}-${index}.${extension}`;
-      try {
-        found = { name, text: await read(resolve(name)) };
-        break;
-      } catch {
-        // Try the next extension, then stop this number.
-      }
-    }
+    const found = await readNumberedFile(
+      pattern,
+      index,
+      extensions,
+      read,
+      resolve,
+    );
     if (found === null) {
       break;
     }
@@ -135,8 +167,11 @@ export async function findQuizFiles(
 async function read(
   url: string,
   cache: TextCache | undefined,
+  t?: Translate,
 ): Promise<string> {
-  return cache === undefined ? fetchText(url) : fetchTextCached(url, cache);
+  return cache === undefined
+    ? fetchText(url, t)
+    : fetchTextCached(url, cache, t);
 }
 
 async function loadManifest(
@@ -145,18 +180,19 @@ async function loadManifest(
   source: string,
   options: LoadSourceOptions,
 ): Promise<QuizManifest> {
+  const t = quizLoaderT(quiz);
   let data: unknown;
   try {
     data = JSON.parse(text) as unknown;
   } catch {
-    throw new Error(`${source} looks like JSON, but it does not parse.`);
+    throw new Error(t("loaderJson", { source }));
   }
   const manifest = parseManifest(data);
   const base = baseOf(source);
   const files = await Promise.all(
     manifest.files.map(async (file) => ({
       name: file.path,
-      text: await read(resolvePath(base, file.path), options.cache),
+      text: await read(resolvePath(base, file.path), options.cache, t),
     })),
   );
   await quiz.load({ type: "files", files });
@@ -179,7 +215,7 @@ export async function loadQuizText(
   try {
     data = JSON.parse(text) as unknown;
   } catch {
-    throw new Error(`${source} looks like JSON, but it does not parse.`);
+    throw new Error(quizLoaderT(quiz)("loaderJson", { source }));
   }
   if (isManifest(data)) {
     return await loadManifest(quiz, text, source, options);
@@ -198,15 +234,16 @@ export async function loadQuizSource(
   source: string,
   options: LoadSourceOptions = {},
 ): Promise<QuizManifest | null> {
+  const t = quizLoaderT(quiz);
   if (isFileProtocol(source) || (isFileProtocol() && !isAbsolute(source))) {
-    throw new Error(FILE_PROTOCOL_HINT);
+    throw new Error(t("loaderFileProtocol"));
   }
   let text: string;
   try {
-    text = await read(absolute(source), options.cache);
+    text = await read(absolute(source), options.cache, t);
   } catch (error) {
     if (isFileProtocol()) {
-      throw new Error(FILE_PROTOCOL_HINT);
+      throw new Error(t("loaderFileProtocol"));
     }
     throw error;
   }

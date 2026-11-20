@@ -9,7 +9,7 @@ import {
   type MountedPrintSheet,
 } from "../../src/renderers/preact/print/mountPrint";
 import { Quiz } from "../../src/renderers/preact/quiz";
-import { installDom, type TestDom } from "./dom";
+import { installDom, settleDom, type TestDom } from "./dom";
 
 const TEXT = `Title => One liner
 Seed => one
@@ -31,7 +31,8 @@ beforeAll(() => {
   dom = installDom();
 });
 
-afterAll(() => {
+afterAll(async () => {
+  await settleDom();
   dom?.uninstall();
 });
 

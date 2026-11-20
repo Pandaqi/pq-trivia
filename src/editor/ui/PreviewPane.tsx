@@ -10,6 +10,7 @@
 import type { JSX } from "preact";
 import { useEffect, useRef } from "preact/hooks";
 import type { PreviewHook, PreviewInstance, PreviewPlace } from "../mount";
+import { useEditorT } from "./i18n";
 
 export interface PreviewPaneProps {
   readonly text: string;
@@ -67,6 +68,7 @@ export function PreviewPane({
   preview,
   place,
 }: PreviewPaneProps): JSX.Element {
+  const t = useEditorT();
   const stage = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null);
   const instance = useRef<PreviewInstance | null>(null);
@@ -167,8 +169,11 @@ export function PreviewPane({
   }, []);
 
   return (
-    <section class="pq-editor-panel pq-editor-preview" aria-label="Preview">
-      <h2>Preview</h2>
+    <section
+      class="pq-editor-panel pq-editor-preview"
+      aria-label={t("editorPreview")}
+    >
+      <h2>{t("editorPreview")}</h2>
       <div class="pq-editor-stage" ref={stage}>
         <div class="pq-editor-preview-host" ref={host} />
       </div>

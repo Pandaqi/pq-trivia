@@ -35,7 +35,7 @@ export function mountPrintSheet(
       ),
       target,
     );
-    summary = fitPrintPages(target, options.onProblem);
+    summary = fitPrintPages(target, options.onProblem, quiz.t);
   };
 
   draw();
@@ -50,7 +50,7 @@ export function mountPrintSheet(
       return summary.problems;
     },
     fit() {
-      summary = fitPrintPages(target, options.onProblem);
+      summary = fitPrintPages(target, options.onProblem, quiz.t);
       return summary;
     },
   };

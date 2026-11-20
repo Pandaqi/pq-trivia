@@ -48,6 +48,35 @@ const LAYER_OF: Readonly<Record<string, number>> = {
 const IMPORT_PATTERN =
   /(?:^|\n)\s*(?:import|export)[^;\n]*?from\s+["']([^"']+)["']|(?:^|\n)\s*import\s+["']([^"']+)["']/g;
 
+/** One import, judged. Null when the edge is fine or outside the layers. */
+function importProblem(
+  file: string,
+  specifier: string,
+  text: string,
+  sourceLayer: number | null,
+): Problem | null {
+  const target = relativeTarget(file, specifier);
+  const targetLayer = layerOf(target);
+  if (sourceLayer === null || targetLayer === null) {
+    if (!target.startsWith("src/v2")) {
+      return null;
+    }
+    return {
+      file,
+      line: lineOf(text, specifier),
+      message: "V3 code imports archived V2 source.",
+    };
+  }
+  if (targetLayer <= sourceLayer) {
+    return null;
+  }
+  return {
+    file,
+    line: lineOf(text, specifier),
+    message: `Layer ${sourceLayer} imports layer ${targetLayer} (${target}). Dependencies point one way.`,
+  };
+}
+
 interface Problem {
   file: string;
   line: number;
@@ -80,7 +109,9 @@ for await (const entry of glob.scan({ cwd: ROOT, onlyFiles: true })) {
   const lines = text.split(/\r?\n/);
   const sourceLayer = layerOf(file);
 
-  if (!layersOnly && lines.length > MAX_LINES) {
+  // Locale tables are data, not code. One file per language is the rule.
+  const isLocaleTable = file.startsWith("src/i18n/locales/");
+  if (!layersOnly && !isLocaleTable && lines.length > MAX_LINES) {
     problems.push({
       file,
       line: MAX_LINES,
@@ -93,24 +124,9 @@ for await (const entry of glob.scan({ cwd: ROOT, onlyFiles: true })) {
     if (specifier === undefined || !specifier.startsWith(".")) {
       continue;
     }
-    const target = relativeTarget(file, specifier);
-    const targetLayer = layerOf(target);
-    if (sourceLayer === null || targetLayer === null) {
-      if (target.startsWith("src/v2")) {
-        problems.push({
-          file,
-          line: lineOf(text, specifier),
-          message: "V3 code imports archived V2 source.",
-        });
-      }
-      continue;
-    }
-    if (targetLayer > sourceLayer) {
-      problems.push({
-        file,
-        line: lineOf(text, specifier),
-        message: `Layer ${sourceLayer} imports layer ${targetLayer} (${target}). Dependencies point one way.`,
-      });
+    const problem = importProblem(file, specifier, text, sourceLayer);
+    if (problem !== null) {
+      problems.push(problem);
     }
   }
 

@@ -15,6 +15,7 @@ import { buildQuiz } from "../src/core/model/quiz";
 import { expandIncludes } from "../src/core/content/include";
 import type { GradeReport } from "../src/core/grading/report";
 import { GradeBand, formatDuration } from "../src/core/grading/report";
+import { AnswerMark, markOf } from "../src/core/values/marks";
 
 export const ROOT = join(import.meta.dir, "..");
 export const EXTENSIONS = /\.(trivia|txt|md)$/;
@@ -182,6 +183,16 @@ function bandLabel(band: GradeBand): string {
   }
 }
 
+function statusMark(question: GradeReport["questions"][number]): string {
+  if (question.correct) {
+    return markOf(true);
+  }
+  if (question.answered) {
+    return markOf(false);
+  }
+  return AnswerMark.Skipped;
+}
+
 export function reportText(report: GradeReport): string {
   const lines = [
     report.title.length > 0 ? report.title : "Quiz",
@@ -193,7 +204,7 @@ export function reportText(report: GradeReport): string {
   }
   lines.push("");
   for (const question of report.questions) {
-    const mark = question.correct ? "✓" : question.answered ? "✗" : "–";
+    const mark = statusMark(question);
     lines.push(
       `${mark} ${question.index + 1}. ${question.title} (${question.points}/${question.maxPoints})`,
     );
@@ -256,4 +267,20 @@ export async function backup(path: string): Promise<void> {
 
 export async function writeText(path: string, text: string): Promise<void> {
   await writeFile(path, text, "utf8");
+}
+
+/** Read every file a signature names. Missing ones are named by `verifyPack`. */
+export async function readPackFiles(
+  root: string,
+  paths: readonly string[],
+): Promise<Record<string, Uint8Array>> {
+  const files: Record<string, Uint8Array> = {};
+  for (const path of paths) {
+    try {
+      files[path] = await readFile(join(root, path));
+    } catch {
+      // Missing files are reported by `verifyPack`, with their names.
+    }
+  }
+  return files;
 }

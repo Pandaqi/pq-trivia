@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import axe from "axe-core";
 import { Quiz } from "../../src/core/quiz/class";
 import { mountQuiz, type MountedQuiz } from "../../src/renderers/preact/mount";
-import { installDom, type TestDom } from "./dom";
+import { installDom, settleDom, type TestDom } from "./dom";
 
 const TEXT = `Title => Screen test
 Seed => screen-test
@@ -61,8 +61,9 @@ beforeAll(async () => {
   await settle();
 });
 
-afterAll(() => {
+afterAll(async () => {
   mounted?.destroy();
+  await settleDom();
   dom?.uninstall();
 });
 

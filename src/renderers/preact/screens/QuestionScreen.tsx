@@ -29,6 +29,7 @@ import { backgroundStyle } from "../components/background";
 import { roundColour } from "../components/roundAccent";
 import { useT } from "../i18n";
 import { typeHintText } from "../typeHint";
+import { pluralKey } from "../../../core/values/marks";
 
 /** Interface keys stay here. The core names lifelines, it does not speak. */
 const LIFELINE_KEYS: Readonly<Record<Lifeline, string>> = {
@@ -129,20 +130,32 @@ export function QuestionScreen({
   const showAnswers = screen.answers.length > 0 && !asking;
   const showOptions =
     !screen.interactive && asking && screen.answers.length > 0;
-  const answers =
-    showInputs && response !== undefined ? (
-      <Answers
-        quiz={quiz}
-        screen={screen}
-        response={response}
-        issues={issues}
-      />
-    ) : showAnswers ? (
-      <ReadOnlyAnswers quiz={quiz} screen={screen} />
-    ) : showOptions ? (
-      <QuestionOptions quiz={quiz} screen={screen} />
+  const answersView = (): JSX.Element | null => {
+    if (showInputs && response !== undefined) {
+      return (
+        <Answers
+          quiz={quiz}
+          screen={screen}
+          response={response}
+          issues={issues}
+        />
+      );
+    }
+    if (showAnswers) {
+      return <ReadOnlyAnswers quiz={quiz} screen={screen} />;
+    }
+    if (showOptions) {
+      return <QuestionOptions quiz={quiz} screen={screen} />;
+    }
+    return null;
+  };
+  const answers = answersView();
+  const iconFor = (glyph: string): JSX.Element | null =>
+    icons ? (
+      <span class="pq-meta-icon" aria-hidden="true">
+        {glyph}{" "}
+      </span>
     ) : null;
-
   // Staged reveals. Each part carries the transition it arrived with, and an
   // ordinary question gets no attributes at all.
   const staged = isStaged(screen);
@@ -199,6 +212,27 @@ export function QuestionScreen({
       </div>
     );
 
+  const rightAnswers = answersRight ? answerBlock : null;
+  const rightColumn = split ? (
+    <div class="pq-split-right">
+      {mediaList}
+      {rightAnswers}
+    </div>
+  ) : null;
+  const timerNote = screen.expired ? (
+    <p class="pq-timer-note" role="status">
+      {t("timeUp")}
+    </p>
+  ) : null;
+  const footer =
+    quiz.config.disableUI === true ? null : (
+      <footer class="pq-toolbar">
+        <Toolbar quiz={quiz} screen={screen} onNext={next} />
+        <Actions quiz={quiz} />
+        {timerNote}
+      </footer>
+    );
+
   return (
     <main
       class={className}
@@ -221,11 +255,7 @@ export function QuestionScreen({
           </span>
         )}
         <span class="pq-meta-round">
-          {icons ? (
-            <span class="pq-meta-icon" aria-hidden="true">
-              📌{" "}
-            </span>
-          ) : null}
+          {iconFor("📌")}
           {screen.roundName ?? t("quizWord")}
         </span>
         <span class="pq-count">
@@ -241,11 +271,7 @@ export function QuestionScreen({
           ? null
           : screen.authors.map((author) => (
               <span class="pq-meta-author">
-                {icons ? (
-                  <span class="pq-meta-icon" aria-hidden="true">
-                    🧑{" "}
-                  </span>
-                ) : null}
+                {iconFor("🧑")}
                 {author}
               </span>
             ))}
@@ -255,25 +281,17 @@ export function QuestionScreen({
           ? null
           : screen.categories.map((category) => (
               <span class="pq-meta-category">
-                {icons ? (
-                  <span class="pq-meta-icon" aria-hidden="true">
-                    🏷️{" "}
-                  </span>
-                ) : null}
+                {iconFor("🏷️")}
                 {category}
               </span>
             ))}
         {quiz.config.hideScore === true ||
         (quiz.config.hideScoreOnAnswers === true && screen.revealed) ? null : (
           <span class="pq-points">
-            {icons ? (
-              <span class="pq-meta-icon" aria-hidden="true">
-                ⭐{" "}
-              </span>
-            ) : null}
+            {iconFor("⭐")}
             {t("pointsLabel", {
               points: screen.points,
-              unit: t(screen.points === 1 ? "point_one" : "point_other"),
+              unit: t(pluralKey(screen.points, "point_one", "point_other")),
             })}
           </span>
         )}
@@ -373,29 +391,14 @@ export function QuestionScreen({
           )}
         </div>
 
-        {!split ? null : (
-          <div class="pq-split-right">
-            {mediaList}
-            {answersRight ? answerBlock : null}
-          </div>
-        )}
+        {rightColumn}
       </div>
 
       <Lifelines quiz={quiz} screen={screen} />
 
       <StepBar quiz={quiz} screen={screen} />
 
-      {quiz.config.disableUI === true ? null : (
-        <footer class="pq-toolbar">
-          <Toolbar quiz={quiz} screen={screen} onNext={next} />
-          <Actions quiz={quiz} />
-          {screen.expired ? (
-            <p class="pq-timer-note" role="status">
-              {t("timeUp")}
-            </p>
-          ) : null}
-        </footer>
-      )}
+      {footer}
     </main>
   );
 }

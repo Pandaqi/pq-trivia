@@ -16,6 +16,18 @@ export interface LexResult {
   readonly diagnostics: readonly Diagnostic[];
 }
 
+/** Where a block comment ends on this line, or the end of the line. */
+function skipCommentBody(
+  raw: string,
+  cursor: number,
+): { cursor: number; closed: boolean } {
+  const end = raw.indexOf("*/", cursor);
+  if (end < 0) {
+    return { cursor: raw.length, closed: false };
+  }
+  return { cursor: end + 2, closed: true };
+}
+
 export function lex(text: string): LexResult {
   const diagnostics: Diagnostic[] = [];
   const source = text.replace(/^\uFEFF/, "");
@@ -33,13 +45,9 @@ export function lex(text: string): LexResult {
 
     while (cursor < raw.length) {
       if (inBlockComment) {
-        const end = raw.indexOf("*/", cursor);
-        if (end < 0) {
-          cursor = raw.length;
-          continue;
-        }
-        inBlockComment = false;
-        cursor = end + 2;
+        const skipped = skipCommentBody(raw, cursor);
+        cursor = skipped.cursor;
+        inBlockComment = !skipped.closed;
         continue;
       }
 

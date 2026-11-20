@@ -105,6 +105,14 @@ function collectExtra(
   return extra;
 }
 
+/** A custom type names its plugin; anything else has no plugin at all. */
+function pluginFor(type: string, declared: string | null): string | null {
+  if (type !== QuestionType.Custom || declared === null) {
+    return null;
+  }
+  return declared === QuestionType.Custom ? null : declared;
+}
+
 export function createQuestion(
   node: AstQuestion,
   context: BuildContext,
@@ -130,12 +138,9 @@ export function createQuestion(
     context.pluginTypes ?? [],
   );
   const declaredType = firstAttributeValue(attributes, "Type");
-  const plugin =
-    type !== QuestionType.Custom || declaredType === undefined
-      ? null
-      : pluginIdOf(declaredType) === QuestionType.Custom
-        ? null
-        : pluginIdOf(declaredType);
+  const declaredPlugin =
+    declaredType === undefined ? null : pluginIdOf(declaredType);
+  const plugin = pluginFor(type, declaredPlugin);
 
   const language =
     firstAttributeValue(attributes, "Language") ?? context.defaultLanguage;

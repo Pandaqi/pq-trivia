@@ -30,10 +30,23 @@ sake.
 Files and folders are checked by `bun run lint`. Nesting is checked by the
 person reading the diff, which is you.
 
-The check has no allowlist. If a file grows past 500 lines, split it: the parser,
-shapes and public door of the inline formatter are three files for exactly this
-reason, and the question model builds in `questionBuilder.ts`. Adding an entry
-to the lint allowlist is not a fix.
+The check has no allowlist for code. If a file grows past 500 lines, split it:
+the parser, shapes and public door of the inline formatter are three files for
+exactly this reason, and the question model builds in `questionBuilder.ts`.
+Adding an entry to the lint allowlist is not a fix.
+
+Locale tables are data, not code. They stay one file per language and are the
+only exception to the line limit.
+
+## Interface text
+
+Nothing a user can read is written in a component. Labels, buttons, headings,
+hints, placeholders, `aria-label`, `alt`, status lines and errors all go through
+`t()` or `useT()`. Add the key to every file in `src/i18n/locales/` in the same
+change. A missing key is a bug, not a fallback.
+
+Attribute names (`Description`, `Points`, `Type`) are syntax keywords. They stay
+as they are; their help text is translated.
 
 ## Shape over branches
 

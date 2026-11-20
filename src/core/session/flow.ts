@@ -11,7 +11,22 @@ import { questionMaxScore } from "../model/question";
 import type { PlannedRound, QuizPlan } from "../plan/plan";
 import type { ResponseMap } from "./responses";
 
-export type CompareOp = ">" | ">=" | "<" | "<=" | "=" | "!=";
+/** Score compares against a number; round against a name. */
+function scoreNode(comparison: CompareOp, value: Token): FlowNode {
+  if (value.kind !== TokenKind.Number) {
+    throw new Error("Score compares against a number.");
+  }
+  return { kind: "score", op: comparison, value: Number(value.value) };
+}
+
+export enum CompareOp {
+  Gt = ">",
+  Gte = ">=",
+  Lt = "<",
+  Lte = "<=",
+  Eq = "=",
+  Ne = "!=",
+}
 
 export type FlowNode =
   | {
@@ -38,7 +53,14 @@ export type FlowParse =
   | { readonly ok: true; readonly node: FlowNode }
   | { readonly ok: false; readonly error: string };
 
-type TokenKind = "word" | "number" | "string" | "op" | "open" | "close";
+enum TokenKind {
+  Word = "word",
+  Number = "number",
+  String = "string",
+  Op = "op",
+  Open = "open",
+  Close = "close",
+}
 
 interface Token {
   readonly kind: TokenKind;
@@ -50,7 +72,15 @@ const CALL_NAMES: ReadonlySet<string> = new Set([
   "wrong",
   "answered",
 ]);
-const COMPARE: ReadonlySet<string> = new Set([">", ">=", "<", "<=", "=", "!="]);
+/** The comparison symbols, and what each one means. One table, no drift. */
+const COMPARE_OPS: Readonly<Record<string, CompareOp>> = {
+  ">": CompareOp.Gt,
+  ">=": CompareOp.Gte,
+  "<": CompareOp.Lt,
+  "<=": CompareOp.Lte,
+  "=": CompareOp.Eq,
+  "!=": CompareOp.Ne,
+};
 
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
@@ -62,12 +92,12 @@ function tokenize(source: string): Token[] {
       continue;
     }
     if (char === "(") {
-      tokens.push({ kind: "open", value: char });
+      tokens.push({ kind: TokenKind.Open, value: char });
       index += 1;
       continue;
     }
     if (char === ")") {
-      tokens.push({ kind: "close", value: char });
+      tokens.push({ kind: TokenKind.Close, value: char });
       index += 1;
       continue;
     }
@@ -76,18 +106,21 @@ function tokenize(source: string): Token[] {
       if (end < 0) {
         throw new Error("A quoted string is not closed.");
       }
-      tokens.push({ kind: "string", value: source.slice(index + 1, end) });
+      tokens.push({
+        kind: TokenKind.String,
+        value: source.slice(index + 1, end),
+      });
       index = end + 1;
       continue;
     }
-    if (COMPARE.has(char)) {
+    if (char in COMPARE_OPS) {
       const two = source.slice(index, index + 2);
-      if (COMPARE.has(two)) {
-        tokens.push({ kind: "op", value: two });
+      if (two in COMPARE_OPS) {
+        tokens.push({ kind: TokenKind.Op, value: two });
         index += 2;
         continue;
       }
-      tokens.push({ kind: "op", value: char });
+      tokens.push({ kind: TokenKind.Op, value: char });
       index += 1;
       continue;
     }
@@ -99,7 +132,10 @@ function tokenize(source: string): Token[] {
       while (/[\d.]/.test(source.charAt(cursor))) {
         cursor += 1;
       }
-      tokens.push({ kind: "number", value: source.slice(index, cursor) });
+      tokens.push({
+        kind: TokenKind.Number,
+        value: source.slice(index, cursor),
+      });
       index = cursor;
       continue;
     }
@@ -108,7 +144,7 @@ function tokenize(source: string): Token[] {
       while (/[\w:-]/.test(source.charAt(cursor))) {
         cursor += 1;
       }
-      tokens.push({ kind: "word", value: source.slice(index, cursor) });
+      tokens.push({ kind: TokenKind.Word, value: source.slice(index, cursor) });
       index = cursor;
       continue;
     }
@@ -137,7 +173,7 @@ class Parser {
 
   #word(value: string): boolean {
     const token = this.#peek();
-    if (token?.kind === "word" && token.value.toLowerCase() === value) {
+    if (token?.kind === TokenKind.Word && token.value.toLowerCase() === value) {
       this.#index += 1;
       return true;
     }
@@ -172,10 +208,10 @@ class Parser {
     if (this.#word("not")) {
       return { kind: "not", node: this.#unary() };
     }
-    if (this.#peek()?.kind === "open") {
+    if (this.#peek()?.kind === TokenKind.Open) {
       this.#index += 1;
       const node = this.#or();
-      if (this.#take()?.kind !== "close") {
+      if (this.#take()?.kind !== TokenKind.Close) {
         throw new Error("Missing a closing bracket.");
       }
       return node;
@@ -188,17 +224,17 @@ class Parser {
     if (token === undefined) {
       throw new Error("The expression ends where a condition should start.");
     }
-    if (token.kind === "word") {
+    if (token.kind === TokenKind.Word) {
       const name = token.value.toLowerCase();
       if (CALL_NAMES.has(name)) {
-        if (this.#take()?.kind !== "open") {
+        if (this.#take()?.kind !== TokenKind.Open) {
           throw new Error(`"${name}" needs an ID in brackets.`);
         }
         const argument = this.#take();
-        if (argument === undefined || argument.kind !== "word") {
+        if (argument === undefined || argument.kind !== TokenKind.Word) {
           throw new Error(`"${name}" needs an ID in brackets.`);
         }
-        if (this.#take()?.kind !== "close") {
+        if (this.#take()?.kind !== TokenKind.Close) {
           throw new Error(`"${name}" needs one ID and a closing bracket.`);
         }
         return {
@@ -209,7 +245,12 @@ class Parser {
       }
       if (name === "score" || name === "round") {
         const op = this.#take();
-        if (op === undefined || op.kind !== "op") {
+        const comparison = op === undefined ? undefined : COMPARE_OPS[op.value];
+        if (
+          op === undefined ||
+          op.kind !== TokenKind.Op ||
+          comparison === undefined
+        ) {
           throw new Error(`"${name}" needs a comparison, like >= 10.`);
         }
         const value = this.#take();
@@ -217,16 +258,9 @@ class Parser {
           throw new Error(`"${name}" needs a value after ${op.value}.`);
         }
         if (name === "score") {
-          if (value.kind !== "number") {
-            throw new Error("Score compares against a number.");
-          }
-          return {
-            kind: "score",
-            op: op.value as CompareOp,
-            value: Number(value.value),
-          };
+          return scoreNode(comparison, value);
         }
-        return { kind: "round", op: op.value as CompareOp, value: value.value };
+        return { kind: "round", op: comparison, value: value.value };
       }
       if (name === "true" || name === "false") {
         return { kind: "const", value: name === "true" };
@@ -255,17 +289,17 @@ function compare(
 ): boolean {
   if (typeof left === "number" && typeof right === "number") {
     switch (op) {
-      case ">":
+      case CompareOp.Gt:
         return left > right;
-      case ">=":
+      case CompareOp.Gte:
         return left >= right;
-      case "<":
+      case CompareOp.Lt:
         return left < right;
-      case "<=":
+      case CompareOp.Lte:
         return left <= right;
-      case "=":
+      case CompareOp.Eq:
         return left === right;
-      case "!=":
+      case CompareOp.Ne:
       default:
         return left !== right;
     }
@@ -273,9 +307,9 @@ function compare(
   const a = String(left).toLowerCase();
   const b = String(right).toLowerCase();
   switch (op) {
-    case "=":
+    case CompareOp.Eq:
       return a === b;
-    case "!=":
+    case CompareOp.Ne:
       return a !== b;
     default:
       return false;

@@ -17,7 +17,7 @@ import type { Response } from "../session/responses";
 import { ResponseKind } from "../session/responses";
 import { nearestPoint, parsePoint } from "../values/point";
 import { matchText, parseNumber } from "./normalize";
-import { closePoints, part, round2 } from "./parts";
+import { closePoints, gradeKind, part, round2 } from "./parts";
 import { GradeKind, type GradeOptions, type GradeResult } from "./types";
 
 const PAIR_SEPARATOR = "@";
@@ -53,11 +53,7 @@ function spotParts(
     questionId: question.id,
     answered: point !== null,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : point === null
-        ? GradeKind.Unanswered
-        : GradeKind.Wrong,
+    kind: gradeKind(won, point !== null, won ? maxPoints : 0),
     points: won ? maxPoints : 0,
     maxPoints,
     parts: [part(label, expected, given, won, maxPoints)],
@@ -145,11 +141,11 @@ export function gradeOddOneOut(
     questionId: question.id,
     answered: selected.length > 0 || reason.trim().length > 0,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : points > 0
-        ? GradeKind.Partial
-        : GradeKind.Wrong,
+    kind: gradeKind(
+      won,
+      selected.length > 0 || reason.trim().length > 0,
+      points,
+    ),
     points,
     maxPoints,
     parts,
@@ -207,13 +203,7 @@ export function gradeMatrix(
     questionId: question.id,
     answered,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, answered, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -272,13 +262,7 @@ export function gradeParts(
     questionId: question.id,
     answered,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : earned > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, answered, earned),
     // `all-or-nothing` is the default, so a half-right multi-part still earns
     // its half. Losing the worked parts would feel like a bug, not a rule.
     points: won ? maxPoints : earned,
@@ -359,13 +343,7 @@ export function gradeClassification(
     questionId: question.id,
     answered,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, answered, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -435,13 +413,7 @@ export function gradeDiagram(
     questionId: question.id,
     answered,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, answered, points),
     points,
     maxPoints: questionMaxScore(question),
     parts,

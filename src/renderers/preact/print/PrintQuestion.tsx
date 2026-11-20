@@ -19,6 +19,7 @@ import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { useT } from "../i18n";
 import { typeHintText } from "../typeHint";
+import { markOf, pluralKey } from "../../../core/values/marks";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -85,7 +86,7 @@ export function PrintQuestion({
               <span class="pq-answer-text">{ref.value.text}</span>
               {reveal ? (
                 <span class="pq-mark" aria-hidden="true">
-                  {correct ? "✓" : "✗"}
+                  {markOf(correct)}
                 </span>
               ) : null}
               {reveal && correct ? (
@@ -100,6 +101,25 @@ export function PrintQuestion({
     </ul>
   );
 
+  const splitMedia = hasMedia ? (
+    <div class="pq-media-list">
+      {question.media.map((item) => (
+        <Media
+          key={item.path}
+          item={toMediaViewModel(item, question.alt, media)}
+        />
+      ))}
+    </div>
+  ) : null;
+  const splitChoices = !hasMedia && isChoice ? answers : null;
+  const splitRight =
+    split && !front ? (
+      <div class="pq-split-right">
+        {splitMedia}
+        {splitChoices}
+      </div>
+    ) : null;
+
   return (
     <div class="pq-print-question-body">
       <p class="pq-meta-strip">
@@ -112,7 +132,7 @@ export function PrintQuestion({
         ))}
         <span class="pq-points">
           {question.score}{" "}
-          {t(question.score === 1 ? "point_one" : "point_other")}
+          {t(pluralKey(question.score, "point_one", "point_other"))}
         </span>
       </p>
 
@@ -172,21 +192,7 @@ export function PrintQuestion({
           )}
         </div>
 
-        {!split || front ? null : (
-          <div class="pq-split-right">
-            {hasMedia ? (
-              <div class="pq-media-list">
-                {question.media.map((item) => (
-                  <Media
-                    key={item.path}
-                    item={toMediaViewModel(item, question.alt, media)}
-                  />
-                ))}
-              </div>
-            ) : null}
-            {!hasMedia && isChoice ? answers : null}
-          </div>
-        )}
+        {splitRight}
       </div>
 
       {reveal && question.explanation !== null ? (

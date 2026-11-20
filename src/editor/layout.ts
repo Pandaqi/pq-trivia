@@ -1,3 +1,5 @@
+import type { Translate } from "../i18n/types";
+
 /**
  * The wizard's layout: which panes are up, and how wide they are.
  *
@@ -25,12 +27,17 @@ export const PANE_ORDER: readonly EditorPane[] = [
   EditorPane.Preview,
 ];
 
-export const PANE_LABELS: Readonly<Record<EditorPane, string>> = {
-  [EditorPane.Slides]: "Slides",
-  [EditorPane.Form]: "Details",
-  [EditorPane.Syntax]: "Syntax",
-  [EditorPane.Preview]: "Preview",
+export const PANE_LABEL_KEYS: Readonly<Record<EditorPane, string>> = {
+  [EditorPane.Slides]: "paneSlides",
+  [EditorPane.Form]: "paneDetails",
+  [EditorPane.Syntax]: "paneSyntax",
+  [EditorPane.Preview]: "panePreview",
 };
+
+/** A pane's name in the page's language. */
+export function paneLabel(t: Translate, pane: EditorPane): string {
+  return t(PANE_LABEL_KEYS[pane]);
+}
 
 /** A pane will not be dragged narrower than this, in pixels. */
 export const MIN_PANE_WIDTH = 150;
@@ -132,14 +139,15 @@ export function startLayout(
   choice: LayoutChoice,
   hasPreview: boolean,
 ): EditorLayout {
+  const remembered =
+    choice.rememberLayout === false ? null : readStored(hasPreview);
   const chosen =
     choice.layout !== undefined
       ? {
           panes: normalizePanes(choice.layout.panes, hasPreview),
           sizes: choice.layout.sizes,
         }
-      : ((choice.rememberLayout === false ? null : readStored(hasPreview)) ??
-        defaultLayout(hasPreview));
+      : (remembered ?? defaultLayout(hasPreview));
   const panes =
     chosen.panes.length === 0 ? defaultLayout(hasPreview).panes : chosen.panes;
   const kept =

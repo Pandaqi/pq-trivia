@@ -51,6 +51,11 @@ const BOUND = new Set([
   "matchMedia",
 ]);
 
+/** Preact runs cleanups on a frame. Wait for it before the window goes. */
+export async function settleDom(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 20));
+}
+
 export interface TestDom {
   readonly window: Window;
   readonly document: Document;

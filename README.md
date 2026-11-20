@@ -59,7 +59,7 @@ Double-click to open the file in your browser and play!
 | **Play**      | Interactive, graded, results, review, resume. Keyboard first.                  |
 | **Print**     | Whole quiz, answer sheet, answer form, grade table, flash cards.               |
 | **Types**     | Open, choice, list, range, sort, match, cloze, sections, start/end.            |
-| **Languages** | One file per language, shared IDs or order, English/Dutch UI, live switching.  |
+| **Languages** | One file per language, shared IDs or order, translated UI, live switching. |
 | **Looks**     | Paper theme, theme folders, fonts, randomized backgrounds, tokens, animations. |
 | **Offline**   | One folder on a USB stick. `file://` with no network.                          |
 | **Live**      | Optional phones-in-the-room bundle. Separate. Zero weight by default.          |

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { buildQuiz } from "../../src/core/model/quiz";
 import {
   detectHeadingStyle,
+  HeadingStyle,
   looksLikeQuiz,
   migrateHeadings,
 } from "../../src/core/syntax/headings";
@@ -90,7 +91,7 @@ Answers => 1989
 `;
 
   test("old headings are recognised", () => {
-    expect(detectHeadingStyle(LEGACY)).toBe("legacy");
+    expect(detectHeadingStyle(LEGACY)).toBe(HeadingStyle.Legacy);
   });
 
   test("old headings shift one level and parse", () => {
@@ -117,7 +118,7 @@ Answers => 1989
 Question => One?
 Answers => Yes
 `;
-    expect(detectHeadingStyle(text)).toBe("legacy");
+    expect(detectHeadingStyle(text)).toBe(HeadingStyle.Legacy);
     expect(migrateHeadings(text)).toContain("## Round");
   });
 
@@ -130,7 +131,7 @@ Answers => Yes
 #### Answers
 Queen
 `;
-    expect(detectHeadingStyle(text)).toBe("current");
+    expect(detectHeadingStyle(text)).toBe(HeadingStyle.Current);
     expect(migrateHeadings(text)).toBe(text);
   });
 
@@ -140,7 +141,7 @@ Queen
 Question => Which band?
 Answers => Queen
 `;
-    expect(detectHeadingStyle(text)).toBe("ambiguous");
+    expect(detectHeadingStyle(text)).toBe(HeadingStyle.Ambiguous);
   });
 
   test("a quiz has keys, a block or an include", () => {
@@ -171,6 +172,6 @@ Answers => Queen
 ### Which band?
 Answers => Queen
 `;
-    expect(detectHeadingStyle(text)).toBe("current");
+    expect(detectHeadingStyle(text)).toBe(HeadingStyle.Current);
   });
 });

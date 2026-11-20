@@ -43,6 +43,25 @@ export enum PlayMode {
   Answers = "answers",
 }
 
+/** Where an index sits: before the quiz, inside it, or past its last question. */
+function statusAt(index: number, total: number): SessionStatus {
+  if (index < 0) {
+    return SessionStatus.Ready;
+  }
+  if (index >= total) {
+    return SessionStatus.Finished;
+  }
+  return SessionStatus.Playing;
+}
+
+/** A no-idea mark goes on once. Setting it twice keeps the same list. */
+function addOnce(list: readonly string[], id: string): readonly string[] {
+  if (list.includes(id)) {
+    return list;
+  }
+  return [...list, id];
+}
+
 export interface SessionState {
   readonly status: SessionStatus;
   readonly plan: QuizPlan | null;
@@ -184,12 +203,7 @@ export function sessionReducer(
           state.responses[question.id] ?? defaultResponse(question);
       }
       const index = Math.min(state.index, action.plan.questions.length);
-      const status =
-        index === action.plan.questions.length
-          ? SessionStatus.Finished
-          : index >= 0
-            ? SessionStatus.Playing
-            : SessionStatus.Ready;
+      const status = statusAt(index, action.plan.questions.length);
       const next = { ...state, plan: action.plan, responses, index, status };
       return withTimer(next, now);
     }
@@ -343,9 +357,7 @@ export function sessionReducer(
       return {
         ...state,
         noIdea: action.value
-          ? state.noIdea.includes(action.questionId)
-            ? state.noIdea
-            : [...state.noIdea, action.questionId]
+          ? addOnce(state.noIdea, action.questionId)
           : state.noIdea.filter((id) => id !== action.questionId),
       };
 
@@ -418,12 +430,7 @@ export function sessionReducer(
         mediaPlays: action.mediaPlays ?? state.mediaPlays,
         index,
         step: 0,
-        status:
-          index >= total && total > 0
-            ? SessionStatus.Finished
-            : index >= 0
-              ? SessionStatus.Playing
-              : SessionStatus.Ready,
+        status: statusAt(index, total),
         startedAt: action.startedAt,
         endedAt: action.endedAt,
         // Only an interactive play is ever saved, so resuming one keeps typing

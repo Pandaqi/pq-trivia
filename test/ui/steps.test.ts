@@ -5,7 +5,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Quiz } from "../../src/core/quiz/class";
 import { mountQuiz, type MountedQuiz } from "../../src/renderers/preact/mount";
-import { installDom, type TestDom } from "./dom";
+import { installDom, settleDom, type TestDom } from "./dom";
 
 const TEXT = `Title => Steps
 Seed => steps
@@ -44,8 +44,9 @@ beforeAll(async () => {
   await waitFor(() => has(".pq-step-bar"));
 });
 
-afterAll(() => {
+afterAll(async () => {
   mounted?.destroy();
+  await settleDom();
   dom?.uninstall();
 });
 

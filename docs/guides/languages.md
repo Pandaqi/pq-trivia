@@ -98,7 +98,7 @@ asks for the same for one question even when the global option is off;
 
 ## The interface
 
-The default build carries English and Dutch. Pick the language with
+The default build carries every language file in `src/i18n/locales/`. Pick the language with
 `languageDefault` or switch with `setLanguage`; the interface follows. Build
 with `--languages` to ship only the ones you need, including none. See
 [builds](builds.md).
@@ -119,8 +119,8 @@ createQuiz({
 });
 ```
 
-A missing key shows the key itself. No language silently fills in for another,
-not even English. Hosts can read one string directly:
+A missing key shows the key itself. No language silently fills in for another.
+Hosts can read one string directly:
 
 ```ts
 quiz.t("next"); // "Volgende"
@@ -129,7 +129,7 @@ quiz.t("pointsLabel", { points: 2, unit: quiz.t("point_other") });
 
 ### Keys worth knowing
 
-| Key                             | English                        | Dutch                                   |
+| Key                             | Default                        | Translation                             |
 | ------------------------------- | ------------------------------ | --------------------------------------- |
 | `next` / `previous`             | Next / Previous                | Volgende / Vorige                       |
 | `play`                          | Play the questions!            | Speel de quiz!                          |

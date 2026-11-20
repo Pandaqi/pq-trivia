@@ -9,6 +9,7 @@ import type { ComponentChildren, JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { Bubble } from "../../shared/bubble";
 import { FieldKind } from "../fields";
+import { useEditorT } from "./i18n";
 import { ListEditor } from "./ListEditor";
 
 export interface FieldShellProps {
@@ -142,6 +143,7 @@ export function Select({
   onChange,
   emptyLabel,
 }: SelectProps): JSX.Element {
+  const t = useEditorT();
   // A value that is not in the list still shows, so a hand edit is not eaten.
   const values =
     value.length === 0 || options.includes(value)
@@ -154,7 +156,7 @@ export function Select({
       value={value}
       onChange={(event) => onChange(event.currentTarget.value)}
     >
-      <option value="">{emptyLabel ?? "(default)"}</option>
+      <option value="">{emptyLabel ?? t("editorDefault")}</option>
       {values.map((option) => (
         <option key={option} value={option}>
           {option}
@@ -169,6 +171,7 @@ export interface RowSpec {
   readonly label: string;
   readonly kind: FieldKind;
   readonly description: string;
+  readonly descriptionKey: string;
   readonly options?: readonly string[] | undefined;
 }
 
@@ -183,6 +186,7 @@ export function FieldRow({
   values,
   onChange,
 }: FieldRowProps): JSX.Element {
+  const t = useEditorT();
   const id = `pq-editor-field-${field.key}`;
   const single = values[0] ?? "";
 
@@ -221,8 +225,8 @@ export function FieldRow({
         onAdd={() => onChange([...values, ""])}
         onRemove={remove}
         onMove={move}
-        addLabel={`Add ${field.label.toLowerCase()}`}
-        emptyText="Nothing yet."
+        addLabel={t("editorAddField", { what: field.label })}
+        emptyText={t("editorNothingYet")}
       />
     );
   })();
@@ -260,7 +264,11 @@ export function FieldRow({
   })();
 
   return (
-    <FieldShell id={id} label={field.label} description={field.description}>
+    <FieldShell
+      id={id}
+      label={field.label}
+      description={t(field.descriptionKey)}
+    >
       {field.kind === FieldKind.List ? list : input}
     </FieldShell>
   );

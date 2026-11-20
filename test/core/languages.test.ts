@@ -73,7 +73,7 @@ describe("language files", () => {
     });
   });
 
-  test("one file can hold both languages, linked by ID", () => {
+  test("one file can hold several languages, linked by ID", () => {
     const model = buildQuiz(`${EN}\n${NL}`, { defaultLanguage: "EN" });
     const map = splitByLanguage(model, "EN");
     expect([...map.keys()].sort()).toEqual(["EN", "NL"]);
@@ -82,7 +82,7 @@ describe("language files", () => {
     );
   });
 
-  test("another language does not silently become English", () => {
+  test("another language does not silently fall back", () => {
     expect(translate("de", "next")).toBe("next");
     expect(translate("nl", "next")).toBe("Volgende");
   });

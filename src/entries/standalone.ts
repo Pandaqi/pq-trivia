@@ -25,6 +25,8 @@ import printQuestions from "../themes/print.questions.css" with { type: "text" }
 
 import { buildQuiz } from "../core/model/quiz";
 import { planQuiz } from "../core/plan/plan";
+import { translator } from "../i18n/dictionary";
+import { LIVE_LOCALES } from "../i18n/liveLocales";
 import { parse } from "../core/syntax/parser";
 import { format } from "../core/syntax/serialize";
 import { Quiz, createQuiz } from "../core/session/quiz";
@@ -162,7 +164,10 @@ export async function startLive(options: {
   const exit = document.createElement("button");
   exit.type = "button";
   exit.className = "pq-link";
-  exit.textContent = "Back to the quiz";
+  exit.textContent = translator(
+    options.quiz.config.language,
+    LIVE_LOCALES,
+  )("liveBackToQuiz");
   exit.addEventListener("click", () => backToQuiz(exit, mounted));
   target.after(exit);
   return mounted;

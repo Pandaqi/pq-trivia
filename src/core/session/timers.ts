@@ -67,20 +67,32 @@ export function formatTimer(remainingMs: number): string {
     : `${seconds}s`;
 }
 
+/** How close the clock is to zero, as the screen shows it. */
+export enum TimerUrgency {
+  Calm = "calm",
+  Warn = "warn",
+  Urgent = "urgent",
+  Done = "done",
+}
+
+/** The last tenth is urgent; the last quarter warns. */
+const URGENT_RATIO = 0.1;
+const WARN_RATIO = 0.25;
+
 /** The last quarter is urgent. The theme repeats that, not just this number. */
 export function timerUrgency(
   remainingMs: number,
   totalMs: number,
-): "calm" | "warn" | "urgent" | "done" {
+): TimerUrgency {
   if (remainingMs <= 0) {
-    return "done";
+    return TimerUrgency.Done;
   }
   const ratio = totalMs <= 0 ? 1 : remainingMs / totalMs;
-  if (ratio <= 0.1) {
-    return "urgent";
+  if (ratio <= URGENT_RATIO) {
+    return TimerUrgency.Urgent;
   }
-  if (ratio <= 0.25) {
-    return "warn";
+  if (ratio <= WARN_RATIO) {
+    return TimerUrgency.Warn;
   }
-  return "calm";
+  return TimerUrgency.Calm;
 }

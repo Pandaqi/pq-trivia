@@ -2,6 +2,8 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import { pluralKey } from "../../core/values/marks";
+import { useT } from "../../renderers/preact/i18n";
 import {
   assignTeamColours,
   colourFor,
@@ -23,6 +25,7 @@ type QrMatrix = readonly (readonly boolean[])[];
  * Generated locally, no network, no image, nothing to load.
  */
 function JoinQr({ link }: { readonly link: string }): JSX.Element | null {
+  const t = useT();
   const [matrix, setMatrix] = useState<QrMatrix | null>(null);
 
   // The encoder is the heaviest thing in this bundle and a lobby on a desk
@@ -66,7 +69,7 @@ function JoinQr({ link }: { readonly link: string }): JSX.Element | null {
       class="pq-live-qr"
       viewBox={`0 0 ${size} ${size}`}
       role="img"
-      aria-label={`Scan to join: ${link}`}
+      aria-label={t("liveScanToJoin", { link })}
       shape-rendering="crispEdges"
     >
       <rect width={size} height={size} fill="#fff" />
@@ -82,17 +85,16 @@ export function CodeCard({
   readonly code: string;
   readonly link: string;
 }): JSX.Element {
+  const t = useT();
   return (
-    <section class="pq-live-code" aria-label="Join this room">
-      <p class="pq-live-kicker">Room code</p>
+    <section class="pq-live-code" aria-label={t("liveRoomAria")}>
+      <p class="pq-live-kicker">{t("liveRoomCode")}</p>
       <p class="pq-live-code-value">{code}</p>
       <p class="pq-live-link">
         <a href={link}>{link}</a>
       </p>
       <JoinQr link={link} />
-      <p class="pq-live-hint">
-        Scan the code, or type it at the same page. Either way: a phone.
-      </p>
+      <p class="pq-live-hint">{t("liveScanHint")}</p>
     </section>
   );
 }
@@ -113,10 +115,11 @@ export function LiveBadge({
   /** Every team in the room, so this phone matches the big screen. */
   readonly colours?: ReadonlyMap<string, TeamColour> | undefined;
 }): JSX.Element {
+  const t = useT();
   const name = team ?? null;
   return (
     <p class="pq-badge-row" role="status">
-      <span class="pq-badge pq-badge-live">Live · {code}</span>
+      <span class="pq-badge pq-badge-live">{t("liveBadge", { code })}</span>
       {name === null ? null : (
         <span
           class="pq-badge pq-badge-group"
@@ -174,13 +177,14 @@ export function Roster({
 }: {
   readonly players: readonly LivePlayer[];
 }): JSX.Element {
+  const t = useT();
   return (
-    <section class="pq-live-roster" aria-label="Players">
+    <section class="pq-live-roster" aria-label={t("livePlayersAria")}>
       <h2 class="pq-live-title">
-        Players <span class="pq-live-count">{players.length}</span>
+        {t("livePlayers")} <span class="pq-live-count">{players.length}</span>
       </h2>
       {players.length === 0 ? (
-        <p class="pq-live-hint">Nobody yet. Put the code on the big screen.</p>
+        <p class="pq-live-hint">{t("liveNobody")}</p>
       ) : (
         <div class="pq-live-groups">
           {playerGroups(players).map((group) => (
@@ -199,7 +203,7 @@ export function Roster({
                     <span>{player.name}</span>
                     <span class="pq-live-score">{player.score}</span>
                     {player.connected ? null : (
-                      <span class="pq-live-offline">offline</span>
+                      <span class="pq-live-offline">{t("liveOffline")}</span>
                     )}
                   </li>
                 ))}
@@ -219,12 +223,13 @@ export function Leaderboard({
   readonly rows: readonly LeaderRow[];
   readonly selfId?: string | null | undefined;
 }): JSX.Element | null {
+  const t = useT();
   if (rows.length === 0) {
     return null;
   }
   return (
-    <section class="pq-live-board" aria-label="Leaderboard">
-      <h2 class="pq-live-title">Leaderboard</h2>
+    <section class="pq-live-board" aria-label={t("liveLeaderboardAria")}>
+      <h2 class="pq-live-title">{t("liveLeaderboard")}</h2>
       <ol>
         {rows.map((row, index) => (
           <li
@@ -246,6 +251,76 @@ function signed(points: number): string {
   return points > 0 ? `+${points}` : String(points);
 }
 
+/** What a player typed, or a dash when they typed nothing. */
+function givenText(result: PlayerResult | undefined): string {
+  if (result === undefined || result.given.length === 0) {
+    return "—";
+  }
+  return result.given;
+}
+
+/** Every answer in the room, for the paper pass. */
+function EveryoneRows({
+  item,
+  players,
+  selfId,
+}: {
+  readonly item: RevealItem;
+  readonly players: readonly LivePlayer[];
+  readonly selfId: string | null;
+}): JSX.Element {
+  const t = useT();
+  return (
+    <ol class="pq-live-rows">
+      {players.map((player) => {
+        const result = item.results[player.id];
+        return (
+          <li
+            key={player.id}
+            data-pq-self={player.id === selfId ? "true" : undefined}
+            data-pq-correct={String(result?.correct === true)}
+          >
+            <span class="pq-live-name">{player.name}</span>
+            <span class="pq-live-given">{givenText(result)}</span>
+            <span class="pq-live-score">
+              {result === undefined ? "" : signed(result.points)}
+              {result?.stake == null
+                ? ""
+                : ` · ${t("liveStaked", { points: result.stake })}`}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** One player's verdict. Nothing to say when the host hid the result. */
+function MyResult({
+  mine,
+}: {
+  readonly mine: PlayerResult | undefined;
+}): JSX.Element | null {
+  const t = useT();
+  if (mine === undefined) {
+    return null;
+  }
+  const unit = t(pluralKey(Math.abs(mine.points), "point_one", "point_other"));
+  return (
+    <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
+      <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
+      {mine.late ? `${t("liveLate")} ` : ""}
+      {`${signed(mine.points)} ${unit}`}
+      {mine.stake === null
+        ? ""
+        : ` · ${t("liveStaked", { points: mine.stake })}`}
+      {mine.given.length === 0
+        ? ""
+        : ` · ${t("liveYouSaid", { text: mine.given })}`}
+    </p>
+  );
+}
+
 /**
  * What the reveal shows. One question or a whole round; a personal verdict or
  * everyone's answers, which is the point of the paper mode.
@@ -261,56 +336,29 @@ export function RevealPanel({
   readonly selfId?: string | null | undefined;
   readonly showEveryone?: boolean;
 }): JSX.Element {
+  const t = useT();
   const mineOf = (item: RevealItem): PlayerResult | undefined =>
     selfId === null ? undefined : item.results[selfId];
   const single = reveal.items.length === 1;
   return (
-    <section class="pq-live-reveal" aria-label="Answers">
+    <section class="pq-live-reveal" aria-label={t("liveAnswersAria")}>
       {reveal.items.map((item) => {
         const mine = mineOf(item);
         return (
           <div class="pq-live-reveal-item" key={item.questionId}>
             {single ? null : (
-              <p class="pq-live-kicker">Question {item.index + 1}</p>
+              <p class="pq-live-kicker">
+                {t("liveQuestionNumber", { number: item.index + 1 })}
+              </p>
             )}
             <p class="pq-live-answer">{item.correct.join(" / ") || "—"}</p>
             {item.explanation === null ? null : (
               <p class="pq-explanation">{item.explanation}</p>
             )}
             {showEveryone ? (
-              <ol class="pq-live-rows">
-                {players.map((player) => {
-                  const result = item.results[player.id];
-                  return (
-                    <li
-                      key={player.id}
-                      data-pq-self={player.id === selfId ? "true" : undefined}
-                      data-pq-correct={String(result?.correct === true)}
-                    >
-                      <span class="pq-live-name">{player.name}</span>
-                      <span class="pq-live-given">
-                        {result === undefined || result.given.length === 0
-                          ? "—"
-                          : result.given}
-                      </span>
-                      <span class="pq-live-score">
-                        {result === undefined ? "" : signed(result.points)}
-                        {result?.stake == null
-                          ? ""
-                          : ` · staked ${result.stake}`}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ol>
-            ) : mine === undefined ? null : (
-              <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
-                <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
-                {mine.late ? "Late. " : ""}
-                {`${signed(mine.points)} points`}
-                {mine.stake === null ? "" : ` · staked ${mine.stake}`}
-                {mine.given.length === 0 ? "" : ` · you said: ${mine.given}`}
-              </p>
+              <EveryoneRows item={item} players={players} selfId={selfId} />
+            ) : (
+              <MyResult mine={mine} />
             )}
           </div>
         );
@@ -329,12 +377,13 @@ export function NameForm({
   readonly error: string | null;
   readonly onJoin: (name: string) => void;
 }): JSX.Element {
+  const t = useT();
   const [name, setName] = useState("");
   return (
-    <section class="pq-live-join" aria-label="Join the room">
-      <p class="pq-live-kicker">Room {code}</p>
+    <section class="pq-live-join" aria-label={t("liveJoinAria")}>
+      <p class="pq-live-kicker">{t("liveRoom", { code })}</p>
       <h1 class="pq-live-heading" tabIndex={-1}>
-        Pick a name
+        {t("livePickName")}
       </h1>
       <form
         onSubmit={(event) => {
@@ -345,7 +394,7 @@ export function NameForm({
         }}
       >
         <label class="pq-field">
-          <span class="pq-field-label">Your name</span>
+          <span class="pq-field-label">{t("liveYourName")}</span>
           <input
             class="pq-input"
             type="text"
@@ -365,7 +414,7 @@ export function NameForm({
           class="pq-primary"
           disabled={name.trim().length === 0}
         >
-          Join
+          {t("liveJoin")}
         </button>
       </form>
     </section>

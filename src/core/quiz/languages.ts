@@ -153,7 +153,8 @@ export function mergeModels(models: readonly QuizModel[]): QuizModel {
         };
         rounds.push(target);
         roundByName.set(round.name.toLowerCase(), target);
-      } else if (target.secret === null && round.secret !== null) {
+      }
+      if (target.secret === null && round.secret !== null) {
         target.secret = round.secret;
       }
       oldToNew.set(round.id, target.id);

@@ -21,7 +21,7 @@ import {
   type Response,
 } from "../session/responses";
 import { matchText, normalizeText, parseNumber } from "./normalize";
-import { closePoints, part, round2 } from "./parts";
+import { closePoints, gradeKind, part, round2 } from "./parts";
 import {
   gradeClassification,
   gradeDiagram,
@@ -30,7 +30,12 @@ import {
   gradeOddOneOut,
   gradeParts,
 } from "./interfaces";
-import { GradeKind, type GradeOptions, type GradeResult } from "./types";
+import {
+  GradeKind,
+  type GradeOptions,
+  type GradePart,
+  type GradeResult,
+} from "./types";
 import type { PluginGrade } from "./plugins";
 import { gradeList, gradeMatch, gradeRank, gradeSort } from "./structured";
 
@@ -43,6 +48,57 @@ function modeOf(question: QuestionModel, options: GradeOptions): GradingMode {
     return GradingMode.Fuzzy;
   }
   return options.grading ?? question.grading;
+}
+
+/** Per-correct counts the earned parts; partial counts the right picks. */
+function splitPoints(
+  question: QuestionModel,
+  parts: readonly GradePart[],
+  selectedCorrect: number,
+  wanted: number,
+  maxPoints: number,
+): number {
+  if (question.scoring === ScoringMethod.PerCorrect) {
+    return round2(
+      parts.reduce(
+        (total, entry) => total + (entry.correct ? entry.points : 0),
+        0,
+      ),
+    );
+  }
+  if (question.scoring === ScoringMethod.Partial) {
+    return round2((maxPoints * selectedCorrect) / Math.max(wanted, 1));
+  }
+  return 0;
+}
+
+/**
+ * Cloze keeps V2's scoring: every filled blank earns its share, even when the
+ * question is not fully right.
+ */
+function clozePoints(
+  question: QuestionModel,
+  parts: readonly GradePart[],
+  won: boolean,
+): number {
+  if (won) {
+    return questionMaxScore(question);
+  }
+  const earned = parts.filter((entry) => entry.correct);
+  if (question.scoring === ScoringMethod.PerCorrect) {
+    return round2(earned.reduce((total, entry) => total + entry.points, 0));
+  }
+  return round2(
+    (questionMaxScore(question) * earned.length) / Math.max(parts.length, 1),
+  );
+}
+
+/** A widget that reports its own score is partial as soon as it has a value. */
+function answeredKind(answered: boolean): GradeKind {
+  if (answered) {
+    return GradeKind.Partial;
+  }
+  return GradeKind.Unanswered;
 }
 
 function gradeOpen(
@@ -68,15 +124,12 @@ function gradeOpen(
     match.correct,
     maxPoints,
   );
+  const answered = given.trim().length > 0;
   return {
     questionId: question.id,
-    answered: given.trim().length > 0,
+    answered,
     correct: match.correct,
-    kind: match.correct
-      ? GradeKind.Correct
-      : given.trim().length === 0
-        ? GradeKind.Unanswered
-        : GradeKind.Wrong,
+    kind: gradeKind(match.correct, answered, match.correct ? maxPoints : 0),
     points: match.correct ? maxPoints : 0,
     maxPoints,
     parts: [entry],
@@ -187,11 +240,7 @@ function gradeChoice(
       questionId: question.id,
       answered: selected.length > 0,
       correct: won,
-      kind: won
-        ? GradeKind.Correct
-        : selected.length === 0
-          ? GradeKind.Unanswered
-          : GradeKind.Wrong,
+      kind: gradeKind(won, selected.length > 0, won ? maxPoints : 0),
       points: won ? maxPoints : 0,
       maxPoints,
       parts: [part("Answer", expectedText, givenText, won, maxPoints)],
@@ -223,31 +272,24 @@ function gradeChoice(
     );
   }
   const won = parts.every((entry) => entry.correct);
-  const selectedCorrect = parts.filter(
-    (entry) => entry.label === "Answer" && entry.correct,
+  // Count the picks, not the part labels: a label is text a host may change.
+  const selectedCorrect = refs.filter(
+    (ref) => wanted(ref) && selected.includes(ref.id),
   ).length;
   const points = won
     ? maxPoints
-    : question.scoring === ScoringMethod.PerCorrect
-      ? round2(
-          parts
-            .filter((entry) => entry.correct)
-            .reduce((total, entry) => total + entry.points, 0),
-        )
-      : question.scoring === ScoringMethod.Partial
-        ? round2((maxPoints * selectedCorrect) / Math.max(correctIds.length, 1))
-        : 0;
+    : splitPoints(
+        question,
+        parts,
+        selectedCorrect,
+        correctIds.length,
+        maxPoints,
+      );
   return {
     questionId: question.id,
     answered: selected.length > 0,
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : selected.length === 0
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(won, selected.length > 0, points),
     points,
     maxPoints,
     parts,
@@ -295,30 +337,16 @@ function gradeCloze(
     );
   });
   const won = parts.every((entry) => entry.correct);
-  const points = won
-    ? questionMaxScore(question)
-    : question.scoring === ScoringMethod.PerCorrect
-      ? round2(
-          parts
-            .filter((entry) => entry.correct)
-            .reduce((total, entry) => total + entry.points, 0),
-        )
-      : round2(
-          (questionMaxScore(question) *
-            parts.filter((entry) => entry.correct).length) /
-            Math.max(parts.length, 1),
-        );
+  const points = clozePoints(question, parts, won);
   return {
     questionId: question.id,
     answered: given.some((blank) => blank.trim().length > 0),
     correct: won,
-    kind: won
-      ? GradeKind.Correct
-      : given.every((blank) => blank.trim().length === 0)
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(
+      won,
+      given.some((blank) => blank.trim().length > 0),
+      points,
+    ),
     points,
     maxPoints: questionMaxScore(question),
     parts,
@@ -349,9 +377,7 @@ function gradeCustom(question: QuestionModel, response: Response): GradeResult {
     kind:
       points >= maxPoints && maxPoints > 0
         ? GradeKind.Correct
-        : value === null
-          ? GradeKind.Unanswered
-          : GradeKind.Partial,
+        : answeredKind(value !== null && value !== undefined),
     points,
     maxPoints,
     parts: [part("Widget", "self-reported", "", points > 0, maxPoints)],
@@ -390,13 +416,7 @@ function gradeFromPlugin(
     questionId: question.id,
     answered,
     correct,
-    kind: correct
-      ? GradeKind.Correct
-      : !answered
-        ? GradeKind.Unanswered
-        : points > 0
-          ? GradeKind.Partial
-          : GradeKind.Wrong,
+    kind: gradeKind(correct, answered, points),
     points,
     maxPoints,
     parts: outcome.parts ?? [],

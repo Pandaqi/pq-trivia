@@ -3,6 +3,9 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import { QuestionType } from "../../core/model/question";
+import { pluralKey } from "../../core/values/marks";
+import type { Translate } from "../../i18n/types";
+import { useT } from "../../renderers/preact/i18n";
 import type { Response } from "../../core/session/responses";
 import type { PlayerRoom } from "../player";
 import {
@@ -26,25 +29,33 @@ function usePlayer(player: PlayerRoom): number {
   return version;
 }
 
+/** Where this question sits, in the page's language. */
+function questionMeta(
+  t: Translate,
+  question: LiveQuestion,
+  answers: boolean,
+): string {
+  if (question.type === QuestionType.Section) {
+    return question.roundName ?? t("roundWord");
+  }
+  const base = answers
+    ? t("liveAnswersOf", { index: question.index + 1, total: question.total })
+    : t("questionOf", { index: question.index + 1, total: question.total });
+  const round = question.roundName === null ? "" : ` · ${question.roundName}`;
+  const unit = t(pluralKey(question.points, "point_one", "point_other"));
+  return `${base}${round} · ${question.points} ${unit}`;
+}
+
 function QuestionBody({
   question,
-  kicker,
+  meta,
 }: {
   readonly question: LiveQuestion;
-  readonly kicker: string;
+  readonly meta: string;
 }): JSX.Element {
-  const section = question.type === QuestionType.Section;
-  const round = question.roundName === null ? "" : ` · ${question.roundName}`;
-  const points = ` · ${question.points} ${
-    question.points === 1 ? "point" : "points"
-  }`;
   return (
     <section class="pq-live-question">
-      <p class="pq-live-meta">
-        {section
-          ? (question.roundName ?? "Round")
-          : `${kicker} ${question.index + 1} of ${question.total}${round}${points}`}
-      </p>
+      <p class="pq-live-meta">{meta}</p>
       <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
         {question.title}
       </h1>
@@ -77,12 +88,13 @@ function BuzzBar({
   readonly selfId: string | null;
   readonly closed: boolean;
 }): JSX.Element {
+  const t = useT();
   if (buzz !== null) {
     return (
       <p class="pq-live-hint pq-live-buzz" role="status">
         {buzz.playerId === selfId
-          ? "You buzzed first. Answer out loud."
-          : `${buzz.name} buzzed first.`}
+          ? t("liveYouBuzzed")
+          : t("liveBuzzedFirst", { name: buzz.name })}
       </p>
     );
   }
@@ -93,7 +105,7 @@ function BuzzBar({
       disabled={closed}
       onClick={() => player.buzz()}
     >
-      Buzz
+      {t("liveBuzz")}
     </button>
   );
 }
@@ -110,12 +122,16 @@ function AnswerPass({
   readonly players: readonly LivePlayer[];
   readonly self: string | null;
 }): JSX.Element {
+  const t = useT();
   return (
     <>
-      <QuestionBody question={question} kicker="Answers" />
+      <QuestionBody
+        question={question}
+        meta={questionMeta(t, question, true)}
+      />
       {reveal === null ? (
         <p class="pq-live-hint" role="status">
-          The host is showing the answers.
+          {t("liveShowingAnswers")}
         </p>
       ) : (
         <RevealPanel
@@ -144,14 +160,14 @@ function StakePicker({
   readonly disabled: boolean;
   readonly onChange: (value: number) => void;
 }): JSX.Element | null {
+  const t = useT();
   if (max <= 0) {
     return null;
   }
+  const unit = t(pluralKey(max, "point_one", "point_other"));
   return (
     <label class="pq-live-stake">
-      <span>
-        Wager up to {max} {max === 1 ? "point" : "points"}
-      </span>
+      <span>{t("liveWagerUpTo", { max, unit })}</span>
       <input
         type="range"
         min={0}
@@ -172,6 +188,7 @@ export function PlayerView({
   readonly player: PlayerRoom;
 }): JSX.Element {
   usePlayer(player);
+  const t = useT();
   const state = player.state();
   // Every team in the room, so this phone's badge matches the big screen.
   const colours = assignTeamColours(
@@ -194,9 +211,11 @@ export function PlayerView({
     return (
       <main class="pq-screen pq-live-screen">
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          Room {state.code}
+          {t("liveRoom", { code: state.code })}
         </h1>
-        <p class="pq-body">{state.error ?? "Connecting to the host…"}</p>
+        <p class="pq-body">
+          {state.error === null ? t("liveConnecting") : t(state.error)}
+        </p>
       </main>
     );
   }
@@ -205,7 +224,7 @@ export function PlayerView({
     return (
       <main class="pq-screen pq-live-screen">
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          That is the quiz
+          {t("liveThatIsQuiz")}
         </h1>
         <Leaderboard rows={state.leaderboard} selfId={state.id} />
       </main>
@@ -216,9 +235,9 @@ export function PlayerView({
     return (
       <main class="pq-screen pq-live-screen">
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
-          You are in
+          {t("liveYouAreIn")}
         </h1>
-        <p class="pq-body">Waiting for the host to show a question.</p>
+        <p class="pq-body">{t("liveWaitingHost")}</p>
         <LiveBadge code={state.code} team={state.team} colours={colours} />
       </main>
     );
@@ -239,68 +258,104 @@ export function PlayerView({
   }
 
   const section = question.type === QuestionType.Section;
-  return (
-    <main class="pq-screen pq-live-screen">
-      <LiveBadge code={state.code} team={state.team} colours={colours} />
-      <QuestionBody
-        question={question}
-        kicker={section ? "Round" : "Question"}
-      />
+  const badge = (
+    <LiveBadge code={state.code} team={state.team} colours={colours} />
+  );
+  const sentNote =
+    stake > 0
+      ? t("liveSentStake", {
+          points: stake,
+          unit: t(pluralKey(stake, "point_one", "point_other")),
+        })
+      : t("liveSent");
 
-      {section ? (
+  if (section) {
+    return (
+      <main class="pq-screen pq-live-screen">
+        {badge}
+        <QuestionBody
+          question={question}
+          meta={questionMeta(t, question, false)}
+        />
         <p class="pq-live-hint" role="status">
-          The next question is coming. Keep an eye on the big screen.
+          {t("liveNextSoon")}
         </p>
-      ) : reveal === null ? (
-        state.watching ? (
-          <p class="pq-live-hint" role="status">
-            Watching. Nothing to answer from this screen.
-          </p>
-        ) : (
-          <>
-            {question.buzzer ? (
-              <BuzzBar
-                player={player}
-                buzz={state.buzz}
-                selfId={state.id}
-                closed={state.closed}
-              />
-            ) : null}
-            {question.wager ? (
-              <StakePicker
-                max={Math.min(question.wagerMax, Math.floor(myScore))}
-                value={Math.min(stake, question.wagerMax, Math.floor(myScore))}
-                disabled={state.submitted || state.closed}
-                onChange={setStake}
-              />
-            ) : null}
-            <PlayerAnswer
-              question={question}
-              disabled={state.submitted || state.closed}
-              onSubmit={submit}
-            />
-            {state.submitted ? (
-              <p class="pq-live-hint" role="status">
-                {stake > 0
-                  ? `Sent with ${stake} on the line. Wait for the reveal.`
-                  : "Sent. Wait for the reveal."}
-              </p>
-            ) : null}
-            {state.closed && !state.submitted ? (
-              <p class="pq-live-hint" role="status">
-                Answers are closed.
-              </p>
-            ) : null}
-          </>
-        )
-      ) : (
+      </main>
+    );
+  }
+
+  if (reveal !== null) {
+    return (
+      <main class="pq-screen pq-live-screen">
+        {badge}
+        <QuestionBody
+          question={question}
+          meta={questionMeta(t, question, false)}
+        />
         <RevealPanel
           reveal={reveal}
           players={state.players}
           selfId={state.id}
           showEveryone={state.revealMode === RevealMode.Pass}
         />
-      )}
+      </main>
+    );
+  }
+
+  if (state.watching) {
+    return (
+      <main class="pq-screen pq-live-screen">
+        {badge}
+        <QuestionBody
+          question={question}
+          meta={questionMeta(t, question, false)}
+        />
+        <p class="pq-live-hint" role="status">
+          {t("liveWatching")}
+        </p>
+      </main>
+    );
+  }
+
+  return (
+    <main class="pq-screen pq-live-screen">
+      {badge}
+      <QuestionBody
+        question={question}
+        meta={questionMeta(t, question, false)}
+      />
+
+      {question.buzzer ? (
+        <BuzzBar
+          player={player}
+          buzz={state.buzz}
+          selfId={state.id}
+          closed={state.closed}
+        />
+      ) : null}
+      {question.wager ? (
+        <StakePicker
+          max={Math.min(question.wagerMax, Math.floor(myScore))}
+          value={Math.min(stake, question.wagerMax, Math.floor(myScore))}
+          disabled={state.submitted || state.closed}
+          onChange={setStake}
+        />
+      ) : null}
+      <PlayerAnswer
+        question={question}
+        disabled={state.submitted || state.closed}
+        onSubmit={submit}
+      />
+      {state.submitted ? (
+        <p class="pq-live-hint" role="status">
+          {sentNote}
+        </p>
+      ) : null}
+      {state.closed && !state.submitted ? (
+        <p class="pq-live-hint" role="status">
+          {t("liveAnswersClosed")}
+        </p>
+      ) : null}
     </main>
   );
 }

@@ -61,13 +61,14 @@ export function formatQuestionValue(
   value: QuestionValue,
   symbols: MaskSymbols,
 ): string {
-  const prefix =
-    value.mask === ValueMask.Question
-      ? symbols.questionMask
-      : value.mask === ValueMask.Answer
-        ? symbols.answerMask
-        : value.keepAsIs
-          ? symbols.keepAsIs
-          : "";
-  return `${prefix}${value.text}`;
+  if (value.mask === ValueMask.Question) {
+    return `${symbols.questionMask}${value.text}`;
+  }
+  if (value.mask === ValueMask.Answer) {
+    return `${symbols.answerMask}${value.text}`;
+  }
+  if (value.keepAsIs) {
+    return `${symbols.keepAsIs}${value.text}`;
+  }
+  return value.text;
 }

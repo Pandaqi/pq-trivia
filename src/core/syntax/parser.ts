@@ -23,6 +23,7 @@ import {
 import { lex } from "./lexer";
 import { resolveSymbols, type Symbols } from "./symbols";
 import { splitPair, splitUnescaped } from "../values/coerce";
+import type { AttributeSpec } from "./attributes";
 
 const SCREEN_TYPES: ReadonlySet<string> = new Set(["start", "end", "section"]);
 
@@ -54,6 +55,68 @@ interface MutableAttribute {
   location: SourceLocation;
 }
 
+interface ParserState {
+  current: MutableAttribute[] | null;
+  blockList: MutableAttribute | null;
+  group: MutableAttribute | null;
+  lastAttribute: MutableAttribute | null;
+}
+
+/** `A, B, C` in one value, or the value itself. `$` keeps it whole. */
+function valuesOf(
+  rawValue: string,
+  spec: AttributeSpec | undefined,
+  options: ParseOptions,
+  symbols: Symbols,
+): string[] {
+  const value = rawValue.trim();
+  if (value.length === 0) {
+    return [];
+  }
+  const isList = spec !== undefined && isListAttribute(spec.key);
+  if (!isList || options.forbidInlineLists === true || value.startsWith("$")) {
+    return [value];
+  }
+  return splitUnescaped(value, symbols.inlineList)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+}
+
+/** `Type => Start` opens a new screen, even after a question has been read. */
+function opensScreenBlock(
+  values: readonly string[],
+  state: ParserState,
+): boolean {
+  const opensScreen = values.some((value) =>
+    SCREEN_TYPES.has(value.toLowerCase()),
+  );
+  if (!opensScreen) {
+    return false;
+  }
+  if (state.current === null) {
+    return true;
+  }
+  return state.current.some((attribute) => attribute.key === "Question");
+}
+
+/** Start and End write `Type =>` before their question. Those stay open. */
+function opensQuestionBlock(state: ParserState): boolean {
+  if (state.current === null) {
+    return true;
+  }
+  const currentType = state.current
+    .find((attribute) => attribute.key === "Type")
+    ?.values[0]?.toLowerCase();
+  const currentHasQuestion = state.current.some(
+    (attribute) => attribute.key === "Question",
+  );
+  const screenWaiting =
+    currentType !== undefined &&
+    SCREEN_TYPES.has(currentType) &&
+    !currentHasQuestion;
+  return !screenWaiting;
+}
+
 export function parse(text: string, options: ParseOptions = {}): ParseResult {
   const file = options.file ?? "<text>";
   const symbols = resolveSymbols(options.symbols);
@@ -64,12 +127,12 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
   const header: MutableAttribute[] = [];
   const blocks: MutableAttribute[][] = [];
 
-  const state: {
-    current: MutableAttribute[] | null;
-    blockList: MutableAttribute | null;
-    group: MutableAttribute | null;
-    lastAttribute: MutableAttribute | null;
-  } = { current: null, blockList: null, group: null, lastAttribute: null };
+  const state: ParserState = {
+    current: null,
+    blockList: null,
+    group: null,
+    lastAttribute: null,
+  };
 
   const at = (line: number, column: number): SourceLocation => ({
     file,
@@ -309,56 +372,26 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
     }
 
     const key = headerKey ?? spec?.key ?? rawKey.toLowerCase();
-    const values: string[] = [];
-    const value = rawValue.trim();
+    const values = valuesOf(rawValue, spec, options, symbols);
 
-    if (value.length > 0) {
-      const isList = spec !== undefined && isListAttribute(spec.key);
-      if (
-        isList &&
-        options.forbidInlineLists !== true &&
-        !value.startsWith("$")
-      ) {
-        for (const part of splitUnescaped(value, symbols.inlineList)) {
-          const item = part.trim();
-          if (item.length > 0) {
-            values.push(item);
-          }
+    switch (key) {
+      case "Question":
+        // A Question line opens a block, except inside a Start/End block that
+        // has not seen its question yet. Those write `Type =>` first.
+        if (opensQuestionBlock(state)) {
+          startBlock();
         }
-      } else {
-        values.push(value);
-      }
-    }
-
-    if (key === "Question") {
-      // A Question line opens a block, except inside a Start/End block that has
-      // not seen its question yet. Those write `Type =>` first.
-      const currentType = state.current
-        ?.find((attribute) => attribute.key === "Type")
-        ?.values[0]?.toLowerCase();
-      const currentHasQuestion =
-        state.current?.some((attribute) => attribute.key === "Question") ??
-        false;
-      const screenBlockWaiting =
-        currentType !== undefined &&
-        SCREEN_TYPES.has(currentType) &&
-        !currentHasQuestion;
-      if (state.current === null || !screenBlockWaiting) {
-        startBlock();
-      }
-    } else if (key === "Type") {
-      // `Type => Start` opens its own screen block, even after a question.
-      const opensScreen = values.some((val) =>
-        SCREEN_TYPES.has(val.toLowerCase()),
-      );
-      const currentHasQuestion =
-        state.current?.some((attribute) => attribute.key === "Question") ??
-        false;
-      if (opensScreen && (state.current === null || currentHasQuestion)) {
-        startBlock();
-      }
-    } else if (state.current === null && headerKey === undefined) {
-      startBlock();
+        break;
+      case "Type":
+        // `Type => Start` opens its own screen block, even after a question.
+        if (opensScreenBlock(values, state)) {
+          startBlock();
+        }
+        break;
+      default:
+        if (state.current === null && headerKey === undefined) {
+          startBlock();
+        }
     }
 
     const attribute = makeAttribute(

@@ -9,11 +9,12 @@
  */
 
 import { isEncryptedQuiz } from "../../core/export/embedded";
-import type { ParseHook } from "../../core/quiz/types";
+import type { LoadInput, ParseHook } from "../../core/quiz/types";
 import type { QuizManifest } from "../../core/quiz/manifest";
 import { createQuiz, type Quiz } from "../../core/session/quiz";
 import { browserAnswerKey } from "../../platform/answerKey";
 import { fetchText } from "../../platform/browser/fetchText";
+import { loaderT } from "../../i18n/loader";
 import { findQuizFiles } from "../../platform/browser/source";
 import { mountQuiz, type MountedQuiz } from "../preact/mount";
 import {
@@ -21,6 +22,17 @@ import {
   resolveThemeFolder,
   setTheme,
 } from "../../platform/browser/theme";
+
+/** A fetched file is either Trivia Syntax or an embedded JSON quiz. */
+function payloadOf(text: string, source: string): LoadInput {
+  if (!text.trimStart().startsWith("{")) {
+    return { type: "text", text, file: source };
+  }
+  const data = JSON.parse(text) as unknown;
+  return isEncryptedQuiz(data)
+    ? { type: "encrypted", data }
+    : { type: "inline", data };
+}
 
 const ELEMENT_NAME = "pq-quiz";
 
@@ -135,9 +147,7 @@ export class QuizElement extends HTMLElement {
         await this.#loadProbed(quiz, generation);
         await this.#headerTheme(theme, generation);
       } catch (error) {
-        if (generation === this.#generation) {
-          quiz.fail(error instanceof Error ? error.message : String(error));
-        }
+        this.#fail(quiz, error, generation);
       }
       return;
     }
@@ -146,22 +156,10 @@ export class QuizElement extends HTMLElement {
       if (generation !== this.#generation) {
         return;
       }
-      if (!text.trimStart().startsWith("{")) {
-        await quiz.load({ type: "text", text, file: source });
-        await this.#headerTheme(theme, generation);
-        return;
-      }
-      const data = JSON.parse(text) as unknown;
-      await quiz.load(
-        isEncryptedQuiz(data)
-          ? { type: "encrypted", data }
-          : { type: "inline", data },
-      );
+      await quiz.load(payloadOf(text, source));
       await this.#headerTheme(theme, generation);
     } catch (error) {
-      if (generation === this.#generation) {
-        quiz.fail(error instanceof Error ? error.message : String(error));
-      }
+      this.#fail(quiz, error, generation);
     }
   }
 
@@ -187,7 +185,11 @@ export class QuizElement extends HTMLElement {
       pattern,
     });
     if (files.length === 0) {
-      throw new Error(`No question files found for "${pattern}".`);
+      throw new Error(
+        loaderT(quiz.state.language ?? quiz.config.language)("loaderNoFiles", {
+          pattern,
+        }),
+      );
     }
     if (generation !== this.#generation) {
       return;
@@ -196,6 +198,13 @@ export class QuizElement extends HTMLElement {
   }
 
   /** `Theme => forest` in the header, when no attribute says otherwise. */
+  /** A stale load must not fail the quiz that replaced it. */
+  #fail(quiz: Quiz, error: unknown, generation: number): void {
+    if (generation === this.#generation) {
+      quiz.fail(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   async #headerTheme(
     attribute: string | null,
     generation: number,

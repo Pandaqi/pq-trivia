@@ -81,7 +81,7 @@ export function PrintMedia({
                 <th scope="col">#</th>
                 <th scope="col">{t("printQuestion")}</th>
                 <th scope="col">{t("roundWord")}</th>
-                <th scope="col">Media</th>
+                <th scope="col">{t("mediaWord")}</th>
                 <th scope="col">{t("printNotes")}</th>
               </tr>
             </thead>

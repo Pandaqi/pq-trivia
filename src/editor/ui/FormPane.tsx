@@ -28,11 +28,13 @@ import {
   valuesFor,
 } from "../commands";
 import { FIELD_GROUPS, fieldsInGroup, HEADER_FIELDS } from "../fields";
+import type { Translate } from "../../i18n/types";
 import type { EditorOptions } from "../mount";
-import { HEADER_INDEX, SLIDE_KIND_LABELS, slideAt } from "../slides";
+import { HEADER_INDEX, slideAt, slideKindLabel, slideLabel } from "../slides";
 import type { EditorSnapshot, EditorStore } from "../store";
 import type { SlideInfo } from "../slides";
 import { DraftText, FieldRow, FieldShell, Select } from "./Field";
+import { useEditorT } from "./i18n";
 import { NoteHead } from "./NoteHead";
 import { ListEditor } from "./ListEditor";
 
@@ -60,35 +62,34 @@ const TYPE_OPTIONS = QUESTION_TYPES.filter(
   (type) => type !== QuestionType.Open,
 );
 
-const ANSWER_HINTS: Readonly<Record<string, string>> = {
-  [QuestionType.Open]:
-    "One accepted answer per row. AlsoAccept adds alternatives.",
-  [QuestionType.Choice]: "Tick every option that counts as correct.",
-  [QuestionType.List]: "Tick the answers a player must give, in any order.",
-  [QuestionType.Sort]: "Write them in the right order. The player sorts them.",
-  [QuestionType.Range]: "The expected number. Range sets the margin.",
-  [QuestionType.Match]: "Write each pair as Left ~ Right.",
-  [QuestionType.Cloze]: "One answer per [blank], or groups split by ||.",
+const ANSWER_HINT_KEYS: Readonly<Record<string, string>> = {
+  [QuestionType.Open]: "editorCorrectHintOpen",
+  [QuestionType.Choice]: "editorCorrectHintChoice",
+  [QuestionType.List]: "editorCorrectHintList",
+  [QuestionType.Sort]: "editorCorrectHintSort",
+  [QuestionType.Range]: "editorCorrectHintRange",
+  [QuestionType.Match]: "editorCorrectHintMatch",
+  [QuestionType.Cloze]: "editorCorrectHintCloze",
 };
 
-function textLabel(type: string): string {
+function textLabel(type: string, t: Translate): string {
   if (type === QuestionType.Section) {
-    return "Round name";
+    return t("editorRoundName");
   }
   if (SCREENS.has(type)) {
-    return "Screen text";
+    return t("editorScreenText");
   }
-  return "Question text";
+  return t("editorQuestionText");
 }
 
-function textHint(type: string): string {
+function textHint(type: string, t: Translate): string {
   if (type === QuestionType.Section) {
-    return "The heading on its own screen at the start of the round.";
+    return t("editorTextHintRound");
   }
   if (SCREENS.has(type)) {
-    return "The big line. Inline formatting works.";
+    return t("editorTextHintScreen");
   }
-  return "Inline formatting works. [blank] is a cloze gap.";
+  return t("editorTextHintQuestion");
 }
 
 export function FormPane({
@@ -119,12 +120,13 @@ function HeaderForm({
   readonly store: EditorStore;
   readonly snapshot: EditorSnapshot;
 }): JSX.Element {
+  const t = useEditorT();
   const empty = snapshot.slides.length === 1;
   return (
-    <section class="pq-editor-panel" aria-label="Quiz settings">
+    <section class="pq-editor-panel" aria-label={t("editorQuizSettings")}>
       <NoteHead
-        label="Quiz settings"
-        note="These lines sit above the first question. Empty a field to drop its line."
+        label={t("editorQuizSettings")}
+        note={t("editorQuizSettingsNote")}
       />
       {HEADER_FIELDS.map((field) => (
         <FieldRow
@@ -138,7 +140,7 @@ function HeaderForm({
       ))}
       {empty ? (
         <p class="pq-editor-hint">
-          No slides yet. Use <strong>+ Question</strong> in the toolbar.
+          {t("editorNoSlides", { button: t("editorAddQuestion") })}
         </p>
       ) : null}
     </section>
@@ -151,6 +153,7 @@ function BlockForm({
   options,
   index,
 }: FormPaneProps & { readonly index: number }): JSX.Element {
+  const t = useEditorT();
   const slide: SlideInfo | undefined = slideAt(snapshot.slides, index);
   const type =
     valuesFor(snapshot, index, "Type")[0]?.toLowerCase() ?? QuestionType.Open;
@@ -160,6 +163,12 @@ function BlockForm({
   const media = valuesFor(snapshot, index, "Media");
   const isScreen = SCREENS.has(type);
   const showCorrect = !NO_CORRECT.has(type);
+  const correctProps = showCorrect
+    ? {
+        correct,
+        onToggleCorrect: (value: string) => toggleCorrect(store, index, value),
+      }
+    : {};
 
   const addMediaClick = (): void => {
     const pick = options.onPickMedia;
@@ -174,20 +183,22 @@ function BlockForm({
       addMedia(store, index, picked.name);
       store.say(
         picked.copied
-          ? `Copied ${picked.name} into media/.`
-          : `${picked.name} is only a path. Put the file next to the quiz.`,
+          ? t("editorCopiedMedia", { name: picked.name })
+          : t("editorMediaPath", { name: picked.name }),
       );
     });
   };
 
   return (
-    <section class="pq-editor-panel" aria-label="Slide editor">
+    <section class="pq-editor-panel" aria-label={t("editorSlideEditor")}>
       <div class="pq-editor-panel-head">
         <h2>
           <span class="pq-editor-kind">
-            {slide === undefined ? "Slide" : SLIDE_KIND_LABELS[slide.kind]}
+            {slide === undefined
+              ? t("editorSlide")
+              : slideKindLabel(t, slide.kind)}
           </span>
-          {slide?.label ?? "Slide"}
+          {slide === undefined ? t("editorSlide") : slideLabel(t, slide)}
         </h2>
         <div class="pq-editor-actions">
           <button
@@ -195,7 +206,7 @@ function BlockForm({
             class="pq-editor-button"
             onClick={() => moveSlide(store, index, -1)}
             disabled={index === 0}
-            title="Alt+↑"
+            title={t("editorAltUp")}
           >
             ↑
           </button>
@@ -204,7 +215,7 @@ function BlockForm({
             class="pq-editor-button"
             onClick={() => moveSlide(store, index, 1)}
             disabled={index >= snapshot.slides.length - 2}
-            title="Alt+↓"
+            title={t("editorAltDown")}
           >
             ↓
           </button>
@@ -213,22 +224,22 @@ function BlockForm({
             class="pq-editor-button"
             onClick={() => duplicateSlide(store, index)}
           >
-            Duplicate
+            {t("editorDuplicate")}
           </button>
           <button
             type="button"
             class="pq-editor-button"
             onClick={() => removeSlide(store, index)}
           >
-            Remove
+            {t("editorRemove")}
           </button>
         </div>
       </div>
 
       <FieldShell
         id="pq-editor-question"
-        label={textLabel(type)}
-        description={textHint(type)}
+        label={textLabel(type, t)}
+        description={textHint(type, t)}
       >
         <DraftText
           id="pq-editor-question"
@@ -241,14 +252,14 @@ function BlockForm({
 
       <FieldShell
         id="pq-editor-type"
-        label="Type"
-        description="Open asks for typed text. The rest show answer cards."
+        label={t("editorType")}
+        description={t("editorTypeNote")}
       >
         <Select
           id="pq-editor-type"
           value={type === QuestionType.Open ? "" : type}
           options={TYPE_OPTIONS}
-          emptyLabel="open (default)"
+          emptyLabel={t("editorOpenDefault")}
           onChange={(value) => setFieldValue(store, index, "Type", value)}
         />
       </FieldShell>
@@ -256,33 +267,27 @@ function BlockForm({
       {isScreen ? null : (
         <FieldShell
           id="pq-editor-answers"
-          label="Answers"
-          description={ANSWER_HINTS[type] ?? ""}
+          label={t("editorAnswers")}
+          description={t(ANSWER_HINT_KEYS[type] ?? "")}
         >
           <ListEditor
             id="pq-editor-answers"
             values={answers}
-            {...(showCorrect
-              ? {
-                  correct,
-                  onToggleCorrect: (value: string) =>
-                    toggleCorrect(store, index, value),
-                }
-              : {})}
+            {...correctProps}
             onChange={(at, value) => setAnswerAt(store, index, at, value)}
             onAdd={() => addAnswer(store, index)}
             onRemove={(at) => removeAnswer(store, index, at)}
             onMove={(at, delta) => moveAnswer(store, index, at, delta)}
-            addLabel="Add answer"
-            emptyText="Open questions can skip this."
+            addLabel={t("editorAddAnswer")}
+            emptyText={t("editorOpenAnswers")}
           />
         </FieldShell>
       )}
 
       <FieldShell
         id="pq-editor-media"
-        label="Media"
-        description="Pick a file to copy it into media/. Any path works too."
+        label={t("editorMedia")}
+        description={t("editorMediaNote")}
       >
         <ListEditor
           id="pq-editor-media"
@@ -291,28 +296,28 @@ function BlockForm({
           onAdd={addMediaClick}
           onRemove={(at) => removeMedia(store, index, at)}
           onMove={(at, delta) => moveMedia(store, index, at, delta)}
-          addLabel="Add file"
-          emptyText="No media on this slide."
+          addLabel={t("editorAddFile")}
+          emptyText={t("editorNoMedia")}
           extra={
             <button
               type="button"
               class="pq-editor-button"
               onClick={() => addMedia(store, index, "")}
             >
-              Add path
+              {t("editorAddPath")}
             </button>
           }
         />
       </FieldShell>
 
-      {FIELD_GROUPS.map(({ group, label }) => {
+      {FIELD_GROUPS.map(({ group, labelKey }) => {
         const fields = fieldsInGroup(group);
         if (fields.length === 0) {
           return null;
         }
         return (
           <details class="pq-editor-more" key={group}>
-            <summary>{label}</summary>
+            <summary>{t(labelKey)}</summary>
             <div class="pq-editor-more-body">
               {fields.map((field) => (
                 <FieldRow

@@ -16,8 +16,15 @@
 import type { AstAttribute } from "./ast";
 import { coerceDuration } from "../values/coerce";
 
-export type ConfigValueKind =
-  "text" | "list" | "number" | "boolean" | "duration" | "pairs";
+/** How a header value is read. The table below says which each one is. */
+export enum ConfigValueKind {
+  Text = "text",
+  List = "list",
+  Number = "number",
+  Boolean = "boolean",
+  Duration = "duration",
+  Pairs = "pairs",
+}
 
 export interface ConfigHeaderRow {
   readonly attribute: string;
@@ -31,179 +38,154 @@ export interface CodeOnlyConfigRow {
   readonly why: string;
 }
 
-export const CONFIG_HEADER_ROWS = [
+/** One header row, short enough to read in the table. */
+const row = (
+  attribute: string,
+  key: string,
+  kind: ConfigValueKind,
+): ConfigHeaderRow => ({ attribute, key, kind });
+
+export const CONFIG_HEADER_ROWS: readonly ConfigHeaderRow[] = [
   // Order.
-  { attribute: "ShuffleQuestions", key: "shuffleQuestions", kind: "boolean" },
-  { attribute: "ShuffleRounds", key: "shuffleRounds", kind: "boolean" },
-  { attribute: "KeepQuestionOrder", key: "keepQuestionOrder", kind: "boolean" },
-  { attribute: "KeepSectionOrder", key: "keepSectionOrder", kind: "boolean" },
-  { attribute: "KeepAnswerOrder", key: "keepAnswerOrder", kind: "boolean" },
-  { attribute: "RandomizeMedia", key: "randomizeMedia", kind: "boolean" },
+  row("ShuffleQuestions", "shuffleQuestions", ConfigValueKind.Boolean),
+  row("ShuffleRounds", "shuffleRounds", ConfigValueKind.Boolean),
+  row("KeepQuestionOrder", "keepQuestionOrder", ConfigValueKind.Boolean),
+  row("KeepSectionOrder", "keepSectionOrder", ConfigValueKind.Boolean),
+  row("KeepAnswerOrder", "keepAnswerOrder", ConfigValueKind.Boolean),
+  row("RandomizeMedia", "randomizeMedia", ConfigValueKind.Boolean),
 
   // Which questions make it into the quiz.
-  { attribute: "Include", key: "include", kind: "pairs" },
-  { attribute: "Exclude", key: "exclude", kind: "pairs" },
-  { attribute: "GroupBy", key: "groupBy", kind: "text" },
-  {
-    attribute: "QuestionTypesAllowed",
-    key: "questionTypesAllowed",
-    kind: "list",
-  },
-  { attribute: "FilterSections", key: "filterSections", kind: "list" },
-  { attribute: "ExcludeSections", key: "excludeSections", kind: "boolean" },
-  { attribute: "MinAnswers", key: "minAnswers", kind: "number" },
-  { attribute: "MaxAnswers", key: "maxAnswers", kind: "number" },
+  row("Include", "include", ConfigValueKind.Pairs),
+  row("Exclude", "exclude", ConfigValueKind.Pairs),
+  row("GroupBy", "groupBy", ConfigValueKind.Text),
+  row("QuestionTypesAllowed", "questionTypesAllowed", ConfigValueKind.List),
+  row("FilterSections", "filterSections", ConfigValueKind.List),
+  row("ExcludeSections", "excludeSections", ConfigValueKind.Boolean),
+  row("MinAnswers", "minAnswers", ConfigValueKind.Number),
+  row("MaxAnswers", "maxAnswers", ConfigValueKind.Number),
 
   // Scores and properties.
-  { attribute: "MinScore", key: "minScore", kind: "number" },
-  { attribute: "MaxScore", key: "maxScore", kind: "number" },
-  { attribute: "DefaultScore", key: "defaultScore", kind: "number" },
-  { attribute: "HideScore", key: "hideScore", kind: "boolean" },
-  {
-    attribute: "HideScoreOnAnswers",
-    key: "hideScoreOnAnswers",
-    kind: "boolean",
-  },
-  { attribute: "DefaultAuthor", key: "defaultAuthor", kind: "text" },
-  { attribute: "PossibleAuthors", key: "possibleAuthors", kind: "list" },
-  { attribute: "HideAuthor", key: "hideAuthor", kind: "boolean" },
-  { attribute: "DefaultCategory", key: "defaultCategory", kind: "text" },
-  { attribute: "PossibleCategories", key: "possibleCategories", kind: "list" },
-  { attribute: "HideCategory", key: "hideCategory", kind: "boolean" },
-  {
-    attribute: "ShowPropertiesWithoutDiversity",
-    key: "showPropertiesWithoutDiversity",
-    kind: "boolean",
-  },
+  row("MinScore", "minScore", ConfigValueKind.Number),
+  row("MaxScore", "maxScore", ConfigValueKind.Number),
+  row("DefaultScore", "defaultScore", ConfigValueKind.Number),
+  row("HideScore", "hideScore", ConfigValueKind.Boolean),
+  row("HideScoreOnAnswers", "hideScoreOnAnswers", ConfigValueKind.Boolean),
+  row("DefaultAuthor", "defaultAuthor", ConfigValueKind.Text),
+  row("PossibleAuthors", "possibleAuthors", ConfigValueKind.List),
+  row("HideAuthor", "hideAuthor", ConfigValueKind.Boolean),
+  row("DefaultCategory", "defaultCategory", ConfigValueKind.Text),
+  row("PossibleCategories", "possibleCategories", ConfigValueKind.List),
+  row("HideCategory", "hideCategory", ConfigValueKind.Boolean),
+  row(
+    "ShowPropertiesWithoutDiversity",
+    "showPropertiesWithoutDiversity",
+    ConfigValueKind.Boolean,
+  ),
 
   // Shape of the play.
-  {
-    attribute: "AddMissingSectionScreens",
-    key: "addMissingSectionScreens",
-    kind: "boolean",
-  },
-  {
-    attribute: "AddSecretThemeQuestions",
-    key: "addSecretThemeQuestions",
-    kind: "boolean",
-  },
-  {
-    attribute: "HideSecretThemeMessage",
-    key: "hideSecretThemeMessage",
-    kind: "boolean",
-  },
-  {
-    attribute: "DisableTextFormatting",
-    key: "disableTextFormatting",
-    kind: "boolean",
-  },
-  {
-    attribute: "SyncPropertiesWithTranslations",
-    key: "syncPropertiesWithTranslations",
-    kind: "boolean",
-  },
-  { attribute: "LanguageDefault", key: "languageDefault", kind: "text" },
+  row(
+    "AddMissingSectionScreens",
+    "addMissingSectionScreens",
+    ConfigValueKind.Boolean,
+  ),
+  row(
+    "AddSecretThemeQuestions",
+    "addSecretThemeQuestions",
+    ConfigValueKind.Boolean,
+  ),
+  row(
+    "HideSecretThemeMessage",
+    "hideSecretThemeMessage",
+    ConfigValueKind.Boolean,
+  ),
+  row(
+    "DisableTextFormatting",
+    "disableTextFormatting",
+    ConfigValueKind.Boolean,
+  ),
+  row(
+    "SyncPropertiesWithTranslations",
+    "syncPropertiesWithTranslations",
+    ConfigValueKind.Boolean,
+  ),
+  row("LanguageDefault", "languageDefault", ConfigValueKind.Text),
 
   // Staged reveals, for a whole quiz at once.
-  { attribute: "DefaultSteps", key: "defaultSteps", kind: "list" },
-  {
-    attribute: "DefaultStepTransition",
-    key: "defaultStepTransition",
-    kind: "text",
-  },
+  row("DefaultSteps", "defaultSteps", ConfigValueKind.List),
+  row("DefaultStepTransition", "defaultStepTransition", ConfigValueKind.Text),
 
   // Interface switches.
-  { attribute: "HideErrors", key: "hideErrors", kind: "boolean" },
-  { attribute: "HideDefaultStyles", key: "hideDefaultStyles", kind: "boolean" },
-  {
-    attribute: "HideDefaultSettings",
-    key: "hideDefaultSettings",
-    kind: "boolean",
-  },
-  { attribute: "ThemeMode", key: "themeMode", kind: "text" },
-  { attribute: "LayoutMode", key: "layoutMode", kind: "text" },
-  { attribute: "ThemeDisabled", key: "themeDisabled", kind: "boolean" },
-  { attribute: "ThemeUpload", key: "themeUpload", kind: "boolean" },
-  {
-    attribute: "PrintAnswerLines",
-    key: "printAnswerLines",
-    kind: "boolean",
-  },
-  { attribute: "PrintTypeHints", key: "printTypeHints", kind: "boolean" },
-  { attribute: "EnableSafety", key: "enableSafety", kind: "boolean" },
-  { attribute: "EnableMouse", key: "enableMouse", kind: "boolean" },
-  { attribute: "DisableKeys", key: "disableKeys", kind: "boolean" },
-  { attribute: "DisableUI", key: "disableUI", kind: "boolean" },
-  { attribute: "DisableTouch", key: "disableTouch", kind: "boolean" },
-  { attribute: "HotkeysForbidden", key: "hotkeysForbidden", kind: "list" },
-  { attribute: "Toolbar", key: "toolbar", kind: "list" },
-  { attribute: "AnswerLabels", key: "answerLabels", kind: "text" },
-  { attribute: "MetadataIcons", key: "metadataIcons", kind: "boolean" },
-  {
-    attribute: "QuestionTypeHints",
-    key: "questionTypeHints",
-    kind: "boolean",
-  },
-  { attribute: "QuestionNumbers", key: "questionNumbers", kind: "boolean" },
-  { attribute: "AllowInput", key: "allowInput", kind: "boolean" },
-  { attribute: "CodeHighlight", key: "codeHighlight", kind: "boolean" },
-  { attribute: "AllowScripts", key: "allowScripts", kind: "boolean" },
+  row("HideErrors", "hideErrors", ConfigValueKind.Boolean),
+  row("HideDefaultStyles", "hideDefaultStyles", ConfigValueKind.Boolean),
+  row("HideDefaultSettings", "hideDefaultSettings", ConfigValueKind.Boolean),
+  row("ThemeMode", "themeMode", ConfigValueKind.Text),
+  row("LayoutMode", "layoutMode", ConfigValueKind.Text),
+  row("ThemeDisabled", "themeDisabled", ConfigValueKind.Boolean),
+  row("ThemeUpload", "themeUpload", ConfigValueKind.Boolean),
+  row("PrintAnswerLines", "printAnswerLines", ConfigValueKind.Boolean),
+  row("PrintTypeHints", "printTypeHints", ConfigValueKind.Boolean),
+  row("EnableSafety", "enableSafety", ConfigValueKind.Boolean),
+  row("EnableMouse", "enableMouse", ConfigValueKind.Boolean),
+  row("DisableKeys", "disableKeys", ConfigValueKind.Boolean),
+  row("DisableUI", "disableUI", ConfigValueKind.Boolean),
+  row("DisableTouch", "disableTouch", ConfigValueKind.Boolean),
+  row("HotkeysForbidden", "hotkeysForbidden", ConfigValueKind.List),
+  row("Toolbar", "toolbar", ConfigValueKind.List),
+  row("AnswerLabels", "answerLabels", ConfigValueKind.Text),
+  row("MetadataIcons", "metadataIcons", ConfigValueKind.Boolean),
+  row("QuestionTypeHints", "questionTypeHints", ConfigValueKind.Boolean),
+  row("QuestionNumbers", "questionNumbers", ConfigValueKind.Boolean),
+  row("AllowInput", "allowInput", ConfigValueKind.Boolean),
+  row("CodeHighlight", "codeHighlight", ConfigValueKind.Boolean),
+  row("AllowScripts", "allowScripts", ConfigValueKind.Boolean),
 
   // Timers.
-  { attribute: "DateCreation", key: "dateCreation", kind: "number" },
-  { attribute: "Hotkeys", key: "hotkeys", kind: "pairs" },
-  { attribute: "HideTimerGlobal", key: "hideTimerGlobal", kind: "boolean" },
-  { attribute: "HideTimerQuestion", key: "hideTimerQuestion", kind: "boolean" },
-  {
-    attribute: "AllowTimerOnSections",
-    key: "allowTimerOnSections",
-    kind: "boolean",
-  },
-  { attribute: "TimerStrategy", key: "timerStrategy", kind: "text" },
-  { attribute: "TimerSound", key: "timerSound", kind: "boolean" },
-  { attribute: "DefaultTimer", key: "defaultTimer", kind: "number" },
+  row("DateCreation", "dateCreation", ConfigValueKind.Number),
+  row("Hotkeys", "hotkeys", ConfigValueKind.Pairs),
+  row("HideTimerGlobal", "hideTimerGlobal", ConfigValueKind.Boolean),
+  row("HideTimerQuestion", "hideTimerQuestion", ConfigValueKind.Boolean),
+  row("AllowTimerOnSections", "allowTimerOnSections", ConfigValueKind.Boolean),
+  row("TimerStrategy", "timerStrategy", ConfigValueKind.Text),
+  row("TimerSound", "timerSound", ConfigValueKind.Boolean),
+  row("DefaultTimer", "defaultTimer", ConfigValueKind.Number),
 
   // Media and files.
-  { attribute: "MediaAutoPlay", key: "mediaAutoPlay", kind: "boolean" },
-  {
-    attribute: "LoadExternalMediaAsIframe",
-    key: "loadExternalMediaAsIframe",
-    kind: "boolean",
-  },
-  { attribute: "Url", key: "url", kind: "text" },
-  { attribute: "LinkPrefixes", key: "linkPrefixes", kind: "list" },
-  { attribute: "MediaFormats", key: "mediaFormats", kind: "list" },
-  { attribute: "SubFolderMedia", key: "subFolderMedia", kind: "text" },
-  { attribute: "SubFolderTheme", key: "subFolderTheme", kind: "text" },
-  { attribute: "SubFolderQuestions", key: "subFolderQuestions", kind: "text" },
-  { attribute: "FilenamePattern", key: "filenamePattern", kind: "text" },
-  { attribute: "Filenames", key: "filenames", kind: "list" },
-  { attribute: "FileExtensions", key: "fileExtensions", kind: "list" },
-  { attribute: "BannerImage", key: "bannerImage", kind: "text" },
-  { attribute: "Icon", key: "icon", kind: "text" },
+  row("MediaAutoPlay", "mediaAutoPlay", ConfigValueKind.Boolean),
+  row(
+    "LoadExternalMediaAsIframe",
+    "loadExternalMediaAsIframe",
+    ConfigValueKind.Boolean,
+  ),
+  row("Url", "url", ConfigValueKind.Text),
+  row("LinkPrefixes", "linkPrefixes", ConfigValueKind.List),
+  row("MediaFormats", "mediaFormats", ConfigValueKind.List),
+  row("SubFolderMedia", "subFolderMedia", ConfigValueKind.Text),
+  row("SubFolderTheme", "subFolderTheme", ConfigValueKind.Text),
+  row("SubFolderQuestions", "subFolderQuestions", ConfigValueKind.Text),
+  row("FilenamePattern", "filenamePattern", ConfigValueKind.Text),
+  row("Filenames", "filenames", ConfigValueKind.List),
+  row("FileExtensions", "fileExtensions", ConfigValueKind.List),
+  row("BannerImage", "bannerImage", ConfigValueKind.Text),
+  row("Icon", "icon", ConfigValueKind.Text),
 
   // Drawing and balancing a round.
-  { attribute: "Pool", key: "pool", kind: "number" },
-  {
-    attribute: "BalanceDifficulty",
-    key: "balanceDifficulty",
-    kind: "boolean",
-  },
+  row("Pool", "pool", ConfigValueKind.Number),
+  row("BalanceDifficulty", "balanceDifficulty", ConfigValueKind.Boolean),
 
   // Points.
-  { attribute: "ScoringPreset", key: "scoringPreset", kind: "text" },
-  { attribute: "NegativeMarking", key: "negativeMarking", kind: "number" },
-  { attribute: "Streaks", key: "streaks", kind: "boolean" },
+  row("ScoringPreset", "scoringPreset", ConfigValueKind.Text),
+  row("NegativeMarking", "negativeMarking", ConfigValueKind.Number),
+  row("Streaks", "streaks", ConfigValueKind.Boolean),
 
   // Play policy.
-  { attribute: "Restricted", key: "restricted", kind: "boolean" },
-  { attribute: "Lifelines", key: "lifelines", kind: "list" },
-  { attribute: "Teams", key: "teams", kind: "list" },
-  { attribute: "QuizLimit", key: "quizLimit", kind: "duration" },
-  { attribute: "RoundTimer", key: "roundTimer", kind: "duration" },
-  { attribute: "RevealMode", key: "revealMode", kind: "text" },
-  { attribute: "Policy", key: "policy", kind: "text" },
-  { attribute: "Grading", key: "grading", kind: "text" },
+  row("Restricted", "restricted", ConfigValueKind.Boolean),
+  row("Lifelines", "lifelines", ConfigValueKind.List),
+  row("Teams", "teams", ConfigValueKind.List),
+  row("QuizLimit", "quizLimit", ConfigValueKind.Duration),
+  row("RoundTimer", "roundTimer", ConfigValueKind.Duration),
+  row("RevealMode", "revealMode", ConfigValueKind.Text),
+  row("Policy", "policy", ConfigValueKind.Text),
+  row("Grading", "grading", ConfigValueKind.Text),
 ] as const satisfies readonly ConfigHeaderRow[];
 
 /**
@@ -323,34 +305,34 @@ export function parseHeaderConfig(
       continue;
     }
     switch (row.kind) {
-      case "boolean":
+      case ConfigValueKind.Boolean:
         out[row.key] = truthy(values[0] ?? "");
         break;
-      case "number": {
+      case ConfigValueKind.Number: {
         const number = Number(values[0]);
         if (Number.isFinite(number)) {
           out[row.key] = number;
         }
         break;
       }
-      case "duration": {
+      case ConfigValueKind.Duration: {
         const ms = coerceDuration(values[0] ?? "");
         if (ms !== undefined) {
           out[row.key] = ms;
         }
         break;
       }
-      case "list":
+      case ConfigValueKind.List:
         out[row.key] = splitList(values);
         break;
-      case "pairs": {
+      case ConfigValueKind.Pairs: {
         const map = pairs(values);
         if (Object.keys(map).length > 0) {
           out[row.key] = map;
         }
         break;
       }
-      case "text":
+      case ConfigValueKind.Text:
       default:
         out[row.key] = (values[0] ?? "").trim();
         break;

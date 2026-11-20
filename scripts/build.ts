@@ -6,6 +6,7 @@
 
 import { mkdir, readdir, readFile, rm, watch } from "node:fs/promises";
 import { join } from "node:path";
+import { minifyCss } from "./css";
 type BuildPlugin = NonNullable<
   NonNullable<Parameters<typeof Bun.build>[0]>["plugins"]
 >[number];
@@ -65,7 +66,10 @@ function requestedLanguages(args: readonly string[]): string[] | null {
 
 async function selectLanguages(): Promise<string[]> {
   const available = (await readdir(LOCALES_DIR))
-    .filter((file) => file.endsWith(".ts") && file !== "index.ts")
+    .filter(
+      (file) =>
+        file.endsWith(".ts") && file !== "index.ts" && file !== "all.ts",
+    )
     .map((file) => file.replace(/\.ts$/, ""))
     .sort();
   const requested = requestedLanguages(process.argv.slice(2));
@@ -82,35 +86,113 @@ async function selectLanguages(): Promise<string[]> {
   return requested;
 }
 
-async function writeLocales(languages: readonly string[]): Promise<string> {
-  await mkdir(GENERATED_DIR, { recursive: true });
-  const imports = languages
-    .map(
-      (code, index) =>
-        `import { ${code.replaceAll("-", "_")} as locale${index} } from "../src/i18n/locales/${code}";`,
-    )
-    .join("\n");
-  const entries = languages
-    .map((code, index) => `${JSON.stringify(code)}: locale${index}`)
-    .join(", ");
-  const path = join(GENERATED_DIR, "locales.ts");
-  await Bun.write(
-    path,
-    `${imports}\n\nexport const LOCALES = { ${entries} };\n`,
-  );
-  return path;
+interface LocaleFiles {
+  readonly locales: string;
+  readonly live: string;
+  readonly editor: string;
+  readonly diagnostic: string;
+  readonly loader: string;
 }
 
-let localeFile = "";
+async function writeLocales(
+  languages: readonly string[],
+): Promise<LocaleFiles> {
+  await mkdir(GENERATED_DIR, { recursive: true });
+  const names = languages.map((code, index) => ({
+    code,
+    index,
+    name: code.replaceAll("-", "_"),
+  }));
+  const imports = (suffix: string): string =>
+    names
+      .map(
+        ({ code, index, name }) =>
+          `import { ${name}${suffix} as locale${index} } from "../src/i18n/locales/${code}";`,
+      )
+      .join("\n");
+  const entries = names
+    .map(({ code, index }) => `${JSON.stringify(code)}: locale${index}`)
+    .join(", ");
+  const write = async (name: string, body: string): Promise<string> => {
+    const path = join(GENERATED_DIR, name);
+    await Bun.write(path, body);
+    return path;
+  };
+  const locales = await write(
+    "locales.ts",
+    `${imports("Base")}\n\nexport const LOCALES = { ${entries} };\n`,
+  );
+  const live = await write(
+    "liveLocales.ts",
+    `${imports("Live")}\n\nexport const LIVE_LOCALES = { ${entries} };\n`,
+  );
+  // The wizard shows diagnostics too, so its table carries both halves.
+  const editorImports = names
+    .map(
+      ({ code, index, name }) =>
+        `import { ${name}Editor as editor${index}, ${name}Diagnostics as diag${index} } from "../src/i18n/locales/${code}";`,
+    )
+    .join("\n");
+  const editorEntries = names
+    .map(
+      ({ code, index }) =>
+        `${JSON.stringify(code)}: { ...editor${index}, ...diag${index} }`,
+    )
+    .join(", ");
+  const editor = await write(
+    "editorLocales.ts",
+    `${editorImports}\n\nexport const EDITOR_LOCALES = { ${editorEntries} };\n`,
+  );
+  const diagnostic = await write(
+    "diagnosticLocales.ts",
+    `${imports("Diagnostics")}\n\nexport const DIAGNOSTIC_LOCALES = { ${entries} };\n\nexport const DIAGNOSTIC_KEYS: ReadonlySet<string> = new Set(\n  Object.values(DIAGNOSTIC_LOCALES).flatMap((table) => Object.keys(table)),\n);\n`,
+  );
+  const loader = await write(
+    "loaderLocales.ts",
+    `${imports("Loader")}\n\nexport const LOADER_LOCALES = { ${entries} };\n`,
+  );
+  return { locales, live, editor, diagnostic, loader };
+}
+
+/** Themes stay readable in `src/`; bundles get the compact text. */
+const CSS_PLUGIN: BuildPlugin = {
+  name: "pq-css",
+  setup(build) {
+    build.onLoad({ filter: /\.css$/ }, async (args) => ({
+      contents: minifyCss(await readFile(args.path, "utf8")),
+      loader: "text",
+    }));
+  },
+};
+
+let localeFiles: LocaleFiles = {
+  locales: "",
+  live: "",
+  editor: "",
+  diagnostic: "",
+  loader: "",
+};
 const LOCALE_PLUGIN: BuildPlugin = {
   name: "pq-locales",
   setup(build) {
     build.onResolve({ filter: /^\.\/locales$/ }, (args) => {
       const importer = args.importer.replaceAll("\\", "/");
       return importer.endsWith("/src/i18n/dictionary.ts")
-        ? { path: localeFile }
+        ? { path: localeFiles.locales }
         : undefined;
     });
+    build.onResolve({ filter: /liveLocales$/ }, () => ({
+      path: localeFiles.live,
+    }));
+    build.onResolve({ filter: /editorLocales$/ }, () => ({
+      path: localeFiles.editor,
+    }));
+    build.onResolve({ filter: /diagnosticLocales$/ }, () => ({
+      path: localeFiles.diagnostic,
+    }));
+    build.onResolve({ filter: /loaderLocales$/ }, () => ({
+      path: localeFiles.loader,
+    }));
   },
 };
 
@@ -165,6 +247,26 @@ const THEME_PARTS: Readonly<Record<string, readonly string[]>> = {
   "print.css": ["print.pages.css", "print.questions.css", "print.forms.css"],
 };
 
+/** Where the block that opens at `open` closes, or the end of the text. */
+function closingBrace(css: string, open: number): number {
+  let depth = 0;
+  for (let cursor = open; cursor < css.length; cursor += 1) {
+    const char = css[cursor];
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+    if (char !== "}") {
+      continue;
+    }
+    depth -= 1;
+    if (depth === 0) {
+      return cursor;
+    }
+  }
+  return css.length;
+}
+
 /** Remove every `@media print { … }` wrapper, whatever the nesting. */
 function unwrapMediaPrint(css: string): string {
   let out = "";
@@ -177,19 +279,7 @@ function unwrapMediaPrint(css: string): string {
     }
     out += css.slice(index, at);
     const open = css.indexOf("{", at);
-    let depth = 0;
-    let cursor = open;
-    for (; cursor < css.length; cursor += 1) {
-      const char = css[cursor];
-      if (char === "{") {
-        depth += 1;
-      } else if (char === "}") {
-        depth -= 1;
-        if (depth === 0) {
-          break;
-        }
-      }
-    }
+    const cursor = closingBrace(css, open);
     out += css.slice(open + 1, cursor);
     index = cursor + 1;
   }
@@ -236,7 +326,7 @@ async function build(languages: readonly string[]): Promise<boolean> {
       await rm(join(OUT_DIR, file));
     }
   }
-  localeFile = await writeLocales(languages);
+  localeFiles = await writeLocales(languages);
 
   for (const [name, flag] of Object.entries(OPT_IN_ENTRIES)) {
     if (process.argv.includes(flag)) {
@@ -282,7 +372,7 @@ async function build(languages: readonly string[]): Promise<boolean> {
         chunk: "chunk-[name].[ext]",
       },
       banner: banner(entry.name),
-      plugins: [LOCALE_PLUGIN],
+      plugins: [LOCALE_PLUGIN, CSS_PLUGIN],
     });
 
     if (!result.success) {

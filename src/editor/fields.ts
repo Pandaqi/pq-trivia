@@ -33,7 +33,13 @@ export interface FieldSpec {
   readonly kind: FieldKind;
   readonly group: AttributeGroup;
   readonly description: string;
+  readonly descriptionKey: string;
   readonly options: readonly string[];
+}
+
+/** The locale key for one attribute's help line. */
+export function descriptionKey(key: string): string {
+  return `desc${key}`;
 }
 
 /** Attribute kinds that get a text input, a select, or a list of rows. */
@@ -70,12 +76,12 @@ const OWN_EDITORS: ReadonlySet<string> = new Set([
 
 export const FIELD_GROUPS: readonly {
   readonly group: AttributeGroup;
-  readonly label: string;
+  readonly labelKey: string;
 }[] = [
-  { group: AttributeGroup.Content, label: "Content" },
-  { group: AttributeGroup.Display, label: "Display" },
-  { group: AttributeGroup.Meta, label: "Meta" },
-  { group: AttributeGroup.Flow, label: "Flow" },
+  { group: AttributeGroup.Content, labelKey: "editorGroupContent" },
+  { group: AttributeGroup.Display, labelKey: "editorGroupDisplay" },
+  { group: AttributeGroup.Meta, labelKey: "editorGroupMeta" },
+  { group: AttributeGroup.Flow, labelKey: "editorGroupFlow" },
 ];
 
 export const BLOCK_FIELDS: readonly FieldSpec[] = listAttributes()
@@ -86,6 +92,7 @@ export const BLOCK_FIELDS: readonly FieldSpec[] = listAttributes()
     kind: KIND_BY_TYPE[attribute.type],
     group: attribute.group,
     description: ATTRIBUTE_DESCRIPTIONS[attribute.key] ?? "",
+    descriptionKey: descriptionKey(attribute.key),
     options: ENUM_OPTIONS[attribute.key] ?? [],
   }))
   .sort((a, b) => attributeOrder(a.key) - attributeOrder(b.key));
@@ -100,6 +107,7 @@ export interface HeaderFieldSpec {
   readonly label: string;
   readonly kind: FieldKind;
   readonly description: string;
+  readonly descriptionKey: string;
 }
 
 /** Title is not here: it lives in the toolbar, where you name the file. */
@@ -109,41 +117,48 @@ export const HEADER_FIELDS: readonly HeaderFieldSpec[] = [
     label: "Description",
     kind: FieldKind.Text,
     description: "One line about the quiz.",
+    descriptionKey: "descHeaderDescription",
   },
   {
     key: "Author",
     label: "Author",
     kind: FieldKind.List,
     description: "Who wrote it.",
+    descriptionKey: "descHeaderAuthor",
   },
   {
     key: "Theme",
     label: "Theme",
     kind: FieldKind.Text,
     description: "A theme folder name, or a path to one.",
+    descriptionKey: "descHeaderTheme",
   },
   {
     key: "Language",
     label: "Language",
     kind: FieldKind.Text,
     description: "Two-letter code for the content language.",
+    descriptionKey: "descHeaderLanguage",
   },
   {
     key: "Languages",
     label: "Languages",
     kind: FieldKind.Text,
     description: "Every language the quiz ships in, separated by a bar.",
+    descriptionKey: "descHeaderLanguages",
   },
   {
     key: "Date",
     label: "Date",
     kind: FieldKind.Text,
     description: "When the quiz is for.",
+    descriptionKey: "descHeaderDate",
   },
   {
     key: "Seed",
     label: "Seed",
     kind: FieldKind.Text,
     description: "Same seed, same shuffle, every time.",
+    descriptionKey: "descHeaderSeed",
   },
 ];

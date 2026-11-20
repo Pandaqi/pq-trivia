@@ -24,6 +24,17 @@ import { useT } from "../preact/i18n";
 import { FieldError, messageFor } from "./fields";
 import type { InputProps } from "./fields";
 
+/** A tight slider gets halves; a wide one stays on whole numbers. */
+const SLIDER_HALF_STEP_SPAN = 20;
+const SLIDER_HALF_STEP = 0.5;
+const SLIDER_WHOLE_STEP = 1;
+
+function sliderStep(min: number, max: number): number {
+  return max - min <= SLIDER_HALF_STEP_SPAN
+    ? SLIDER_HALF_STEP
+    : SLIDER_WHOLE_STEP;
+}
+
 /** The parser both numeric widgets use. `1,5` is one and a half. */
 export function parseNumberText(raw: string): number | null {
   const text = raw.trim();
@@ -235,9 +246,7 @@ export function RangeInput(props: InputProps): JSX.Element {
             type="range"
             min={props.screen.slider.min}
             max={props.screen.slider.max}
-            step={
-              props.screen.slider.max - props.screen.slider.min <= 20 ? 0.5 : 1
-            }
+            step={sliderStep(props.screen.slider.min, props.screen.slider.max)}
             value={value ?? props.screen.slider.min}
             onInput={(event) =>
               props.quiz.setResponse(

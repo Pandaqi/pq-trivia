@@ -89,7 +89,27 @@ const SLASH_COMMENT = /^(\/\/[^\n]*|\/\*[\s\S]*?\*\/)/;
 const HASH_COMMENT = /^(\/\/[^\n]*|\/\*[\s\S]*?\*\/|#[^\n]*)/;
 const HEX_COLOUR = /^#[0-9a-fA-F]{3,8}\b/;
 
-type TokenKind = "text" | "comment" | "string" | "number" | "keyword";
+/** Languages where `#abc` is a colour, not a comment. */
+const STYLE_LANGS: ReadonlySet<string> = new Set(["css", "less", "scss"]);
+
+enum TokenKind {
+  Text = "text",
+  Comment = "comment",
+  String = "string",
+  Number = "number",
+  Keyword = "keyword",
+}
+
+/** One comment form per language family. */
+function commentPattern(lang: string): RegExp {
+  if (lang === "css") {
+    return BLOCK_COMMENT;
+  }
+  if (HASH_COMMENTS.has(lang)) {
+    return HASH_COMMENT;
+  }
+  return SLASH_COMMENT;
+}
 
 interface Token {
   readonly kind: TokenKind;
@@ -103,21 +123,16 @@ interface Token {
 export function tokenize(code: string, language = ""): readonly Token[] {
   const lang = language.trim().toLowerCase();
   // Plain CSS has one comment form. `//` in `url(https://…)` is not one.
-  const comments =
-    lang === "css"
-      ? BLOCK_COMMENT
-      : HASH_COMMENTS.has(lang)
-        ? HASH_COMMENT
-        : SLASH_COMMENT;
+  const comments = commentPattern(lang);
   // A CSS colour is not a comment, and not a keyword either.
-  const colour = lang === "css" || lang === "less" || lang === "scss";
+  const colour = STYLE_LANGS.has(lang);
   const tokens: Token[] = [];
   let plain = "";
   let index = 0;
 
   const push = (kind: TokenKind, text: string): void => {
     if (plain.length > 0) {
-      tokens.push({ kind: "text", text: plain });
+      tokens.push({ kind: TokenKind.Text, text: plain });
       plain = "";
     }
     tokens.push({ kind, text });
@@ -128,34 +143,34 @@ export function tokenize(code: string, language = ""): readonly Token[] {
     if (colour) {
       const hex = HEX_COLOUR.exec(rest);
       if (hex !== null) {
-        push("number", hex[0]);
+        push(TokenKind.Number, hex[0]);
         index += hex[0].length;
         continue;
       }
     }
     const comment = comments.exec(rest);
     if (comment !== null) {
-      push("comment", comment[0]);
+      push(TokenKind.Comment, comment[0]);
       index += comment[0].length;
       continue;
     }
     const string =
       /^("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)/.exec(rest);
     if (string !== null) {
-      push("string", string[0]);
+      push(TokenKind.String, string[0]);
       index += string[0].length;
       continue;
     }
     const number = /^\b\d+(?:\.\d+)?\b/.exec(rest);
     if (number !== null) {
-      push("number", number[0]);
+      push(TokenKind.Number, number[0]);
       index += number[0].length;
       continue;
     }
     const word = /^[A-Za-z_$][\w$]*/.exec(rest);
     if (word !== null) {
       if (KEYWORDS.has(word[0])) {
-        push("keyword", word[0]);
+        push(TokenKind.Keyword, word[0]);
       } else {
         plain += word[0];
       }
@@ -166,7 +181,7 @@ export function tokenize(code: string, language = ""): readonly Token[] {
     index += 1;
   }
   if (plain.length > 0) {
-    tokens.push({ kind: "text", text: plain });
+    tokens.push({ kind: TokenKind.Text, text: plain });
   }
   return tokens;
 }
@@ -181,7 +196,7 @@ export function CodeBlock({
   const highlight = useCodeHighlight();
   const tokens = highlight
     ? tokenize(code, language)
-    : [{ kind: "text", text: code }];
+    : [{ kind: TokenKind.Text, text: code }];
 
   return (
     <div class="pq-code-block">

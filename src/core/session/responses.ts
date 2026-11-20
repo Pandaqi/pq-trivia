@@ -260,6 +260,18 @@ export function setMatrixRow(
   return { kind: ResponseKind.Matrix, rows };
 }
 
+/** One cell: a tick removes, a radio row replaces, a checkbox row adds. */
+function toggleCell(
+  current: readonly string[],
+  answerId: string,
+  multiple: boolean,
+): string[] {
+  if (current.includes(answerId)) {
+    return current.filter((id) => id !== answerId);
+  }
+  return multiple ? [...current, answerId] : [answerId];
+}
+
 export function toggleMatrixCell(
   response: Response,
   index: number,
@@ -270,12 +282,7 @@ export function toggleMatrixCell(
     return response;
   }
   const current = response.rows[index] ?? [];
-  const selected = current.includes(answerId)
-    ? current.filter((id) => id !== answerId)
-    : multiple
-      ? [...current, answerId]
-      : [answerId];
-  return setMatrixRow(response, index, selected);
+  return setMatrixRow(response, index, toggleCell(current, answerId, multiple));
 }
 
 export function setPartValue(

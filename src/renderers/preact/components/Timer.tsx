@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "preact/hooks";
 import type { Quiz } from "../../../core/session/quiz";
 import {
   formatTimer,
+  TimerUrgency,
   timerUrgency,
   type TimerSound,
 } from "../../../core/session/timers";
@@ -116,7 +117,7 @@ export function Timer({
       <span class="pq-timer-bar" aria-hidden="true">
         <span style={`width: ${percent}%`} />
       </span>
-      {urgency === "done" ? (
+      {urgency === TimerUrgency.Done ? (
         <p class="pq-timer-note" role="status">
           {t("timeUp")}
         </p>

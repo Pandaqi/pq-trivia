@@ -7,6 +7,7 @@
 
 import type { JSX } from "preact";
 import { DraftText } from "./Field";
+import { useEditorT } from "./i18n";
 
 export interface ListEditorProps {
   readonly id: string;
@@ -35,6 +36,7 @@ export function ListEditor({
   emptyText,
   extra,
 }: ListEditorProps): JSX.Element {
+  const t = useEditorT();
   const marks =
     correct !== undefined && onToggleCorrect !== undefined
       ? { correct, onToggleCorrect }
@@ -63,8 +65,8 @@ export function ListEditor({
                 id={`${id}-correct-${index}`}
                 checked={marks.correct.includes(value)}
                 onChange={() => marks.onToggleCorrect(value)}
-                aria-label={`Correct: ${value}`}
-                title="Mark as correct"
+                aria-label={t("editorCorrectOf", { value })}
+                title={t("editorMarkCorrect")}
               />
             )}
             <DraftText
@@ -76,7 +78,7 @@ export function ListEditor({
               type="button"
               onClick={() => onMove(index, -1)}
               disabled={index === 0}
-              aria-label={`Move ${value} up`}
+              aria-label={t("moveUp", { text: value })}
               onKeyDown={(event) => {
                 altMove(event, index);
               }}
@@ -87,7 +89,7 @@ export function ListEditor({
               type="button"
               onClick={() => onMove(index, 1)}
               disabled={index === values.length - 1}
-              aria-label={`Move ${value} down`}
+              aria-label={t("moveDown", { text: value })}
               onKeyDown={(event) => {
                 altMove(event, index);
               }}
@@ -97,7 +99,7 @@ export function ListEditor({
             <button
               type="button"
               onClick={() => onRemove(index)}
-              aria-label={`Remove ${value}`}
+              aria-label={t("editorRemoveItem", { value })}
             >
               ×
             </button>

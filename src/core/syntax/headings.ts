@@ -11,7 +11,12 @@
  * a title.
  */
 
-export type HeadingStyle = "legacy" | "current" | "ambiguous";
+/** Which heading dialect a file speaks. `ambiguous` means: do not guess. */
+export enum HeadingStyle {
+  Legacy = "legacy",
+  Current = "current",
+  Ambiguous = "ambiguous",
+}
 
 const HEADING = /^(#{1,4})\s+(.+?)\s*$/;
 const KEY_LINE = /^[A-Za-z][\w-]*\s*=>/;
@@ -48,6 +53,52 @@ const BLOCK_KEYS: ReadonlySet<string> = new Set([
   "stylesheet",
   "alt",
 ]);
+
+interface DialectScore {
+  readonly legacy: number;
+  readonly current: number;
+}
+
+/** What one heading says about the file's dialect. */
+function scoreHeading(
+  heading: HeadingLine,
+  next: string,
+  nextIsKey: boolean,
+  nextLevel: number,
+  titleValue: string | undefined,
+  hasTitleHeader: boolean,
+): DialectScore {
+  if (heading.level === 1) {
+    // A `#` line that repeats the title header is a V3 title. Any other `#`
+    // line next to a title header is a V2 round.
+    if (
+      titleValue !== undefined &&
+      heading.text.trim().toLowerCase() === titleValue
+    ) {
+      return { legacy: 0, current: 3 };
+    }
+    return hasTitleHeader
+      ? { legacy: 3, current: 0 }
+      : { legacy: 0, current: 0 };
+  }
+  if (heading.level === 2) {
+    if (/^Question\s*=>/i.test(next)) {
+      return { legacy: 0, current: 2 };
+    }
+    if (nextLevel === 3 || nextLevel === 4) {
+      return { legacy: 0, current: 1 };
+    }
+    return nextIsKey ? { legacy: 2, current: 0 } : { legacy: 0, current: 0 };
+  }
+  // Level 3. Old files use it for blocks; new files use it for questions.
+  if (isBlockKey(heading.text)) {
+    return { legacy: 3, current: 0 };
+  }
+  if (nextIsKey || nextLevel === 4) {
+    return { legacy: 0, current: 2 };
+  }
+  return { legacy: 1, current: 0 };
+}
 
 interface HeadingLine {
   readonly level: number;
@@ -124,7 +175,7 @@ export function looksLikeQuiz(text: string): boolean {
 export function detectHeadingStyle(text: string): HeadingStyle {
   const headings = headingsOf(text);
   if (headings.length === 0 || headings.some((heading) => heading.level >= 4)) {
-    return "current";
+    return HeadingStyle.Current;
   }
 
   const hasTitleHeader = TITLE_HEADER.test(text);
@@ -137,51 +188,23 @@ export function detectHeadingStyle(text: string): HeadingStyle {
 
   for (const heading of headings) {
     const next = heading.next ?? "";
-    const nextIsKey = KEY_LINE.test(next);
-    const nextHeading = NEXT_HEADING.exec(next);
-    const nextLevel = nextHeading?.[1]?.length ?? 0;
-
-    if (heading.level === 1) {
-      // A `#` line that repeats the title header is a V3 title. Any other `#`
-      // line next to a title header is a V2 round.
-      if (
-        titleValue !== undefined &&
-        heading.text.trim().toLowerCase() === titleValue
-      ) {
-        current += 3;
-      } else if (hasTitleHeader) {
-        legacy += 3;
-      }
-      continue;
-    }
-
-    if (heading.level === 2) {
-      if (/^Question\s*=>/i.test(next)) {
-        current += 2;
-      } else if (nextLevel === 3 || nextLevel === 4) {
-        current += 1;
-      } else if (nextIsKey) {
-        legacy += 2;
-      }
-      continue;
-    }
-
-    // Level 3. Old files use it for blocks; new files use it for questions.
-    if (isBlockKey(heading.text)) {
-      legacy += 3;
-    } else if (nextIsKey) {
-      current += 2;
-    } else if (nextLevel === 4) {
-      current += 2;
-    } else {
-      legacy += 1;
-    }
+    const nextLevel = NEXT_HEADING.exec(next)?.[1]?.length ?? 0;
+    const score = scoreHeading(
+      heading,
+      next,
+      KEY_LINE.test(next),
+      nextLevel,
+      titleValue,
+      hasTitleHeader,
+    );
+    legacy += score.legacy;
+    current += score.current;
   }
 
   if (legacy === 0 && current === 0) {
-    return "ambiguous";
+    return HeadingStyle.Ambiguous;
   }
-  return legacy > current ? "legacy" : "current";
+  return legacy > current ? HeadingStyle.Legacy : HeadingStyle.Current;
 }
 
 /**
@@ -192,7 +215,10 @@ export function migrateHeadings(
   text: string,
   options: { readonly force?: boolean } = {},
 ): string {
-  if (options.force !== true && detectHeadingStyle(text) !== "legacy") {
+  if (
+    options.force !== true &&
+    detectHeadingStyle(text) !== HeadingStyle.Legacy
+  ) {
     return text;
   }
   const bom = text.startsWith("\uFEFF") ? "\uFEFF" : "";

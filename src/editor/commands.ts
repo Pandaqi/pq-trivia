@@ -210,15 +210,15 @@ export function setSlideText(
   if (after !== before) {
     store.say(
       body.trim().length === 0
-        ? "Slide removed."
-        : "That slide now holds more or fewer blocks. Check the list.",
+        ? "editorSlideRemoved"
+        : "editorSlideShapeChanged",
     );
   }
 }
 
 export function setWholeText(store: EditorStore, body: string): void {
   store.update(body);
-  store.say("Parsed the whole file.");
+  store.say("editorParsed");
 }
 
 /* ------------------------------------------------------------------ answers */

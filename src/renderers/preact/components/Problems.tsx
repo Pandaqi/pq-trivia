@@ -3,7 +3,40 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Diagnostic } from "../../../core/syntax/diagnostics";
+import {
+  diagnosticMessage,
+  diagnosticSuggestion,
+} from "../../../i18n/diagnostics";
 import { useT } from "../i18n";
+
+/** One localized line, with the reference for the full explanation. */
+export function ProblemRow({
+  diagnostic,
+}: {
+  readonly diagnostic: Diagnostic;
+}): JSX.Element {
+  const t = useT();
+  const suggestion = diagnosticSuggestion(t, diagnostic);
+  return (
+    <li>
+      <strong>{diagnostic.code}</strong> {diagnosticMessage(t, diagnostic)}
+      {suggestion === null ? null : (
+        <span class="pq-suggestion"> {suggestion}</span>
+      )}
+      {diagnostic.docsUrl === undefined ? null : (
+        <a
+          class="pq-suggestion"
+          href={diagnostic.docsUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {" "}
+          {t("diagOpenReference")}
+        </a>
+      )}
+    </li>
+  );
+}
 
 function uniqueProblems(diagnostics: readonly Diagnostic[]): Diagnostic[] {
   const seen = new Set<string>();
@@ -70,12 +103,7 @@ export function Problems({
       </p>
       <ul class="pq-problems">
         {problems.slice(0, limit).map((problem, index) => (
-          <li key={index}>
-            <strong>{problem.code}</strong> {problem.message}
-            {problem.suggestion === undefined ? null : (
-              <span class="pq-suggestion"> {problem.suggestion}</span>
-            )}
-          </li>
+          <ProblemRow key={index} diagnostic={problem} />
         ))}
       </ul>
       {problems.length > limit ? (

@@ -2,11 +2,9 @@
 
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
+import type { Translate } from "../../i18n/types";
 
-export type Translate = (
-  key: string,
-  params?: Readonly<Record<string, string | number>>,
-) => string;
+export type { Translate } from "../../i18n/types";
 
 export const UiContext = createContext<Translate>((key) => key);
 
