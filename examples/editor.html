@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia wizard</title>
+    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+      }
+      .pq-wizard-note {
+        max-width: 56rem;
+        margin: 1rem auto 0;
+        padding: 0 1rem;
+        font-size: 0.9rem;
+        opacity: 0.75;
+      }
+    </style>
+  </head>
+  <body>
+    <p class="pq-wizard-note">
+      Build it first: <code>bun run build:editor</code>. Then write a quiz here
+      and press Save.
+    </p>
+    <!-- The bundle mounts into this one element. Nothing else to wire. -->
+    <div data-pq-wizard></div>
+    <script type="module" src="../dist/v3/editor.js"></script>
+  </body>
+</html>

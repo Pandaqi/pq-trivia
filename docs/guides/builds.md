@@ -24,6 +24,18 @@ bun run build --languages none
 Filtered builds write the same files as a normal build. Run the one you want
 last. `bun run size` measures what is actually in `dist/v3`.
 
+## The wizard bundle
+
+The QuizWizard has its own entry and its own flag.
+
+```bash
+bun run build --editor
+```
+
+That writes `dist/v3/editor.js` beside everything else, with its own size
+budget. Every other build leaves it out and removes an old copy, so a player
+folder never carries an authoring tool it does not use.
+
 ## Add a language
 
 One file in `src/i18n/locales/`, named after its code.

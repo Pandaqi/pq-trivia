@@ -27,5 +27,10 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": []
   },
-  "include": ["src/core/**/*", "src/entries/**/*", "src/renderers/**/*"]
+  "include": [
+    "src/core/**/*",
+    "src/entries/**/*",
+    "src/renderers/**/*",
+    "src/editor/**/*"
+  ]
 }

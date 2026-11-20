@@ -28,6 +28,7 @@
     "fmt": "bun fmt",
     "fmt:check": "bun fmt --check",
     "build": "bun run scripts/build.ts",
+    "build:editor": "bun run scripts/build.ts --editor",
     "build:lang": "bun run scripts/build.ts",
     "dev": "bun run scripts/build.ts --watch",
     "size": "bun run scripts/size.ts",
@@ -51,6 +52,7 @@
     "./headless": "./dist/v3/headless.js",
     "./browser": "./dist/v3/browser.js",
     "./multiplayer": "./dist/v3/multiplayer.js",
+    "./editor": "./dist/v3/editor.js",
     "./animations": "./dist/v3/animations.js",
     "./themes/*": "./dist/v3/themes/*",
     "./package.json": "./package.json"

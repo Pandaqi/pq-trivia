@@ -18,6 +18,21 @@ const GENERATED_DIR = join(ROOT, ".pq-build");
 const WATCH = process.argv.includes("--watch");
 
 /**
+ * Entries that need a flag. The wizard is one: `bun run build --editor`.
+ *
+ * A normal build removes the old output too, so "not in the default build"
+ * stays true after someone built it once.
+ */
+const OPT_IN_ENTRIES: Readonly<Record<string, string>> = {
+  editor: "--editor",
+};
+
+function wants(name: string): boolean {
+  const flag = OPT_IN_ENTRIES[name];
+  return flag === undefined || process.argv.includes(flag);
+}
+
+/**
  * `--languages nl`, `--languages=nl,en`, or `--languages none`.
  *
  * No flag means every language in `locales/`. A filtered build leaves the
@@ -223,9 +238,21 @@ async function build(languages: readonly string[]): Promise<boolean> {
   }
   localeFile = await writeLocales(languages);
 
+  for (const [name, flag] of Object.entries(OPT_IN_ENTRIES)) {
+    if (process.argv.includes(flag)) {
+      continue;
+    }
+    await rm(join(OUT_DIR, `${name}.js`), { force: true });
+    await rm(join(OUT_DIR, `${name}.js.map`), { force: true });
+    console.log(
+      `  ${name}.js skipped. Build the wizard with \`bun run build ${flag}\`.`,
+    );
+  }
+
   // One file in src/entries/ is one artifact. No config edit to add an entry.
   const entryFiles = (await readdir(ENTRIES_DIR))
     .filter((file) => file.endsWith(".ts") && !file.endsWith(".d.ts"))
+    .filter((file) => wants(file.replace(/\.ts$/, "")))
     .sort();
   const entries: Entry[] = entryFiles.map((file) => ({
     name: file.replace(/\.ts$/, ""),

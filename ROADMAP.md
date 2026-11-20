@@ -1,7 +1,7 @@
 # PQ-Trivia V3 — Roadmap & Specification
 
 > **Working title:** _PQ-Trivia V3 — Trivia Syntax_
-> **Status:** Phases 0–8 shipped.
+> **Status:** Phases 0–9 shipped.
 > **Baseline:** v2.5.0 (`src/v2/`, `dist/v2/pq-trivia.min.js`, 108 KB)
 > **Source:** `todo.md`, a full read of `src/`, and an audit of the build and distribution.
 
@@ -17,7 +17,7 @@ V3 rebuilds the library around three promises:
 
 Also: a better default look, working interactive mode, optional multiplayer, real exports for teacher platforms, and themes that cost nothing when unused.
 
-**Shape:** 8 phases, plus 1 stretch goal. Phase 0–2 is the core. Everything else ships after 3.0 as minor versions.
+**Shape:** 8 phases, plus the wizard in its own bundle. Phase 0–2 is the core. Everything else ships after 3.0 as minor versions.
 
 **One rule to keep in mind:** every dependency must earn its kilobytes. Current list: Preact. That's it, for the library itself.
 
@@ -219,7 +219,7 @@ pq-trivia/
 │  │  ├─ preact/                QuizApp · screens/ · questionTypes/ · components/
 │  │  ├─ dom/                   customElement · primitives
 │  │  └─ headless/
-│  ├─ editor/                   ← stretch goal, own bundle (§10.5)
+│  ├─ editor/                   ← own bundle, build flag (§10.5)
 │  │  ├─ EditorApp.tsx          slide list · form pane · text pane · preview
 │  │  ├─ forms/                 attribute-driven field widgets
 │  │  ├─ commands.ts            add · remove · move · duplicate · undo
@@ -303,7 +303,7 @@ Only two real dependencies. `trystero` is optional and only imported by the mult
 | `dist/v3/multiplayer.js`        | ESM                                       | full + Trystero adapter                                      | ≤ 32 KB           |
 | `dist/v3/chunk-qr.js`           | ESM, lazy                                 | the join QR encoder, fetched by the lobby only               | ≤ 8 KB            |
 | `dist/v3/animations.js`         | ESM                                       | full animation set                                           | ≤ 10 KB           |
-| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 60 KB, separate |
+| `dist/v3/editor.js`             | ESM                                       | QuizWizard. **Not in any default build.**                    | ≤ 95 KB, separate |
 | `dist/v3/types/**`              | `.d.ts`                                   | release only, `bunx tsc --emitDeclarationOnly`               | —                 |
 
 Every artifact gets a `/*! PQ-Trivia vX.Y.Z | MIT | commit */` banner and an external map. Budgets are checked by `bun run size` (our own 30-line script). Release-time, not on every save.
@@ -1198,7 +1198,7 @@ console.log(2 + 2)
 - Line numbers, copy button, wrap toggle, max-height scroll, print-safe.
 - Inline `` `code` `` uses the same styles.
 
-### 10.5 The QuizWizard (stretch goal, optional build)
+### 10.5 The QuizWizard (optional build)
 
 Author a quiz **inside** the page. No text file, no editor.
 
@@ -1237,8 +1237,6 @@ Author a quiz **inside** the page. No text file, no editor.
 - AST nodes with stable IDs, so a slide survives a reparse.
 - `QuizPlan` as a pure function of text + config, so preview is free.
 - An `editor` entry point in the build matrix, budgeted separately.
-
-**Why stretch:** it is a product of its own. Syntax + formatter + validator + templates already cover authoring. Ship 3.0 first.
 
 ### 10.6 Timer sound
 
@@ -1708,34 +1706,13 @@ docs/
 
 Sizes are for one focused developer. Not deadlines.
 
-Phases 0–8 are shipped. The specification above describes what exists; this
+Phases 0–9 are shipped. The specification above describes what exists; this
 list starts at what is left.
 
 What is left for a person, not for CI: mount/destroy 100× in a real browser,
 the three-browser offline and manual accessibility passes, two real devices
 over Trystero on a real network, a look at the lobby on a phone, and publishing
 the release itself.
-
-### Phase 9 — QuizWizard (stretch, M–L, after 3.0)
-
-**Only after Phases 0–8 have landed in real use.** The plan makes it cheap.
-It is still a product.
-
-- `editor` entry + separate bundle. Build flag, default off.
-- Slide list, generated forms, text pane, preview.
-- Add, remove, reorder, duplicate.
-- Parse-on-blur and serialize-on-edit. One buffer.
-- Basic edits to questions can be done through this wizard/UI. For example (the UI should do much more than these few examples):
-  - Click part of the slide/question and type what text should be there instead ("edit a textbox")
-  - Add/remove multiple choice answers, change the correct answer
-  - Add/remove media in place
-  - The "Trivia Syntax" edit box is per-slide too, so you can (for example) design the overall quiz structure with the UI/automatically, but then update a few individual slides by hand through changing the Trivia Syntax for it.
-- Undo/redo over text snapshots.
-- Media picker, save/download, open folder.
-- Keyboard reorder. Labels. No drag-only.
-- Docs recipe: "build a quiz with the wizard".
-
-**Done when:** you can write a full quiz without opening Notepad. The output is a normal `.trivia` file that plays in the default build. The wizard's bundle never appears in a normal build.
 
 ### Phase 10 — Ideas, made concrete (M–L, after 3.0)
 
@@ -1748,22 +1725,7 @@ end, tick it. Nothing here is promised for 3.0.
 `src/themes/paper.*.css`, `test/core/grading.test.ts`, and one new file in
 `test/fixtures/`.
 
-**Question types**
-
-- [ ] **Ranking (S).** New `Type => Rank`. `Answers` are written in the correct order. Click-to-place UI with arrow-key support. Score is the fraction of adjacent pairs in order. Tests: full, partial, empty, duplicate item.
-- [ ] **Estimate (S).** `Type => Estimate` with `Answer => 42`, `Tolerance => 2`, `Unit => km`. Slider plus a number field. Correct when the value is inside the tolerance. Tests at the edges.
-- [ ] **Negation (S).** `Negate => true` on a Choice question. Grading marks the one wrong option correct. Add `negated` to the answer view model so the UI can say "Pick the false one".
-- [ ] **Odd one out (S).** Choice plus a required reason. Two score parts: the pick, then the reason graded like an open answer.
-- [ ] **Hotspot (M).** `Media => map.png` plus `Answer => 120,80` regions. Click layer over the image, keyboard fallback as a region list, distance check in grading. Needs an authoring helper to read coordinates.
-- [ ] **Matrix (M).** Rows of statements against one shared scale. `Rows =>` block. One score per row, partial credit, checkbox and radio variants.
-- [ ] **Multi-part (M).** One stem, several inputs, one total. `Parts =>` with a type and points per part. Reuse the existing grading parts rather than inventing a second scorer.
-- [ ] **Classification (M).** Items dropped into named buckets. Click-to-place first, drag later. Score per item.
-- [ ] **Audio and video clips (S).** No new type: give `Media` a `PlayLimit` and controls. Count plays in the attempt.
-- [ ] **Wager (M).** `Wager => true`. Bet 0 to max before the reveal, store it in the session, show risk on the report.
-- [ ] **Diagram labels (M).** Drag labels onto targets. Shares the Hotspot click layer, so build Hotspot first.
-- [ ] **Buzzer (L).** First correct answer wins. Needs the live-room transport. Do not fake it with timers.
-
-**Answer interfaces**
+#### Step 1. Answer interfaces
 
 - [ ] **Click on image (M).** Pairs with Hotspot. Include a visible list of regions for keyboard and screen readers.
 - [ ] **Slider (S).** Drag, arrow keys and a live value. Reuse the Range field's parser.
@@ -1775,30 +1737,46 @@ end, tick it. Nothing here is promised for 3.0.
 - [ ] **Per-option feedback (S).** `Feedback =>` under an answer, shown after the reveal. One line per option.
 - [ ] **Speech input (M).** Optional Web Speech adapter in `platform/`. Say plainly which browsers support it; the field still works by typing.
 
-**Play and host**
+#### Step 2. Question types
+
+- [ ] **Ranking (S).** New `Type => Rank`. `Answers` are written in the correct order. Click-to-place UI with arrow-key support. Score is the fraction of adjacent pairs in order. Tests: full, partial, empty, duplicate item. ---> How is this different from SORT questions? Perhaps enhance Sort instead of adding this one.
+- [ ] **Estimate (S).** `Type => Estimate` with `Answer => 42`, `Tolerance => 2`, `Unit => km`. Slider plus a number field. Correct when the value is inside the tolerance. Tests at the edges. ---> How is this different from RANGE questions? Maybe enhance Range instead of adding this one.
+- [ ] **Negation (S).** `Negate => true` on a Choice question. Grading marks the one wrong option correct. Add `negated` to the answer view model so the UI can say "Pick the false one".
+- [ ] **Odd one out (S).** Choice plus a required reason. Two score parts: the pick, then the reason graded like an open answer.
+- [ ] **Hotspot (M).** `Media => map.png` plus `Answer => 120,80` regions. Click layer over the image, keyboard fallback as a region list, distance check in grading. Needs an authoring helper to read coordinates.
+- [ ] **Matrix (M).** Rows of statements against one shared scale. `Rows =>` block. One score per row, partial credit, checkbox and radio variants.
+- [ ] **Multi-part (M).** One stem, several inputs, one total. `Parts =>` with a type and points per part. Reuse the existing grading parts rather than inventing a second scorer.
+- [ ] **Classification (M).** Items dropped into named buckets. Click-to-place first, drag later. Score per item.
+- [ ] **Audio and video clips (S).** No new type: give `Media` a `PlayLimit` and controls (like in V2 but enhanced). Count plays in the attempt.
+- [ ] **Wager (M).** `Wager => true`. Bet 0 to max before the reveal, store it in the session, show risk on the report.
+- [ ] **Diagram labels (M).** Drag labels onto targets. Shares the Hotspot click layer, so build Hotspot first.
+- [ ] **Buzzer (L).** First correct answer wins. Needs the live-room transport. Do not fake it with timers.
+
+
+#### Step 3. Play and host
 
 - [ ] **Team mode (M).** Team name before Start, responses per team, a scoreboard between rounds. Keep solo mode the default.
 - [ ] **Host view (M).** Two windows on one machine via `BroadcastChannel` first, then the live rooms for real devices. The host sees answers; the player view never does.
 - [ ] **Streaks and multipliers (S).** Three in a row, cap at 2×. Report shows the multiplier. Tests for the cap.
 - [ ] **Lifelines (M).** 50/50, extra time, ask the room. Each costs points. Restricted mode disables them.
-- [ ] **Round timer (S).** A timer for the whole round, not one question. Reuses `timers.ts`.
-- [ ] **Presenter notes (S).** `Notes =>` on a question. Host-only, never in the view model or print.
+- [ ] **Round timer (S).** A timer for the whole round, not one question. Reuses `timers.ts`. ---> I think we also lost the timer for the ENTIRE quiz. It should at least track the time (count-up) by default. A limit/countdown for the entire quiz would be a setting/config people can turn on.
+- [ ] **Presenter notes (S).** `Notes =>` on a question. Host-only, never in the view model or print. --> Should not overlap the Comment/Explanation/Hint attributes we already have for adding public notes and remarks to questions.
 - [ ] **Undo answer (S).** One step back, written to the attempt journal.
 - [ ] **Leaderboard (M).** Show it between rounds, never during a question.
 - [ ] **Spectator mode (M).** Watch without answering. Same transport as the host view.
 
-**Authoring**
+#### Step 4. Authoring
 
 - [ ] **Question pools (M).** `Pool => 10` per round, seeded selection, and the report says which questions were drawn.
-- [ ] **Variants (L).** One template with placeholders, different values per play. Print the chosen values so a handout matches the screen.
-- [ ] **Difficulty tags (M).** Tag questions, then balance a round by score instead of trusting vibes.
+- [ ] **Variants (L).** One template with placeholders, different values per play. Print the chosen values so a handout matches the screen. ---> So, basically, randomization without constraints set by quiz/user.
+- [ ] **Difficulty tags (M).** Tag questions, then balance a round by score instead of trusting vibes. (Like how V2 supported difficulty.)
 - [ ] **Scoring presets (S).** Negative marking, all-or-nothing, partial. One enum in config, no new maths.
-- [ ] **Translations (M).** Per question, not per file. Falls back to the file language.
+- [ ] **Translations (M).** Per question, not per file. Falls back to the file language. ---> Already implemented I believe?
 - [ ] **CSV and Markdown import (M).** Teachers already have spreadsheets. One importer, diagnostics per row.
 - [ ] **Near-duplicate detector (S).** Same answer with different wording. Part of `check:content`, warning only.
 - [ ] **Media in packs (S).** `pack` copies local media next to the HTML instead of leaving a path that needs a network.
 
-**Technical and distribution**
+#### Step 5. Technical and distribution
 
 - [ ] **Service worker update prompt (S).** The pack has a cache; add "new version, reload".
 - [ ] **Transcripts and captions (S).** Audio rounds without captions exclude people. Plain text under the player.
@@ -1815,10 +1793,9 @@ end, tick it. Nothing here is promised for 3.0.
 ```
 0 ─▶ 1 ─▶ 2 ─▶ 3 ─▶ 4 ─▶ 5 ─▶ 6 ─▶ 8
                   └────────▶ 7        (after 3)
-                                    8 ─▶ 9   (stretch)
 ```
 
-Phase 10 can start any time after Phase 5. Its items do not depend on 8 or 9.
+Phase 10 can start any time after Phase 5. Its items do not depend on 8.
 
 ### Phase 11: Publish
 
@@ -1876,7 +1853,7 @@ Phase 10 can start any time after Phase 5. Its items do not depend on 8 or 9.
 | T40 | Icons, banner, styling                                  | §7.4       | 2           |
 | T41 | _(Discarded)_ language switch before load               | §1.3       | —           |
 | T42 | _(Discarded)_ background music                          | §1.3       | —           |
-| T43 | **QuizWizard: build and edit a quiz in the UI** (new)   | §10.5      | 9 (stretch) |
+| T43 | **QuizWizard: build and edit a quiz in the UI** (new)   | §10.5      | 9           |
 
 ---
 
@@ -1960,7 +1937,7 @@ Not in `todo.md`. Ordered by value per unit of pain.
 | Translation capacity                | UI stuck in en/nl   | Typed keys, JSON files, English fallback, credit.                                                   |
 | Migration breaks sold quizzes       | Angry customers     | Real-quiz fixture, migration CLI, v2 archive, staged deprecations.                                  |
 | Public API churn                    | Developer trust     | Freeze types before docs. Deprecation policy.                                                       |
-| Solo maintainer burnout             | Nothing ships       | Phases sized part-time. The wizard is a stretch, not a promise.                                     |
+| Solo maintainer burnout             | Nothing ships       | Phases sized part-time. The wizard came last, after 3.0.                                            |
 
 ---
 
@@ -2008,7 +1985,7 @@ All settled. Nothing left open for 3.0.
 - [ ] Docs live and versioned. V2 archive and migration guide.
 - [ ] Release automation: tag → GitHub Release → npm → docs.
 - [ ] README has badges, GIF, screenshots, feature table and a 5-minute start.
-- [ ] Every todo T1–T42 is shipped or explicitly deferred with a version. T43 is documented as a stretch goal.
+- [ ] Every todo T1–T43 is shipped or explicitly deferred with a version.
 
 ---
 

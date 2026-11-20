@@ -72,6 +72,7 @@ Nothing here is in the default build. Load it when you need it.
 | `browser.js`     | Worker parsing, IndexedDB cache, manifest loading. |
 | `multiplayer.js` | Live rooms over BroadcastChannel or Trystero.      |
 | `animations.js`  | The full preset list.                              |
+| `editor.js`      | The QuizWizard: build a quiz in the page.           |
 
 Big quiz in an element? Hand it the worker parser:
 

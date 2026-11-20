@@ -54,6 +54,7 @@ Hosting from a server? Use the element instead:
 | **Live**      | Optional phones-in-the-room bundle. Separate. Zero weight by default.          |
 | **Exports**   | Embedded JSON, standalone HTML, GIFT, QTI, CSV.                                |
 | **Tools**     | Validate, format, migrate, pack, encrypt, grade. Bun only.                     |
+| **Author**    | The wizard: slides, forms, Trivia Syntax and a preview in one page. Separate.  |
 
 ## Sizes
 

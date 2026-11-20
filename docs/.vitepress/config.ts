@@ -41,6 +41,7 @@ export default defineConfig({
           { text: "Multiplayer", link: "/guides/multiplayer" },
           { text: "Exporting", link: "/guides/exporting" },
           { text: "Accessibility", link: "/guides/accessibility" },
+          { text: "The wizard", link: "/guides/wizard" },
         ],
       },
       {

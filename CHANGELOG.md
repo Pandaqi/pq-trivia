@@ -46,6 +46,9 @@ The rewrite. Same Trivia Syntax, new bones.
   form, grade table, flash cards.
 - **Export.** Embedded JSON, one-file HTML handout, GIFT, QTI, CSV.
 - **Live mode.** Phones join by code. Separate bundle, off by default.
+- **QuizWizard.** Slide list, generated forms, the Trivia Syntax text and a
+  live preview in one page. Build it with `bun run build --editor`. It is never
+  in a normal build.
 - **Encrypted quizzes.** `pq-trivia encrypt` with a passphrase.
 - **Offline pack.** One folder, opens from `file://`.
 - **Better diagnostics.** Every problem has a code, a place, a sentence and a
@@ -58,7 +61,9 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Headless core.** Parse, plan, session and grading with no DOM. Runs in a
   Worker, a CLI or a test.
 - **Typed entries.** `core`, `headless`, `player`, `browser`, `multiplayer`,
-  `animations`, and the IIFE.
+  `animations`, `editor`, and the IIFE.
+- **Editor entry.** `editor.js`, budgeted apart. The text is the only model, so
+  the wizard has no state to drift.
 - **`<pq-quiz>` element.** Light DOM. One quiz per element.
 - **Events and view models.** `ScreenViewModel` is the renderer contract.
 - **Worker parsing.** `createWorkerParser()` above 1 MB, with a sync fallback.
