@@ -436,6 +436,10 @@ const live: TranslationTable = {
   liveLockIn: "Lock it in",
   livePickOne: "Pick one",
   liveBackToQuiz: "Back to the quiz",
+  liveYourAnswers: "Your answers",
+  liveNoAnswer: "no answer",
+  liveWinner: "Winner",
+  liveTheme: "Theme: {theme}",
 };
 
 const editor: TranslationTable = {

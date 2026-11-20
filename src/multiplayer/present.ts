@@ -11,12 +11,45 @@ import type { QuizPlan } from "../core/plan/plan";
 import { ResponseKind, type Response } from "../core/session/responses";
 import type { LiveQuestion } from "./types";
 
+export interface RoundInfo {
+  readonly name: string | null;
+  readonly questions: number;
+  readonly points: number;
+  readonly secret: string | null;
+}
+
+/** The round a plan position sits in, with the numbers a round card shows. */
+export function roundInfoOf(
+  plan: QuizPlan,
+  position: number,
+  hideSecret = false,
+): RoundInfo {
+  for (const round of plan.rounds) {
+    if (position >= round.index && position < round.index + round.count) {
+      return {
+        name: round.name,
+        questions: round.questionCount,
+        points: round.points,
+        // A quiz may keep its theme off the phones.
+        secret: hideSecret ? null : round.secret,
+      };
+    }
+  }
+  return { name: null, questions: 0, points: 0, secret: null };
+}
+
 export function liveQuestion(
   question: QuestionModel,
   index: number,
   total: number,
   roundNameValue: string | null,
   deadline: number | null,
+  round: RoundInfo = {
+    name: roundNameValue,
+    questions: 0,
+    points: 0,
+    secret: null,
+  },
 ): LiveQuestion {
   const refs = answerRefs(question);
   return {
@@ -41,6 +74,9 @@ export function liveQuestion(
       0,
     ),
     roundName: roundNameValue,
+    roundQuestions: round.questions,
+    roundPoints: round.points,
+    roundSecret: round.secret,
     buzzer: question.buzzer,
     wager: question.wager,
     wagerMax: questionMaxScore(question),

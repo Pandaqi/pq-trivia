@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>01 · Basics</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>01 · Basics</strong>
+      <span
+        >Eight types, inline formatting, a code block. All in one text.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>One <code>Question</code> block per type. No extra code.</li>
+          <li>Hints appear one click at a time. Sources sit underneath.</li>
+          <li>
+            Answers accept the same formatting as the question: bold, links,
+            even images.
+          </li>
+          <li>
+            The last hash block is an <code>End</code> screen with its own
+            buttons.
+          </li>
+        </ul>
+        <p class="demo-muted">
+          Play it with the keyboard: arrows for questions, <kbd>a</kbd> for the
+          answer, <kbd>h</kbd> for a hint.
+        </p>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 01 · Basics
+      Description => Eight types, one file. Start, rounds, end.
+      Author => PQ-Trivia
+      Seed => basics
+      Language => en
+      CodeHighlight => true
+      QuestionTypeHints => true
+
+      Type => Start
+      Question => Everything basic
+      Comment => Press play, answer with the keyboard, watch the reveal.
+      Buttons => play | interactive | answers | settings
+
+      ## Everyday types
+
+      Question => Which superhero is called the Man of Steel?
+      Answers => Superman | Batman | Spider-Man
+      Type => Choice
+      Correct => Superman
+      Category => Comics
+      Explanation => Clark Kent, mild-mannered reporter.
+
+      Question => Name the capital of Portugal.
+      Answers => Lisbon
+      Type => Open
+      AlsoAccept => Lisboa
+      Hints => It starts with an L.
+      Sources => https://en.wikipedia.org/wiki/Lisbon
+
+      Question => Name the three colours in the Belgian flag, left to right.
+      Answers => Black | Yellow | Red
+      Type => List
+      Correct => Black | Yellow | Red
+      Scoring => partial
+      Score => 3
+
+      Question => Put these inventions in order, oldest first.
+      Answers => The wheel | The printing press | The internet
+      Type => Sort
+      Correct => The wheel | The printing press | The internet
+
+      Question => Match the artist to the album.
+      Answers => The Beatles ~ Abbey Road | Daft Punk ~ Discovery | Björk ~ Homogenic
+      Type => Match
+      Score => 3
+      Explanation => Three albums, three decades, one good night.
+
+      Question => In which year did the Berlin Wall fall?
+      Answers => 1989
+      Type => Range
+      Range => 1
+      Unit => year
+      Explanation => 9 November 1989. A Thursday, if you were wondering.
+
+      Question => Neil Armstrong walked on [blank] in [blank].
+      Answers => the Moon | 1969
+      Type => Cloze
+      Score => 2
+
+      ## Text
+
+      Question => Which word is **bold**: [mark]red[/mark], **green**, ~~blue~~?
+      Answers => green
+      Type => Open
+      Explanation => Press [kbd]Enter[/kbd] to send it. The [docs](https://example.com) live elsewhere.
+
+      Question => Which one is code: *solar*, __wind__, `tide`?
+      Answers => tide
+      Type => Open
+      Explanation => CO^[2]^ is carbon dioxide, and [abbr=what this quiz is about]trivia[/abbr] needs no explaining.
+
+      Question => This one keeps the types as typed.
+      #### Question
+      Type exactly what you see: **plain**
+      Answers => **plain**
+      Type => Open
+      FormatText => false
+
+      ### A fenced code block
+      #### Question
+      What does this print?
+      ```js
+      const total = 2 + 2;
+      ```
+      Answers => 4
+      Type => Open
+
+      Type => End
+      Question => That's the basics.
+      Credits => Questions by nobody. Answers by you.
+      Buttons => answers | restart | exit
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "basics.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

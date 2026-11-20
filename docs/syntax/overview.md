@@ -39,7 +39,8 @@ Points => 2
 Explanation => Clark Kent, mild-mannered reporter.
 ```
 
-- `Question` is the title. A second `Question` line is body text.
+- `Question` is the title. A `#### Question` block under it is body text.
+  A second `Question =>` line starts another question.
 - `Answers` is a list. One answer is open, many is choice, unless `Type` says
   otherwise. Write it as `a | b | c`, one value per line after `Answers =>`, or
   a `#### Answers` block.

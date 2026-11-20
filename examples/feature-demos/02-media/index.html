@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>02 · Media</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>02 · Media</strong>
+      <span>A file is a media item. The extension decides how it plays.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Media => photo.svg { alt="…", credit="…" }</code>. The options
+            are inside the braces.
+          </li>
+          <li>
+            Audio carries a <code>captions</code> track and a
+            <code>transcript</code>. The transcript loads on open, never before.
+          </li>
+          <li>
+            Video has a poster and <code>playsinline</code>. No autoplay with
+            sound.
+          </li>
+          <li>
+            <code>PlayLimit => 1</code> removes the player after one press.
+          </li>
+          <li>
+            An answer that is only a file is shown as that file, not as text.
+          </li>
+        </ul>
+        <p class="demo-muted">
+          The clip and the fjord are downloaded files, not drawings: a CC0 WebM
+          from MDN and a WebP from the sample gallery. The poster is a frame
+          from the clip.
+        </p>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 02 · Media
+      Description => Two photos, one sound, one clip, one limit.
+      Author => PQ-Trivia
+      Seed => media
+      Language => en
+      MediaAutoPlay => false
+
+      ## Stills
+
+      Question => Which of these is the lighthouse?
+      Answers => assets/lighthouse.svg | assets/cottage.svg
+      Type => Choice
+      Correct => assets/lighthouse.svg
+      Explanation => The striped tower on the rock. The cottage has a chimney.
+
+      Question => Where is this fjord?
+      Media => assets/fjord.webp { alt="A deep fjord between steep green mountains", credit="WebP sample gallery" }
+      Answers => Norway | Iceland | Chile
+      Type => Choice
+      Correct => Norway
+      Explanation => Geirangerfjord, on the west coast of Norway.
+
+      Question => What is written on the door?
+      Media => assets/cottage.svg { alt="A white cottage with a blue door and a brass sign", credit="Drawn for this demo" }
+      Answers => Welcome
+      Type => Open
+      Hints => Open the picture in a new tab if the text is small.
+
+      ## Sound and motion
+
+      Question => How many tones do you hear?
+      Media => assets/tone.wav { captions="assets/tone.vtt", transcript="assets/tone.txt", credit="Generated for this demo" }
+      Answers => 2
+      Type => Range
+      Range => 0
+      Explanation => Two: 660 Hz, then 880 Hz. Captions and transcript say the same, for anyone who cannot hear it.
+
+      Question => What colour is the flower in the clip?
+      Media => assets/clip.webm { poster="assets/clip-poster.png", captions="assets/clip.vtt", credit="CC0 clip from MDN" }
+      Answers => Red | Blue | White
+      Type => Choice
+      Correct => Red
+      Explanation => The clip is five seconds of a small red flower in the breeze. The captions say so, for anyone who cannot see it.
+
+      Question => Play it once, then answer.
+      Media => assets/tone.wav { transcript="assets/tone.txt" }
+      Answers => 880
+      Type => Range
+      Range => 0
+      PlayLimit => 1
+      Explanation => After one play the player is replaced by a note. Fair is fair.
+
+      Question => Where does the transcript live?
+      Media => https://en.wikipedia.org/wiki/Lighthouse
+      Answers => Next to the media item
+      Type => Open
+      Explanation => A bare URL is a link, not an embed. The browser decides.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "media.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

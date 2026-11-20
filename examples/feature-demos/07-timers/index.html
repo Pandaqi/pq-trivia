@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>07 · Timers</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>07 · Timers</strong>
+      <span
+        >One clock per question, one per round, one for the whole quiz.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>DefaultTimer => 15</code> gives every question that names no
+            timer one.
+          </li>
+          <li><code>Timer => 0</code> means this question has none.</li>
+          <li>
+            <code>RoundTimer</code> is one clock for a whole round.
+            <code>QuizLimit</code> counts the quiz down; without it the clock
+            counts up.
+          </li>
+          <li>
+            <code>TimerSound => true</code> beeps in the last five seconds. It
+            needs a click first, which the Play button already gave it.
+          </li>
+          <li>
+            When time runs out the question is marked expired and the field
+            stays open. <code>TimerStrategy</code> decides what next: continue,
+            expire or skip.
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 07 · Timers
+      Description => Fifteen seconds unless the question says otherwise.
+      Author => PQ-Trivia
+      Seed => timers
+      Language => en
+      DefaultTimer => 15
+      TimerSound => true
+      TimerStrategy => continue
+      QuizLimit => 4m
+      RoundTimer => 45s
+
+      ## Warm-up
+
+      Question => Fifteen seconds, from the header.
+      Answers => 15
+      Type => Range
+      Range => 0
+      Explanation => No Timer line here. DefaultTimer did it.
+
+      Question => This one gets twenty, on purpose.
+      Timer => 20
+      Answers => 20
+      Type => Range
+      Range => 0
+
+      Question => No clock at all. Read it slowly.
+      Timer => 0
+      Answers => 0
+      Type => Range
+      Range => 0
+      Hints => Timer => 0 is the way to say "none".
+
+      ## A round with a clock
+
+      Question => The round clock is shared with the next question.
+      Answers => 45
+      Type => Range
+      Range => 0
+      Explanation => RoundTimer => 45s. When it runs out, the round is done being generous.
+
+      Question => Same round, same clock.
+      Answers => Yes
+      Type => Open
+
+      Question => The quiz clock is in the meta strip, top left.
+      Answers => 4
+      Type => Range
+      Range => 0
+      Explanation => QuizLimit => 4m turns the counter into a countdown.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "timers.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

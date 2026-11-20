@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>15 · Live</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+    <style>
+      .demo-live {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(15rem, 1fr) minmax(
+            13rem,
+            0.9fr
+          );
+        gap: 0.8rem;
+        padding: 0.8rem;
+        align-items: start;
+      }
+      .demo-live > section {
+        min-width: 0;
+        border-radius: 0.9rem;
+        background: #fffdf7;
+      }
+      .demo-live h2 {
+        margin: 0;
+        padding: 0.45rem 0.8rem;
+        border-bottom: 1px solid #e4dccb;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6f676d;
+      }
+      .demo-live .pane {
+        padding: 0.4rem;
+        min-height: 24rem;
+      }
+      @media (max-width: 70rem) {
+        .demo-live {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>15 · Live</strong>
+      <a href="phone.html?pq-live=REEF">one phone ↗</a>
+      <span
+        >Host, one phone with a team badge, one watcher. Same room code.</span
+      >
+    </header>
+    <div class="demo-live">
+      <section>
+        <h2>Host</h2>
+        <div class="pane" id="host"></div>
+      </section>
+      <section>
+        <h2>Player · Red</h2>
+        <div class="pane" id="player"></div>
+      </section>
+      <section>
+        <h2>Watcher</h2>
+        <div class="pane" id="watch"></div>
+      </section>
+    </div>
+
+    <script type="module">
+      import { createQuiz } from "../../../dist/v3/player.js";
+      import {
+        LiveRole,
+        RevealMode,
+        createBroadcastTransport,
+        mountLive,
+      } from "../../../dist/v3/multiplayer.js";
+
+      // No O, 0, I or 1 in a room code.
+      const code = "REEF";
+      const transport = createBroadcastTransport();
+      const link = `${location.origin}${location.pathname}?pq-live=${code}`;
+
+      const text = `
+Title => 15 · Live
+Description => One host, three phones, four characters.
+Seed => live
+Language => en
+
+Question => Which superhero is called the Man of Steel?
+Answers => Superman | Batman | Spider-Man
+Type => Choice
+Correct => Superman
+Explanation => Clark Kent, mild-mannered reporter.
+
+Question => In which year did the Berlin Wall fall?
+Answers => 1989
+Type => Range
+Range => 0
+
+## Second round
+
+Question => Name the closest star to Earth.
+Answers => The Sun
+Type => Open
+`;
+
+      const quiz = createQuiz({ config: { seed: "live" } });
+      await quiz.load({ type: "text", text, file: "live.trivia" });
+
+      const host = mountLive({
+        target: document.getElementById("host"),
+        role: LiveRole.Host,
+        code,
+        quiz,
+        transport,
+        joinLink: link,
+        revealMode: RevealMode.Question,
+      });
+
+      mountLive({
+        target: document.getElementById("player"),
+        role: LiveRole.Player,
+        code,
+        name: "Ada",
+        team: "Red",
+        transport,
+      });
+
+      mountLive({
+        target: document.getElementById("watch"),
+        role: LiveRole.Player,
+        code,
+        name: "Corridor screen",
+        watching: true,
+        transport,
+      });
+
+      // After the first question the host ignores this, on purpose: changing
+      // the mode mid-quiz would move the flow under everyone.
+      window.demoHost = host;
+      window.demoReveal = (mode) => host.host?.setRevealMode(RevealMode[mode]);
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

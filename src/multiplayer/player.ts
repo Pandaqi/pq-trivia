@@ -16,6 +16,7 @@ import {
   type LeaderRow,
   type LivePlayer,
   type LiveQuestion,
+  type RevealItem,
   type RevealPayload,
   type RoomStatePayload,
   type SubmitPayload,
@@ -35,6 +36,16 @@ export interface PlayerOptions {
   readonly team?: string;
 }
 
+/** One line of the quiz this phone just played. The end screen's memory. */
+export interface HistoryRow {
+  readonly questionId: string;
+  readonly title: string;
+  readonly correct: readonly string[];
+  readonly given: string;
+  readonly answeredCorrectly: boolean;
+  readonly points: number;
+}
+
 export interface PlayerState {
   readonly code: string;
   readonly id: string | null;
@@ -49,6 +60,8 @@ export interface PlayerState {
   readonly submitted: boolean;
   readonly reveal: RevealPayload | null;
   readonly leaderboard: readonly LeaderRow[];
+  /** Every question this phone has seen the answer to, in play order. */
+  readonly history: readonly HistoryRow[];
   /** First buzz on this question, if anyone has pressed it. */
   readonly buzz: BuzzState | null;
   /** This screen is here to watch. */
@@ -138,11 +151,59 @@ function readReveal(payload: unknown): RevealPayload | null {
   return payload as RevealPayload;
 }
 
+/** One reveal becomes one line per question, the newest answer winning. */
+function mergeHistory(
+  current: readonly HistoryRow[],
+  items: readonly RevealItem[],
+  selfId: string | null,
+): readonly HistoryRow[] {
+  if (selfId === null) {
+    return current;
+  }
+  const rows = [...current];
+  const at = new Map(rows.map((row, index) => [row.questionId, index]));
+  for (const item of items) {
+    const result = item.results[selfId];
+    const row: HistoryRow = {
+      questionId: item.questionId,
+      title: item.title,
+      correct: item.correct,
+      given: result?.given ?? "",
+      answeredCorrectly: result?.correct === true,
+      points: result?.points ?? 0,
+    };
+    const index = at.get(item.questionId);
+    if (index === undefined) {
+      at.set(item.questionId, rows.length);
+      rows.push(row);
+    } else {
+      rows[index] = row;
+    }
+  }
+  return rows;
+}
+
+function readItems(payload: unknown): readonly RevealItem[] {
+  const entry = record(payload);
+  return entry !== null && Array.isArray(entry["items"])
+    ? (entry["items"] as RevealItem[])
+    : [];
+}
+
 function readLeaderboard(payload: unknown): LeaderRow[] | null {
   const entry = record(payload);
   return entry !== null && Array.isArray(entry["leaderboard"])
     ? (entry["leaderboard"] as LeaderRow[])
     : null;
+}
+
+/** Phases where a phone without a question is missing exactly that. */
+function roomHasQuestion(phase: RoomPhase): boolean {
+  return (
+    phase === RoomPhase.Question ||
+    phase === RoomPhase.Answers ||
+    phase === RoomPhase.Reveal
+  );
 }
 
 export async function createPlayer(
@@ -172,6 +233,7 @@ export async function createPlayer(
     submitted: false,
     reveal: null,
     leaderboard: [],
+    history: [],
     buzz: null,
     watching: options.watching === true,
     team: options.team ?? null,
@@ -182,6 +244,17 @@ export async function createPlayer(
     for (const listener of [...listeners]) {
       listener();
     }
+  }
+
+  let resyncTries = 0;
+
+  /** Ask the host for the current question. Only worth a few tries. */
+  function requestResync(): void {
+    if (resyncTries >= 3) {
+      return;
+    }
+    resyncTries += 1;
+    room.send(createEnvelope(MessageType.Resync, {}, room.selfId));
   }
 
   function settleJoin(error: string | null): void {
@@ -226,6 +299,11 @@ export async function createPlayer(
       buzz: payload.buzz ?? null,
     });
     settleJoin(null);
+    // The room says a question is up but this phone has none. That is a lost
+    // first message, not a game state: ask again, a few times at most.
+    if (state.question === null && roomHasQuestion(payload.phase)) {
+      requestResync();
+    }
   }
 
   function handle(payload: unknown, type: MessageType, from: string): void {
@@ -239,6 +317,7 @@ export async function createPlayer(
     if (type === MessageType.QuestionShow) {
       const shown = readQuestion(payload);
       if (shown !== null) {
+        resyncTries = 0;
         update({
           question: shown.question,
           closed: shown.closed,
@@ -268,6 +347,7 @@ export async function createPlayer(
               : RoomPhase.Reveal,
           closed: true,
           leaderboard: reveal.leaderboard,
+          history: mergeHistory(state.history, reveal.items, state.id),
         });
       }
       return;
@@ -299,6 +379,7 @@ export async function createPlayer(
       update({
         phase: RoomPhase.Ended,
         ...(leaderboard === null ? {} : { leaderboard }),
+        history: mergeHistory(state.history, readItems(payload), state.id),
       });
       return;
     }

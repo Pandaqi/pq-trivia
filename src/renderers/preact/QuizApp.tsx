@@ -398,7 +398,15 @@ export function QuizApp({
         <CodeHighlightContext.Provider
           value={quiz.config.codeHighlight === true}
         >
+          {/* Each question is a new screen, so its entrance animation plays.
+              Without the key, Preact reuses one <main> and the transition is
+              only ever seen once. */}
           <ScreenView
+            key={
+              screen.kind === ScreenKind.Question
+                ? `${screen.kind}:${screen.id}`
+                : screen.kind
+            }
             quiz={quiz}
             screen={screen}
             state={snapshot.state}

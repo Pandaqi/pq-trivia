@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>15 · Live on a phone</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <style>
+      /* One phone, nothing else. The same player the demo shows in a pane,
+         mounted at a real phone size for a look at what a thumb gets. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      #phone {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        background: var(--pq-paper);
+      }
+    </style>
+  </head>
+  <body class="pq-quiz">
+    <div id="phone"></div>
+    <script type="module">
+      import {
+        createBroadcastTransport,
+        LiveRole,
+        mountLive,
+      } from "../../../dist/v3/multiplayer.js";
+
+      const params = new URLSearchParams(location.search);
+      const code = params.get("pq-live") ?? "REEF";
+      const name = params.get("name")?.trim() ?? "";
+      const team = params.get("team")?.trim() ?? "";
+
+      // No name in the URL means the join form, which is where a phone starts.
+      window.demoPhone = mountLive({
+        target: document.getElementById("phone"),
+        role: LiveRole.Player,
+        code,
+        transport: createBroadcastTransport(),
+        ...(name.length === 0 ? {} : { name }),
+        ...(team.length === 0 ? {} : { team }),
+      });
+    </script>
+  </body>
+</html>

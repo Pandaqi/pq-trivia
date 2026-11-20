@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>14 · Export</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>14 · Export</strong>
+      <span>One plan, seven exits. All pure functions.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>quiz.export.embedded()</code>, <code>.csv()</code>,
+            <code>.gift()</code>, <code>.qti()</code>. Each reads the plan and
+            never changes it.
+          </li>
+          <li>
+            <code>downloadQuizHandout()</code> writes one HTML file with the
+            answers in it. Open it anywhere.
+          </li>
+          <li>
+            <code>shareQuizUrl()</code> carries the seed and the order flags,
+            never an answer.
+          </li>
+          <li>
+            <code>downloadQuizAttempts()</code> turns the saved attempts on this
+            device into one row per question.
+          </li>
+        </ul>
+        <h2>Output</h2>
+        <div class="demo-actions">
+          <button type="button" data-kind="json">JSON</button>
+          <button type="button" data-kind="csv">CSV</button>
+          <button type="button" data-kind="gift">GIFT</button>
+          <button type="button" data-kind="qti">QTI</button>
+          <button type="button" data-kind="share">Share link</button>
+        </div>
+        <div class="demo-actions">
+          <button type="button" data-download="json">Download JSON</button>
+          <button type="button" data-download="handout">
+            Download handout
+          </button>
+          <button type="button" data-download="print">Print sheet</button>
+        </div>
+        <pre class="demo-log" data-log>Pick a format.</pre>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 14 · Export
+      Description => A small quiz with every type that matters to an exporter.
+      Author => PQ-Trivia
+      Seed => export
+      Language => en
+
+      Question => Which superhero is called the Man of Steel?
+      Answers => Superman | Batman | Spider-Man
+      Type => Choice
+      Correct => Superman
+      Explanation => Clark Kent, mild-mannered reporter.
+
+      Question => Put these in order, oldest first.
+      Answers => The wheel | The printing press | The internet
+      Type => Sort
+      Correct => The wheel | The printing press | The internet
+
+      Question => In which year did the Berlin Wall fall?
+      Answers => 1989
+      Type => Range
+      Range => 0
+      Points => 2
+    </script>
+
+    <script type="module">
+      import {
+        createQuiz,
+        downloadQuizHandout,
+        downloadQuizJson,
+        mountQuiz,
+        shareQuizUrl,
+      } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "export.trivia" });
+
+      const log = document.querySelector("[data-log]");
+      const show = (value) => {
+        log.textContent =
+          value.length > 12000 ? `${value.slice(0, 12000)}\n…` : value;
+      };
+
+      const preview = {
+        json: () => JSON.stringify(quiz.export.embedded(), null, 2),
+        csv: () => quiz.export.csv(),
+        gift: () => quiz.export.gift(),
+        qti: () => quiz.export.qti(),
+        share: () => shareQuizUrl(quiz) ?? "No page, no link.",
+      };
+
+      for (const button of document.querySelectorAll("[data-kind]")) {
+        button.addEventListener("click", () => {
+          const kind = button.dataset.kind;
+          try {
+            show(preview[kind]());
+          } catch (error) {
+            show(`Export failed: ${String(error)}`);
+          }
+        });
+      }
+
+      const downloads = {
+        json: () => downloadQuizJson(quiz),
+        handout: () => downloadQuizHandout(quiz),
+        print: () => window.print(),
+      };
+      for (const button of document.querySelectorAll("[data-download]")) {
+        button.addEventListener("click", () => {
+          downloads[button.dataset.download]();
+        });
+      }
+
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

@@ -10,6 +10,7 @@ import {
   teamStyle,
   type TeamColour,
 } from "../../shared/teamColours";
+import { ranksOf, winnersOf } from "../board";
 import type {
   LeaderRow,
   LivePlayer,
@@ -227,27 +228,38 @@ export function Leaderboard({
   if (rows.length === 0) {
     return null;
   }
+  const winners = winnersOf(rows);
+  const ranks = ranksOf(rows);
   return (
     <section class="pq-live-board" aria-label={t("liveLeaderboardAria")}>
       <h2 class="pq-live-title">{t("liveLeaderboard")}</h2>
       <ol>
-        {rows.map((row, index) => (
-          <li
-            key={row.id}
-            data-pq-self={row.id === selfId ? "true" : undefined}
-          >
-            <span class="pq-live-rank">{index + 1}</span>
-            <span class="pq-live-name">{row.name}</span>
-            <span class="pq-live-score">{row.score}</span>
-          </li>
-        ))}
+        {rows.map((row, index) => {
+          const won = winners.has(row.id);
+          return (
+            <li
+              key={row.id}
+              data-pq-self={row.id === selfId ? "true" : undefined}
+              data-pq-winner={won ? "true" : undefined}
+            >
+              <span class="pq-live-rank">{ranks.get(row.id) ?? index + 1}</span>
+              <span class="pq-live-name">
+                {row.name}
+                {won ? (
+                  <span class="pq-live-winner">{t("liveWinner")}</span>
+                ) : null}
+              </span>
+              <span class="pq-live-score">{row.score}</span>
+            </li>
+          );
+        })}
       </ol>
     </section>
   );
 }
 
 /** `+2`, `-2`, `0`. A lost stake has to look lost. */
-function signed(points: number): string {
+export function signed(points: number): string {
   return points > 0 ? `+${points}` : String(points);
 }
 

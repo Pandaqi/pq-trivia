@@ -68,7 +68,11 @@ function NoIdea({ quiz, screen }: InputProps): JSX.Element {
 function ConfidencePicker({ quiz, screen }: InputProps): JSX.Element {
   const t = useT();
   return (
-    <div class="pq-confidence" role="group" aria-label={t("confidence")}>
+    <div
+      class="pq-confidence pq-center"
+      role="group"
+      aria-label={t("confidence")}
+    >
       <span class="pq-field-label">{t("confidence")}</span>
       {CONFIDENCE_LEVELS.map((level) => (
         <button
@@ -99,7 +103,7 @@ function WagerPicker({ quiz, screen }: InputProps): JSX.Element | null {
   }
   const value = Math.min(screen.wagerValue ?? 0, screen.wagerMax);
   return (
-    <label class="pq-wager">
+    <label class="pq-wager pq-center">
       <span class="pq-field-label">
         {t("wagerLabel", {
           max: screen.wagerMax,
@@ -141,7 +145,7 @@ export function Answers(props: InputProps): JSX.Element {
   return (
     <>
       <Input {...props} />
-      <div class="pq-response-extras">
+      <div class="pq-response-extras pq-center">
         <NoIdea {...props} />
         <ConfidencePicker {...props} />
       </div>

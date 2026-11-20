@@ -250,6 +250,16 @@
   width: 100%;
 }
 
+/* Everything on a slide that is not a paragraph: lifelines, a wager, a keypad,
+   a map. One class, so they all sit in the same place: the middle. */
+.pq-center {
+  align-self: center;
+  width: 100%;
+  margin-inline: auto;
+  justify-content: center;
+  text-align: center;
+}
+
 /* A stack of cards with no markers. Answers, sort, match, review, people. */
 .pq-answers,
 .pq-sort,

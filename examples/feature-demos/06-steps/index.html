@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>06 · Steps</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>06 · Steps</strong>
+      <span
+        >Media, then question, then answers. Each part keeps its entrance.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Steps => media | fade | question | slide-up | answers</code>.
+            A transition name sits between two parts and applies to what
+            follows.
+          </li>
+          <li>
+            <code>DefaultSteps</code> and <code>DefaultStepTransition</code> in
+            the header do the same for every question without its own list.
+          </li>
+          <li>What is not named joins the last step, so nothing is lost.</li>
+          <li>
+            A video that ends counts as "next step". Clicking <em>Next step</em>
+            or pressing the next-question key works too.
+          </li>
+          <li>Revealing the answer shows everything at once.</li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 06 · Steps
+      Description => Four ways to arrive in parts.
+      Author => PQ-Trivia
+      Seed => steps
+      Language => en
+      DefaultSteps => question | answers
+      DefaultStepTransition => fade
+
+      Question => Which shape appears at the end of the clip?
+      Media => ../02-media/assets/clip.webm { poster="../02-media/assets/clip-poster.png", captions="../02-media/assets/clip.vtt" }
+      Steps => media | fade | question | slide-up | answers
+      Answers => A circle | A square | A triangle
+      Type => Choice
+      Correct => A circle
+      Explanation => The clip ends on a blue circle.
+
+      Question => This one takes the default: question, then answers.
+      Answers => Yes | No
+      Type => Choice
+      Correct => Yes
+
+      Question => Everything that is left arrives together.
+      Media => ../02-media/assets/lighthouse.svg { alt="A red and white lighthouse on a rock" }
+      Steps => media | all
+      Answers => A lighthouse
+      Type => Open
+
+      Question => Hints have a step of their own.
+      Steps => question | hints | explanation | all
+      Answers => 1989
+      Type => Range
+      Range => 0
+      Hints => It is a year. | It ends in nine.
+      Explanation => 1989. The wall came down in November.
+
+      Question => A finished clip moves the question along by itself.
+      Media => ../02-media/assets/clip.webm { poster="../02-media/assets/clip-poster.png" }
+      Steps => media | question
+      Answers => Circle
+      Type => Open
+      Explanation => When the clip ended, the question arrived without a click.
+
+      Question => No Steps line here. Everything at once, like before.
+      Media => ../02-media/assets/cottage.svg { alt="A white cottage with a blue door" }
+      Answers => A cottage
+      Type => Open
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "steps.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

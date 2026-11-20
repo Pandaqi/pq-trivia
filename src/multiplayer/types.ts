@@ -54,6 +54,8 @@ export enum MessageType {
   QuizEnd = "quiz:end",
   Ping = "ping",
   Join = "join",
+  /** A phone that missed the question asks again. Cheap, and it heals a drop. */
+  Resync = "room:sync",
   AnswerSubmit = "answer:submit",
   Ready = "ready",
   Buzz = "buzz",
@@ -98,6 +100,10 @@ export interface LiveQuestion {
   /** Blanks in a cloze question. */
   readonly blanks: number;
   readonly roundName: string | null;
+  /** The round this card opens: how big it is, what it is worth, its theme. */
+  readonly roundQuestions: number;
+  readonly roundPoints: number;
+  readonly roundSecret: string | null;
   /** `Buzzer => true`: the first phone to buzz owns this question. */
   readonly buzzer: boolean;
   /** `Wager => true`: the phone offers a stake before answering. */
@@ -197,6 +203,11 @@ export interface RevealPayload {
   readonly results: Readonly<Record<string, PlayerResult>>;
   readonly leaderboard: readonly LeaderRow[];
   readonly seq: number;
+  readonly items: readonly RevealItem[];
+}
+
+export interface FinalPayload extends ScorePayload {
+  /** Every answer this phone has not seen yet. Its end screen's history. */
   readonly items: readonly RevealItem[];
 }
 

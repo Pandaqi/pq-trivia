@@ -1,0 +1,21 @@
+Label => Harbour
+Stylesheet => style.css
+BackgroundAlpha => 0.28
+BoldHeadings => true
+
+--pq-accent => #1f6f8b
+--pq-paper => #eef3f1
+--pq-slide => #fbfdfc
+--pq-ink => #1c2b31
+--pq-muted => #51666e
+--pq-honey => #d9a441
+
+### Background
+bg-tide.svg
+bg-rocks.svg
+
+### ColorScheme night
+Light => #cfd8dc
+Dark => #0b1a22
+Background => #0b1a22
+Text => #f2f6f4

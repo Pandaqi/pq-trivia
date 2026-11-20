@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>05 · Animations</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>05 · Animations</strong>
+      <span>Every screen transition, one per question. Then the reveal.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Transition</code> animates the screen as it arrives. Press
+            next and watch the new slide come in.
+          </li>
+          <li>
+            <code>Reveal</code> animates the correct answers when the answer
+            shows.
+          </li>
+          <li>
+            Names: <code>fade</code>, <code>slide-up</code>,
+            <code>slide-left</code>, <code>slide-right</code>,
+            <code>zoom-in</code>, <code>zoom-out</code>, <code>flip-x</code>,
+            <code>wipe</code>, <code>blur-in</code>, <code>shake</code>,
+            <code>pulse</code>, <code>none</code>.
+          </li>
+          <li>
+            What the names look like is the theme's job. Paper ships the
+            keyframes; a theme can redraw them.
+          </li>
+          <li>
+            Turn on your system's reduced-motion setting and all of it stops.
+            That is a feature, not a missing demo.
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 05 · Animations
+      Description => Twelve transitions and four reveals.
+      Author => PQ-Trivia
+      Seed => animations
+      Language => en
+
+      Question => Fade. The quiet default.
+      Transition => fade
+      Reveal => fade
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Slide up, from below.
+      Transition => slide-up
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Slide left.
+      Transition => slide-left
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Slide right.
+      Transition => slide-right
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Zoom in, from 96%.
+      Transition => zoom-in
+      Reveal => zoom-in
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Zoom out, from 104%.
+      Transition => zoom-out
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Flip on the X axis.
+      Transition => flip-x
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Wipe, left to right.
+      Transition => wipe
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Blur in.
+      Transition => blur-in
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Shake. Use it once, for a bad bet.
+      Transition => shake
+      Reveal => shake
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => Pulse. Once.
+      Transition => pulse
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+
+      Question => None. It just appears.
+      Transition => none
+      Answers => Next | Stop | Skip
+      Type => Choice
+      Correct => Next
+      Explanation => Some questions do not want a drum roll.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "animations.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

@@ -52,7 +52,7 @@ function NumberPad({
 }): JSX.Element {
   const t = useT();
   return (
-    <div class="pq-numpad" role="group" aria-label={t("numberPad")}>
+    <div class="pq-numpad pq-center" role="group" aria-label={t("numberPad")}>
       {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
         <button
           key={digit}

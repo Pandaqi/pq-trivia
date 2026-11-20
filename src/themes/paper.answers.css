@@ -216,8 +216,20 @@
 /* Typed answers sit on a line, like a form on paper. They share the question's
  * column, so an input lines up with the cards beside it. */
 .pq-field {
+  width: 100%;
   max-width: 100%;
   margin: var(--pq-gap-lg) auto 0;
+}
+
+/* Every control fills the field it sits in. One rule, so a settings panel and a
+ * question slide cannot disagree about it. */
+.pq-input,
+.pq-input-row,
+.pq-field > select,
+.pq-field > textarea,
+.pq-wager input {
+  width: 100%;
+  min-width: 0;
 }
 
 .pq-input {
@@ -238,10 +250,6 @@
 /* The answer box is read from across a room; a settings field is not. */
 .pq-screen-question .pq-field .pq-input {
   font-size: 1.25rem;
-}
-
-.pq-input-number {
-  max-width: 12rem;
 }
 
 .pq-cloze {

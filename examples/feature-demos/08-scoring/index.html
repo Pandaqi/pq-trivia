@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>08 · Scoring</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>08 · Scoring</strong>
+      <span>Partial credit, a penalty, a streak, a bet, three lifelines.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Scoring => partial</code> gives a share per right answer.
+            <code>per-correct</code> pays each one separately.
+          </li>
+          <li>
+            <code>ScoringPreset => negative</code> costs a quarter of the
+            question for a wrong answer. A skip is free.
+          </li>
+          <li>
+            <code>Streaks => true</code> pays 1.5× from three right, 2× from
+            six.
+          </li>
+          <li>
+            <code>Wager => true</code> puts points on the line. The bet is
+            capped at the question's score.
+          </li>
+          <li>
+            Lifelines cost points. 50/50 needs a choice question; extra time
+            buys seconds; ask the room is what it says.
+          </li>
+          <li>
+            <code>Teams</code> adds a name box on the start screen. One screen,
+            one badge to pass around.
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 08 · Scoring
+      Description => Points, and what happens when you lose them.
+      Author => PQ-Trivia
+      Seed => scoring
+      Language => en
+      ScoringPreset => negative
+      NegativeMarking => 0.25
+      Streaks => true
+      Lifelines => 50/50 | extra-time | ask-room
+      Teams => The Regulars | Quizzy McQuizface
+      Grading => normalized
+
+      Question => Name the three primary colours.
+      Answers => Red | Yellow | Blue
+      Type => List
+      Correct => Red | Yellow | Blue
+      Scoring => partial
+      Score => 3
+      Explanation => One point each. Two out of three is two points.
+
+      Question => Which of these are noble gases?
+      Answers => Helium | Oxygen | Neon | Iron
+      Type => Choice
+      Multiple => true
+      Correct => Helium | Neon
+      Scoring => per-correct
+      Score => 2
+      Explanation => Helium and neon. Oxygen is rude, iron is a metal.
+
+      Question => Which planet is the hottest?
+      Answers => Venus | Mercury | Mars
+      Type => Choice
+      Correct => Venus
+      Explanation => Venus, thanks to an atmosphere that would melt a probe. Use 50/50 here.
+
+      Question => Who painted the Mona Lisa?
+      Answers => Leonardo da Vinci
+      Type => Open
+      AlsoAccept => Da Vinci | Leonardo
+      Reject => Michelangelo
+      Grading => fuzzy
+      FuzzyDistance => 2
+      Score => 2
+      Explanation => Fuzzy grading forgives a typo, not a different artist.
+
+      Question => Bet your points: which year did the first iPhone ship?
+      Answers => 2007
+      Type => Range
+      Range => 0
+      Wager => true
+      Score => 3
+      Explanation => 2007. A steady hand and a good memory are worth points.
+
+      Question => A wrong answer now costs you a quarter of the question.
+      Answers => Yes | No
+      Type => Choice
+      Correct => Yes
+      Score => 4
+      Explanation => NegativeMarking => 0.25, so four points become minus one.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "scoring.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

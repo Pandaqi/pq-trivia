@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>09 · Flow</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>09 · Flow</strong>
+      <span>A question can wait for an answer, or never show at all.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>When => answered(one) and answered(two)</code> keeps a bonus
+            back until the warm-up is done.
+          </li>
+          <li>
+            <code>correct(id)</code>, <code>wrong(id)</code> and
+            <code>score &gt;= 2</code> work in the same line. No eval, no
+            Function.
+          </li>
+          <li>
+            <code>Continue => onCorrect</code> refuses to move on until the
+            answer is right.
+          </li>
+          <li>
+            <code>HiddenAtPlay</code> leaves a question in the file and out of
+            the plan.
+          </li>
+          <li>
+            <code>Notes</code> never reach the player. The button below reads
+            them through the API, which is where a host UI would get them.
+          </li>
+        </ul>
+        <h2>Host panel</h2>
+        <p data-plan class="demo-muted">Loading…</p>
+        <div class="demo-actions">
+          <button type="button" data-notes>Read presenter notes</button>
+        </div>
+        <pre class="demo-log" data-log></pre>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 09 · Flow
+      Description => Two warm-ups, then whatever you earned.
+      Author => PQ-Trivia
+      Seed => flow
+      Language => en
+      RevealMode => afterAnswer
+
+      ### Warm-up one
+      ID => warm-up-one
+      Answers => one
+      Type => Open
+      Notes => The answer is one. Do not say it before they try.
+
+      ### Warm-up two
+      ID => warm-up-two
+      Answers => two
+      Type => Open
+
+      Question => Both warm-ups answered. This is the bonus.
+      When => answered(warm-up-one) and answered(warm-up-two)
+      Answers => Three
+      Type => Open
+      Score => 2
+      Explanation => It appeared because you answered both. Check the plan count in the panel.
+
+      Question => Two points gets you this one.
+      When => score >= 2
+      Answers => Four
+      Type => Open
+
+      Question => This needs the first warm-up to be right.
+      When => correct(warm-up-one)
+      Answers => Right
+      Type => Open
+      Explanation => A wrong first answer hides it. A right one brings it back.
+
+      Question => Answer this one correctly to move on.
+      Continue => onCorrect
+      Answers => Correct
+      Type => Open
+      Explanation => Pressing next with a wrong answer says why. That is the point.
+
+      Question => In the file, out of the plan.
+      HiddenAtPlay => true
+      Answers => Never
+      Type => Open
+
+      Question => Presenter notes are for the host only.
+      Notes => Say the answer slowly. Half the room knows it.
+      Notes => Do not read the second note out loud.
+      Answers => Notes
+      Type => Open
+      Explanation => The player view model never carries these. The host panel does.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "flow.trivia" });
+
+      const plan = document.querySelector("[data-plan]");
+      const log = document.querySelector("[data-log]");
+
+      const report = () => {
+        const state = quiz.state;
+        const total = state.plan?.total ?? 0;
+        const progress = quiz.progress();
+        plan.textContent = `${total} questions in the plan. ${progress.answered} answered.`;
+      };
+
+      const say = (line) => {
+        log.textContent = `${line}\n${log.textContent}`.slice(0, 4000);
+      };
+
+      quiz.subscribe(report);
+      quiz.on("question:enter", ({ index, id }) =>
+        say(`enter ${index}: ${id}`),
+      );
+      quiz.on("grade:ready", ({ report: grade }) =>
+        say(`grade: ${grade.points} of ${grade.maxPoints}`),
+      );
+
+      document.querySelector("[data-notes]").addEventListener("click", () => {
+        const screen = quiz.currentScreen();
+        if (screen === null || !("id" in screen)) {
+          say("No question on screen.");
+          return;
+        }
+        const notes = quiz.presenterNotes(screen.id);
+        say(
+          notes.length === 0
+            ? `${screen.id}: no notes.`
+            : `${screen.id}: ${notes.join(" · ")}`,
+        );
+      });
+
+      report();
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

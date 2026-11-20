@@ -18,13 +18,14 @@ import { settleWager } from "../core/grading/wager";
 import { QuestionType, type QuestionModel } from "../core/model/question";
 import type { QuizPlan } from "../core/plan/plan";
 import { flowSlots, rangeOf, roundRanges } from "./flow";
-import { describeResponse, liveQuestion, roundNameOf } from "./present";
+import { describeResponse, liveQuestion, roundInfoOf } from "./present";
 import { createEnvelope } from "./protocol";
 import { createRoster } from "./roster";
 import type { Room } from "./transport/types";
 import {
   DEFAULT_REVEAL_MODE,
   MAX_PLAYERS,
+  type FinalPayload,
   MessageType,
   RevealMode,
   RoomPhase,
@@ -46,6 +47,7 @@ import {
 
 export async function createHost(options: HostOptions): Promise<HostRoom> {
   const quiz = options.quiz;
+  const hideSecretTheme = quiz.config.hideSecretThemeMessage === true;
   const loadedPlan = quiz.state.plan;
   if (loadedPlan === null || loadedPlan.total === 0) {
     throw new Error("Load a quiz before opening a room.");
@@ -235,20 +237,6 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
     return results;
   }
 
-  function gradeRange(start: number, end: number): void {
-    for (let position = Math.max(start, 0); position <= end; position += 1) {
-      const question = questionAt(position);
-      if (
-        question === undefined ||
-        isSection(question) ||
-        graded.has(question.id)
-      ) {
-        continue;
-      }
-      gradeOne(question);
-    }
-  }
-
   function itemsFor(start: number, end: number): RevealItem[] {
     const items: RevealItem[] = [];
     for (let position = Math.max(start, 0); position <= end; position += 1) {
@@ -319,12 +307,14 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
       phaseValue === RoomPhase.Question && question.timerMs !== null
         ? Date.now() + question.timerMs
         : null;
+    const round = roundInfoOf(plan, at, hideSecretTheme);
     currentQuestion = liveQuestion(
       question,
       position,
       total,
-      roundNameOf(plan, at),
+      round.name,
       deadline,
+      round,
     );
     seq += 1;
     lastQuestion = {
@@ -391,12 +381,16 @@ export async function createHost(options: HostOptions): Promise<HostRoom> {
   }
 
   function end(): void {
-    gradeRange(0, index);
+    // Grade whatever is left, and hand the phones the answers they have not
+    // seen. That list is the end screen's history, in every reveal mode.
+    const items = itemsFor(0, index);
     phase = RoomPhase.Ended;
     closed = true;
+    const leaderboard = roster.leaderboard();
     broadcast(MessageType.QuizEnd, {
-      leaderboard: roster.leaderboard(),
-    } satisfies ScorePayload);
+      leaderboard,
+      items,
+    } satisfies FinalPayload);
     publishState();
   }
 

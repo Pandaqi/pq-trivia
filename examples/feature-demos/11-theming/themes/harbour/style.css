@@ -1,0 +1,24 @@
+/* Harbour. Small on purpose: tokens do most of the work. */
+
+.pq-quiz {
+  --pq-font-heading: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --pq-font-body: "Segoe UI", system-ui, sans-serif;
+  --pq-r-sm: 0.2rem;
+  --pq-r-md: 0.45rem;
+  --pq-r-lg: 0.8rem;
+}
+
+.pq-quiz .pq-title {
+  letter-spacing: -0.01em;
+}
+
+.pq-quiz .pq-primary,
+.pq-quiz .pq-answer {
+  border-radius: 0.45rem;
+}
+
+.pq-quiz .pq-meta-strip {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}

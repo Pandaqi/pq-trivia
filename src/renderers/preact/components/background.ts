@@ -2,12 +2,20 @@
 
 const IMAGE_PREFIX = /^image:\s*/i;
 const COLOR_PREFIX = /^color:\s*/i;
+const GRADIENT_PREFIX = /^gradient:\s*/i;
 
 export function backgroundStyle(background: string | null): string | undefined {
   if (background === null || background.trim().length === 0) {
     return undefined;
   }
   const value = background.trim();
+  if (value.toLowerCase() === "none") {
+    return "background: none";
+  }
+  if (GRADIENT_PREFIX.test(value)) {
+    // `background-image` is the one property both gradients and URLs share.
+    return `background-image: ${value.replace(GRADIENT_PREFIX, "")}`;
+  }
   if (IMAGE_PREFIX.test(value)) {
     const path = value.replace(IMAGE_PREFIX, "");
     return `background-image: url("${path}")`;

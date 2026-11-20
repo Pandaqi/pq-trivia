@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>13 · Extend</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>13 · Extend</strong>
+      <span
+        >A widget in its own sandbox, a toolbar button, the event stream.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Script => widget.html</code> loads the widget into a sandboxed
+            iframe with an opaque origin. It cannot read the page, the quiz or
+            the answers.
+          </li>
+          <li>
+            Off unless the host says <code>AllowScripts => true</code>. The page
+            can also pass it in code.
+          </li>
+          <li>
+            The widget talks over <code>postMessage</code>:
+            <code>pq:ready</code>, <code>pq:resize</code>,
+            <code>pq:response</code>, <code>pq:diagnostic</code>.
+          </li>
+          <li>
+            <code>quiz.actions.add()</code> puts a button in the toolbar.
+            <code>quiz.on()</code> gives you every event on the page.
+          </li>
+        </ul>
+        <h2>Events</h2>
+        <div class="demo-actions">
+          <button type="button" data-results>Show results</button>
+          <button type="button" data-clear>Clear log</button>
+        </div>
+        <pre class="demo-log" data-log>Waiting for a question.</pre>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 13 · Extend
+      Description => A sandboxed widget, and the events underneath it.
+      Author => PQ-Trivia
+      Seed => extend
+      Language => en
+      AllowScripts => true
+
+      Question => Which way is the tide going right now?
+      Script => widget.html
+      Height => 10em
+      Answers => Out | In
+      Type => Choice
+      Correct => Out
+      Hints => The widget is decoration and a clock. The tide is the question.
+      Explanation => The widget draws the time of day. It posts ready and resize, and never touches the answer.
+
+      Question => A normal question, for the event log.
+      Answers => Fine
+      Type => Open
+      Explanation => Every enter, response and grade lands in the panel.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "extend.trivia" });
+
+      const log = document.querySelector("[data-log]");
+      const say = (line) => {
+        log.textContent = `${line}\n${log.textContent}`.slice(0, 6000);
+      };
+
+      quiz.on("question:enter", ({ index, id }) =>
+        say(`enter ${index}: ${id}`),
+      );
+      quiz.on("response:change", ({ id }) => say(`response: ${id}`));
+      quiz.on("grade:ready", ({ report }) =>
+        say(`grade: ${report.points} of ${report.maxPoints}`),
+      );
+      quiz.on("mode:change", ({ mode }) => say(`mode: ${mode}`));
+
+      quiz.actions.add({
+        id: "demo-results",
+        label: "Show results",
+        title: "Jump to the results, events and all",
+        pinned: true,
+        run: (instance) => void instance.showResults(),
+      });
+
+      document.querySelector("[data-results]").addEventListener("click", () => {
+        quiz.showResults();
+      });
+      document.querySelector("[data-clear]").addEventListener("click", () => {
+        log.textContent = "";
+      });
+
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

@@ -4,4 +4,7 @@ dist/pack/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 .pq-build/
+
+# Screenshots from a review run. Worth looking at, not source.
+test/artifacts/
 .DS_Store

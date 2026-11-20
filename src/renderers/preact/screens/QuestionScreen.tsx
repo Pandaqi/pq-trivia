@@ -56,7 +56,11 @@ function Lifelines({
   }
   const used = quiz.state.lifelines[screen.id] ?? [];
   return (
-    <div class="pq-lifelines" role="group" aria-label={t("lifelines")}>
+    <div
+      class="pq-lifelines pq-center"
+      role="group"
+      aria-label={t("lifelines")}
+    >
       {allowed.map((lifeline) => (
         <button
           key={lifeline}

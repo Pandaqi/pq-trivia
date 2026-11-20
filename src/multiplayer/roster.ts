@@ -243,6 +243,14 @@ export function createRoster(context: RosterContext): Roster {
       submit(from, message.payload);
       return;
     }
+    if (message.type === MessageType.Resync) {
+      // A phone that missed the question asks again. Same answer a phone
+      // coming back from a reload gets.
+      if (playerOf(from) !== undefined) {
+        context.replay(from);
+      }
+      return;
+    }
     if (message.type === MessageType.Ready) {
       setReady(from, message.payload);
       return;

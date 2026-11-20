@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>03 · Advanced types</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>03 · Advanced types</strong>
+      <span>Click, drag, sort, label. Same five lines every time.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>Multi-select is a choice with <code>Multiple => true</code>.</li>
+          <li>
+            Hotspot takes a point: <code>Answers => 28,64</code>. The hit radius
+            is a percentage of the image.
+          </li>
+          <li>
+            Diagram takes targets: <code>Targets => Handle spot @ 76,52</code>,
+            then <code>Correct => Handle @ Handle spot</code>.
+          </li>
+          <li>
+            Classification puts items in buckets with
+            <code>Correct => Item @ Bucket</code>.
+          </li>
+          <li>
+            Every one of these is also a button in a list, so a keyboard can
+            answer without a mouse.
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 03 · Advanced types
+      Description => Nine types that need more than a line of text.
+      Author => PQ-Trivia
+      Seed => advanced-types
+      Language => en
+
+      ## Pick, rank, estimate
+
+      Question => Which of these are prime numbers?
+      Answers => 2 | 3 | 4 | 9
+      Type => Choice
+      Multiple => true
+      Correct => 2 | 3
+      Explanation => Two and three. Four is 2×2, nine is 3×3.
+
+      Question => Rank these albums by release year, oldest first.
+      Answers => Please Please Me | Abbey Road | Let It Be
+      Type => Rank
+      Correct => Please Please Me | Abbey Road | Let It Be
+      Explanation => 1963, 1969, 1970. The last one was recorded before the middle one, which is the sort of fact that starts arguments.
+
+      Question => How far is the Moon from Earth, on average?
+      Answers => 384400
+      Type => Estimate
+      Tolerance => 1500
+      Unit => km
+      Slider => 370000..390000
+      Score => 2
+      Explanation => 384,400 km. Anything within 1,500 counts.
+
+      ## Click and place
+
+      Question => Click the hut on the map.
+      Media => assets/map.svg { alt="A coastline with a hut, a lighthouse and some rocks" }
+      Answers => 28,64
+      Type => Hotspot
+      HitRadius => 8
+      Score => 2
+      Explanation => The little brown hut on the west coast. The lighthouse is north-east.
+
+      Question => Label the door.
+      Media => assets/door.svg { alt="A front door with a handle, a hinge and a lock plate" }
+      Answers => Handle | Hinge | Lock
+      Targets => Handle spot @ 76,60 | Hinge spot @ 21,52 | Lock spot @ 73,70
+      Correct => Handle @ Handle spot | Hinge @ Hinge spot | Lock @ Lock spot
+      Type => Diagram
+      Score => 3
+
+      Question => Put each band in its decade.
+      Answers => The Beatles | Nirvana | ABBA | Oasis
+      Buckets => 1960s | 1990s
+      Correct => The Beatles @ 1960s | ABBA @ 1960s | Nirvana @ 1990s | Oasis @ 1990s
+      Type => Classification
+      Score => 4
+
+      ## Rows and parts
+
+      Question => Mark each claim.
+      Answers => True | False
+      Rows => The sky is blue | Water is dry | Two plus two is four
+      Correct => True | False | True
+      Type => Matrix
+      Score => 3
+
+      Question => Name the band and the singer.
+      Parts => open: Band: 2 | open: Singer: 1
+      Answers => The Beatles || Paul McCartney
+      Type => Parts
+      Score => 3
+      Hints => The band is older than the singer's solo career.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "types.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

@@ -219,7 +219,13 @@ export function nearestAttributeName(rawKey: string): string | undefined {
     ...HEADER_KEYS,
   ];
   for (const candidate of candidates) {
-    const distance = editDistance(key, candidate.toLowerCase());
+    const lower = candidate.toLowerCase();
+    // A suggestion that is the thing you typed is not a suggestion. This
+    // happens for a header setting used in a question block.
+    if (lower === key) {
+      continue;
+    }
+    const distance = editDistance(key, lower);
     if (distance < bestScore) {
       bestScore = distance;
       best = candidate;

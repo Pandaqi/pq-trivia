@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>04 · Layout</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>04 · Layout</strong>
+      <span
+        >Layout names, five built-in classes, three kinds of background.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Layout</code> takes <code>center</code>, <code>compact</code>,
+            <code>quote</code> or <code>full-bleed</code>. A theme can add its
+            own.
+          </li>
+          <li>
+            <code>Class</code> adds a class to the slide. The five short names
+            ship with Paper: <code>center</code>, <code>dark</code>,
+            <code>invert</code>, <code>quote</code>, <code>spotlight</code>.
+          </li>
+          <li>
+            <code>Background</code> reads <code>color:</code>,
+            <code>image:</code>, <code>gradient:</code> or <code>none</code>.
+          </li>
+          <li>Text and answers use the same tokens, so a theme moves both.</li>
+        </ul>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 04 · Layout
+      Description => One layout per screen. No CSS written here.
+      Author => PQ-Trivia
+      Seed => layout
+      Language => en
+
+      ## Layouts
+
+      Question => Centred, because this line deserves the middle.
+      Layout => center
+      Answers => Yes
+      Type => Open
+
+      Question => Compact. Less air, more room for a long list.
+      Layout => compact
+      Answers => 1 | 2 | 3 | 4 | 5
+      Type => List
+      Correct => 1 | 2 | 3 | 4 | 5
+
+      Question => "I have not failed. I've just found 10,000 ways that won't work."
+      Layout => quote
+      Answers => Edison
+      Type => Open
+      Explanation => Attributed to Edison, which is how most quotes work.
+
+      Question => A full-bleed image, edge to edge.
+      Layout => full-bleed
+      Media => assets/waves.svg { alt="Three overlapping bands of green waves" }
+      Answers => Water
+      Type => Open
+
+      ## Classes
+
+      Question => A dark card, for a question that should feel like an object.
+      Class => dark
+      Answers => Card
+      Type => Open
+
+      Question => Spotlit. The edges go quiet.
+      Class => spotlight center
+      Answers => Middle
+      Type => Open
+
+      Question => Inverted colours on a colour of its own.
+      Class => invert
+      Background => color:#10232b
+      Answers => Blue
+      Type => Open
+
+      Question => **A gradient**, made from two colours.
+      Class => invert
+      Background => gradient:linear-gradient(135deg, #10232b, #2f6b4f)
+      Answers => Green
+      Type => Open
+
+      Question => An image behind the paper.
+      Background => image:assets/waves.svg
+      Layout => center
+      Answers => Waves
+      Type => Open
+
+      Question => No background at all. The theme's paper shows through.
+      Background => none
+      Answers => Plain
+      Type => Open
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "layout.trivia" });
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

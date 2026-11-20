@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="A simple map: a green coast, a hut, a lighthouse and grey rocks">
+  <rect width="800" height="450" fill="#bcd9e6"/>
+  <path d="M0 450 V300 Q120 286 220 250 Q320 214 380 150 Q430 96 520 60 Q600 30 700 40 L800 34 V450Z" fill="#9ab97a"/>
+  <path d="M0 340 Q120 320 230 282 Q330 248 400 180 Q460 118 540 86" fill="none" stroke="#f3ead2" stroke-width="22" stroke-linecap="round"/>
+  <g>
+    <rect x="206" y="272" width="44" height="30" fill="#8a5a3b"/>
+    <path d="M198 272 L228 248 L258 272Z" fill="#b9764f"/>
+    <rect x="222" y="286" width="12" height="16" fill="#3a2f24"/>
+  </g>
+  <g>
+    <rect x="556" y="66" width="22" height="58" fill="#f4efe1"/>
+    <rect x="552" y="54" width="30" height="14" fill="#c2543f"/>
+    <rect x="556" y="88" width="22" height="10" fill="#c2543f"/>
+  </g>
+  <g fill="#7d7c74">
+    <circle cx="120" cy="368" r="14"/>
+    <circle cx="146" cy="378" r="9"/>
+    <circle cx="690" cy="366" r="18"/>
+    <circle cx="664" cy="378" r="10"/>
+  </g>
+  <text x="228" y="330" font-family="system-ui, sans-serif" font-size="13" fill="#33421f" text-anchor="middle">hut</text>
+</svg>

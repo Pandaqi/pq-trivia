@@ -268,16 +268,20 @@ function LiveShell({
     return <PlayerView player={player} />;
   }
 
+  // The join form comes before the player has a screen, so it borrows one.
+  // Without it the fields sat against the glass, with no padding at all.
   if (name.trim().length === 0) {
     return (
-      <NameForm
-        code={code.length === 0 ? "????" : code}
-        error={error}
-        onJoin={(value) => {
-          setName(value);
-          setAttempt((current) => current + 1);
-        }}
-      />
+      <main class="pq-screen pq-live-screen">
+        <NameForm
+          code={code.length === 0 ? "????" : code}
+          error={error}
+          onJoin={(value) => {
+            setName(value);
+            setAttempt((current) => current + 1);
+          }}
+        />
+      </main>
     );
   }
 

@@ -41,8 +41,18 @@ export {
 export { downloadText, fileSlug } from "../platform/browser/download";
 export {
   applyShareOrder,
+  copyQuizJson,
   copyQuizShareLink,
+  copyQuizTrivia,
   downloadQuizAttempts,
+  downloadQuizCsv,
+  downloadQuizGift,
+  downloadQuizGrades,
+  downloadQuizHandout,
+  downloadQuizJson,
+  downloadQuizQti,
+  downloadQuizTrivia,
+  printQuiz,
   shareQuizUrl,
 } from "../platform/browser/exports";
 export { QuizApp } from "../renderers/preact/QuizApp";

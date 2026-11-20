@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>12 · Languages</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>12 · Languages</strong>
+      <span>Two files, matching IDs, one quiz. Switch mid-question.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            The file name decides the language:
+            <code>questions.en.trivia</code>, <code>questions.nl.trivia</code>.
+          </li>
+          <li>
+            Questions line up by <code>ID</code>. Without one, position inside
+            the round does it.
+          </li>
+          <li>
+            Switch while a question is on screen: the text and the interface
+            change, the answer you typed stays.
+          </li>
+          <li>
+            One language in one file also works, with a
+            <code>Language</code> line per block.
+          </li>
+        </ul>
+        <h2>Language</h2>
+        <div class="demo-actions">
+          <button type="button" data-lang="EN" aria-pressed="true">
+            English
+          </button>
+          <button type="button" data-lang="NL" aria-pressed="false">
+            Nederlands
+          </button>
+        </div>
+        <p class="demo-muted" data-note>The start screen has a picker too.</p>
+      </aside>
+    </div>
+
+    <script id="quiz-en" type="text/plain">
+      Title => 12 · Languages
+      Description => Two files, one quiz. Switch while playing.
+      Author => PQ-Trivia
+      Seed => languages
+      Language => en
+
+      Question => Which city is the capital of the Netherlands?
+      ID => capital
+      Answers => Amsterdam
+      Type => Open
+      Explanation => Amsterdam is the capital. The Hague is where the government sits, which is the sort of detail that wins pub quizzes.
+
+      Question => In which year was the North Sea Flood?
+      ID => flood
+      Answers => 1953
+      Type => Range
+      Range => 0
+      Hints => A year in the fifties.
+    </script>
+
+    <script id="quiz-nl" type="text/plain">
+      Title => 12 · Talen
+      Description => Twee bestanden, één quiz. Wissel tijdens het spelen.
+      Author => PQ-Trivia
+      Seed => languages
+      Language => nl
+
+      Question => Welke stad is de hoofdstad van Nederland?
+      ID => capital
+      Answers => Amsterdam
+      Type => Open
+      Explanation => Amsterdam is de hoofdstad. Den Haag zit de regering, en dat wint pubquizzen.
+
+      Question => In welk jaar was de Watersnoodramp?
+      ID => flood
+      Answers => 1953
+      Type => Range
+      Range => 0
+      Hints => Een jaar in de vijftig.
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({
+        type: "files",
+        files: [
+          {
+            name: "questions.en.trivia",
+            text: document.getElementById("quiz-en").textContent,
+          },
+          {
+            name: "questions.nl.trivia",
+            text: document.getElementById("quiz-nl").textContent,
+          },
+        ],
+      });
+
+      const note = document.querySelector("[data-note]");
+      const buttons = document.querySelectorAll("[data-lang]");
+      const sync = () => {
+        const active = quiz.state.language ?? "EN";
+        for (const button of buttons) {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.lang === active),
+          );
+        }
+        note.textContent = `Loaded: ${quiz.languages().join(", ")}. Now: ${active}.`;
+      };
+
+      for (const button of buttons) {
+        button.addEventListener("click", () => {
+          quiz.setLanguage(button.dataset.lang);
+          sync();
+        });
+      }
+      quiz.subscribe(sync);
+      sync();
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

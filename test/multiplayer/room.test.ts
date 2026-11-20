@@ -12,6 +12,7 @@ import {
 } from "../../src/multiplayer/protocol";
 import type { MemoryNetwork } from "../../src/multiplayer/transport/memory";
 import { memoryNetwork } from "../../src/multiplayer/transport/memory";
+import type { RoomTransport } from "../../src/multiplayer/transport/types";
 import {
   MessageType,
   RevealMode,
@@ -305,6 +306,124 @@ describe("a live round", () => {
     expect(again.state().leaderboard[0]?.score).toBe(1);
     host.leave();
     again.leave();
+  });
+
+  test("a phone that missed the question asks for it again", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "SYNC",
+    });
+    // A reload inside a frame: the join lands, the first question does not.
+    let dropped = false;
+    let shows = 0;
+    const deaf: RoomTransport = {
+      create: (code) => network.create(code),
+      join: async (code) => {
+        const room = await network.join(code);
+        return {
+          selfId: room.selfId,
+          send: (envelope, to) => room.send(envelope, to),
+          onMessage: (handler) =>
+            room.onMessage((message) => {
+              if (message.envelope.type === MessageType.QuestionShow) {
+                if (!dropped) {
+                  dropped = true;
+                  return;
+                }
+                shows += 1;
+              }
+              handler(message);
+            }),
+          onPeerJoin: (handler) => room.onPeerJoin(handler),
+          onPeerLeave: (handler) => room.onPeerLeave(handler),
+          leave: () => room.leave(),
+        };
+      },
+    };
+    const ada = await createPlayer({
+      transport: deaf,
+      code: "SYNC",
+      name: "Ada",
+    });
+    await ada.join();
+    host.start();
+    // The room state says a question is up, so the phone asks once more.
+    await tick();
+    await tick();
+    await tick();
+    expect(ada.state().question?.title).toBe("Pick B");
+    // One resync, one replay. Not a loop.
+    expect(shows).toBe(1);
+    host.leave();
+    ada.leave();
+  });
+
+  test("the end of the quiz leaves the phone a history", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "HIST",
+      reveal: RevealMode.End,
+    });
+    const ada = await createPlayer({
+      transport: network,
+      code: "HIST",
+      name: "Ada",
+    });
+    await ada.join();
+    host.start();
+    await tick();
+    const b = ada.state().question?.answers.find((entry) => entry.text === "B");
+    ada.submit(choice(b?.id ?? ""));
+    await tick();
+    host.next();
+    await tick();
+    host.next();
+    await tick();
+    const history = ada.state().history;
+    expect(history.length).toBe(2);
+    expect(history[0]?.answeredCorrectly).toBe(true);
+    expect(history[0]?.points).toBe(1);
+    // Tapped nothing on the second one, and the history says so.
+    expect(history[1]?.given).toBe("");
+    expect(history[1]?.answeredCorrectly).toBe(false);
+    expect(ada.state().phase).toBe(RoomPhase.Ended);
+    host.leave();
+    ada.leave();
+  });
+
+  test("a phone never sees the round's theme when the quiz hides it", async () => {
+    const network = memoryNetwork();
+    const quiz = createQuiz({
+      config: { hideSecretThemeMessage: true, addMissingSectionScreens: true },
+    });
+    await quiz.load({
+      type: "text",
+      text: "Title => Secret\nSeed => secret\n\n## Instruments\nSecret => Instruments\nQuestion => One\nAnswers => A | B\nType => Choice\nCorrect => B",
+    });
+    const host = await createHost({
+      quiz,
+      transport: network,
+      code: "SECR",
+    });
+    const ada = await createPlayer({
+      transport: network,
+      code: "SECR",
+      name: "Ada",
+    });
+    await ada.join();
+    host.start();
+    await tick();
+    const card = ada.state().question;
+    expect(card?.type).toBe(QuestionType.Section);
+    // The card still says how big the round is. The theme stays home.
+    expect(card?.roundQuestions).toBe(1);
+    expect(card?.roundSecret).toBeNull();
+    host.leave();
+    ada.leave();
   });
 });
 

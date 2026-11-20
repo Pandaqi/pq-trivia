@@ -780,29 +780,28 @@
   color: var(--pq-accent-ink, #fff);
 }
 
+/* The extras under a field: no idea, confidence, a wager. `.pq-center` puts
+   them in the middle; these rules only say how they stack. */
 .pq-response-extras {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.75rem;
   margin-top: 0.6rem;
 }
 
-/* "How sure are you?" is a question of its own. Give it the middle. */
 .pq-confidence {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.35rem;
-  width: 100%;
 }
 
 .pq-wager {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  max-width: 30rem;
   margin-top: 0.5rem;
 }
 
@@ -813,6 +812,7 @@
   gap: 0.35rem;
   max-width: 16rem;
   margin-top: 0.5rem;
+  margin-inline: auto;
 }
 
 .pq-numpad-wide {
@@ -875,6 +875,10 @@
   border: 0;
   background: none;
   cursor: crosshair;
+}
+
+.pq-map-static {
+  cursor: default;
 }
 
 .pq-map-surface img {

@@ -444,6 +444,10 @@ const live: TranslationTable = {
   liveLockIn: "Zet vast",
   livePickOne: "Kies er één",
   liveBackToQuiz: "Terug naar de quiz",
+  liveYourAnswers: "Jouw antwoorden",
+  liveNoAnswer: "geen antwoord",
+  liveWinner: "Winnaar",
+  liveTheme: "Thema: {theme}",
 };
 
 const editor: TranslationTable = {

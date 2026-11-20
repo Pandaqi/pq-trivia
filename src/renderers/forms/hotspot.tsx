@@ -62,9 +62,12 @@ function MapFrame({
     return null;
   }
   return (
-    <div class="pq-map">
+    <div class="pq-map pq-center">
       {onPick === undefined ? (
-        <Media item={screen.map} />
+        <div class="pq-map-surface pq-map-static">
+          <Media item={screen.map} />
+          {children}
+        </div>
       ) : (
         <button
           type="button"

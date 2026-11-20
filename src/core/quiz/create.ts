@@ -207,10 +207,13 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     if (quiz === null || state.plan === null) {
       return;
     }
-    if (!state.plan.questions.some((question) => question.when !== null)) {
+    // The current plan is already filtered, so a `When` question that is still
+    // hidden is not in it. Ask the unfiltered plan whether any condition exists.
+    const base = planQuiz(quiz, planOptions());
+    if (!base.questions.some((question) => question.when !== null)) {
       return;
     }
-    const flow = applyFlow(planQuiz(quiz, planOptions()), state.responses);
+    const flow = applyFlow(base, state.responses);
     for (const problem of flow.problems) {
       const diagnostic = syntaxWarning(
         DiagnosticCodes.InvalidValue,

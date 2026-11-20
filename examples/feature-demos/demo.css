@@ -1,0 +1,156 @@
+/* Page chrome for the feature demos. Paper owns the quiz; this is the bar
+   above it and the small panels beside it. Every demo links this file. */
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: #f2e9d9;
+  color: #2f2a33;
+  font:
+    0.95rem/1.5 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+.demo-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  align-items: baseline;
+  padding: 0.55rem 1.1rem;
+  border-bottom: 1px solid #d9d0be;
+  background: #fffdf7;
+}
+
+.demo-bar a {
+  color: #5f585e;
+  text-decoration: none;
+}
+
+.demo-bar a:hover,
+.demo-bar a:focus-visible {
+  color: #2f2a33;
+  text-decoration: underline;
+}
+
+.demo-bar strong {
+  font-size: 0.95rem;
+}
+
+.demo-bar span {
+  margin-left: auto;
+  color: #6f676d;
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.demo-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 21rem);
+  gap: 1rem;
+  align-items: start;
+  padding: 1rem;
+}
+
+.demo-body.single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.demo-body > aside {
+  padding: 0.85rem 1rem;
+  border: 1px solid #d9d0be;
+  border-radius: 0.9rem;
+  background: #fffdf7;
+  font-size: 0.85rem;
+}
+
+.demo-body > aside h2 {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.demo-body > aside p {
+  margin: 0 0 0.5rem;
+}
+
+.demo-body > aside ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.demo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+}
+
+.demo-actions button,
+.demo-actions select {
+  padding: 0.32rem 0.8rem;
+  border: 1.5px solid #b9ad99;
+  border-radius: 999rem;
+  background: #faf5ea;
+  color: inherit;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.demo-actions button:hover,
+.demo-actions select:hover {
+  border-color: #2f2a33;
+}
+
+.demo-actions button[aria-pressed="true"] {
+  border-color: #2f2a33;
+  background: #f5c65d;
+}
+
+.demo-log {
+  margin: 0.4rem 0 0;
+  padding: 0.5rem 0.6rem;
+  max-height: 14rem;
+  overflow: auto;
+  border-radius: 0.5rem;
+  background: #2f2a33;
+  color: #f5f2ea;
+  font:
+    0.72rem/1.45 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  white-space: pre-wrap;
+}
+
+.demo-muted {
+  color: #6f676d;
+}
+
+@media (max-width: 62rem) {
+  .demo-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .demo-bar,
+  .demo-body > aside {
+    display: none;
+  }
+
+  .demo-body {
+    display: block;
+    padding: 0;
+  }
+}

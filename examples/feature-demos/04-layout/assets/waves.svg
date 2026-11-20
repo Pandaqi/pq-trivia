@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="Two overlapping wave patterns">
+  <rect width="800" height="450" fill="#eef1e6"/>
+  <path d="M0 300 Q100 250 200 300 T400 300 T600 300 T800 300 V450 H0Z" fill="#b9cfa8"/>
+  <path d="M0 340 Q100 290 200 340 T400 340 T600 340 T800 340 V450 H0Z" fill="#8fb08a"/>
+  <path d="M0 380 Q100 330 200 380 T400 380 T600 380 T800 380 V450 H0Z" fill="#6a8f79"/>
+</svg>

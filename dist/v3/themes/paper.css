@@ -250,6 +250,16 @@
   width: 100%;
 }
 
+/* Everything on a slide that is not a paragraph: lifelines, a wager, a keypad,
+   a map. One class, so they all sit in the same place: the middle. */
+.pq-center {
+  align-self: center;
+  width: 100%;
+  margin-inline: auto;
+  justify-content: center;
+  text-align: center;
+}
+
 /* A stack of cards with no markers. Answers, sort, match, review, people. */
 .pq-answers,
 .pq-sort,
@@ -766,8 +776,20 @@ body {
 /* Typed answers sit on a line, like a form on paper. They share the question's
  * column, so an input lines up with the cards beside it. */
 .pq-field {
+  width: 100%;
   max-width: 100%;
   margin: var(--pq-gap-lg) auto 0;
+}
+
+/* Every control fills the field it sits in. One rule, so a settings panel and a
+ * question slide cannot disagree about it. */
+.pq-input,
+.pq-input-row,
+.pq-field > select,
+.pq-field > textarea,
+.pq-wager input {
+  width: 100%;
+  min-width: 0;
 }
 
 .pq-input {
@@ -788,10 +810,6 @@ body {
 /* The answer box is read from across a room; a settings field is not. */
 .pq-screen-question .pq-field .pq-input {
   font-size: 1.25rem;
-}
-
-.pq-input-number {
-  max-width: 12rem;
 }
 
 .pq-cloze {
@@ -2291,29 +2309,28 @@ body {
   color: var(--pq-accent-ink, #fff);
 }
 
+/* The extras under a field: no idea, confidence, a wager. `.pq-center` puts
+   them in the middle; these rules only say how they stack. */
 .pq-response-extras {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.75rem;
   margin-top: 0.6rem;
 }
 
-/* "How sure are you?" is a question of its own. Give it the middle. */
 .pq-confidence {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 0.35rem;
-  width: 100%;
 }
 
 .pq-wager {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  max-width: 30rem;
   margin-top: 0.5rem;
 }
 
@@ -2324,6 +2341,7 @@ body {
   gap: 0.35rem;
   max-width: 16rem;
   margin-top: 0.5rem;
+  margin-inline: auto;
 }
 
 .pq-numpad-wide {
@@ -2386,6 +2404,10 @@ body {
   border: 0;
   background: none;
   cursor: crosshair;
+}
+
+.pq-map-static {
+  cursor: default;
 }
 
 .pq-map-surface img {
@@ -2719,6 +2741,12 @@ body {
 .pq-live-screen {
   max-width: 46rem;
   margin: 0 auto;
+  /* The panel brings its own ink. A page that drops it in has its own colour,
+     and dark grey names on a dark board are not a theme, they are a bug. */
+  color: var(--pq-ink);
+  /* A phone has a notch and a home bar. Keep the words off both. */
+  padding-block: max(var(--pq-gap-lg), env(safe-area-inset-top))
+    max(var(--pq-gap-lg), env(safe-area-inset-bottom));
 }
 
 .pq-live-kicker,
@@ -2832,6 +2860,34 @@ body {
   flex: 1;
 }
 
+/* Winning is the point. Honey, dark ink, and a word for it. */
+.pq-live-board li[data-pq-winner="true"] {
+  background: var(--pq-honey);
+  color: var(--pq-code-bg);
+  box-shadow: var(--pq-shadow-2);
+  font-weight: 700;
+}
+
+.pq-live-board li[data-pq-winner="true"] .pq-live-rank,
+.pq-live-board li[data-pq-winner="true"] .pq-live-score {
+  color: inherit;
+}
+
+.pq-live-winner {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-code-bg);
+  color: var(--pq-honey);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 0.12em;
+}
+
 /* What a player said, next to their name. */
 .pq-live-given {
   flex: 2;
@@ -2857,9 +2913,21 @@ body {
   font-size: var(--pq-text-md);
 }
 
+/* Locked in, the card you sent stays readable. The others fade, on purpose. */
+.pq-live-answers .pq-answer[data-pq-selected="true"][disabled] {
+  opacity: 1;
+}
+
 .pq-live-submit {
   min-height: 3.4rem;
   font-size: var(--pq-text-md);
+}
+
+/* Sent, or the host closed the question: there is nothing left to press. The
+   line under the answers says why. A button that is merely not ready yet stays
+   where it is. */
+.pq-live-screen[data-pq-locked="true"] .pq-live-submit {
+  display: none;
 }
 
 .pq-live-answer {
@@ -2877,6 +2945,88 @@ body {
 
 .pq-live-result[data-pq-correct="false"] {
   color: var(--pq-wrong);
+}
+
+/* A round card carries what the big screen's card carries. */
+.pq-live-round {
+  margin: 0;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+}
+
+.pq-live-secret {
+  margin: 0;
+  color: var(--pq-accent);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+  font-weight: 600;
+}
+
+/* The end of the quiz is a slide of its own: the board gets the room. */
+.pq-live-end {
+  max-width: 62rem;
+  gap: var(--pq-gap-lg);
+  text-align: center;
+}
+
+.pq-live-end .pq-live-heading {
+  font-size: clamp(1.9rem, 5vw, 3rem);
+}
+
+/* A phone that is done keeps its own answers, and a way out. */
+.pq-live-history {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  text-align: left;
+}
+
+.pq-live-history ol {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pq-live-history li {
+  display: grid;
+  grid-template-columns: 1.2rem minmax(0, 1fr) auto;
+  gap: 0.15rem var(--pq-gap-sm);
+  align-items: baseline;
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+  font-size: var(--pq-text-sm);
+}
+
+.pq-live-history-mark {
+  font-weight: 700;
+}
+
+.pq-live-history li[data-pq-correct="true"] .pq-live-history-mark {
+  color: var(--pq-right);
+}
+
+.pq-live-history li[data-pq-correct="false"] .pq-live-history-mark {
+  color: var(--pq-wrong);
+}
+
+.pq-live-history-title,
+.pq-live-history-given {
+  overflow-wrap: anywhere;
+}
+
+.pq-live-history-given {
+  grid-column: 2 / -1;
+  color: var(--pq-muted);
+}
+
+.pq-live-leave {
+  justify-self: center;
+  min-height: 3.2rem;
+  padding-inline: 1.6rem;
+  font-size: var(--pq-text-md);
 }
 
 /* The host's lobby settings: two fields, no extra chrome. */

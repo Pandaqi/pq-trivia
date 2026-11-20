@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="A red and white striped lighthouse on a rock in a blue sea">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#cfe6f2"/>
+      <stop offset="1" stop-color="#f7ead2"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#sky)"/>
+  <circle cx="670" cy="86" r="34" fill="#f6dfa0" opacity="0.8"/>
+  <path d="M0 300 Q160 280 330 300 T800 292 V450 H0Z" fill="#3b7d8f"/>
+  <path d="M0 320 Q200 300 410 322 T800 312 V450 H0Z" fill="#2c6373"/>
+  <ellipse cx="580" cy="352" rx="120" ry="34" fill="#6b5b4a"/>
+  <path d="M530 350 L552 214 H608 L630 350Z" fill="#f4efe1"/>
+  <path d="M543 300 L557 246 H603 L617 300Z" fill="#c2543f"/>
+  <path d="M536 246 L568 222 H592 L624 246Z" fill="#f4efe1"/>
+  <rect x="566" y="176" width="28" height="46" fill="#3a3a42"/>
+  <path d="M560 176 H600 L592 160 H568Z" fill="#c2543f"/>
+  <rect x="548" y="214" width="64" height="10" fill="#3a3a42"/>
+  <rect x="566" y="262" width="14" height="20" rx="7" fill="#3a3a42"/>
+  <path d="M0 400 Q200 380 400 398 T800 392 V450 H0Z" fill="#1f4b58"/>
+</svg>

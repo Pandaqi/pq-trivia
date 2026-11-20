@@ -17,7 +17,7 @@ import {
   type RevealPayload,
 } from "../types";
 import { assignTeamColours } from "../../shared/teamColours";
-import { Leaderboard, LiveBadge, RevealPanel } from "./parts";
+import { Leaderboard, LiveBadge, RevealPanel, signed } from "./parts";
 import { PlayerAnswer } from "./PlayerAnswer";
 
 function usePlayer(player: PlayerRoom): number {
@@ -46,6 +46,22 @@ function questionMeta(
   return `${base}${round} · ${question.points} ${unit}`;
 }
 
+/**
+ * Out of the room, back to the quiz. A phone that is done should not sit there
+ * until the tab is closed by hand.
+ */
+function leaveRoom(player: PlayerRoom): void {
+  player.leave();
+  if (typeof location === "undefined") {
+    return;
+  }
+  const url = new URL(location.href);
+  for (const key of ["pq-live", "name", "team", "watch"]) {
+    url.searchParams.delete(key);
+  }
+  location.assign(url.toString());
+}
+
 function QuestionBody({
   question,
   meta,
@@ -55,7 +71,7 @@ function QuestionBody({
 }): JSX.Element {
   return (
     <section class="pq-live-question">
-      <p class="pq-live-meta">{meta}</p>
+      {meta.length === 0 ? null : <p class="pq-live-meta">{meta}</p>}
       <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
         {question.title}
       </h1>
@@ -222,11 +238,40 @@ export function PlayerView({
 
   if (state.phase === RoomPhase.Ended) {
     return (
-      <main class="pq-screen pq-live-screen">
+      <main class="pq-screen pq-live-screen pq-live-end">
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
           {t("liveThatIsQuiz")}
         </h1>
         <Leaderboard rows={state.leaderboard} selfId={state.id} />
+        {state.history.length === 0 ? null : (
+          <section class="pq-live-history" aria-label={t("liveYourAnswers")}>
+            <h2 class="pq-live-title">{t("liveYourAnswers")}</h2>
+            <ol>
+              {state.history.map((row) => (
+                <li
+                  key={row.questionId}
+                  data-pq-correct={String(row.answeredCorrectly)}
+                >
+                  <span class="pq-live-history-mark" aria-hidden="true">
+                    {row.answeredCorrectly ? "✓" : "✗"}
+                  </span>
+                  <span class="pq-live-history-title">{row.title}</span>
+                  <span class="pq-live-score">{signed(row.points)}</span>
+                  <span class="pq-live-history-given">
+                    {row.given.length === 0 ? t("liveNoAnswer") : row.given}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+        <button
+          type="button"
+          class="pq-primary pq-live-leave"
+          onClick={() => leaveRoom(player)}
+        >
+          {t("liveBackToQuiz")}
+        </button>
       </main>
     );
   }
@@ -273,10 +318,30 @@ export function PlayerView({
     return (
       <main class="pq-screen pq-live-screen">
         {badge}
-        <QuestionBody
-          question={question}
-          meta={questionMeta(t, question, false)}
-        />
+        {/* A round card has no count and no points. Its name is the heading,
+            so the meta line would only say it twice. The card does carry the
+            round's size, its worth and its theme, the way the big screen does. */}
+        <QuestionBody question={question} meta="" />
+        {question.roundQuestions === 0 ? null : (
+          <p class="pq-live-round">
+            {question.roundQuestions}{" "}
+            {t(
+              pluralKey(
+                question.roundQuestions,
+                "question_one",
+                "question_other",
+              ),
+            )}
+            {" · "}
+            {question.roundPoints}{" "}
+            {t(pluralKey(question.roundPoints, "point_one", "point_other"))}
+          </p>
+        )}
+        {question.roundSecret === null ? null : (
+          <p class="pq-live-secret">
+            {t("liveTheme", { theme: question.roundSecret })}
+          </p>
+        )}
         <p class="pq-live-hint" role="status">
           {t("liveNextSoon")}
         </p>
@@ -318,7 +383,10 @@ export function PlayerView({
   }
 
   return (
-    <main class="pq-screen pq-live-screen">
+    <main
+      class="pq-screen pq-live-screen"
+      data-pq-locked={state.submitted || state.closed ? "true" : undefined}
+    >
       {badge}
       <QuestionBody
         question={question}

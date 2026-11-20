@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>11 · Theming</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>11 · Theming</strong>
+      <span
+        >A folder with a settings file, a stylesheet and two backgrounds.</span
+      >
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>themes/harbour/theme.trivia-theme</code> holds the tokens, the
+            two backgrounds and a colour scheme. No JavaScript.
+          </li>
+          <li>
+            The background changes per question, from a stable hash. The same
+            question gets the same image when you go back.
+          </li>
+          <li>
+            <code>ColorScheme => night</code> uses the scheme block from the
+            same settings file.
+          </li>
+          <li><code>Background</code> on a question beats the theme's pick.</li>
+          <li>
+            Print is untouched: the sheet uses its own styles, not the theme's
+            colours.
+          </li>
+        </ul>
+        <h2>Theme</h2>
+        <p class="demo-muted" data-theme>Loading…</p>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 11 · Theming
+      Description => Harbour, a theme folder built for this demo.
+      Author => PQ-Trivia
+      Seed => theming
+      Language => en
+
+      Question => Which way is the tide going?
+      Answers => Out | In
+      Type => Choice
+      Correct => Out
+      Explanation => The theme does not know. The hash just picked a background.
+
+      Question => The same question twice gets the same background.
+      Answers => Stable
+      Type => Open
+
+      Question => A dark scheme, from the theme's settings file.
+      ColorScheme => night
+      Answers => Night
+      Type => Open
+
+      Question => Spotlight, on top of the theme's colours.
+      Class => spotlight
+      Answers => Lit
+      Type => Open
+
+      Question => A background set on the question itself.
+      Background => color:#1f2a33
+      Class => invert
+      Answers => Override
+      Type => Open
+
+      Question => Bold headings and a serif face, both from the theme.
+      Answers => Serif
+      Type => Open
+    </script>
+
+    <script type="module">
+      import {
+        createQuiz,
+        getTheme,
+        mountQuiz,
+        subscribeTheme,
+      } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({
+        config: { layoutMode: "inline", theme: "harbour" },
+      });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "theming.trivia" });
+
+      const label = document.querySelector("[data-theme]");
+      const show = () => {
+        const theme = getTheme();
+        label.textContent =
+          theme === null
+            ? "No theme loaded yet."
+            : `${theme.settings.label}: ${theme.settings.backgrounds.length} backgrounds, ${Object.keys(theme.settings.schemes).length} schemes.`;
+      };
+      subscribeTheme(show);
+      show();
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

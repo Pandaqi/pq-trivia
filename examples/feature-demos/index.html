@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PQ-Trivia feature demos</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 68rem;
+        padding: 2rem 1.25rem 4rem;
+        background: #f2e9d9;
+        color: #2f2a33;
+        font:
+          1rem/1.55 system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      h1 {
+        margin: 0 0 0.2rem;
+        font-size: 1.7rem;
+      }
+      .lede {
+        margin: 0 0 0.4rem;
+        max-width: 46rem;
+      }
+      .hint {
+        margin: 0 0 2rem;
+        color: #6f676d;
+        font-size: 0.9rem;
+      }
+      h2 {
+        margin: 2rem 0 0.7rem;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6f676d;
+      }
+      ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
+        gap: 0.7rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      li a {
+        display: block;
+        height: 100%;
+        padding: 0.8rem 0.95rem;
+        border: 1px solid #d9d0be;
+        border-radius: 0.8rem;
+        background: #fffdf7;
+        color: inherit;
+        text-decoration: none;
+      }
+      li a:hover,
+      li a:focus-visible {
+        border-color: #2f2a33;
+        background: #fff;
+      }
+      li strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      li span {
+        color: #6f676d;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PQ-Trivia feature demos</h1>
+    <p class="lede">
+      One small page per feature. Every quiz is plain text inside its own page,
+      so you can read the source, change a line and reload.
+    </p>
+    <p class="hint">
+      Serve the repository with <code>bun run preview</code> and open
+      <code>http://localhost:4173/examples/feature-demos/</code>. Most demos
+      also work from <code>file://</code>; the language, theme and widget ones
+      need a server, because a browser refuses to fetch local files.
+    </p>
+
+    <h2>Content</h2>
+    <ul>
+      <li>
+        <a href="01-basics/index.html">
+          <strong>01 · Basics</strong>
+          <span
+            >Start, rounds, end, the eight everyday types, inline text.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="02-media/index.html">
+          <strong>02 · Media</strong>
+          <span
+            >Images, audio, video, captions, a transcript, one watch
+            limit.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="03-types/index.html">
+          <strong>03 · Advanced types</strong>
+          <span>Hotspot, diagram, buckets, matrix, parts, estimate, rank.</span>
+        </a>
+      </li>
+      <li>
+        <a href="09-flow/index.html">
+          <strong>04 · Flow</strong>
+          <span
+            >When, Unlock, Continue, hidden blocks and presenter notes.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="10-planning/index.html">
+          <strong>05 · Planning</strong>
+          <span
+            >Pools, difficulty, variants, shuffling, filters, a secret
+            theme.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="08-scoring/index.html">
+          <strong>06 · Scoring</strong>
+          <span
+            >Partial, per-correct, negative, streaks, wagers, lifelines,
+            teams.</span
+          >
+        </a>
+      </li>
+    </ul>
+
+    <h2>Look and motion</h2>
+    <ul>
+      <li>
+        <a href="04-layout/index.html">
+          <strong>07 · Layout</strong>
+          <span>Named layouts, built-in classes, backgrounds.</span>
+        </a>
+      </li>
+      <li>
+        <a href="05-animations/index.html">
+          <strong>08 · Animations</strong>
+          <span>Every screen transition, and the answer reveal.</span>
+        </a>
+      </li>
+      <li>
+        <a href="06-steps/index.html">
+          <strong>09 · Steps</strong>
+          <span>One part at a time, with its own entrance.</span>
+        </a>
+      </li>
+      <li>
+        <a href="07-timers/index.html">
+          <strong>10 · Timers</strong>
+          <span>Per question, per round, whole quiz, beeps and expiry.</span>
+        </a>
+      </li>
+      <li>
+        <a href="11-theming/index.html">
+          <strong>11 · Theming</strong>
+          <span>A theme folder, tokens, colour schemes, backgrounds.</span>
+        </a>
+      </li>
+    </ul>
+
+    <h2>Host and platform</h2>
+    <ul>
+      <li>
+        <a href="12-languages/index.html">
+          <strong>12 · Languages</strong>
+          <span>Two files, one quiz, switch while playing.</span>
+        </a>
+      </li>
+      <li>
+        <a href="13-extend/index.html">
+          <strong>13 · Extend</strong>
+          <span
+            >A sandboxed script widget, custom actions, the event stream.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="14-export/index.html">
+          <strong>14 · Export</strong>
+          <span
+            >JSON, CSV, GIFT, QTI, handout, share link, class analytics.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="15-live/index.html">
+          <strong>15 · Live</strong>
+          <span>Host, player and watcher, teams, reveal modes, QR.</span>
+        </a>
+      </li>
+    </ul>
+
+    <h2>Older demos, same folder</h2>
+    <ul>
+      <li>
+        <a href="player.html">
+          <strong>Player</strong>
+          <span>The one-line <code>new Quiz()</code> page.</span>
+        </a>
+      </li>
+      <li>
+        <a href="element.html">
+          <strong>Element</strong>
+          <span><code>&lt;pq-quiz&gt;</code> with a separate file.</span>
+        </a>
+      </li>
+      <li>
+        <a href="print.html">
+          <strong>Print</strong>
+          <span
+            >Proof sheet: questions, answers, form, grade table, cards.</span
+          >
+        </a>
+      </li>
+      <li>
+        <a href="custom.html">
+          <strong>Custom views</strong>
+          <span>Replace a screen, add toolbar buttons.</span>
+        </a>
+      </li>
+      <li>
+        <a href="multiplayer.html">
+          <strong>Live, minimal</strong>
+          <span>Two panes, one BroadcastChannel.</span>
+        </a>
+      </li>
+      <li>
+        <a href="editor.html">
+          <strong>Wizard</strong>
+          <span>Build <code>bun run build:editor</code> first.</span>
+        </a>
+      </li>
+      <li>
+        <a href="hotspot.html">
+          <strong>Hotspot helper</strong>
+          <span>Turn clicks on an image into coordinates.</span>
+        </a>
+      </li>
+    </ul>
+  </body>
+</html>

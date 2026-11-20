@@ -21,10 +21,13 @@ type HostState = ReturnType<HostRoom["state"]>;
 
 function useHost(host: HostRoom): number {
   const [version, setVersion] = useState(0);
-  useEffect(
-    () => host.subscribe(() => setVersion((value) => value + 1)),
-    [host],
-  );
+  useEffect(() => {
+    const off = host.subscribe(() => setVersion((value) => value + 1));
+    // A player can join between this render and the subscription. Read the
+    // current room once more so the first roster is not the stale one.
+    setVersion((value) => value + 1);
+    return off;
+  }, [host]);
   return version;
 }
 
@@ -248,6 +251,28 @@ export function HostView({
     ((phase === RoomPhase.Question && mode !== RevealMode.Pass) ||
       (inAnswers && mode === RevealMode.Pass));
 
+  const standings = [...state.players]
+    .sort((a, b) => b.score - a.score)
+    .map((player) => ({
+      id: player.id,
+      name: player.team ?? player.name,
+      score: player.score,
+    }));
+
+  // The quiz is over. The last question does not get to keep the board at its
+  // feet: the board is the slide, and it gets the whole screen.
+  if (phase === RoomPhase.Ended) {
+    return (
+      <main class="pq-screen pq-live-screen pq-live-end">
+        <p class="pq-live-kicker">{t("liveLiveQuiz")}</p>
+        <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
+          {t("liveThatIsQuiz")}
+        </h1>
+        <Leaderboard rows={standings} />
+      </main>
+    );
+  }
+
   const body = (): JSX.Element => {
     if (lobby) {
       return <LobbyPanel host={host} state={state} mode={mode} />;
@@ -291,18 +316,6 @@ export function HostView({
         />
       )}
 
-      {phase === RoomPhase.Ended ? (
-        <Leaderboard
-          rows={[...state.players]
-            .sort((a, b) => b.score - a.score)
-            .map((player) => ({
-              id: player.id,
-              name: player.team ?? player.name,
-              score: player.score,
-            }))}
-        />
-      ) : null}
-
       <footer class="pq-toolbar">
         {lobby ? (
           <button
@@ -314,7 +327,7 @@ export function HostView({
             {t("liveStartQuiz")}
           </button>
         ) : null}
-        {lobby || phase === RoomPhase.Ended ? null : (
+        {lobby ? null : (
           <HostControls
             host={host}
             phase={phase}

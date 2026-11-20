@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" role="img" aria-label="A white cottage with a blue door and a brass welcome sign">
+  <rect width="800" height="450" fill="#dfe9d5"/>
+  <circle cx="120" cy="80" r="42" fill="#f6dfa0"/>
+  <path d="M0 360 Q220 336 430 358 T800 350 V450 H0Z" fill="#7fa268"/>
+  <rect x="220" y="180" width="360" height="200" fill="#f7f3e8"/>
+  <path d="M190 190 L400 90 L610 190Z" fill="#a4553f"/>
+  <rect x="262" y="210" width="70" height="66" fill="#9cc6d8"/>
+  <rect x="468" y="210" width="70" height="66" fill="#9cc6d8"/>
+  <rect x="362" y="226" width="84" height="154" fill="#3c6d8a"/>
+  <circle cx="430" cy="304" r="6" fill="#d9b45a"/>
+  <rect x="378" y="250" width="52" height="26" rx="4" fill="#d9b45a"/>
+  <text x="404" y="268" font-family="Georgia, serif" font-size="12" fill="#3a2f24" text-anchor="middle">Welcome</text>
+  <rect x="496" y="140" width="26" height="58" fill="#a4553f"/>
+</svg>

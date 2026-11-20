@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>10 · Planning</title>
+    <link rel="stylesheet" href="../../../dist/v3/themes/paper.css" />
+    <link
+      rel="stylesheet"
+      href="../../../dist/v3/themes/print.css"
+      media="print"
+    />
+    <link rel="stylesheet" href="../demo.css" />
+  </head>
+  <body>
+    <header class="demo-bar">
+      <a href="../index.html">← all demos</a>
+      <strong>10 · Planning</strong>
+      <span>A pool draws three of eight. The seed decides which three.</span>
+    </header>
+    <div class="demo-body">
+      <main id="quiz"></main>
+      <aside>
+        <h2>Look for</h2>
+        <ul>
+          <li>
+            <code>Pool => 3</code> in the header draws three per round.
+            <code>BalanceDifficulty</code> spreads the draw across the tags
+            instead of taking the shuffle.
+          </li>
+          <li>
+            <code>Variants</code> picks one value per slot. <code>{1}</code> and
+            <code>{2}</code> take it, and the print sheet reads the same plan.
+          </li>
+          <li>
+            <code>ShuffleQuestions => true</code> moves the order, not the
+            answers.
+          </li>
+          <li>
+            The secret theme asks one generated question at the end of its
+            round.
+          </li>
+        </ul>
+        <h2>Plan report</h2>
+        <p data-report class="demo-muted">Loading…</p>
+        <div class="demo-actions">
+          <button type="button" data-all aria-pressed="true">All rounds</button>
+          <button type="button" data-hide aria-pressed="false">
+            Hide rounds
+          </button>
+          <button type="button" data-reshuffle>New seed</button>
+        </div>
+        <pre class="demo-log" data-log></pre>
+      </aside>
+    </div>
+
+    <script id="quiz-text" type="text/plain">
+      Title => 10 · Planning
+      Description => Eight questions, three of them. Then a second round.
+      Author => PQ-Trivia
+      Seed => planning
+      Language => en
+      Pool => 3
+      BalanceDifficulty => true
+      ShuffleQuestions => true
+      AddSecretThemeQuestions => true
+
+      ## Mixed bag
+      Secret => Lighthouse
+
+      Question => Which sea creature has three hearts?
+      Answers => Octopus | Crab | Jellyfish
+      Type => Choice
+      Correct => Octopus
+      Difficulty => 2
+
+      Question => What is the largest planet in the solar system?
+      Answers => Jupiter
+      Type => Open
+      Difficulty => 1
+
+      Question => In {1}, who sang {2}?
+      Answers => Paul McCartney | Paul Simon
+      Variants => 1969 | 1970
+      Variants => Hey Jude | Let It Be
+      Difficulty => 3
+
+      Question => How many strings does a violin have?
+      Answers => 4
+      Type => Range
+      Range => 0
+      Difficulty => 1
+
+      Question => Name the only mammal that can truly fly.
+      Answers => Bat
+      Type => Open
+      Difficulty => 2
+
+      Question => Which country has the most time zones?
+      Answers => France
+      Type => Open
+      Difficulty => 5
+      Explanation => France, thanks to its overseas territories. Nobody guesses it.
+
+      ## Second round
+
+      Question => Which instrument has 88 keys?
+      Answers => Piano
+      Type => Open
+      Difficulty => 1
+
+      Question => What does HTTP stand for?
+      Answers => HyperText Transfer Protocol
+      Type => Open
+      Difficulty => 4
+
+      Question => Name the closest star to Earth.
+      Answers => The Sun
+      Type => Open
+      Difficulty => 1
+
+      Question => What is the chemical symbol for gold?
+      Answers => Au
+      Type => Open
+      Difficulty => 3
+
+      Question => The Battle of Hastings was in [blank].
+      Answers => 1066
+      Type => Cloze
+      Difficulty => 3
+    </script>
+
+    <script type="module">
+      import { createQuiz, mountQuiz } from "../../../dist/v3/player.js";
+
+      const text = document.getElementById("quiz-text").textContent;
+      const quiz = createQuiz({ config: { layoutMode: "inline" } });
+      mountQuiz(quiz, document.getElementById("quiz"));
+      await quiz.load({ type: "text", text, file: "planning.trivia" });
+
+      const report = document.querySelector("[data-report]");
+      const log = document.querySelector("[data-log]");
+      const hide = document.querySelector("[data-hide]");
+      const all = document.querySelector("[data-all]");
+
+      const say = (line) => {
+        log.textContent = `${line}\n${log.textContent}`.slice(0, 4000);
+      };
+
+      const draw = () => {
+        const plan = quiz.state.plan;
+        if (plan === null) {
+          return;
+        }
+        const rounds = plan.rounds
+          .map((round) => `${round.name} (${round.count})`)
+          .join(" · ");
+        report.textContent = `${plan.total} questions, seed "${plan.seed}". ${rounds}`;
+      };
+
+      quiz.subscribe(draw);
+
+      all.addEventListener("click", () => {
+        quiz.configure({ filterSections: [] });
+        all.setAttribute("aria-pressed", "true");
+        hide.setAttribute("aria-pressed", "false");
+        say("filterSections: []");
+      });
+
+      hide.addEventListener("click", () => {
+        quiz.configure({ filterSections: ["Mixed bag"] });
+        all.setAttribute("aria-pressed", "false");
+        hide.setAttribute("aria-pressed", "true");
+        say('filterSections: ["Mixed bag"]');
+      });
+
+      document
+        .querySelector("[data-reshuffle]")
+        .addEventListener("click", () => {
+          const seed = `planning-${Math.floor(Math.random() * 1000)}`;
+          quiz.setOrder({ seed });
+          quiz.restart();
+          say(`New seed "${seed}". Restart to see the draw.`);
+        });
+
+      draw();
+      window.demoQuiz = quiz;
+    </script>
+  </body>
+</html>

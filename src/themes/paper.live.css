@@ -6,6 +6,12 @@
 .pq-live-screen {
   max-width: 46rem;
   margin: 0 auto;
+  /* The panel brings its own ink. A page that drops it in has its own colour,
+     and dark grey names on a dark board are not a theme, they are a bug. */
+  color: var(--pq-ink);
+  /* A phone has a notch and a home bar. Keep the words off both. */
+  padding-block: max(var(--pq-gap-lg), env(safe-area-inset-top))
+    max(var(--pq-gap-lg), env(safe-area-inset-bottom));
 }
 
 .pq-live-kicker,
@@ -119,6 +125,34 @@
   flex: 1;
 }
 
+/* Winning is the point. Honey, dark ink, and a word for it. */
+.pq-live-board li[data-pq-winner="true"] {
+  background: var(--pq-honey);
+  color: var(--pq-code-bg);
+  box-shadow: var(--pq-shadow-2);
+  font-weight: 700;
+}
+
+.pq-live-board li[data-pq-winner="true"] .pq-live-rank,
+.pq-live-board li[data-pq-winner="true"] .pq-live-score {
+  color: inherit;
+}
+
+.pq-live-winner {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-code-bg);
+  color: var(--pq-honey);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  vertical-align: 0.12em;
+}
+
 /* What a player said, next to their name. */
 .pq-live-given {
   flex: 2;
@@ -144,9 +178,21 @@
   font-size: var(--pq-text-md);
 }
 
+/* Locked in, the card you sent stays readable. The others fade, on purpose. */
+.pq-live-answers .pq-answer[data-pq-selected="true"][disabled] {
+  opacity: 1;
+}
+
 .pq-live-submit {
   min-height: 3.4rem;
   font-size: var(--pq-text-md);
+}
+
+/* Sent, or the host closed the question: there is nothing left to press. The
+   line under the answers says why. A button that is merely not ready yet stays
+   where it is. */
+.pq-live-screen[data-pq-locked="true"] .pq-live-submit {
+  display: none;
 }
 
 .pq-live-answer {
@@ -164,6 +210,88 @@
 
 .pq-live-result[data-pq-correct="false"] {
   color: var(--pq-wrong);
+}
+
+/* A round card carries what the big screen's card carries. */
+.pq-live-round {
+  margin: 0;
+  color: var(--pq-muted);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+}
+
+.pq-live-secret {
+  margin: 0;
+  color: var(--pq-accent);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-sm);
+  font-weight: 600;
+}
+
+/* The end of the quiz is a slide of its own: the board gets the room. */
+.pq-live-end {
+  max-width: 62rem;
+  gap: var(--pq-gap-lg);
+  text-align: center;
+}
+
+.pq-live-end .pq-live-heading {
+  font-size: clamp(1.9rem, 5vw, 3rem);
+}
+
+/* A phone that is done keeps its own answers, and a way out. */
+.pq-live-history {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  text-align: left;
+}
+
+.pq-live-history ol {
+  display: grid;
+  gap: var(--pq-gap-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pq-live-history li {
+  display: grid;
+  grid-template-columns: 1.2rem minmax(0, 1fr) auto;
+  gap: 0.15rem var(--pq-gap-sm);
+  align-items: baseline;
+  padding: var(--pq-gap-sm) var(--pq-gap);
+  border-radius: var(--pq-r-md);
+  background: var(--pq-paper-deep);
+  font-size: var(--pq-text-sm);
+}
+
+.pq-live-history-mark {
+  font-weight: 700;
+}
+
+.pq-live-history li[data-pq-correct="true"] .pq-live-history-mark {
+  color: var(--pq-right);
+}
+
+.pq-live-history li[data-pq-correct="false"] .pq-live-history-mark {
+  color: var(--pq-wrong);
+}
+
+.pq-live-history-title,
+.pq-live-history-given {
+  overflow-wrap: anywhere;
+}
+
+.pq-live-history-given {
+  grid-column: 2 / -1;
+  color: var(--pq-muted);
+}
+
+.pq-live-leave {
+  justify-self: center;
+  min-height: 3.2rem;
+  padding-inline: 1.6rem;
+  font-size: var(--pq-text-md);
 }
 
 /* The host's lobby settings: two fields, no extra chrome. */
