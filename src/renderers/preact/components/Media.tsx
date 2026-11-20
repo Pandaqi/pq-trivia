@@ -1,7 +1,8 @@
 /** One media item. Lazy, no autoplay with sound, honest fallback. */
 
 import type { JSX } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
+import { fetchText } from "../../../platform/browser/fetchText";
 import { MediaKind } from "../../../core/values/media";
 import type { MediaViewModel } from "../../../core/session/viewModel";
 import { useT } from "../i18n";
@@ -32,6 +33,54 @@ function Credit({
 }): JSX.Element | null {
   return text === null ? null : (
     <figcaption class="pq-media-credit">{text}</figcaption>
+  );
+}
+
+/**
+ * Plain text under the player. Fetched when someone opens it, never before.
+ * A transcript is the cheap version of captions, and better than nothing.
+ */
+function Transcript({ path }: { readonly path: string }): JSX.Element {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!open || text !== null || failed) {
+      return;
+    }
+    let cancelled = false;
+    void fetchText(path)
+      .then((value) => {
+        if (!cancelled) {
+          setText(value.trim());
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFailed(true);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, path, text, failed]);
+
+  return (
+    <details
+      class="pq-transcript"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary>{t("transcript")}</summary>
+      {failed ? (
+        <p class="pq-transcript-text">{t("transcriptMissing")}</p>
+      ) : text === null ? (
+        <p class="pq-transcript-text">{t("loading")}</p>
+      ) : (
+        <p class="pq-transcript-text">{text}</p>
+      )}
+    </details>
   );
 }
 
@@ -125,6 +174,9 @@ export function Media({
           )}
         </audio>
         <Credit text={item.credit} />
+        {item.transcript === null ? null : (
+          <Transcript path={item.transcript} />
+        )}
       </figure>
     );
   }
@@ -149,6 +201,9 @@ export function Media({
           )}
         </video>
         <Credit text={item.credit} />
+        {item.transcript === null ? null : (
+          <Transcript path={item.transcript} />
+        )}
       </figure>
     );
   }

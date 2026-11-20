@@ -47,6 +47,10 @@ import type {
 } from "../model/quiz";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import type { ActionRegistry, ViewRegistry } from "../session/registry";
+import type {
+  CustomQuestionType,
+  QuestionTypeRegistry,
+} from "../grading/plugins";
 import type { Emitter, Unsubscribe } from "../session/events";
 import type {
   AnswerKey,
@@ -54,6 +58,9 @@ import type {
   EmbeddedQuizV3,
 } from "../export/embedded";
 import type { InteractivePolicy, RevealMode } from "../session/policies";
+import type { ScoringPreset } from "../grading/points";
+import type { Standing } from "../grading/teams";
+import type { Lifeline } from "../grading/aids";
 
 export type QuizEventMap = {
   ready: { readonly version: string; readonly total: number };
@@ -215,6 +222,24 @@ export interface QuizConfig {
   readonly policy?: InteractivePolicy;
   /** One grading mode for the whole quiz. Question settings win when unset. */
   readonly grading?: GradingMode;
+  /** Negative marking, all-or-nothing, partial, or nothing special. */
+  readonly scoringPreset?: ScoringPreset;
+  /** With the negative preset: the slice of a question a wrong answer costs. */
+  readonly negativeMarking?: number;
+  /** Three in a row, and the points start climbing. Off by default. */
+  readonly streaks?: boolean;
+  /** Lifelines the player may use. Empty means none at all. */
+  readonly lifelines?: readonly string[];
+  /** Team names a host prefilled. Empty means solo play, the default. */
+  readonly teams?: readonly string[];
+  /** A limit for the whole quiz, in milliseconds. Zero or absent means count up. */
+  readonly quizLimit?: number;
+  /** One timer for every round that names no `RoundTimer`. Milliseconds. */
+  readonly roundTimer?: number;
+  /** Draw this many questions from every round that names no `Pool`. */
+  readonly pool?: number;
+  /** Spread a pool across the difficulty tags instead of taking the shuffle. */
+  readonly balanceDifficulty?: boolean;
   /** Sandboxed `Script` widgets. Off by default, on purpose. */
   readonly allowScripts?: boolean;
   /** Timer beeps. Off by default; a host opts in. */
@@ -331,6 +356,29 @@ export interface QuizApi {
   setWager(questionId: string, value: number): void;
   /** Count one play of this question's clip. Defaults to the current one. */
   noteMediaPlay(questionId?: string): void;
+  /** Start team play with these names. Solo stays the default. */
+  setTeams(names: readonly string[]): readonly string[];
+  /** Hand the page to another team. Returns the index that is active now. */
+  setActiveTeam(index: number): number;
+  /** Back to solo play, keeping every team's answers. */
+  stopTeams(): void;
+  /** 50/50, extra time or ask the room. False when it is not allowed. */
+  useLifeline(lifeline: Lifeline | string): boolean;
+  /** Answers a 50/50 has taken away, for the current question or a named one. */
+  eliminated(questionId?: string): readonly string[];
+  /** One step back on the answer just given. */
+  undo(): boolean;
+  canUndo(): boolean;
+  /** Host-only notes. Never in the view model, never on paper. */
+  presenterNotes(questionId?: string): readonly string[];
+  /** Milliseconds since the first question. Null before the quiz starts. */
+  elapsed(now?: number): number | null;
+  /** Milliseconds left on the whole-quiz limit. Null when there is no limit. */
+  quizRemaining(now?: number): number | null;
+  /** Milliseconds left in the current round. Null when the round has none. */
+  roundRemaining(now?: number): number | null;
+  /** Every team's score, highest first. Empty in solo play. */
+  standings(): readonly Standing[];
   /** Manual reveal. False when restricted or already shown. */
   reveal(): boolean;
   /** Show the answer or put it away again. V2's `a`. */
@@ -354,6 +402,12 @@ export interface QuizApi {
   fail(message: string, suggestion?: string): void;
   readonly views: ViewRegistry;
   readonly actions: ActionRegistry;
+  /** Custom question types. Their inputs reach the player through this. */
+  readonly questionTypes: QuestionTypeRegistry;
+  /** Add a question type. Register before `load()` for its `Type =>` name. */
+  registerQuestionType(type: CustomQuestionType): () => void;
+  /** Saved attempts, newest first. Empty when there is no journal. */
+  history(): Promise<readonly AttemptRecord[]>;
   subscribe(
     listener: (state: SessionState, screen: ScreenViewModel | null) => void,
   ): Unsubscribe;

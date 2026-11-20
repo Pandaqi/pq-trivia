@@ -300,6 +300,15 @@
   box-sizing: border-box;
 }
 
+/* The quiz owns the window, so the page must not scroll as well. Without this
+   the browser's default 8px body margin pushes the page 16px past the screen
+   and you get a scrollbar inside a scrollbar. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
 /* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
 .pq-quiz {
   position: relative;

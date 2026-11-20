@@ -10,7 +10,6 @@ import {
 } from "../../../platform/browser/source";
 import { setTheme, themeFromFiles } from "../../../platform/browser/theme";
 import type { StartViewModel } from "../../../core/session/viewModel";
-import { Actions } from "../components/Actions";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { Problems } from "../components/Problems";
@@ -444,10 +443,6 @@ export function StartScreen({
           <kbd>r</kbd> {t("keyReveal")}, <kbd>h</kbd> {t("keyHint")}.
         </p>
       )}
-
-      <footer class="pq-toolbar">
-        <Actions quiz={quiz} />
-      </footer>
     </main>
   );
 }

@@ -38,6 +38,10 @@ export interface PlayerRecord {
   readonly stakes: Map<string, number>;
   readonly answered: Set<string>;
   readonly late: Set<string>;
+  /** Here to watch. Never on the board, never counted as a seat. */
+  readonly watching: boolean;
+  /** The group this phone answers for. Null in a room of individuals. */
+  team: string | null;
 }
 
 /** What the roster may ask the host, and nothing else. */
@@ -81,9 +85,11 @@ export function createRoster(context: RosterContext): Roster {
 
   function leaderboard(): LeaderRow[] {
     return [...players.values()]
+      .filter((player) => !player.watching)
       .map((player) => ({
         id: player.id,
-        name: player.name,
+        // A group of five sharing one phone is a team, and the board says so.
+        name: player.team ?? player.name,
         score: player.score,
       }))
       .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
@@ -100,10 +106,12 @@ export function createRoster(context: RosterContext): Roster {
       ready: player.ready,
       answered: question !== null && player.answered.has(question.id),
       late: player.late.size,
+      ...(player.team === null ? {} : { team: player.team }),
       stake:
         question === null || !wagerQuestion
           ? null
           : (player.stakes.get(question.id) ?? null),
+      ...(player.watching ? { watching: true } : {}),
     }));
   }
 
@@ -126,9 +134,12 @@ export function createRoster(context: RosterContext): Roster {
       reconnect(existing, peer, request.name);
       return;
     }
+    // (A team is set on join only: a phone does not change group mid-quiz.)
+    // A watcher takes no seat: the room is still full for players.
+    const seated = [...players.values()].filter((player) => !player.watching);
     if (
       context.phase() !== RoomPhase.Lobby ||
-      players.size >= context.maxPlayers
+      (!request.watch && seated.length >= context.maxPlayers)
     ) {
       context.sendState(peer, null);
       return;
@@ -146,6 +157,8 @@ export function createRoster(context: RosterContext): Roster {
       stakes: new Map(),
       answered: new Set(),
       late: new Set(),
+      watching: request.watch,
+      team: request.team,
     };
     players.set(player.id, player);
     byPeer.set(peer, player.id);
@@ -169,7 +182,7 @@ export function createRoster(context: RosterContext): Roster {
   function submit(peer: string, payload: unknown): void {
     const player = playerOf(peer);
     const question = context.current();
-    if (player === undefined || question === null) {
+    if (player === undefined || player.watching || question === null) {
       return;
     }
     if (!submitLimit.allow(player.id)) {

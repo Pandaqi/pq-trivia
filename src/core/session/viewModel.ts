@@ -32,6 +32,7 @@ import { MediaKind, type MediaOptions } from "../values/media";
 import { toMediaViewModel, type MediaViewModel } from "../values/mediaView";
 import type { HotspotTarget, SliderRange } from "../values/point";
 import type { Confidence } from "./responses";
+import { fiftyFifty, Lifeline } from "../grading/aids";
 
 export { toMediaViewModel };
 export type { AnswerViewModel, MediaViewModel };
@@ -56,6 +57,8 @@ export interface QuestionViewModel {
   readonly kind: ScreenKind.Question;
   readonly id: string;
   readonly type: QuestionType;
+  /** A registered plugin id when the type is `Custom`. Null otherwise. */
+  readonly plugin: string | null;
   readonly title: readonly InlineNode[];
   readonly body: readonly InlineNode[];
   readonly answers: readonly AnswerViewModel[];
@@ -64,6 +67,8 @@ export interface QuestionViewModel {
   readonly map: MediaViewModel | null;
   /** Choice with `Negate => true`: pick the false one. */
   readonly negated: boolean;
+  /** Answer IDs a 50/50 took away. Empty when none were. */
+  readonly eliminated: readonly string[];
   /** Autocomplete suggestions. Empty when the author gave none. */
   readonly suggestions: readonly string[];
   readonly slider: SliderRange | null;
@@ -258,6 +263,7 @@ export function questionScreen(
     kind: ScreenKind.Question,
     id: question.id,
     type: question.type,
+    plugin: question.plugin,
     title: inlineValue(
       { text: title, keepAsIs: titleValue?.keepAsIs ?? false },
       formatText,
@@ -269,6 +275,11 @@ export function questionScreen(
       ? (declaredMedia.find((item) => item.kind === MediaKind.Image) ?? null)
       : null,
     negated: question.negate,
+    eliminated: (state.lifelines[question.id] ?? []).includes(
+      Lifeline.FiftyFifty,
+    )
+      ? fiftyFifty(question, state.plan?.seed ?? "")
+      : [],
     suggestions:
       question.suggestions.length > 0
         ? question.suggestions

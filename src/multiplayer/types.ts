@@ -127,6 +127,10 @@ export interface LivePlayer {
   readonly late: number;
   /** Points on the current question, when it takes a wager. */
   readonly stake: number | null;
+  /** Here to watch. No answers, no buzzer, no score. */
+  readonly watching?: boolean;
+  /** The group this phone answers for, when a room plays in teams. */
+  readonly team?: string;
 }
 
 export interface LeaderRow {
@@ -207,6 +211,8 @@ export interface EndPayload {
 export interface JoinPayload {
   readonly name: string;
   readonly token: string | null;
+  readonly watch?: boolean;
+  readonly team?: string;
 }
 
 export interface SubmitPayload {

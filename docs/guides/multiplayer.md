@@ -58,6 +58,33 @@ On a phone:
 Without a name or a code in the URL, the player shows a name form. The room
 code comes from `?pq-live=ABCD`.
 
+## Watching
+
+A watcher joins the same room with `watch: true`, or `?watch=1` in the link.
+They get the questions and the reveals, and no answer form. A watcher takes no
+seat, so a full room still lets one in, and never shows up on the board.
+
+```html
+<a href="?pq-live=ABCD&watch=1">Second screen</a>
+```
+
+That is the screen in the corridor, or the one behind the bar. Same transport,
+same room, nothing to press.
+
+## Teams
+
+A group of five can share one phone: one person types, everybody argues. Add
+`?team=Red` to the join link and the host's list and the final board say Red.
+The badge on the phone wears the team's colour, so it is obvious which group is
+looking at it.
+
+```html
+<a href="?pq-live=ABCD&team=Red">Team Red</a>
+```
+
+One phone per group. Two phones on one team are two rows with the same name and
+two sets of answers, which is not what you want.
+
 ## When the answers come out
 
 Four modes. The host picks one when the room opens.

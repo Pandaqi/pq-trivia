@@ -39,6 +39,12 @@ export {
   type ThemeFont,
 } from "../core/quiz/theme";
 export { downloadText, fileSlug } from "../platform/browser/download";
+export {
+  applyShareOrder,
+  copyQuizShareLink,
+  downloadQuizAttempts,
+  shareQuizUrl,
+} from "../platform/browser/exports";
 export { QuizApp } from "../renderers/preact/QuizApp";
 export { defineQuizElement, QuizElement } from "../renderers/dom/quizElement";
 export { VERSION } from "../core/version";

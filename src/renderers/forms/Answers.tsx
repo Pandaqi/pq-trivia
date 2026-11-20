@@ -7,7 +7,7 @@
  * on the report.
  */
 
-import type { JSX } from "preact";
+import { h, type JSX } from "preact";
 import { QuestionType } from "../../core/model/question";
 import { CONFIDENCE_LEVELS, Confidence } from "../../core/session/responses";
 import { useT } from "../preact/i18n";
@@ -121,7 +121,22 @@ function WagerPicker({ quiz, screen }: InputProps): JSX.Element | null {
   );
 }
 
+/** A registered type brings its own input. Opaque in core, Preact here. */
+function customInput(
+  props: InputProps,
+): ((props: InputProps) => JSX.Element) | null {
+  const plugin = props.quiz.questionTypes.get(props.screen.plugin);
+  const input = plugin?.render?.input;
+  return typeof input === "function"
+    ? (input as (props: InputProps) => JSX.Element)
+    : null;
+}
+
 export function Answers(props: InputProps): JSX.Element {
+  const custom = customInput(props);
+  if (custom !== null) {
+    return h(custom, props);
+  }
   const Input = INPUTS[props.screen.type] ?? OpenInput;
   return (
     <>

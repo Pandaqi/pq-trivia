@@ -3,8 +3,28 @@
  * results and saved attempts. Split out so the player factory stays readable.
  */
 
-import type { GradeReport } from "../grading/report";
+import type { GradeReport, ReportOptions } from "../grading/report";
+import type {
+  CustomQuestionType,
+  QuestionTypeRegistry,
+} from "../grading/plugins";
+import type { Diagnostic } from "../syntax/diagnostics";
 import { retryIds } from "../grading/report";
+import {
+  allowedLifelines,
+  EXTRA_TIME_MS,
+  Lifeline,
+  parseLifeline,
+} from "../grading/aids";
+import { cleanTeamNames } from "../grading/teams";
+import {
+  eliminatedOf,
+  elapsedOf,
+  presenterNotesOf,
+  quizRemainingOf,
+  roundRemainingOf,
+  standingsOf,
+} from "./report";
 import type { QuizPlan } from "../plan/plan";
 import type { Emitter } from "../session/events";
 import { defaultResponse, type Response } from "../session/responses";
@@ -25,6 +45,7 @@ export interface ExtrasContext {
   readonly apply: (state: SessionState) => void;
   readonly notify: () => void;
   readonly report: () => GradeReport | null;
+  readonly reportOptions: () => ReportOptions;
   readonly emitter: Emitter<QuizEventMap>;
   readonly journal: () => AttemptJournal | null;
   readonly setJournal: (journal: AttemptJournal | null) => void;
@@ -36,6 +57,10 @@ export interface ExtrasContext {
   readonly applyOrder: (order: OrderOptions) => void;
   /** Rebuild models and plan after a content setting changed. */
   readonly refresh?: () => void;
+  readonly questionTypes: QuestionTypeRegistry;
+  readonly reportPluginDiagnostics: (
+    diagnostics: readonly Diagnostic[],
+  ) => void;
 }
 
 type Extras = Pick<
@@ -54,7 +79,21 @@ type Extras = Pick<
   | "resume"
   | "clearAttempt"
   | "attachAttempts"
+  | "setTeams"
+  | "setActiveTeam"
+  | "stopTeams"
+  | "useLifeline"
+  | "eliminated"
+  | "undo"
+  | "canUndo"
+  | "presenterNotes"
+  | "elapsed"
+  | "quizRemaining"
+  | "roundRemaining"
+  | "standings"
   | "configure"
+  | "history"
+  | "registerQuestionType"
 >;
 
 /** Settings that change which questions exist, or how they look on paper. */
@@ -290,6 +329,76 @@ export function createExtras(ctx: ExtrasContext): Extras {
     });
   };
 
+  const useLifeline = (raw: Lifeline | string): boolean => {
+    const lifeline = parseLifeline(String(raw));
+    const state = ctx.state();
+    const question = currentQuestion(state);
+    if (lifeline === null || question === null) {
+      return false;
+    }
+    if (
+      !allowedLifelines(
+        ctx.config().lifelines ?? [],
+        ctx.isRestricted(),
+      ).includes(lifeline)
+    ) {
+      return false;
+    }
+    if ((state.lifelines[question.id] ?? []).includes(lifeline)) {
+      return false;
+    }
+    // Extra time on a question without a timer is a donation, not a lifeline.
+    if (lifeline === Lifeline.ExtraTime && state.timer === null) {
+      return false;
+    }
+    ctx.apply(
+      sessionReducer(
+        state,
+        { type: "lifeline/use", questionId: question.id, lifeline },
+        Date.now(),
+      ),
+    );
+    if (lifeline === Lifeline.ExtraTime) {
+      ctx.apply(
+        sessionReducer(
+          ctx.state(),
+          {
+            type: "timer/extend",
+            questionId: question.id,
+            ms: EXTRA_TIME_MS,
+          },
+          Date.now(),
+        ),
+      );
+    }
+    return true;
+  };
+
+  const undo = (): boolean => {
+    if (ctx.state().undo === null) {
+      return false;
+    }
+    ctx.apply(sessionReducer(ctx.state(), { type: "undo" }, Date.now()));
+    return true;
+  };
+
+  const registerQuestionType = (type: CustomQuestionType): (() => void) => {
+    const remove = ctx.questionTypes.add(type);
+    const found: Diagnostic[] = [];
+    for (const question of ctx.state().plan?.questions ?? []) {
+      if (question.plugin === type.id) {
+        type.validate?.(question, found);
+      }
+    }
+    if (found.length > 0) {
+      ctx.reportPluginDiagnostics(found);
+    }
+    return () => {
+      remove();
+      ctx.notify();
+    };
+  };
+
   const configure = (partial: Partial<QuizConfig>): void => {
     const order: Record<string, unknown> = {};
     let orderChanged = false;
@@ -338,6 +447,37 @@ export function createExtras(ctx: ExtrasContext): Extras {
     resume,
     clearAttempt,
     attachAttempts,
+    setTeams: (names) => {
+      const clean = cleanTeamNames(names);
+      ctx.apply(
+        sessionReducer(ctx.state(), { type: "team/start", names: clean }, 0),
+      );
+      return clean;
+    },
+    setActiveTeam: (index) => {
+      ctx.apply(sessionReducer(ctx.state(), { type: "team/switch", index }, 0));
+      return ctx.state().team;
+    },
+    stopTeams: () => {
+      ctx.apply(sessionReducer(ctx.state(), { type: "team/stop" }, 0));
+    },
+    useLifeline,
+    eliminated: (questionId) =>
+      eliminatedOf(ctx.state(), ctx.plan(), questionId),
+    undo,
+    canUndo: () => ctx.state().undo !== null,
+    presenterNotes: (questionId) =>
+      presenterNotesOf(ctx.plan(), ctx.state(), questionId),
+    elapsed: (now) => elapsedOf(ctx.state(), now),
+    quizRemaining: (now) =>
+      quizRemainingOf(ctx.state(), ctx.config().quizLimit, now),
+    roundRemaining: (now) => roundRemainingOf(ctx.plan(), ctx.state(), now),
+    standings: () => standingsOf(ctx.plan(), ctx.state(), ctx.reportOptions()),
     configure,
+    registerQuestionType,
+    history: async () => {
+      const journal = ctx.journal();
+      return journal === null ? [] : journal.history();
+    },
   };
 }

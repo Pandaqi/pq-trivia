@@ -148,6 +148,28 @@ Background => image: themes/forest/bg-waves.svg
 
 `Class` adds a class to the slide. Names without `pq-` get that prefix.
 
+### Built-in classes
+
+Five classes ship with Paper, so an author can set the mood without a
+stylesheet. Write the short name; the prefix is added for you.
+
+| Write       | What it does                                            |
+| ----------- | ------------------------------------------------------- |
+| `center`    | Centres the text.                                        |
+| `dark`      | A dark panel, for a question that should feel like a card. |
+| `invert`    | Flips the colours. Good on a screenshot with a white page. |
+| `quote`     | Italics, for a line someone said.                        |
+| `spotlight` | Dims the edges, so the middle is the only thing lit.     |
+
+```txt
+Question => Name this painting.
+Class => spotlight center
+```
+
+The first class takes the spotlight, the second centres the text. Order does not
+matter. Every theme keeps these five, so content written on Paper still works
+when a theme folder adds its own colours.
+
 ## Extra themes
 
 `high-contrast.css` and `large-print.css` load after Paper and override it.

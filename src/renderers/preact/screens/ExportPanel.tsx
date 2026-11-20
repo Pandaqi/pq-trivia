@@ -11,7 +11,9 @@ import { useState } from "preact/hooks";
 import type { Quiz } from "../../../core/session/quiz";
 import {
   copyQuizJson,
+  copyQuizShareLink,
   copyQuizTrivia,
+  downloadQuizAttempts,
   downloadQuizCsv,
   downloadQuizGift,
   downloadQuizGrades,
@@ -41,6 +43,7 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
   const t = useT();
   const trivia = quiz.sourceText();
   const [copied, setCopied] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   return (
     <>
@@ -81,8 +84,19 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
           >
             {t("copyTrivia")}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              void copyQuizShareLink(quiz).then((ok) =>
+                setCopied(ok ? t("shareWord") : null),
+              );
+            }}
+          >
+            {t("saveShare")}
+          </button>
         </div>
         <CopyNote what={copied} />
+        <p class="pq-settings-note">{t("shareNote")}</p>
       </fieldset>
 
       <fieldset
@@ -107,6 +121,27 @@ export function ExportPanel({ quiz }: { readonly quiz: Quiz }): JSX.Element {
             {t("saveResultsCsv")}
           </button>
         </div>
+      </fieldset>
+
+      <fieldset class="pq-settings-group" aria-label={t("saveAnalyticsCsv")}>
+        <GroupHead label={t("saveAnalyticsCsv")} note={t("analyticsNote")} />
+        <div class="pq-settings-row">
+          <button
+            type="button"
+            onClick={() => {
+              void downloadQuizAttempts(quiz).then((ok) =>
+                setNote(ok ? null : t("noAttempts")),
+              );
+            }}
+          >
+            {t("saveAnalyticsCsv")}
+          </button>
+        </div>
+        {note === null ? null : (
+          <p class="pq-settings-note" role="status">
+            {note}
+          </p>
+        )}
       </fieldset>
 
       <fieldset class="pq-settings-group" aria-label={t("settingsPrint")}>

@@ -33,6 +33,32 @@ bun run cli/index.ts build quiz.trivia --format csv   --out questions.csv
 | CSV              | spreadsheets, Kahoot/Quizlet import |
 | Offline pack     | USB stick, `file://`                |
 
+## Sharing the order, not the answers
+
+The settings panel copies a link with the seed and the order flags in it:
+`?seed=music-night&shuffle=1`. Open it and you get the same plan. The answers
+never travel in a URL.
+
+```js
+import { shareQuizUrl, copyQuizShareLink } from "pq-trivia";
+
+shareQuizUrl(quiz); // the full URL, or null outside a page
+await copyQuizShareLink(quiz);
+```
+
+## Class analytics
+
+One row per question across every attempt saved on the device: attempts,
+answered, correct, correct percent, points and average points. The summary at
+the top counts graded attempts and the average score.
+
+```js
+import { analyticsCsv } from "pq-trivia/core";
+```
+
+The settings panel has **Save class analytics**. The saved attempts are the
+same records the resume prompt reads, so nothing is collected twice.
+
 ## Grading a stack of answers
 
 ```bash

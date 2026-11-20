@@ -13,8 +13,8 @@ the honest one.
   seconds, once each.
 - Answers are buttons with `aria-pressed`, not coloured boxes.
 - Correct and wrong are text as well as colour.
-- Media has `alt` support, captions via `captions=…`, `preload="metadata"`,
-  no autoplay with sound.
+- Media has `alt` support, captions via `captions=…`, plain text via
+  `transcript=…`, `preload="metadata"`, no autoplay with sound.
 - Reduced motion is honoured.
 - `rem` sizing. 200% zoom and a 320px window are part of the manual check.
 
@@ -22,7 +22,8 @@ the honest one.
 
 - Your own theme's contrast. Tokens are yours; ratios are still your job.
 - Your content's `alt` text. The parser can require it; it cannot write it.
-- Audio rounds without a transcript. Add one.
+- Audio rounds without a transcript. Add `transcript="intro.txt"` and listen
+  to a screen reader read it.
 - A screen reader pass on load, start, play, input, reveal, results, settings.
 
 ## Keyboard

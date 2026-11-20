@@ -7,6 +7,7 @@
 
 import type { GradeReport } from "../grading/report";
 import type { Confidence, ResponseMap } from "./responses";
+import type { UndoStep } from "../grading/aids";
 import { SessionStatus, type SessionState } from "./session";
 import type { StorageAdapter } from "./storage";
 
@@ -53,6 +54,8 @@ export interface AttemptRecord {
   readonly wagers?: Readonly<Record<string, number>>;
   readonly noIdea?: readonly string[];
   readonly mediaPlays?: Readonly<Record<string, number>>;
+  /** The answer an undo would put back, so a resumed attempt can still use it. */
+  readonly undo?: UndoStep | null;
 }
 
 function keyOf(attemptKey: string, savedAt: number): string {
@@ -89,6 +92,7 @@ export function createAttempt(
     readonly wagers?: Readonly<Record<string, number>>;
     readonly noIdea?: readonly string[];
     readonly mediaPlays?: Readonly<Record<string, number>>;
+    readonly undo?: UndoStep | null;
   },
 ): AttemptRecord {
   return {
@@ -111,6 +115,7 @@ export function createAttempt(
     ...(fields.mediaPlays === undefined
       ? {}
       : { mediaPlays: fields.mediaPlays }),
+    ...(fields.undo === undefined ? {} : { undo: fields.undo }),
   };
 }
 
@@ -167,6 +172,7 @@ export function saveAttempt(
       wagers: state.wagers,
       noIdea: state.noIdea,
       mediaPlays: state.mediaPlays,
+      undo: state.undo,
     }),
   );
 }

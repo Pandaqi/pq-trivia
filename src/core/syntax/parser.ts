@@ -240,8 +240,20 @@ export function parse(text: string, options: ParseOptions = {}): ParseResult {
         );
         continue;
       }
-      // The title belongs to the whole quiz, wherever the line sits. First wins.
-      if (!header.some((attribute) => attribute.key === "Title")) {
+      // The title belongs to the whole quiz, wherever the line sits. A second
+      // one means a second quiz, and a file holds one, so say so.
+      if (header.some((attribute) => attribute.key === "Title")) {
+        diagnostics.push(
+          syntaxWarning(
+            DiagnosticCodes.InvalidLine,
+            "A second title starts a second quiz, and a file holds one.",
+            {
+              location,
+              suggestion: "Keep one title, or split the quiz into two files.",
+            },
+          ),
+        );
+      } else {
         header.push(makeAttribute("Title", "Title", [name], location));
       }
       continue;

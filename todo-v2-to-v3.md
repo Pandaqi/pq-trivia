@@ -11,7 +11,7 @@ Currently it's just raw DOM (HTML/CSS/JS). Investigate two things:
 
 Pick the best option and plan for that migration.
 
-## MORE CUSTOMIZATION
+## STYLE GUIDE & MORE CUSTOMIZATION
 
 - Allow adding **(CSS) classes** to questions (through `.txt`, Trivia Syntax) to change their layout. (These classes would then be present in the stylesheet of the theme you loaded.)
   - Implement some default layouts to pick immediately.

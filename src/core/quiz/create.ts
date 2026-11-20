@@ -14,6 +14,7 @@ import {
 } from "../syntax/diagnostics";
 import { Emitter } from "../session/events";
 import { ActionRegistry, ViewRegistry } from "../session/registry";
+import { pluginProblemsFor, QuestionTypeRegistry } from "../grading/plugins";
 import { defaultResponse, isEmptyResponse } from "../session/responses";
 import {
   createSessionState,
@@ -34,7 +35,7 @@ import { applyFlow } from "../session/flow";
 import { createExtras } from "./extras";
 import { createNavigation } from "./navigation";
 import { createLoader } from "./load";
-import { persistState, reportFor } from "./report";
+import { persistState, reportFor, reportOptionsFrom } from "./report";
 import { languagesOf } from "./languages";
 import {
   findLanguageKey,
@@ -43,8 +44,8 @@ import {
   prepareLanguageSwitch,
   prepareModels,
   refreshPlan,
+  translateFor,
 } from "./languageOptions";
-import { builtinLanguages, translate } from "../../i18n/dictionary";
 import type {
   CreateQuizOptions,
   LoadInput,
@@ -77,6 +78,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
   let pending: Promise<void> = Promise.resolve();
   const views = new ViewRegistry();
   const actions = new ActionRegistry();
+  const questionTypes = new QuestionTypeRegistry();
 
   const emitter = new Emitter<QuizEventMap>({
     onHandlerError: (error, event) => {
@@ -112,7 +114,13 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     );
   }
   function buildReport(): GradeReport | null {
-    return reportFor(state.plan, state, quiz?.meta.title ?? "", config.grading);
+    return reportFor(
+      state.plan,
+      state,
+      quiz?.meta.title ?? "",
+      config,
+      questionTypes,
+    );
   }
   function persist(): void {
     persistState(journal, quiz, state, config);
@@ -241,25 +249,14 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     diagnostics,
     emitReady: () =>
       emitter.emit("ready", { version, total: state.plan?.total ?? 0 }),
+    pluginTypes: () => questionTypes.ids(),
   });
 
-  function findLanguage(code: string): string | null {
-    return findLanguageKey(models, code);
-  }
-  function uiLanguage(): string {
-    const current = state.language ?? "";
-    if (current.length > 0) {
-      return current;
-    }
-    // No language gets a special place. If the quiz does not name one, use the
-    // first language this build carries, or none at all.
-    return config.languageDefault ?? builtinLanguages()[0] ?? "";
-  }
   function t(
     key: string,
     params: Readonly<Record<string, string | number>> = {},
   ): string {
-    return translate(uiLanguage(), key, params, config.translations ?? {});
+    return translateFor(state.language, config, key, params);
   }
   function finishLoad(loaded: Map<string, QuizModel>): void {
     const first = [...loaded.values()][0];
@@ -291,6 +288,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     for (const diagnostic of quiz.diagnostics) {
       emitter.emit("diagnostic", { diagnostic });
     }
+    diagnostics.push(...pluginProblemsFor(questionTypes, quiz));
     // A quiz with nothing to play is an error, not a ready quiz. The message
     // came from `validateQuiz` above, so every path says "Quiz is empty."
     if (quiz.questions.length === 0) {
@@ -303,7 +301,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     apply(sessionReducer(state, { type: "load/success", plan: flow.plan }, 0));
   }
   function setLanguage(code: string): boolean {
-    const language = findLanguage(code);
+    const language = findLanguageKey(models, code);
     if (language === null || models.size === 0) {
       return false;
     }
@@ -358,6 +356,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     apply: (next) => apply(next),
     notify: () => notify(state.status),
     report: buildReport,
+    reportOptions: () => reportOptionsFrom(state, config, questionTypes),
     emitter,
     journal: () => journal,
     setJournal: (value) => {
@@ -375,6 +374,8 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     },
     applyOrder,
     refresh: refreshContent,
+    questionTypes,
+    reportPluginDiagnostics: (found) => diagnostics.push(...found),
   });
 
   return {
@@ -388,6 +389,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
     },
     views,
     actions,
+    questionTypes,
     get meta() {
       return quiz === null ? null : quiz.meta;
     },
@@ -477,6 +479,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
       listeners.clear();
       views.clear();
       actions.clear();
+      questionTypes.clear();
       emitter.emit("destroy", {});
       emitter.clear();
       quiz = null;

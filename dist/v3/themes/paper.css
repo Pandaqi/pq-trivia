@@ -300,6 +300,15 @@
   box-sizing: border-box;
 }
 
+/* The quiz owns the window, so the page must not scroll as well. Without this
+   the browser's default 8px body margin pushes the page 16px past the screen
+   and you get a scrollbar inside a scrollbar. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
 /* V2 behaviour: the quiz owns the window. Content scrolls inside it. */
 .pq-quiz {
   position: relative;
@@ -560,6 +569,9 @@
   position: relative;
   display: flex;
   align-items: center;
+  /* A button does not stretch like a div. The list item is the cell, so the
+     button has to say it wants all of it. */
+  width: 100%;
   gap: var(--pq-gap);
   min-height: 3.35rem;
   padding: var(--pq-gap) var(--pq-gap-lg);
@@ -759,6 +771,7 @@
 }
 
 .pq-input {
+  width: 100%;
   min-height: 3rem;
   padding: 0.75rem 1rem;
   color: var(--pq-ink);
@@ -855,6 +868,23 @@
 .pq-media-missing-hint {
   margin: var(--pq-gap-sm) 0 0;
   font-size: var(--pq-text-sm);
+}
+
+/* A transcript is a quiet fold under the player. Closed until someone asks. */
+.pq-transcript {
+  margin-top: 0.4em;
+  font-size: 0.9em;
+}
+
+.pq-transcript summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.pq-transcript-text {
+  margin: 0.4em 0 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 /* Markdown images, in a question or an answer. Small enough to share a card. */
@@ -985,6 +1015,31 @@
 
 .pq-start-actions button {
   min-width: 12rem;
+}
+
+/*
+ * Any button in the quiz looks like paper, custom controls included. `:where`
+ * keeps this at element weight, so every class below still wins: a bare
+ * `button` from a custom view gets the shape, `.pq-primary` keeps its colour.
+ */
+:where(.pq-quiz) button {
+  padding: 0.45rem 0.9rem;
+  border: var(--pq-border);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where(.pq-quiz) button:hover:not(:disabled) {
+  border-color: var(--pq-line-strong);
+}
+
+:where(.pq-quiz) button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 /* The one loud button. It takes the round's colour. */
@@ -1233,6 +1288,9 @@
 .pq-settings-head {
   position: sticky;
   top: 0;
+  /* Above the fields it scrolls over. A close button that cannot be pressed
+     because a label happens to sit in front of it is not a close button. */
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1251,6 +1309,14 @@
   font-size: var(--pq-text-md);
 }
 
+/* The panel's own title, louder than the sections underneath it. */
+.pq-settings-title {
+  font-size: var(--pq-text-lg, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .pq-settings-close {
   min-height: 2rem;
   padding: 0.2rem 0.7rem;
@@ -1267,7 +1333,8 @@
 .pq-settings-body {
   display: flex;
   flex-direction: column;
-  gap: var(--pq-space);
+  /* Two spaces between sections. They are separate things, not one list. */
+  gap: calc(var(--pq-space) * 2);
   padding: var(--pq-gap) var(--pq-space) var(--pq-space);
 }
 
@@ -1285,7 +1352,7 @@
   }
 }
 
-/* A section heading: bigger, in ink, with a dotted rule under the lot. */
+/* A section heading: bigger, bold, in ink, with a dotted rule under the lot. */
 .pq-settings-group legend {
   display: block;
   width: 100%;
@@ -1294,6 +1361,7 @@
   color: var(--pq-ink);
   font-family: var(--pq-font-heading);
   font-size: var(--pq-text-md);
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   text-align: left;
@@ -2188,6 +2256,13 @@
   gap: 0.4rem;
 }
 
+/* A field with a unit beside it shares the line; the unit keeps its width. */
+.pq-input-row .pq-input {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
 .pq-unit {
   font-size: 0.9em;
   opacity: 0.8;
@@ -2220,14 +2295,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
   margin-top: 0.6rem;
 }
 
+/* "How sure are you?" is a question of its own. Give it the middle. */
 .pq-confidence {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
+  width: 100%;
 }
 
 .pq-wager {
@@ -2446,6 +2526,190 @@
   border-radius: 0.5rem;
 }
 
+/* --- Lifelines and the quiz clock (Phase 10) ----------------------------- */
+
+/* The quiz clock lives in the strip, before the pin. Same letters as the rest
+   of the strip, one weight heavier because the clock is the thing you check. */
+.pq-meta-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* One small line under the header: teams at the table, or a live room. */
+.pq-badge {
+  display: block;
+  width: fit-content;
+  margin: 0.6rem auto 0;
+  padding: 0.15rem 0.7rem;
+  border: 1px solid
+    var(--pq-team, color-mix(in srgb, currentColor 30%, transparent));
+  border-radius: 999px;
+  background: var(--pq-team, transparent);
+  color: var(--pq-team-ink, inherit);
+  font-family: var(--pq-font-label, inherit);
+  font-size: var(--pq-text-xs, 0.75rem);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* The teams badge is a button. It looks like a badge. */
+.pq-badge-teams {
+  cursor: pointer;
+}
+
+.pq-badge-teams:hover {
+  filter: brightness(1.06);
+}
+
+.pq-badge-teams:focus-visible {
+  outline: var(--pq-focus, 2px solid currentColor);
+  outline-offset: 3px;
+}
+
+.pq-badge-turn {
+  opacity: 0.72;
+}
+
+/* Badges share one line: the room code and the team. */
+.pq-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+}
+
+.pq-badge-row .pq-badge {
+  margin: 0;
+}
+
+/* A quiet badge is the one with no team behind it. */
+.pq-badge-live {
+  opacity: 0.75;
+}
+
+.pq-lifelines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0 0 0.75rem;
+}
+
+.pq-lifeline {
+  font: inherit;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--pq-line, currentColor);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.pq-lifeline:hover:not([disabled]) {
+  background: var(--pq-accent, currentColor);
+  color: var(--pq-accent-ink, #fff);
+}
+
+.pq-lifeline[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* A 50/50 leaves the option readable but out of reach. */
+.pq-answer[data-pq-eliminated="true"] {
+  opacity: 0.35;
+  text-decoration: line-through;
+  cursor: default;
+}
+
+/* Teams: the box in settings, the badge, the board. */
+.pq-team-setup {
+  margin: 0;
+}
+
+.pq-team-setup[open] summary {
+  margin-bottom: 0.5rem;
+}
+
+.pq-team-setup > .pq-field {
+  margin-top: 0;
+}
+
+/* The start button is the loud one, and it gets the whole width. */
+.pq-team-setup > button {
+  display: block;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.55rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pq-team-setup > button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pq-team-setup-stop {
+  display: inline-block;
+  width: auto;
+}
+
+.pq-teams-playing {
+  margin: 0 0 0.5rem;
+  opacity: 0.75;
+}
+
+.pq-scoreboard {
+  margin: 1.5rem 0 0;
+}
+
+.pq-scoreboard-title {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  margin: 0 0 0.35rem;
+}
+
+.pq-scoreboard-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.pq-scoreboard-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.2rem 0;
+  border-bottom: 1px solid var(--pq-line, rgba(0, 0, 0, 0.12));
+}
+
+.pq-scoreboard-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-right: 0.4rem;
+  border-radius: 50%;
+  background: var(--pq-team, currentColor);
+  vertical-align: baseline;
+}
+
+/* A hot streak shows what it paid. */
+.pq-review-multiplier {
+  margin-left: 0.35rem;
+  padding: 0 0.3rem;
+  border-radius: 0.3rem;
+  background: var(--pq-accent, currentColor);
+  color: var(--pq-accent-ink, #fff);
+  font-size: 0.8em;
+}
+
 
 /* Live mode. Paper, part five: a code you can read from the back row, and
  * phone buttons a thumb can hit without aiming. Everything else is the player's
@@ -2618,4 +2882,25 @@
 /* The host's lobby settings: two fields, no extra chrome. */
 .pq-live-settings .pq-field {
   margin: 0;
+}
+
+/* Teams on the host screen: a coloured head, then the phones in it. The room
+   can see who is in before anyone has answered a question. */
+.pq-live-groups {
+  display: grid;
+  gap: var(--pq-gap);
+}
+
+.pq-live-team-head {
+  width: fit-content;
+  margin: 0 0 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--pq-team, transparent);
+  color: var(--pq-team-ink, inherit);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }

@@ -1,11 +1,12 @@
 /**
  * Our own lint. About 100 lines, no dependency.
  *
- * Two jobs:
+ * Three jobs:
  * 1. Layers point one way. Core never imports a renderer or a platform file.
  * 2. Source hygiene. No DOM in core, no `any`, no @ts-ignore, no stray logs.
+ * 3. No dead CSS. A class nobody renders is a rule that lies about the page.
  *
- * `bun run lint` runs both. `bun run layers` runs only the first.
+ * `bun run lint` runs all three. `bun run layers` runs only the first.
  */
 
 import { readFile, readdir } from "node:fs/promises";
@@ -17,6 +18,20 @@ const layersOnly = process.argv.includes("--layers-only");
 /** CODING_STYLE.md: 500 lines per file, 12 entries per folder. */
 const MAX_LINES = 500;
 const MAX_ENTRIES = 12;
+
+/**
+ * Author utilities, for quiz text rather than for our own markup, plus the
+ * token classes the highlighter builds with a template string. Used, just not
+ * by name in any file here.
+ */
+const CSS_ALLOWED: ReadonlySet<string> = new Set([
+  "pq-dark",
+  "pq-invert",
+  "pq-center",
+  "pq-spotlight",
+  "pq-quote",
+]);
+const CSS_ALLOWED_PREFIXES: readonly string[] = ["pq-token-"];
 
 const LAYER_OF: Readonly<Record<string, number>> = {
   core: 1,
@@ -151,7 +166,49 @@ function lineOf(text: string, needle: string): number {
   return text.slice(0, index).split(/\r?\n/).length;
 }
 
+/** Every class in the themes, checked against every file that can name one. */
+async function deadCss(): Promise<void> {
+  const dir = join(ROOT, "src/themes");
+  const files = (await readdir(dir)).filter((name) => name.endsWith(".css"));
+  const seen = new Map<string, Problem>();
+  for (const file of files) {
+    const text = await readFile(join(dir, file), "utf8");
+    for (const match of text.matchAll(/\.([a-z][a-z0-9]*(?:-[a-z0-9]+)*)/gi)) {
+      const name = match[1] ?? "";
+      if (name.length < 3 || seen.has(name) || CSS_ALLOWED.has(name)) {
+        continue;
+      }
+      if (CSS_ALLOWED_PREFIXES.some((prefix) => name.startsWith(prefix))) {
+        continue;
+      }
+      seen.set(name, {
+        file: `src/themes/${file}`,
+        line: text.slice(0, match.index).split(/\r?\n/).length,
+        message: `\`.${name}\` is never rendered. Delete the rule.`,
+      });
+    }
+  }
+  const corpus: string[] = [];
+  for await (const path of new Bun.Glob(
+    "{src,examples,test,cli}/**/*.{ts,tsx,html,js}",
+  ).scan({ cwd: ROOT, onlyFiles: true })) {
+    const clean = path.replaceAll("\\", "/");
+    if (clean.startsWith("src/v2/")) {
+      continue;
+    }
+    corpus.push(await readFile(join(ROOT, clean), "utf8"));
+  }
+  const text = corpus.join("\n");
+  for (const [name, problem] of seen) {
+    if (!text.includes(name)) {
+      problems.push(problem);
+    }
+  }
+}
+
 if (!layersOnly) {
+  await deadCss();
+
   const folders = new Set<string>(["src"]);
   for await (const path of new Bun.Glob("src/**").scan({
     cwd: ROOT,

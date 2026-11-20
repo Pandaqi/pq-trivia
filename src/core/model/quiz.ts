@@ -65,6 +65,8 @@ export interface BuildOptions {
   readonly defaultScore?: number;
   readonly defaultLanguage?: string | null;
   readonly forbidInlineLists?: boolean;
+  /** Type names registered with `quiz.registerQuestionType`. */
+  readonly pluginTypes?: readonly string[];
 }
 
 const HEADER_KNOWN: ReadonlySet<string> = new Set([
@@ -238,6 +240,9 @@ export function buildQuizFromParsed(
         round:
           currentRound !== null ? (rounds[currentRound]?.id ?? null) : null,
         symbols,
+        ...(options.pluginTypes === undefined
+          ? {}
+          : { pluginTypes: options.pluginTypes }),
       },
       diagnostics,
     );

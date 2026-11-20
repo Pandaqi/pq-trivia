@@ -116,7 +116,7 @@ bun run bench     # 10k questions
 bun run release:dry
 ```
 
-Read `ROADMAP.md` before changing anything. Read `CODING_STYLE.md` too.
+Read `docs/` before changing anything. Read `CODING_STYLE.md` too.
 
 ## Built with
 

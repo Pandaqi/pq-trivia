@@ -65,6 +65,31 @@
   min-width: 12rem;
 }
 
+/*
+ * Any button in the quiz looks like paper, custom controls included. `:where`
+ * keeps this at element weight, so every class below still wins: a bare
+ * `button` from a custom view gets the shape, `.pq-primary` keeps its colour.
+ */
+:where(.pq-quiz) button {
+  padding: 0.45rem 0.9rem;
+  border: var(--pq-border);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-slide);
+  color: var(--pq-ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where(.pq-quiz) button:hover:not(:disabled) {
+  border-color: var(--pq-line-strong);
+}
+
+:where(.pq-quiz) button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* The one loud button. It takes the round's colour. */
 .pq-primary {
   border: calc(var(--pq-line-w) * 2) solid var(--pq-strip);
@@ -311,6 +336,9 @@
 .pq-settings-head {
   position: sticky;
   top: 0;
+  /* Above the fields it scrolls over. A close button that cannot be pressed
+     because a label happens to sit in front of it is not a close button. */
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,6 +357,14 @@
   font-size: var(--pq-text-md);
 }
 
+/* The panel's own title, louder than the sections underneath it. */
+.pq-settings-title {
+  font-size: var(--pq-text-lg, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 .pq-settings-close {
   min-height: 2rem;
   padding: 0.2rem 0.7rem;
@@ -345,7 +381,8 @@
 .pq-settings-body {
   display: flex;
   flex-direction: column;
-  gap: var(--pq-space);
+  /* Two spaces between sections. They are separate things, not one list. */
+  gap: calc(var(--pq-space) * 2);
   padding: var(--pq-gap) var(--pq-space) var(--pq-space);
 }
 
@@ -363,7 +400,7 @@
   }
 }
 
-/* A section heading: bigger, in ink, with a dotted rule under the lot. */
+/* A section heading: bigger, bold, in ink, with a dotted rule under the lot. */
 .pq-settings-group legend {
   display: block;
   width: 100%;
@@ -372,6 +409,7 @@
   color: var(--pq-ink);
   font-family: var(--pq-font-heading);
   font-size: var(--pq-text-md);
+  font-weight: 700;
   letter-spacing: 0;
   text-transform: none;
   text-align: left;

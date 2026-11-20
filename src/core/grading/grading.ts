@@ -31,6 +31,7 @@ import {
   gradeParts,
 } from "./interfaces";
 import { GradeKind, type GradeOptions, type GradeResult } from "./types";
+import type { PluginGrade } from "./plugins";
 import { gradeList, gradeMatch, gradeRank, gradeSort } from "./structured";
 
 export * from "./types";
@@ -359,6 +360,51 @@ function gradeCustom(question: QuestionModel, response: Response): GradeResult {
   };
 }
 
+/**
+ * A registered type grades itself. A plugin that throws, or one nobody
+ * registered, falls back to the self-reported custom grade below.
+ */
+function gradeFromPlugin(
+  question: QuestionModel,
+  response: Response,
+  options: GradeOptions,
+): GradeResult | null {
+  const plugin = options.plugins?.get(question.plugin);
+  if (plugin === undefined) {
+    return null;
+  }
+  let outcome: PluginGrade;
+  try {
+    outcome = plugin.grade(question, response);
+  } catch {
+    return null;
+  }
+  const maxPoints = Math.max(
+    0,
+    outcome.maxPoints ?? questionMaxScore(question),
+  );
+  const points = Math.max(0, Math.min(outcome.points, maxPoints));
+  const answered = !isEmptyResponse(response);
+  const correct = outcome.correct ?? (maxPoints > 0 && points >= maxPoints);
+  return {
+    questionId: question.id,
+    answered,
+    correct,
+    kind: correct
+      ? GradeKind.Correct
+      : !answered
+        ? GradeKind.Unanswered
+        : points > 0
+          ? GradeKind.Partial
+          : GradeKind.Wrong,
+    points,
+    maxPoints,
+    parts: outcome.parts ?? [],
+    normalizedGiven: outcome.normalizedGiven ?? [],
+    normalizedCorrect: outcome.normalizedCorrect ?? [],
+  };
+}
+
 /** The one grading function. Every type, every scoring method. */
 export function gradeQuestion(
   question: QuestionModel,
@@ -379,6 +425,12 @@ export function gradeQuestion(
       normalizedGiven: [],
       normalizedCorrect: [],
     };
+  }
+  if (question.type === QuestionType.Custom) {
+    const custom = gradeFromPlugin(question, response, options);
+    if (custom !== null) {
+      return custom;
+    }
   }
   switch (question.type) {
     case QuestionType.Choice:

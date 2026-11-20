@@ -260,7 +260,7 @@ export function mediaForConfig(
   if (srcset !== undefined) {
     extra["srcset"] = resolveSrcset(srcset, options);
   }
-  for (const key of ["poster", "captions"]) {
+  for (const key of ["poster", "captions", "transcript"]) {
     const value = descriptor.options[key];
     if (value !== undefined) {
       extra[key] = resolveMediaPath(value, options);

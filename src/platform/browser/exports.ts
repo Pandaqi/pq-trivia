@@ -5,6 +5,8 @@
  */
 
 import { toStandaloneHtml } from "../../core/export/standalone";
+import { analyticsCsv } from "../../core/export/analytics";
+import { orderFromQuery, shareQuery } from "../../core/plan/share";
 import type { Quiz } from "../../core/session/quiz";
 import { downloadText, fileSlug } from "./download";
 import { requestPrint, type PrintKind } from "./print";
@@ -61,6 +63,54 @@ export function downloadQuizGrades(quiz: Quiz): void {
     return;
   }
   downloadText(`${fileSlug(title(quiz))}-results.csv`, text, "text/csv");
+}
+
+/**
+ * A link to this quiz with the seed and the order in it. Never an answer.
+ * Null without a page, so a Worker can import this file and not explode.
+ */
+export function shareQuizUrl(quiz: Quiz): string | null {
+  if (typeof location === "undefined") {
+    return null;
+  }
+  const url = new URL(location.href);
+  url.search = shareQuery({
+    seed: quiz.config.seed ?? "",
+    shuffleQuestions: quiz.config.shuffleQuestions === true,
+    shuffleRounds: quiz.config.shuffleRounds === true,
+  });
+  url.hash = "";
+  return url.toString();
+}
+
+export function copyQuizShareLink(quiz: Quiz): Promise<boolean> {
+  const url = shareQuizUrl(quiz);
+  return url === null ? Promise.resolve(false) : copyText(url);
+}
+
+/** Read `?seed=` and the order flags after loading. Same quiz, same plan. */
+export function applyShareOrder(quiz: Quiz): void {
+  if (typeof location === "undefined") {
+    return;
+  }
+  const order = orderFromQuery(location.search);
+  if (Object.keys(order).length > 0) {
+    quiz.setOrder(order);
+  }
+}
+
+/** Every saved attempt on this device, one row per question. */
+export async function downloadQuizAttempts(quiz: Quiz): Promise<boolean> {
+  const attempts = await quiz.history();
+  if (attempts.length === 0) {
+    return false;
+  }
+  downloadText(
+    `${fileSlug(title(quiz))}-analytics.csv`,
+    analyticsCsv(attempts),
+    "text/csv",
+  );
+  return true;
 }
 
 export function downloadQuizHandout(quiz: Quiz): void {

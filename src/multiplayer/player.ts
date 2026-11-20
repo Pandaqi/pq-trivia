@@ -29,6 +29,10 @@ export interface PlayerOptions {
   /** From an earlier session. Restores the score and the current question. */
   readonly token?: string | null;
   readonly joinTimeoutMs?: number;
+  /** Watch only: join the room, take the questions, send nothing back. */
+  readonly watching?: boolean;
+  /** The group this phone answers for. One phone per group. */
+  readonly team?: string;
 }
 
 export interface PlayerState {
@@ -47,6 +51,10 @@ export interface PlayerState {
   readonly leaderboard: readonly LeaderRow[];
   /** First buzz on this question, if anyone has pressed it. */
   readonly buzz: BuzzState | null;
+  /** This screen is here to watch. */
+  readonly watching: boolean;
+  /** The team this phone answers for, if the room plays in teams. */
+  readonly team: string | null;
 }
 
 export interface PlayerRoom {
@@ -165,6 +173,8 @@ export async function createPlayer(
     reveal: null,
     leaderboard: [],
     buzz: null,
+    watching: options.watching === true,
+    team: options.team ?? null,
   };
 
   function update(next: Partial<PlayerState>): void {
@@ -329,7 +339,12 @@ export async function createPlayer(
         room.send(
           createEnvelope(
             MessageType.Join,
-            { name: options.name, token } satisfies JoinPayload,
+            {
+              name: options.name,
+              token,
+              watch: state.watching,
+              ...(state.team === null ? {} : { team: state.team }),
+            } satisfies JoinPayload,
             room.selfId,
           ),
         );
@@ -338,6 +353,7 @@ export async function createPlayer(
     submit(response, stake) {
       const question = state.question;
       if (
+        state.watching ||
         question === null ||
         state.submitted ||
         state.phase !== RoomPhase.Question
@@ -365,6 +381,7 @@ export async function createPlayer(
     buzz() {
       const question = state.question;
       if (
+        state.watching ||
         question === null ||
         !question.buzzer ||
         state.buzz !== null ||

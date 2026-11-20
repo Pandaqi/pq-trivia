@@ -20,108 +20,56 @@ import { isStaged, showsStep, StepBar, stepEnter } from "./QuestionSteps";
 import { StepPart } from "../../../core/model/steps";
 import { ScriptWidget } from "../components/ScriptWidget";
 import { Timer } from "../components/Timer";
+import { formatTimer } from "../../../core/session/timers";
+import { allowedLifelines, Lifeline } from "../../../core/grading/aids";
+import { TeamsBadge } from "../components/Teams";
+import { accentStyle, SectionScreen } from "./SectionScreen";
 import { Toolbar } from "../components/Toolbar";
 import { backgroundStyle } from "../components/background";
-import { roundColour, type RoundColour } from "../components/roundAccent";
-import { useT, type Translate } from "../i18n";
+import { roundColour } from "../components/roundAccent";
+import { useT } from "../i18n";
 import { typeHintText } from "../typeHint";
 
-function accentStyle(colour: RoundColour): string {
-  return [
-    `--pq-accent:${colour.shade}`,
-    `--pq-accent-ink:${colour.ink}`,
-    `--pq-round-accent:${colour.base}`,
-    `--pq-round-shade:${colour.shade}`,
-  ].join(";");
-}
+/** Interface keys stay here. The core names lifelines, it does not speak. */
+const LIFELINE_KEYS: Readonly<Record<Lifeline, string>> = {
+  [Lifeline.FiftyFifty]: "lifeline5050",
+  [Lifeline.ExtraTime]: "lifelineExtraTime",
+  [Lifeline.AskRoom]: "lifelineAskRoom",
+};
 
-function roundSizeLabel(
-  t: Translate,
-  questions: number,
-  points: number,
-): string {
-  const questionWord = t(questions === 1 ? "question_one" : "question_other");
-  const pointWord = t(points === 1 ? "point_one" : "point_other");
-  return `${questions} ${questionWord} · ${points} ${pointWord}`;
-}
-
-function SectionScreen({
+/** 50/50, extra time and ask the room. A lifeline costs points, so it says so. */
+function Lifelines({
   quiz,
   screen,
-  timerSound,
 }: {
   readonly quiz: Quiz;
   readonly screen: QuestionViewModel;
-  readonly timerSound?: TimerSound | undefined;
-}): JSX.Element {
+}): JSX.Element | null {
   const t = useT();
-  const colour = roundColour(
-    screen.seed,
-    screen.round,
-    0,
-    Math.max(screen.roundQuestionCount, 1),
+  const allowed = allowedLifelines(
+    quiz.config.lifelines ?? [],
+    quiz.config.restricted === true,
   );
-  const body =
-    screen.body.length === 0 ? null : (
-      <div class="pq-body">
-        <Inline nodes={screen.body} />
-      </div>
-    );
+  if (allowed.length === 0 || screen.revealed) {
+    return null;
+  }
+  const used = quiz.state.lifelines[screen.id] ?? [];
   return (
-    <main
-      class="pq-screen pq-screen-section"
-      style={`${accentStyle(colour)};${backgroundStyle(screen.background) ?? ""}`}
-    >
-      <Timer quiz={quiz} sound={timerSound} />
-      <div class="pq-section-body">
-        <p class="pq-kicker">
-          {screen.roundNumber === null
-            ? t("roundWord")
-            : t("roundNumber", { number: screen.roundNumber })}
-        </p>
-        <h1 class="pq-title pq-section-title" data-pq-heading tabIndex={-1}>
-          {screen.numberPrefix}
-          {screen.title.length === 0 ? (
-            (screen.roundName ?? t("roundWord"))
-          ) : (
-            <Inline nodes={screen.title} />
-          )}
-        </h1>
-        <p class="pq-section-stats">
-          {roundSizeLabel(t, screen.roundQuestionCount, screen.roundPoints)}
-        </p>
-        {screen.roundSecret === null ||
-        quiz.config.hideSecretThemeMessage === true ? null : (
-          <p class="pq-section-secret">
-            {t("theme", { theme: screen.roundSecret })}
-          </p>
-        )}
-        {body}
-        {screen.comments.length === 0 ? null : (
-          <div class="pq-comments">
-            <Inline nodes={screen.comments} />
-          </div>
-        )}
-        {screen.media.length === 0 ? null : (
-          <div class="pq-media-list">
-            {screen.media.map((item) => (
-              <Media
-                key={item.path}
-                item={item}
-                autoplay={quiz.config.mediaAutoPlay === true}
-                asIframe={quiz.config.loadExternalMediaAsIframe === true}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-      {quiz.config.disableUI === true ? null : (
-        <footer class="pq-toolbar">
-          <Toolbar quiz={quiz} screen={screen} />
-          <Actions quiz={quiz} />
-        </footer>
-      )}
-    </main>
+    <div class="pq-lifelines" role="group" aria-label={t("lifelines")}>
+      {allowed.map((lifeline) => (
+        <button
+          key={lifeline}
+          type="button"
+          class="pq-lifeline"
+          data-pq-lifeline={lifeline}
+          aria-pressed={used.includes(lifeline)}
+          disabled={used.includes(lifeline)}
+          onClick={() => quiz.useLifeline(lifeline)}
+        >
+          {t(LIFELINE_KEYS[lifeline])}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -159,6 +107,12 @@ export function QuestionScreen({
       <SectionScreen quiz={quiz} screen={screen} timerSound={timerSound} />
     );
   }
+
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const handle = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(handle);
+  }, []);
 
   const hintCount = screen.hints.revealed.length;
   const colour = roundColour(
@@ -211,6 +165,9 @@ export function QuestionScreen({
   ].join(" ");
   const transition = screen.transition ?? "fade";
 
+  // The whole quiz counts up by default. A `QuizLimit` turns it into a
+  // countdown, and the same line shows either.
+  const clock = formatTimer(quiz.quizRemaining(now) ?? quiz.elapsed(now) ?? 0);
   const hasMedia = screen.media.length > 0;
   const manyAnswers = screen.answers.length > 1;
   // A media-only step is the clip's turn. One column, nothing beside it.
@@ -258,6 +215,11 @@ export function QuestionScreen({
       <Timer quiz={quiz} sound={timerSound} />
 
       <p class="pq-meta-strip">
+        {quiz.config.hideTimerGlobal === true ? null : (
+          <span class="pq-meta-clock" title={t("quizClock")}>
+            {clock}
+          </span>
+        )}
         <span class="pq-meta-round">
           {icons ? (
             <span class="pq-meta-icon" aria-hidden="true">
@@ -317,6 +279,8 @@ export function QuestionScreen({
         )}
         {settings}
       </p>
+
+      <TeamsBadge quiz={quiz} />
 
       <div class={split ? "pq-split" : "pq-split pq-split-single"}>
         <div class="pq-split-left">
@@ -416,6 +380,8 @@ export function QuestionScreen({
           </div>
         )}
       </div>
+
+      <Lifelines quiz={quiz} screen={screen} />
 
       <StepBar quiz={quiz} screen={screen} />
 

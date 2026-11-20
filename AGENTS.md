@@ -6,7 +6,7 @@ Master file. Keep it short. Details live in the links.
 
 PQ-Trivia: a plain-text quiz engine for pub quizzes and classrooms. V2 ships. V3 is planned.
 
-Read `ROADMAP.md` before changing anything. It holds the plan, the syntax, the API and the phases.
+Read `docs/` before changing anything. The syntax, the API and the guides live there.
 
 Code style rules live in `CODING_STYLE.md`. Read that too.
 
@@ -34,17 +34,17 @@ Adds replay protection to the multiplayer lobby
 
 - **No new dependencies.** Preact, Trystero (optional, multiplayer) and `uqr` (lazy join QR) at runtime. Dev only: VitePress, `@types/bun`, `happy-dom`, `axe-core`. That is the whole list.
 - **Bun only.** `bun check`, `bun lint`, `bun fmt`, `bun test`, `bun build`. No Biome, ESLint, Prettier, dependency-cruiser.
-- **TypeScript, strictest settings.** `ROADMAP.md` §14.2. Enums are fine and welcome.
+- **TypeScript, strictest settings.** The `tsconfig` files hold them. Enums are fine and welcome.
 - **Core has no DOM.** `src/core/**` must compile with `lib: ["ES2022"]`.
 - **Keep tests cheap.** The dev machine is a 15-year-old laptop. Whole suite under 10 seconds. No coverage gates.
 - **Offline and plain text stay first-class.** No backend. Trivia Syntax is the only authoring format.
-- **One documentation home.** Add to `ROADMAP.md` or `docs/`. Do not spawn new markdown files.
+- **One documentation home.** Add to `docs/`. Do not spawn new markdown files.
 
 ## Where things are
 
 | Need                      | Look at                                                             |
 | ------------------------- | ------------------------------------------------------------------- |
-| Plan, phases, API, syntax | `ROADMAP.md`                                                        |
+| Syntax, API and guides    | `docs/`                                                             |
 | V2 documentation          | `docs.md`                                                           |
 | Requirements list         | `todo.md`                                                           |
 | V3 code                   | `src/core/`, `src/entries/`, `cli/`                                 |
@@ -79,4 +79,4 @@ These exist once Phase 0 is done. Until then, there is nothing to build. Do not 
 
 ## Before you say it is done
 
-`ROADMAP.md` §23. That is the checklist.
+`CONTRIBUTING.md` has the checks. Then look at the page yourself.

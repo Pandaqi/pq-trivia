@@ -46,7 +46,10 @@ export default defineConfig({
       },
       {
         text: "API",
-        items: [{ text: "createQuiz", link: "/api/create-quiz" }],
+        items: [
+          { text: "createQuiz", link: "/api/create-quiz" },
+          { text: "Plugins", link: "/api/plugins" },
+        ],
       },
     ],
     socialLinks: [

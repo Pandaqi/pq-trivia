@@ -39,11 +39,18 @@ export * from "./plan/rng";
 export * from "./plan/shuffle";
 export * from "./plan/order";
 export * from "./plan/plan";
+export * from "./plan/pool";
+export * from "./plan/variants";
+export * from "./plan/share";
 
 // grading
 export * from "./grading/normalize";
 export * from "./grading/grading";
+export * from "./grading/plugins";
 export * from "./grading/report";
+export * from "./grading/points";
+export * from "./grading/teams";
+export * from "./grading/aids";
 
 // session
 export * from "./session/responses";
@@ -56,11 +63,14 @@ export * from "./session/flow";
 
 // content
 export * from "./content/include";
+export * from "./content/import";
+export * from "./content/duplicates";
 
 // export
 export * from "./export/embedded";
 export * from "./export/json";
 export * from "./export/csv";
+export * from "./export/analytics";
 export * from "./export/gift";
 export * from "./export/qti";
 export * from "./export/printModel";

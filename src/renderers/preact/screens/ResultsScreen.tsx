@@ -15,6 +15,7 @@ import {
 import type { Quiz } from "../../../core/session/quiz";
 import type { ResultsViewModel } from "../../../core/session/viewModel";
 import { useT } from "../i18n";
+import { Scoreboard } from "../components/Teams";
 
 const BAND_KEYS: Readonly<Record<string, string>> = {
   [GradeBand.Excellent]: "bandExcellent",
@@ -68,6 +69,9 @@ function ReviewCard({
         </p>
         <p class="pq-review-points">
           {question.points} / {question.maxPoints}
+          {question.multiplier > 1 ? (
+            <span class="pq-review-multiplier">×{question.multiplier}</span>
+          ) : null}
         </p>
         <p class="pq-review-status">
           <span aria-hidden="true">{statusMark(question)}</span> {status}
@@ -220,6 +224,8 @@ export function ResultsScreen({
           </div>
         </dl>
       </header>
+
+      <Scoreboard quiz={quiz} />
 
       {report.rounds.length === 0 ? null : (
         <table class="pq-table pq-round-table">

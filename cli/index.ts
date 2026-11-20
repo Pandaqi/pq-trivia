@@ -7,7 +7,13 @@
  */
 
 import { copyFile, mkdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import {
+  generatePackKeys,
+  signPack,
+  verifyPack,
+  type PackSignature,
+} from "./sign";
+import { dirname, isAbsolute, join } from "node:path";
 import { buildQuiz } from "../src/core/model/quiz";
 import { questionMaxScore } from "../src/core/model/question";
 import { planQuiz } from "../src/core/plan/plan";
@@ -31,8 +37,15 @@ import { toStandaloneHtml } from "../src/core/export/standalone";
 import { mediaOptionsFrom } from "../src/core/values/media";
 
 import {
+  importContent,
+  importFormatOf,
+  ImportFormat,
+} from "../src/core/content/import";
+import { nearDuplicates } from "../src/core/content/duplicates";
+import {
   backup,
   buildWithIncludes,
+  copyMedia,
   parseArgs,
   readExpanded,
   readQuiz,
@@ -54,7 +67,11 @@ const USAGE = `PQ-Trivia CLI
                                        canonicalise, keep a .bak
                                        --headings shifts heading levels only
   build <file> [--format json|html|gift|qti|csv] [--out file] [--answers]
-  pack <file> [--out dir] [--seed text]   an offline folder that plays
+  import <file.csv|file.md> [--out file]  a spreadsheet or notes into Trivia Syntax
+  pack <file> [--out dir] [--seed text] [--key private.pem]
+                                       an offline folder that plays
+  keygen [--out dir]                   a signing key pair for packs
+  verify <packdir>                     check a signed pack, file by file
   encrypt <file> [--passphrase text] [--out file]
   grade <file> --answers <json> [--csv]
   stats <path...>                      counts, types, points
@@ -83,6 +100,96 @@ if (command === "docs") {
   process.exit(0);
 }
 
+// Import reads a spreadsheet or a Markdown file, so it runs before the quiz
+// file search: a `.csv` is not a quiz file until this command makes it one.
+/** A path from the command line, absolute or relative to the repo. */
+function fromHere(path: string): string {
+  return isAbsolute(path) ? path : join(ROOT, path);
+}
+
+if (command === "keygen") {
+  const outFlag = flags["out"];
+  const outDir = join(ROOT, typeof outFlag === "string" ? outFlag : "keys");
+  const keys = generatePackKeys();
+  await mkdir(outDir, { recursive: true });
+  await writeText(join(outDir, "pq-pack-private.pem"), keys.privateKey);
+  await writeText(join(outDir, "pq-pack-public.pem"), keys.publicKey);
+  console.log(`Wrote ${outDir}/pq-pack-private.pem and pq-pack-public.pem.`);
+  console.log("Keep the private half off the web. Ship the public one.");
+  process.exit(0);
+}
+
+if (command === "verify") {
+  const dir = targets[0];
+  if (dir === undefined) {
+    console.error("verify needs a pack folder.");
+    process.exit(2);
+  }
+  const packDir = fromHere(dir);
+  let signature: PackSignature | null = null;
+  try {
+    signature = JSON.parse(
+      await readFile(join(packDir, "signature.json"), "utf8"),
+    ) as PackSignature;
+  } catch {
+    console.error("No signature.json in that folder. Nothing to check.");
+    process.exit(1);
+  }
+  if (signature === null) {
+    process.exit(1);
+  }
+  const files: Record<string, Uint8Array> = {};
+  for (const path of Object.keys(signature.files)) {
+    try {
+      files[path] = await readFile(join(packDir, path));
+    } catch {
+      // Missing files are reported by `verifyPack`, with their names.
+    }
+  }
+  const check = verifyPack(files, signature);
+  if (!check.ok) {
+    for (const problem of check.problems) {
+      console.error(problem);
+    }
+    console.error("This pack is not the one that was signed. Do not use it.");
+    process.exit(1);
+  }
+  console.log(
+    `Signed pack checks out: ${Object.keys(signature.files).length} file(s).`,
+  );
+  process.exit(0);
+}
+
+if (command === "import") {
+  const source = targets[0];
+  if (source === undefined) {
+    console.error("import needs one file.");
+    process.exit(2);
+  }
+  // An absolute path is used as given. `join` on Windows would staple it to
+  // the repo and produce a path that cannot exist.
+  const text = await readFile(fromHere(source), "utf8");
+  const format =
+    flags["format"] === "csv"
+      ? ImportFormat.Csv
+      : flags["format"] === "markdown" || flags["format"] === "md"
+        ? ImportFormat.Markdown
+        : importFormatOf(source);
+  const result = importContent(text, format);
+  const counted = reportDiagnostics(result.diagnostics);
+  const out =
+    typeof flags["out"] === "string"
+      ? flags["out"]
+      : `${source.replace(/\.[^.]+$/, "")}.trivia`;
+  if (flags["out"] === undefined) {
+    process.stdout.write(result.text);
+  } else {
+    await writeText(fromHere(out), result.text);
+    console.log(`Wrote ${out}: ${result.questions} question(s).`);
+  }
+  process.exit(counted.errors > 0 ? 1 : 0);
+}
+
 const files = await resolveTargets(targets);
 if (files.length === 0) {
   console.error("No quiz files found.");
@@ -104,7 +211,12 @@ if (command === "validate") {
         `${name}: V2 headings. Run migrate ${relativeName(file)} --headings --write.`,
       );
     }
-    const counted = reportDiagnostics(quiz.diagnostics);
+    // Duplicate wording is an authoring smell, not a broken file. Only the
+    // content check looks for it; a player never pays for the scan.
+    const counted = reportDiagnostics([
+      ...quiz.diagnostics,
+      ...nearDuplicates(quiz.questions),
+    ]);
     errors += counted.errors;
     warnings += counted.warnings;
     const maxScore = quiz.questions.reduce(
@@ -272,6 +384,21 @@ if (command === "pack") {
   // Includes are already written out, so the pack is one self-contained file.
   const text = formatText(expanded, {}).replaceAll("</script", "<\\/script");
   const seed = typeof flags["seed"] === "string" ? flags["seed"] : "";
+  // Media travels with the pack. A path to the author's laptop is not offline.
+  const configured = quiz.meta.config?.["subFolderMedia"];
+  const mediaFolder = typeof configured === "string" ? configured : "media";
+  const mediaPaths = quiz.questions.flatMap((question) =>
+    question.media.map((item) => item.path),
+  );
+  const localMedia = [...new Set(mediaPaths)].filter(
+    (path) => !/^[a-z][a-z0-9+.-]*:/i.test(path) && !path.startsWith("//"),
+  );
+  const mediaFiles = localMedia.map((path) => `${mediaFolder}/${path}`);
+  // Bump this with the content. A cache name that never changes never updates.
+  const version = new Bun.CryptoHasher("sha256")
+    .update(text)
+    .digest("hex")
+    .slice(0, 12);
   const packFiles = [
     "index.html",
     "quiz.trivia",
@@ -280,17 +407,22 @@ if (command === "pack") {
     "print.css",
     "manifest.json",
     "sw.js",
+    ...mediaFiles,
   ];
   const html = `<!doctype html>
 <html>
 <head>
-<style>html,body{margin:0;height:100%}</style>
+<style>html,body{margin:0;height:100%}\n#pq-update{position:fixed;left:1rem;right:1rem;bottom:1rem;display:flex;gap:1rem;justify-content:space-between;align-items:center;padding:.75rem 1rem;background:#111;color:#fff;font:1rem/1.4 system-ui,sans-serif;border-radius:.5rem;z-index:9}\n#pq-update[hidden]{display:none}\n#pq-update button{font:inherit;padding:.4rem .8rem}</style>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="print.css" media="print">
 <script src="pq-trivia.min.js" defer></script>
 </head>
 <body>
 <div id="app"></div>
+<div id="pq-update" role="status" hidden>
+  <span>A new version is ready.</span>
+  <button type="button" id="pq-update-button">Reload</button>
+</div>
 <script id="quiz-text" type="text/plain">
 ${text}
 </script>
@@ -302,26 +434,55 @@ window.addEventListener("load", function () {
   PQTrivia.mountQuiz(quiz, host);
   quiz.load({ type: "text", text: source });
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
-    navigator.serviceWorker.register("sw.js").catch(function () {});
+    var box = document.getElementById("pq-update");
+    var button = document.getElementById("pq-update-button");
+    var hadController = navigator.serviceWorker.controller !== null;
+    var offer = function (worker) {
+      if (!worker || !box || !button) return;
+      box.hidden = false;
+      button.onclick = function () {
+        worker.postMessage({ type: "pq-skip-waiting" });
+      };
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (hadController) location.reload();
+    });
+    navigator.serviceWorker.register("sw.js").then(function (registration) {
+      if (registration.waiting) offer(registration.waiting);
+      registration.addEventListener("updatefound", function () {
+        var installing = registration.installing;
+        if (!installing) return;
+        installing.addEventListener("statechange", function () {
+          if (installing.state === "installed" && navigator.serviceWorker.controller) {
+            offer(installing);
+          }
+        });
+      });
+      setInterval(function () { registration.update().catch(function () {}); }, 3600000);
+    }).catch(function () {});
   }
 });
 </script>
 </body>
 </html>
 `;
-  const sw = `/* Offline pack: cache the seven files, serve them when the network is gone. */
-const CACHE = "pq-pack-${slug}";
+  const sw = `/* Offline pack: cache the files, wait, and let the page ask for a reload. */
+const CACHE = "pq-pack-${slug}-${version}";
 const FILES = ${JSON.stringify(packFiles, null, 2)};
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((cache) => cache.addAll(FILES)).then(() => self.skipWaiting()),
-  );
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(FILES)));
+});
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "pq-skip-waiting") self.skipWaiting();
 });
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
-    ),
+      Promise.all(
+        keys.filter((key) => key.startsWith("pq-pack-") && key !== CACHE)
+          .map((key) => caches.delete(key)),
+      ),
+    ).then(() => self.clients.claim()),
   );
 });
 self.addEventListener("fetch", (event) => {
@@ -365,7 +526,44 @@ self.addEventListener("fetch", (event) => {
     )}\n`,
   );
   await writeText(join(outDir, "sw.js"), sw);
-  console.log(`Packed ${quiz.questions.length} questions into ${outDir}.`);
+  const copied = await copyMedia(
+    localMedia,
+    dirname(file),
+    outDir,
+    mediaFolder,
+  );
+  if (copied.missing.length > 0) {
+    console.warn(
+      `Missing media, left out of the pack: ${copied.missing.join(", ")}`,
+    );
+  }
+  const signingKey = flags["key"];
+  if (typeof signingKey === "string") {
+    const signed: Record<string, Uint8Array> = {};
+    for (const path of packFiles) {
+      try {
+        signed[path] = await readFile(join(outDir, path));
+      } catch {
+        // Missing media was already named above. `verify` will name it again.
+      }
+    }
+    const signature = signPack(
+      signed,
+      await readFile(join(ROOT, signingKey), "utf8"),
+    );
+    await writeText(
+      join(outDir, "signature.json"),
+      `${JSON.stringify(signature, null, 2)}\n`,
+    );
+    console.log(
+      verifyPack(signed, signature).ok
+        ? `Signed ${Object.keys(signature.files).length} file(s).`
+        : "The signature did not check out. Do not ship this pack.",
+    );
+  }
+  console.log(
+    `Packed ${quiz.questions.length} questions into ${outDir}${copied.copied > 0 ? `, with ${copied.copied} media file(s)` : ""}.`,
+  );
   console.log("Open index.html from the folder, Wi-Fi or not.");
   process.exit(0);
 }

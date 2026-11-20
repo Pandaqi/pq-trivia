@@ -170,3 +170,24 @@
 .pq-live-settings .pq-field {
   margin: 0;
 }
+
+/* Teams on the host screen: a coloured head, then the phones in it. The room
+   can see who is in before anyone has answered a question. */
+.pq-live-groups {
+  display: grid;
+  gap: var(--pq-gap);
+}
+
+.pq-live-team-head {
+  width: fit-content;
+  margin: 0 0 0.35rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--pq-team, transparent);
+  color: var(--pq-team-ink, inherit);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

@@ -14,8 +14,10 @@
  */
 
 import type { AstAttribute } from "./ast";
+import { coerceDuration } from "../values/coerce";
 
-export type ConfigValueKind = "text" | "list" | "number" | "boolean" | "pairs";
+export type ConfigValueKind =
+  "text" | "list" | "number" | "boolean" | "duration" | "pairs";
 
 export interface ConfigHeaderRow {
   readonly attribute: string;
@@ -180,8 +182,25 @@ export const CONFIG_HEADER_ROWS = [
   { attribute: "BannerImage", key: "bannerImage", kind: "text" },
   { attribute: "Icon", key: "icon", kind: "text" },
 
+  // Drawing and balancing a round.
+  { attribute: "Pool", key: "pool", kind: "number" },
+  {
+    attribute: "BalanceDifficulty",
+    key: "balanceDifficulty",
+    kind: "boolean",
+  },
+
+  // Points.
+  { attribute: "ScoringPreset", key: "scoringPreset", kind: "text" },
+  { attribute: "NegativeMarking", key: "negativeMarking", kind: "number" },
+  { attribute: "Streaks", key: "streaks", kind: "boolean" },
+
   // Play policy.
   { attribute: "Restricted", key: "restricted", kind: "boolean" },
+  { attribute: "Lifelines", key: "lifelines", kind: "list" },
+  { attribute: "Teams", key: "teams", kind: "list" },
+  { attribute: "QuizLimit", key: "quizLimit", kind: "duration" },
+  { attribute: "RoundTimer", key: "roundTimer", kind: "duration" },
   { attribute: "RevealMode", key: "revealMode", kind: "text" },
   { attribute: "Policy", key: "policy", kind: "text" },
   { attribute: "Grading", key: "grading", kind: "text" },
@@ -311,6 +330,13 @@ export function parseHeaderConfig(
         const number = Number(values[0]);
         if (Number.isFinite(number)) {
           out[row.key] = number;
+        }
+        break;
+      }
+      case "duration": {
+        const ms = coerceDuration(values[0] ?? "");
+        if (ms !== undefined) {
+          out[row.key] = ms;
         }
         break;
       }

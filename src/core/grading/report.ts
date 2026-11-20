@@ -22,6 +22,13 @@ import {
 } from "./grading";
 import { round2 } from "./parts";
 import { settleWager } from "./wager";
+import { allowedLifelines, lifelineCost, type Lifeline } from "./aids";
+import {
+  applyPointRules,
+  DEFAULT_NEGATIVE_MARK,
+  ScoringPreset,
+  type PointRules,
+} from "./points";
 
 export enum GradeBand {
   Excellent = "excellent",
@@ -76,6 +83,14 @@ export interface QuestionReport {
   readonly confidence: Confidence | null;
   readonly wager: number | null;
   readonly wagerRisk: WagerRisk | null;
+  /** Correct answers in a row up to and including this one. */
+  readonly run: number;
+  /** The streak bonus this question earned. 1 when there was none. */
+  readonly multiplier: number;
+  /** Lifelines used here, by name. Empty when none were. */
+  readonly lifelines: readonly Lifeline[];
+  /** What those lifelines took off. Zero when none were used. */
+  readonly lifelineCost: number;
 }
 
 export interface RoundReport {
@@ -86,6 +101,8 @@ export interface RoundReport {
   readonly points: number;
   readonly maxPoints: number;
   readonly percent: number;
+  /** Questions this round drew through `Pool`. Empty when it drew none. */
+  readonly drawn: readonly string[];
 }
 
 export interface CategoryReport {
@@ -116,6 +133,11 @@ export interface GradeReport {
   readonly questions: readonly QuestionReport[];
   readonly rounds: readonly RoundReport[];
   readonly categories: readonly CategoryReport[];
+  /** Longest run of correct answers in this attempt. */
+  readonly bestStreak: number;
+  /** Lifeline uses across the attempt, and what they cost. */
+  readonly lifelinesUsed: number;
+  readonly lifelineCost: number;
 }
 
 export interface ReportOptions extends GradeOptions {
@@ -125,6 +147,16 @@ export interface ReportOptions extends GradeOptions {
   readonly noIdea?: readonly string[];
   readonly confidence?: Readonly<Record<string, Confidence>>;
   readonly wagers?: Readonly<Record<string, number>>;
+  /** Negative marking, all-or-nothing, partial, or nothing special. */
+  readonly preset?: ScoringPreset;
+  /** The slice of a question a wrong answer costs, with the negative preset. */
+  readonly negativeMarking?: number;
+  /** Three in a row, and it starts paying. Off unless the host says so. */
+  readonly streaks?: boolean;
+  /** Lifelines used per question ID. */
+  readonly lifelines?: Readonly<Record<string, readonly string[]>>;
+  /** Restricted mode allows none. */
+  readonly restricted?: boolean;
 }
 
 export enum ReportFilter {
@@ -204,9 +236,18 @@ export function gradeAttempt(
   const rounds = new Map<string, { name: string; items: QuestionReport[] }>();
   const categories = new Map<string, QuestionReport[]>();
   let number = 0;
-  let stakes = 0;
   /** Points earned so far. The floor for a lost stake. */
   let bank = 0;
+  let run = 0;
+  let bestStreak = 0;
+  let lifelinesUsed = 0;
+  let lifelineSpent = 0;
+  let possible = 0;
+  const rules: PointRules = {
+    preset: options.preset ?? ScoringPreset.Standard,
+    negativeMarking: options.negativeMarking ?? DEFAULT_NEGATIVE_MARK,
+    streaks: options.streaks === true,
+  };
 
   plan.questions.forEach((question, planIndex) => {
     // A section screen has no answer. It must not appear as a skipped question.
@@ -230,8 +271,34 @@ export function gradeAttempt(
       correct: result.correct,
     });
     bank = round2(bank + settled.points);
-    stakes += settled.stake;
+    const used = allowedLifelines(
+      options.lifelines?.[question.id] ?? [],
+      options.restricted === true,
+    );
+    const spent = lifelineCost(used);
+    const pointed = applyPointRules(
+      {
+        points: settled.points,
+        maxPoints: settled.maxPoints,
+        correct: result.correct,
+        answered: result.answered,
+        parts: result.parts,
+      },
+      rules,
+      run,
+    );
+    run = pointed.run;
+    bestStreak = Math.max(bestStreak, run);
+    lifelinesUsed += used.length;
+    lifelineSpent += spent;
+    possible = round2(possible + pointed.maxPoints);
     const wager = settled.stake > 0 ? settled.stake : null;
+    // A lifeline may eat this question. It may not push the question below
+    // zero, and it never turns a penalty into a bigger one.
+    const paid =
+      pointed.points <= 0
+        ? pointed.points
+        : Math.max(0, round2(pointed.points - spent));
     const report: QuestionReport = {
       id: question.id,
       index: number,
@@ -246,13 +313,17 @@ export function gradeAttempt(
       answered: result.answered,
       correct: result.correct,
       kind: result.kind,
-      points: settled.points,
-      maxPoints: settled.maxPoints,
+      points: paid,
+      maxPoints: pointed.maxPoints,
       parts: result.parts,
       noIdea: options.noIdea?.includes(question.id) === true,
       confidence: options.confidence?.[question.id] ?? null,
       wager,
       wagerRisk: wager === null ? null : wagerRiskOf(wager, result.maxPoints),
+      run: pointed.run,
+      multiplier: pointed.multiplier,
+      lifelines: used,
+      lifelineCost: spent,
     };
     questions.push(report);
     number += 1;
@@ -271,10 +342,11 @@ export function gradeAttempt(
     }
   });
 
-  const points = questions.reduce((total, entry) => total + entry.points, 0);
-  // A stake raises what this attempt could have earned, so a full-stake run
-  // still tops out at 100 percent.
-  const maxPoints = round2(plan.maxScore + stakes);
+  // A stake and a streak raise what this attempt could have earned, so a
+  // perfect run still tops out at 100 percent. A score never goes below zero.
+  const sum = questions.reduce((total, entry) => total + entry.points, 0);
+  const points = Math.max(0, round2(sum));
+  const maxPoints = possible;
   const percent = percentOf(points, maxPoints);
   const correct = questions.filter((entry) => entry.correct).length;
   const answered = questions.filter((entry) => entry.answered).length;
@@ -289,7 +361,7 @@ export function gradeAttempt(
     wrong: answered - correct,
     unanswered: questions.length - answered,
     noIdea: questions.filter((entry) => entry.noIdea).length,
-    points: Math.round(points * 100) / 100,
+    points,
     maxPoints,
     percent,
     band: bandOf(percent, maxPoints),
@@ -300,6 +372,9 @@ export function gradeAttempt(
         ? Math.max(0, endedAt - startedAt)
         : null,
     questions,
+    bestStreak,
+    lifelinesUsed,
+    lifelineCost: lifelineSpent,
     rounds: [...rounds.values()].map((bucket) => {
       const roundPoints = bucket.items.reduce(
         (total, entry) => total + entry.points,
@@ -317,6 +392,9 @@ export function gradeAttempt(
         points: Math.round(roundPoints * 100) / 100,
         maxPoints: roundMax,
         percent: percentOf(roundPoints, roundMax),
+        drawn:
+          plan.rounds.find((round) => round.id === bucket.items[0]?.round)
+            ?.drawn ?? [],
       };
     }),
     categories: [...categories.entries()].map(([name, items]) => {

@@ -23,8 +23,8 @@ No Biome, no ESLint, no Prettier, no bundler config.
   needs a `document`, it belongs in `renderers/` or `platform/`.
 - **500 lines per file, 12 entries per folder.** `bun run lint` checks it.
 - **Tests stay cheap.** Whole suite under 10 seconds. No coverage number.
-- **One documentation home.** `ROADMAP.md` or `docs/`. No new markdown files
-  in the repo root.
+- **One documentation home.** `docs/`. No new markdown files in the repo
+  root.
 
 ## Writing
 

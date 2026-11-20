@@ -1,7 +1,7 @@
 /** Shared CLI helpers. Files in, models out. No DOM. */
 
-import { readFile, writeFile, copyFile } from "node:fs/promises";
-import { dirname, join, relative } from "node:path";
+import { readFile, writeFile, copyFile, mkdir, stat } from "node:fs/promises";
+import { dirname, isAbsolute, join, relative } from "node:path";
 import {
   countBySeverity,
   DiagnosticCodes,
@@ -60,7 +60,8 @@ export async function resolveTargets(
 ): Promise<string[]> {
   const files: string[] = [];
   for (const target of targets) {
-    const path = join(ROOT, target);
+    // An absolute path is used as given. `join` would staple it to the repo.
+    const path = isAbsolute(target) ? target : join(ROOT, target);
     if (EXTENSIONS.test(target)) {
       files.push(path);
       continue;
@@ -206,6 +207,45 @@ export function reportText(report: GradeReport): string {
     }
   }
   return lines.join("\n");
+}
+
+/**
+ * Copy a quiz's media next to the HTML.
+ *
+ * A pack that points at `media/crowd.jpg` on the author's laptop is not
+ * offline. Absolute URLs are left alone: they are somebody else's network.
+ */
+export async function copyMedia(
+  paths: readonly string[],
+  baseDir: string,
+  outDir: string,
+  subFolder: string,
+): Promise<{ copied: number; missing: string[] }> {
+  const missing: string[] = [];
+  let copied = 0;
+  for (const path of new Set(paths)) {
+    if (
+      path.length === 0 ||
+      /^[a-z][a-z0-9+.-]*:/i.test(path) ||
+      path.startsWith("//")
+    ) {
+      continue;
+    }
+    const from = join(baseDir, subFolder, path);
+    const exists = await stat(from).then(
+      () => true,
+      () => false,
+    );
+    if (!exists) {
+      missing.push(path);
+      continue;
+    }
+    const to = join(outDir, subFolder, path);
+    await mkdir(dirname(to), { recursive: true });
+    await copyFile(from, to);
+    copied += 1;
+  }
+  return { copied, missing };
 }
 
 /** `.bak` next to the file, only when a write is really going to happen. */

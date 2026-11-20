@@ -2,6 +2,12 @@
 
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
+import {
+  assignTeamColours,
+  colourFor,
+  teamStyle,
+  type TeamColour,
+} from "../../shared/teamColours";
 import type {
   LeaderRow,
   LivePlayer,
@@ -91,6 +97,78 @@ export function CodeCard({
   );
 }
 
+/**
+ * Live, and the room code next to it.
+ *
+ * A late joiner reads the code off the nearest phone, not off the screen in the
+ * corner. One line, no card, nothing to press.
+ */
+export function LiveBadge({
+  code,
+  team,
+  colours,
+}: {
+  readonly code: string;
+  readonly team?: string | null | undefined;
+  /** Every team in the room, so this phone matches the big screen. */
+  readonly colours?: ReadonlyMap<string, TeamColour> | undefined;
+}): JSX.Element {
+  const name = team ?? null;
+  return (
+    <p class="pq-badge-row" role="status">
+      <span class="pq-badge pq-badge-live">Live · {code}</span>
+      {name === null ? null : (
+        <span
+          class="pq-badge pq-badge-group"
+          style={teamStyle(colourFor(colours ?? new Map(), name))}
+        >
+          {name}
+        </span>
+      )}
+    </p>
+  );
+}
+
+export interface PlayerGroup {
+  /** Null is the phones that came alone. */
+  readonly name: string | null;
+  readonly colour: TeamColour;
+  readonly rows: readonly LivePlayer[];
+}
+
+const NO_COLOUR: TeamColour = { base: "transparent", ink: "inherit" };
+
+/**
+ * The room, by team. A group of five has one phone and one name, so the host
+ * sees who is in before anybody answers a question.
+ */
+export function playerGroups(
+  players: readonly LivePlayer[],
+): readonly PlayerGroup[] {
+  const colours = assignTeamColours(players.map((player) => player.team ?? ""));
+  const names = [
+    ...new Set(
+      players
+        .map((player) => player.team)
+        .filter(
+          (team): team is string => typeof team === "string" && team.length > 0,
+        ),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  const groups: PlayerGroup[] = names.map((name) => ({
+    name,
+    colour: colourFor(colours, name),
+    rows: players.filter((player) => player.team === name),
+  }));
+  const alone = players.filter(
+    (player) => player.team === undefined || player.team.length === 0,
+  );
+  if (alone.length > 0) {
+    groups.push({ name: null, colour: NO_COLOUR, rows: alone });
+  }
+  return groups;
+}
+
 export function Roster({
   players,
 }: {
@@ -104,17 +182,31 @@ export function Roster({
       {players.length === 0 ? (
         <p class="pq-live-hint">Nobody yet. Put the code on the big screen.</p>
       ) : (
-        <ul class="pq-live-players">
-          {players.map((player) => (
-            <li key={player.id} data-pq-ready={player.ready ? "true" : "false"}>
-              <span>{player.name}</span>
-              <span class="pq-live-score">{player.score}</span>
-              {player.connected ? null : (
-                <span class="pq-live-offline">offline</span>
+        <div class="pq-live-groups">
+          {playerGroups(players).map((group) => (
+            <div class="pq-live-group" key={group.name ?? "solo"}>
+              {group.name === null ? null : (
+                <p class="pq-live-team-head" style={teamStyle(group.colour)}>
+                  {group.name}
+                </p>
               )}
-            </li>
+              <ul class="pq-live-players">
+                {group.rows.map((player) => (
+                  <li
+                    key={player.id}
+                    data-pq-ready={player.ready ? "true" : "false"}
+                  >
+                    <span>{player.name}</span>
+                    <span class="pq-live-score">{player.score}</span>
+                    {player.connected ? null : (
+                      <span class="pq-live-offline">offline</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </section>
   );

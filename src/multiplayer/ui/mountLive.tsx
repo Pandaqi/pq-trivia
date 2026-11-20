@@ -29,6 +29,10 @@ export interface MountLiveOptions {
   readonly allowChanges?: boolean;
   /** One reveal per question, per round, at the end, or a second pass. */
   readonly revealMode?: RevealMode;
+  /** Watch only: the questions, no answer form. `?watch=1` does the same. */
+  readonly watching?: boolean;
+  /** The group this phone answers for. `?team=Red` does the same. */
+  readonly team?: string;
 }
 
 export interface MountedLive {
@@ -71,6 +75,24 @@ function safeBroadcast(): RoomTransport | null {
   }
 }
 
+/** One phone per group, so the whole group reads the same badge. */
+function teamFromUrl(): string | null {
+  if (typeof location === "undefined") {
+    return null;
+  }
+  const value = new URLSearchParams(location.search).get("team")?.trim() ?? "";
+  return value.length === 0 ? null : value.slice(0, 24);
+}
+
+/** A second screen in the room. It shows, it does not answer. */
+function watchingFromUrl(): boolean {
+  if (typeof location === "undefined") {
+    return false;
+  }
+  const value = new URLSearchParams(location.search).get("watch");
+  return value === "1" || value === "true";
+}
+
 function currentCode(options: MountLiveOptions): string {
   if (options.code !== undefined) {
     return normalizeRoomCode(options.code);
@@ -89,6 +111,8 @@ function LiveShell({
   readonly handle: MountedLive;
 }): JSX.Element {
   const code = currentCode(options);
+  const watching = options.watching === true || watchingFromUrl();
+  const team = options.team ?? teamFromUrl();
   const [host, setHost] = useState<HostRoom | null>(null);
   const [player, setPlayer] = useState<PlayerRoom | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +187,8 @@ function LiveShell({
       code,
       name: name.trim(),
       token: readToken(code),
+      watching,
+      ...(team === null ? {} : { team }),
     })
       .then(async (room) => {
         await room.join();

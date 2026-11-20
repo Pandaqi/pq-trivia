@@ -13,7 +13,8 @@ import {
   type LiveQuestion,
   type RevealPayload,
 } from "../types";
-import { Leaderboard, RevealPanel } from "./parts";
+import { assignTeamColours } from "../../shared/teamColours";
+import { Leaderboard, LiveBadge, RevealPanel } from "./parts";
 import { PlayerAnswer } from "./PlayerAnswer";
 
 function usePlayer(player: PlayerRoom): number {
@@ -172,6 +173,10 @@ export function PlayerView({
 }): JSX.Element {
   usePlayer(player);
   const state = player.state();
+  // Every team in the room, so this phone's badge matches the big screen.
+  const colours = assignTeamColours(
+    state.players.map((entry) => entry.team ?? ""),
+  );
   const question = state.question;
   const reveal = state.reveal;
   const [stake, setStake] = useState(0);
@@ -214,7 +219,7 @@ export function PlayerView({
           You are in
         </h1>
         <p class="pq-body">Waiting for the host to show a question.</p>
-        <p class="pq-live-meta">Room {state.code}</p>
+        <LiveBadge code={state.code} team={state.team} colours={colours} />
       </main>
     );
   }
@@ -222,7 +227,7 @@ export function PlayerView({
   if (state.phase === RoomPhase.Answers) {
     return (
       <main class="pq-screen pq-live-screen">
-        <p class="pq-live-kicker">Room {state.code}</p>
+        <LiveBadge code={state.code} team={state.team} colours={colours} />
         <AnswerPass
           question={question}
           reveal={reveal}
@@ -236,7 +241,7 @@ export function PlayerView({
   const section = question.type === QuestionType.Section;
   return (
     <main class="pq-screen pq-live-screen">
-      <p class="pq-live-kicker">Room {state.code}</p>
+      <LiveBadge code={state.code} team={state.team} colours={colours} />
       <QuestionBody
         question={question}
         kicker={section ? "Round" : "Question"}
@@ -247,41 +252,47 @@ export function PlayerView({
           The next question is coming. Keep an eye on the big screen.
         </p>
       ) : reveal === null ? (
-        <>
-          {question.buzzer ? (
-            <BuzzBar
-              player={player}
-              buzz={state.buzz}
-              selfId={state.id}
-              closed={state.closed}
-            />
-          ) : null}
-          {question.wager ? (
-            <StakePicker
-              max={Math.min(question.wagerMax, Math.floor(myScore))}
-              value={Math.min(stake, question.wagerMax, Math.floor(myScore))}
+        state.watching ? (
+          <p class="pq-live-hint" role="status">
+            Watching. Nothing to answer from this screen.
+          </p>
+        ) : (
+          <>
+            {question.buzzer ? (
+              <BuzzBar
+                player={player}
+                buzz={state.buzz}
+                selfId={state.id}
+                closed={state.closed}
+              />
+            ) : null}
+            {question.wager ? (
+              <StakePicker
+                max={Math.min(question.wagerMax, Math.floor(myScore))}
+                value={Math.min(stake, question.wagerMax, Math.floor(myScore))}
+                disabled={state.submitted || state.closed}
+                onChange={setStake}
+              />
+            ) : null}
+            <PlayerAnswer
+              question={question}
               disabled={state.submitted || state.closed}
-              onChange={setStake}
+              onSubmit={submit}
             />
-          ) : null}
-          <PlayerAnswer
-            question={question}
-            disabled={state.submitted || state.closed}
-            onSubmit={submit}
-          />
-          {state.submitted ? (
-            <p class="pq-live-hint" role="status">
-              {stake > 0
-                ? `Sent with ${stake} on the line. Wait for the reveal.`
-                : "Sent. Wait for the reveal."}
-            </p>
-          ) : null}
-          {state.closed && !state.submitted ? (
-            <p class="pq-live-hint" role="status">
-              Answers are closed.
-            </p>
-          ) : null}
-        </>
+            {state.submitted ? (
+              <p class="pq-live-hint" role="status">
+                {stake > 0
+                  ? `Sent with ${stake} on the line. Wait for the reveal.`
+                  : "Sent. Wait for the reveal."}
+              </p>
+            ) : null}
+            {state.closed && !state.submitted ? (
+              <p class="pq-live-hint" role="status">
+                Answers are closed.
+              </p>
+            ) : null}
+          </>
+        )
       ) : (
         <RevealPanel
           reveal={reveal}

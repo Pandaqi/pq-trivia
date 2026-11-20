@@ -30,6 +30,7 @@ export const DiagnosticCodes = {
   InvalidStyle: "PQ203",
   UnknownRound: "PQ301",
   DuplicateQuestion: "PQ302",
+  NearDuplicate: "PQ303",
   PlanConflict: "PQ401",
   UnknownPlacement: "PQ402",
 } as const;

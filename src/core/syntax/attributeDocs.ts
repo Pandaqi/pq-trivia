@@ -64,6 +64,13 @@ export const ATTRIBUTE_DESCRIPTIONS: Readonly<Record<string, string>> = {
   Continue: "When the player may move on.",
   Include: "Path[#selector] to merge before planning.",
   Script: "Sandboxed widget file.",
+  Notes:
+    "Presenter notes. Host only. Never in the player view model, never on paper.",
+  Pool: "Rounds only: draw this many questions from the round, seeded.",
+  Difficulty: "How hard it is, 1 to 5. Used to balance a pool.",
+  Variants:
+    "One line per slot. `{1}`, `{2}` in the text take the value picked for that slot.",
+  RoundTimer: "Rounds only: one timer for the whole round.",
   Wager:
     "Bet up to your score, never more than the question's points. Right wins the stake, wrong loses it, and a score never goes below zero.",
 };

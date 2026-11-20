@@ -13,6 +13,33 @@ import { planQuiz } from "../plan/plan";
 import { applyFlow } from "../session/flow";
 import { syncModels } from "./languages";
 import type { QuizConfig } from "./types";
+import { builtinLanguages, translate } from "../../i18n/dictionary";
+
+/** The language the interface speaks: the chosen one, or the first we carry. */
+export function uiLanguageOf(
+  language: string | null,
+  config: QuizConfig,
+): string {
+  if (language !== null && language.length > 0) {
+    return language;
+  }
+  return config.languageDefault ?? builtinLanguages()[0] ?? "";
+}
+
+/** One UI string, with the quiz's own overrides on top. */
+export function translateFor(
+  language: string | null,
+  config: QuizConfig,
+  key: string,
+  params: Readonly<Record<string, string | number>> = {},
+): string {
+  return translate(
+    uiLanguageOf(language, config),
+    key,
+    params,
+    config.translations ?? {},
+  );
+}
 
 export function findLanguageKey(
   models: ReadonlyMap<string, QuizModel>,
@@ -191,6 +218,13 @@ export function planOptionsFrom(
       : {}),
     ...(config.disableTextFormatting === true
       ? { disableTextFormatting: true }
+      : {}),
+    ...(config.pool !== undefined && config.pool > 0
+      ? { poolSize: config.pool }
+      : {}),
+    ...(config.balanceDifficulty === true ? { balanceDifficulty: true } : {}),
+    ...(config.roundTimer !== undefined && config.roundTimer > 0
+      ? { roundTimerMs: config.roundTimer }
       : {}),
     ...planOrder,
   };

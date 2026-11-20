@@ -54,9 +54,11 @@ Explanation => Clark Kent, mild-mannered reporter.
 Question => ...
 ```
 
-`## Name` starts a round. `# Name` is the quiz title, never a round.
-`Section => Warm-up` moves one question into a round without starting a new one
-there. All of it is optional: questions before the first `##` go into a round
+`## Name` starts a round. `# Name` is the quiz title, never a round and never a
+question. One hash means "start of the quiz", so a second `#` is a second quiz.
+One file holds one quiz, so the parser keeps the first title and warns about
+the second. `Section => Warm-up` moves one question into a round without
+starting a new one there. All of it is optional: questions before the first `##` go into a round
 called `General`.
 
 ## `###` shorthand
@@ -126,7 +128,7 @@ is left alone.
 
 ```txt
 Media => crowd.jpg { alt="A packed hall", credit="Jane Doe" }
-Media => intro.mp3
+Media => intro.mp3 { captions="intro.en.vtt", transcript="intro.txt" }
 ```
 
 An answer that is just a file (image, audio, video) is shown as that media,
@@ -137,7 +139,8 @@ Answers => photo.jpg | intro.mp3 | A text answer
 ```
 
 Images lazy-load. Audio and video never autoplay with sound. `alt` is checked
-in strict mode.
+in strict mode. `captions` adds a WebVTT track; `transcript` adds plain text
+under the player, fetched when someone opens it.
 
 ## Steps
 
@@ -271,6 +274,63 @@ Include => banks/music.trivia
 ```
 
 Includes are a CLI preprocessor. The browser never fetches a surprise file.
+
+## Pools and difficulty
+
+```txt
+## Round three
+
+Type => Section
+Question => Round three
+Pool => 10
+Difficulty => 3
+
+Question => Who wrote Hey Jude?
+Answers => Paul McCartney
+Difficulty => 2
+```
+
+`Pool => 10` draws ten of the round's questions. Seeded, so the same seed
+draws the same ten, and the report says which ones. `BalanceDifficulty` spreads
+the draw across `Difficulty` tags instead of taking whatever the shuffle gives.
+
+## Variants
+
+One line per slot. `{1}` and `{2}` in the text take the value picked for that
+slot, so the same question comes back as a different question each play.
+
+```txt
+Question => In {1}, who sang {2}?
+Answers => Paul McCartney | Paul Simon
+Variants => 1969 | 1970
+Variants => Hey Jude | Let It Be
+```
+
+Picked from the seed. On screen and on paper it is the same value, because the
+print sheet reads the plan.
+
+## Host notes, timers and team play
+
+```txt
+Notes => Ask the B-side first. Someone always knows it.
+RoundTimer => 10m
+```
+
+`Notes` are for the host. They never reach the player view model and never get
+printed. `RoundTimer` puts one clock on the whole round; `QuizLimit` puts one on
+the whole quiz, which counts up when there is none.
+
+```txt
+Streaks => true
+ScoringPreset => negative
+NegativeMarking => 0.25
+Lifelines => 50/50 | extra-time | ask-room
+Teams => The Regulars | Quizzy McQuizface
+```
+
+`Streaks` pays 1.5x from three right in a row and 2x from six. A lifeline costs
+points, and restricted mode turns them off. Teams keep their own answers; solo
+is still the default.
 
 ## Every attribute
 

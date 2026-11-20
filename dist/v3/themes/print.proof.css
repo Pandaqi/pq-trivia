@@ -348,26 +348,6 @@
     opacity: 1;
   }
 
-  .pq-round-banner {
-    margin: 0 0 5mm;
-    padding: 3mm 4mm;
-    border: none;
-    border-left: 3mm solid var(--pq-round-accent, var(--pq-ink));
-    background: var(--pq-paper-deep) !important;
-    color: var(--pq-ink) !important;
-    text-align: left;
-  }
-
-  .pq-round-banner::before {
-    content: none;
-  }
-
-  .pq-round-banner .pq-round-name {
-    font-size: 16pt;
-    transform: none;
-    text-align: left;
-  }
-
   .pq-split {
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);

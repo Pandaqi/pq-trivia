@@ -28,7 +28,9 @@ const BUDGETS: Readonly<Record<string, number>> = {
   "headless.js": 55,
   "player.js": 100,
   "pq-trivia.js": 105,
-  "pq-trivia.min.js": 115,
+  // Phase 10 added pools, variants, streaks, lifelines, teams and the score
+  // rules. Measured 120.2 after that, so the number carries some air.
+  "pq-trivia.min.js": 125,
   "pq-trivia.core.min.js": 42,
   // The wizard itself. The player arrives as a lazy chunk, so this number is
   // the forms and the buffer, never the quiz screen.

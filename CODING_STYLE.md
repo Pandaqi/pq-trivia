@@ -14,6 +14,10 @@ sake.
 
 ## Hard limits
 
+- SOLID
+- DRY
+- Data-Driven
+- Modular & Functional (pure functions)
 - **Three levels of nesting, maximum.** Four means extract a function and give
   it a name.
   - **No nested ternary statements** or if statements with more than 3 parts.
@@ -68,17 +72,14 @@ function login() {
   if (isUsernameValid()) {
     doStuff();
   } else {
-    doOtherSuff();
+    doNothing();
   }
 }
 
 // Yes
 function login() {
-  if (!isUserNameValid()) {
-    doStuff();
-    return;
-  }
-  doOtherStuff();
+  if (!isUserNameValid()) { return; }
+  doStuff();
 }
 ```
 
@@ -107,4 +108,4 @@ on in `bunfig.toml` and this rule becomes real.
 - No `any`, no `@ts-ignore` (lint).
 - No DOM outside `renderers/` and `platform/`. Core compiles with `lib: ["ES2022"]`.
 - Comments explain why. The code already explains what.
-- One documentation home. `ROADMAP.md` or `docs/`.
+- One documentation home. `docs/`.

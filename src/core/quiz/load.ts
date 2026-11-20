@@ -45,6 +45,8 @@ export interface LoaderDeps {
   readonly finishLoad: (models: Map<string, QuizModel>) => void;
   readonly diagnostics: Diagnostic[];
   readonly emitReady: () => void;
+  /** Type names a plugin registered, so `Type => that-name` parses. */
+  readonly pluginTypes: () => readonly string[];
 }
 
 export interface Loader {
@@ -109,6 +111,9 @@ export function createLoader(deps: LoaderDeps): Loader {
       ...(language !== null ? { defaultLanguage: language } : {}),
       ...(config.forbidInlineLists === true ? { forbidInlineLists: true } : {}),
       ...(config.symbols !== undefined ? { symbols: config.symbols } : {}),
+      ...(deps.pluginTypes().length === 0
+        ? {}
+        : { pluginTypes: deps.pluginTypes() }),
     };
   }
 

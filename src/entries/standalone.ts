@@ -51,6 +51,7 @@ import {
   setTheme,
   themeFromFiles,
 } from "../platform/browser/theme";
+import { applyShareOrder } from "../platform/browser/exports";
 import { mountQuiz } from "../renderers/preact/mount";
 import { defineQuizElement } from "../renderers/dom/quizElement";
 
@@ -239,6 +240,8 @@ function boot(): void {
   mountQuiz(quiz, host);
   attachLiveAction(quiz);
   void quiz.load({ type: "text", text, file: "inline" }).then(() => {
+    // `?seed=music-night&shuffle=1` is the same quiz, not the same answers.
+    applyShareOrder(quiz);
     const name = quiz.meta?.theme;
     if (name === null || name === undefined || name.trim().length === 0) {
       return;

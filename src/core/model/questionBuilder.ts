@@ -16,6 +16,8 @@ import {
   GRADING_VALUES,
   ORDER_VALUES,
   readBoolean,
+  readDifficulty,
+  readDuration,
   readEnum,
   readNumber,
   readScale,
@@ -24,6 +26,7 @@ import {
   readTargets,
   readTimer,
   readType,
+  readVariants,
   SCORING_VALUES,
 } from "./attributeReaders";
 import { stableId } from "./ids";
@@ -37,6 +40,7 @@ import {
   firstAttributeValue,
   GradingMode,
   OrderMode,
+  pluginIdOf,
   QuestionType,
   ScoringMethod,
   type BuildContext,
@@ -119,7 +123,19 @@ export function createQuestion(
   const correctValues = attributeValues(attributes, "Correct").map((raw) =>
     pickValue(raw, symbols),
   );
-  const type = readType(attributes, diagnostics, location);
+  const type = readType(
+    attributes,
+    diagnostics,
+    location,
+    context.pluginTypes ?? [],
+  );
+  const declaredType = firstAttributeValue(attributes, "Type");
+  const plugin =
+    type !== QuestionType.Custom || declaredType === undefined
+      ? null
+      : pluginIdOf(declaredType) === QuestionType.Custom
+        ? null
+        : pluginIdOf(declaredType);
 
   const language =
     firstAttributeValue(attributes, "Language") ?? context.defaultLanguage;
@@ -135,6 +151,7 @@ export function createQuestion(
   return {
     id,
     type,
+    plugin,
     round:
       firstAttributeValue(attributes, "Section") !== undefined
         ? null
@@ -155,6 +172,9 @@ export function createQuestion(
       pickValue(raw, symbols),
     ),
     hints: attributeValues(attributes, "Hints").map((raw) =>
+      pickValue(raw, symbols),
+    ),
+    notes: attributeValues(attributes, "Notes").map((raw) =>
       pickValue(raw, symbols),
     ),
     sources: attributeValues(attributes, "Sources"),
@@ -214,6 +234,10 @@ export function createQuestion(
         location,
       ) ?? DEFAULT_HIT_RADIUS,
     playLimit: readNumber(attributes, "PlayLimit", null, diagnostics, location),
+    pool: readNumber(attributes, "Pool", null, diagnostics, location),
+    difficulty: readDifficulty(attributes, diagnostics, location),
+    variants: readVariants(attributes),
+    roundTimerMs: readDuration(attributes, "RoundTimer", diagnostics, location),
     wager: readBoolean(attributes, "Wager", false, diagnostics, location),
     buzzer: readBoolean(attributes, "Buzzer", false, diagnostics, location),
     timerMs: readTimer(attributes, diagnostics, location),

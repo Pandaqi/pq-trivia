@@ -13,7 +13,7 @@ import { installDom, type TestDom } from "./dom";
 const TEXT = `Title => Escape test
 Seed => escape-test
 
-# Round one
+## Round one
 
 Question => Type your answer.
 Answers => Something
@@ -83,6 +83,12 @@ test("Escape closes the note before the panel", async () => {
   await waitFor(() => panel() !== null, "the settings panel");
   document.querySelector<HTMLElement>(".pq-info-button")?.click();
   await waitFor(() => note() !== null, "the note");
+  // Placement runs in an effect, and the Escape listener is in the next one.
+  // A note with no style has not run its effects yet, so the key would miss.
+  await waitFor(
+    () => typeof note()?.getAttribute("style") === "string",
+    "the note to be placed",
+  );
 
   escape();
   await waitFor(() => note() === null, "the note to close");

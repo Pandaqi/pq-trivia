@@ -19,6 +19,9 @@
   position: relative;
   display: flex;
   align-items: center;
+  /* A button does not stretch like a div. The list item is the cell, so the
+     button has to say it wants all of it. */
+  width: 100%;
   gap: var(--pq-gap);
   min-height: 3.35rem;
   padding: var(--pq-gap) var(--pq-gap-lg);
@@ -218,6 +221,7 @@
 }
 
 .pq-input {
+  width: 100%;
   min-height: 3rem;
   padding: 0.75rem 1rem;
   color: var(--pq-ink);
@@ -314,6 +318,23 @@
 .pq-media-missing-hint {
   margin: var(--pq-gap-sm) 0 0;
   font-size: var(--pq-text-sm);
+}
+
+/* A transcript is a quiet fold under the player. Closed until someone asks. */
+.pq-transcript {
+  margin-top: 0.4em;
+  font-size: 0.9em;
+}
+
+.pq-transcript summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.pq-transcript-text {
+  margin: 0.4em 0 0;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 /* Markdown images, in a question or an answer. Small enough to share a card. */

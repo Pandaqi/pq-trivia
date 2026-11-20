@@ -16,8 +16,14 @@ import { createQuestion } from "../model/questionBuilder";
 import { DEFAULT_SYMBOLS } from "../syntax/symbols";
 import type { AstAttribute, AstQuestion } from "../syntax/ast";
 import { applyPlacement } from "./order";
+import { drawPool } from "./pool";
 import { derivedRng, shuffleWith } from "./shuffle";
-import type { Diagnostic } from "../syntax/diagnostics";
+import { withVariants } from "./variants";
+import {
+  DiagnosticCodes,
+  syntaxWarning,
+  type Diagnostic,
+} from "../syntax/diagnostics";
 
 export interface PlannedRound {
   readonly id: string;
@@ -30,6 +36,12 @@ export interface PlannedRound {
   /** Real questions in this round, section screens left out. */
   readonly questionCount: number;
   readonly points: number;
+  /** The `Pool` that trimmed this round. Null when nothing was drawn. */
+  readonly pool: number | null;
+  /** IDs that made it through the pool. Empty when the round was left alone. */
+  readonly drawn: readonly string[];
+  /** `RoundTimer` for the whole round. Null when there is none. */
+  readonly roundTimerMs: number | null;
 }
 
 export interface QuizPlan {
@@ -62,6 +74,12 @@ export interface PlanOptions {
   readonly addMissingSectionScreens?: boolean;
   /** V2's `allowTimerOnSections`: section screens may count down too. */
   readonly allowTimerOnSections?: boolean;
+  /** Draw this many questions from every round that names no `Pool`. */
+  readonly poolSize?: number | null;
+  /** Spread a pool across the difficulty tags instead of taking the shuffle. */
+  readonly balanceDifficulty?: boolean;
+  /** One timer for every round that names no `RoundTimer`. Milliseconds. */
+  readonly roundTimerMs?: number | null;
 }
 
 function questionValues(question: QuestionModel, key: string): string[] {
@@ -234,8 +252,26 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
           order.indexOf(questionValues(b, options.groupBy ?? "")[0] ?? ""),
       );
     }
-    const items = applyPlacement(shuffled, diagnostics).map((question) =>
-      applyDefaults(question, options),
+    const placed = applyPlacement(shuffled, diagnostics);
+    const poolSize = round.source?.pool ?? options.poolSize ?? null;
+    const draw = drawPool(
+      placed,
+      poolSize,
+      seed,
+      round.id,
+      options.balanceDifficulty === true,
+    );
+    if (poolSize !== null && draw.drawn.length === 0) {
+      diagnostics.push(
+        syntaxWarning(
+          DiagnosticCodes.InvalidNumber,
+          `Round "${round.name}" asks for ${poolSize} of its ${draw.available} questions, so it keeps them all.`,
+          { suggestion: "Lower `Pool`, or add more questions." },
+        ),
+      );
+    }
+    const items = draw.questions.map((question) =>
+      withVariants(applyDefaults(question, options), seed),
     );
     if (
       options.addMissingSectionScreens !== false &&
@@ -268,6 +304,9 @@ export function planQuiz(quiz: QuizModel, options: PlanOptions = {}): QuizPlan {
         (total, question) => total + questionMaxScore(question),
         0,
       ),
+      pool: draw.drawn.length === 0 ? null : poolSize,
+      drawn: draw.drawn,
+      roundTimerMs: round.source?.roundTimerMs ?? options.roundTimerMs ?? null,
     });
     questions.push(...items);
   }

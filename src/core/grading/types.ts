@@ -1,6 +1,7 @@
 /** Grade shapes. Plain data, JSON-safe, shared by browser and CLI. */
 
 import type { GradingMode } from "../model/question";
+import type { QuestionTypeRegistry } from "./plugins";
 
 export enum GradeKind {
   Correct = "correct",
@@ -36,4 +37,6 @@ export interface GradeOptions {
   readonly grading?: GradingMode;
   /** Overrides every question's own `FuzzyDistance`. */
   readonly fuzzyDistance?: number | null;
+  /** Registered custom types. Empty means a custom question self-reports. */
+  readonly plugins?: QuestionTypeRegistry;
 }

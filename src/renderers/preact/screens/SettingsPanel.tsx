@@ -40,6 +40,8 @@ import {
 } from "../../../core/quiz/types";
 import type { Quiz } from "../../../core/session/quiz";
 import { bubbleIsOpen, dismissBubbles } from "../../../shared/bubble";
+import { PlayMode } from "../../../core/session/session";
+import { TeamSetup } from "../components/Teams";
 import { ExportPanel } from "./ExportPanel";
 import { GroupHead, HoverNote } from "./Info";
 import {
@@ -106,6 +108,16 @@ export function SettingsPanel({
     available.length > 0 &&
     available.every((round) => included[round.id] !== true);
 
+  // Teams get a box only when the quiz asks for them.
+  const teamsOn =
+    (quiz.config.teams ?? []).length > 0 || quiz.state.teams.length > 0;
+  const startTeams = (): void => {
+    quiz.setMode(PlayMode.Questions);
+    quiz.setInteractive(true);
+    onClose?.();
+    quiz.next();
+  };
+
   const toggleRound = (id: string, checked: boolean): void => {
     const next = { ...included, [id]: checked };
     setIncluded(next);
@@ -118,6 +130,13 @@ export function SettingsPanel({
 
   return (
     <>
+      {teamsOn ? (
+        <fieldset class="pq-settings-group" aria-label={t("teams")}>
+          <GroupHead label={t("teams")} note={t("teamsNote")} />
+          <TeamSetup quiz={quiz} onStart={startTeams} />
+        </fieldset>
+      ) : null}
+
       <fieldset class="pq-settings-group" aria-label={t("settingsOrder")}>
         <GroupHead label={t("settingsOrder")} note={t("orderNote")} />
         <label class="pq-field">

@@ -171,6 +171,8 @@ export function cleanName(value: unknown): string | null {
 export interface JoinRequest {
   readonly name: string;
   readonly token: string | null;
+  readonly watch: boolean;
+  readonly team: string | null;
 }
 
 export function readJoin(payload: unknown): JoinRequest | null {
@@ -186,6 +188,8 @@ export function readJoin(payload: unknown): JoinRequest | null {
   return {
     name,
     token: typeof token === "string" && token.length > 0 ? token : null,
+    watch: entry["watch"] === true,
+    team: cleanName(entry["team"]),
   };
 }
 

@@ -20,6 +20,8 @@ export interface MediaViewModel {
   readonly poster: string | null;
   /** A WebVTT file. Audio without captions excludes people. */
   readonly captions: string | null;
+  /** A plain text file, shown under the player. */
+  readonly transcript: string | null;
   /** `PlayLimit => 2`. Null means play it as often as you like. */
   readonly playLimit: number | null;
   /** Plays counted in this attempt. */
@@ -43,6 +45,7 @@ export function toMediaViewModel(
     srcset: options["srcset"] ?? null,
     poster: options["poster"] ?? null,
     captions: options["captions"] ?? null,
+    transcript: options["transcript"] ?? null,
     playLimit,
     plays,
   };

@@ -5,7 +5,14 @@ import { useEffect, useState } from "preact/hooks";
 import { QuestionType } from "../../core/model/question";
 import type { HostRoom } from "../host";
 import { RevealMode, RoomPhase } from "../types";
-import { CodeCard, Leaderboard, RevealPanel, Roster } from "./parts";
+import { teamStyle } from "../../shared/teamColours";
+import {
+  CodeCard,
+  Leaderboard,
+  playerGroups,
+  RevealPanel,
+  Roster,
+} from "./parts";
 
 function useHost(host: HostRoom): number {
   const [version, setVersion] = useState(0);
@@ -53,7 +60,9 @@ export function HostView({
   const mode = state.revealMode;
   const lobby = phase === RoomPhase.Lobby;
   const inAnswers = phase === RoomPhase.Answers;
-  const answered = state.players.filter((player) => player.answered).length;
+  // Watchers are in the room but not on the sheet. They never answer.
+  const seated = state.players.filter((player) => player.watching !== true);
+  const answered = seated.filter((player) => player.answered).length;
   const last = state.index + 1 >= state.total;
   const section = question?.type === QuestionType.Section;
   const canReveal =
@@ -132,22 +141,35 @@ export function HostView({
       ) : (
         <section class="pq-live-progress" aria-label="Answers in">
           <p class="pq-live-count">
-            {answered} of {state.players.length} answered
+            {answered} of {seated.length} answered
           </p>
-          <ul class="pq-live-players">
-            {state.players.map((player) => (
-              <li
-                key={player.id}
-                data-pq-ready={player.answered ? "true" : "false"}
-              >
-                <span>{player.name}</span>
-                <span class="pq-live-score">
-                  {player.answered ? "in" : "…"}
-                  {player.stake === null ? "" : ` · staked ${player.stake}`}
-                </span>
-              </li>
+          <div class="pq-live-groups">
+            {playerGroups(seated).map((group) => (
+              <div class="pq-live-group" key={group.name ?? "solo"}>
+                {group.name === null ? null : (
+                  <p class="pq-live-team-head" style={teamStyle(group.colour)}>
+                    {group.name}
+                  </p>
+                )}
+                <ul class="pq-live-players">
+                  {group.rows.map((player) => (
+                    <li
+                      key={player.id}
+                      data-pq-ready={player.answered ? "true" : "false"}
+                    >
+                      <span>{player.name}</span>
+                      <span class="pq-live-score">
+                        {player.answered ? "in" : "…"}
+                        {player.stake === null
+                          ? ""
+                          : ` · staked ${player.stake}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         </section>
       )}
 
@@ -171,7 +193,7 @@ export function HostView({
             .sort((a, b) => b.score - a.score)
             .map((player) => ({
               id: player.id,
-              name: player.name,
+              name: player.team ?? player.name,
               score: player.score,
             }))}
         />

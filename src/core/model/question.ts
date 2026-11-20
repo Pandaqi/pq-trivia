@@ -69,6 +69,8 @@ export enum ContinueMode {
 export interface QuestionModel {
   readonly id: string;
   readonly type: QuestionType;
+  /** A registered plugin id when `type` is `Custom`. Null otherwise. */
+  readonly plugin: string | null;
   readonly round: string | null;
   readonly text: readonly QuestionValue[];
   readonly answers: readonly QuestionValue[];
@@ -84,6 +86,8 @@ export interface QuestionModel {
   readonly authors: readonly string[];
   readonly comments: readonly QuestionValue[];
   readonly hints: readonly QuestionValue[];
+  /** Host-only notes. Never in the view model, never printed. */
+  readonly notes: readonly QuestionValue[];
   readonly sources: readonly string[];
   readonly explanation: string | null;
   readonly description: string | null;
@@ -121,6 +125,17 @@ export interface QuestionModel {
   readonly hitRadius: number;
   /** Media: how many times a clip may be played. Null means no limit. */
   readonly playLimit: number | null;
+  /** Rounds only: how many of the round's questions to draw. Null means all. */
+  readonly pool: number | null;
+  /** 1 to 5. Null when the author said nothing. Used to balance a pool. */
+  readonly difficulty: number | null;
+  /**
+   * One slot per `Variants` line. `{1}` takes the first slot's picked value.
+   * Empty when the question is the same every play.
+   */
+  readonly variants: readonly (readonly string[])[];
+  /** Rounds only: one timer for the whole round. */
+  readonly roundTimerMs: number | null;
   /** Wager: bet points before the reveal. */
   readonly wager: boolean;
   /** Buzzer: first correct answer in the live room wins. */
@@ -166,6 +181,8 @@ export interface BuildContext {
   readonly defaultScore: number;
   readonly round: string | null;
   readonly symbols: Symbols;
+  /** Type names registered by a plugin. Unknown ones still warn. */
+  readonly pluginTypes?: readonly string[];
 }
 
 /** The scale a matrix uses when the author did not name one. */
@@ -173,6 +190,27 @@ export const DEFAULT_SCALE: readonly string[] = ["True", "False"];
 
 /** How far a click may land when no `HitRadius` is given. */
 export const DEFAULT_HIT_RADIUS = 8;
+
+/** Difficulties people write in words, mapped to the 1 to 5 scale. */
+export const DIFFICULTY_WORDS: Readonly<Record<string, number>> = {
+  trivial: 1,
+  easy: 2,
+  medium: 3,
+  normal: 3,
+  hard: 4,
+  expert: 5,
+};
+
+/** The top of the difficulty scale. */
+export const MAX_DIFFICULTY = 5;
+
+/** `Confidence`, `confidence`, `odd one out` and `odd-one-out` agree. */
+export function pluginIdOf(raw: string): string {
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
+}
 
 export function attributeValues(
   attributes: readonly AstAttribute[],

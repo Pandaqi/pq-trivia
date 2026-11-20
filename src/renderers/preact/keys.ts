@@ -28,6 +28,7 @@ export const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
   prevRound: [",", "<"],
   reveal: ["r", "a"],
   hint: ["h"],
+  undo: ["u"],
   mode: ["m"],
   end: ["Escape"],
   start: ["Home"],
@@ -52,6 +53,8 @@ export function actionFor(name: string): Action | null {
       return (target) => void target.toggleReveal();
     case "hint":
       return (target) => void target.revealHint();
+    case "undo":
+      return (target) => void target.undo();
     case "mode":
       return (target) =>
         void target.setMode(

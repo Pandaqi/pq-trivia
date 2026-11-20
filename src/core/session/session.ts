@@ -8,6 +8,7 @@ import type { Diagnostic } from "../syntax/diagnostics";
 import type { GradeReport } from "../grading/report";
 import {
   defaultResponse,
+  isEmptyResponse,
   toggleChoice,
   setResponse,
   type Confidence,
@@ -15,7 +16,18 @@ import {
   type ResponseMap,
 } from "./responses";
 import type { QuestionModel } from "../model/question";
+import { reducePlay, type UndoStep } from "../grading/aids";
+import type { SessionAction } from "./events";
+export type { SessionAction } from "./events";
 import { timerFor, type TimerState } from "./timers";
+
+/** A team: a name and its own answers. Solo play has none of these. */
+export interface TeamState {
+  readonly name: string;
+  readonly responses: ResponseMap;
+  /** Each team spends its own lifelines. One phone per team means one 50/50. */
+  readonly lifelines: Readonly<Record<string, readonly string[]>>;
+}
 
 export enum SessionStatus {
   Idle = "idle",
@@ -64,68 +76,17 @@ export interface SessionState {
   readonly report: GradeReport | null;
   /** Results are a screen of their own, not a mode on the end screen. */
   readonly showingResults: boolean;
+  /** Team play. Empty in solo mode, which is the default. */
+  readonly teams: readonly TeamState[];
+  /** The team answering now. -1 is solo. */
+  readonly team: number;
+  /** Lifelines used per question ID, by name. */
+  readonly lifelines: Readonly<Record<string, readonly string[]>>;
+  /** One step back. The answer this question had before it was filled in. */
+  readonly undo: UndoStep | null;
+  /** When the current round started. The round timer counts from here. */
+  readonly roundStartedAt: number | null;
 }
-
-export type SessionAction =
-  | { readonly type: "load/start" }
-  | { readonly type: "load/success"; readonly plan: QuizPlan }
-  | { readonly type: "plan/replace"; readonly plan: QuizPlan }
-  | {
-      readonly type: "load/failure";
-      readonly diagnostics: readonly Diagnostic[];
-    }
-  | { readonly type: "nav/next" }
-  | { readonly type: "nav/prev" }
-  | { readonly type: "nav/goTo"; readonly index: number }
-  | { readonly type: "step/next" }
-  | { readonly type: "nav/restart"; readonly keepResponses?: boolean }
-  | { readonly type: "mode/set"; readonly mode: PlayMode }
-  | { readonly type: "interactive/set"; readonly interactive: boolean }
-  | {
-      readonly type: "response/set";
-      readonly questionId: string;
-      readonly response: Response;
-    }
-  | {
-      readonly type: "answer/toggle";
-      readonly questionId: string;
-      readonly answerId: string;
-    }
-  | {
-      readonly type: "confidence/set";
-      readonly questionId: string;
-      readonly level: Confidence | null;
-    }
-  | {
-      readonly type: "wager/set";
-      readonly questionId: string;
-      readonly value: number;
-    }
-  | {
-      readonly type: "noidea/set";
-      readonly questionId: string;
-      readonly value: boolean;
-    }
-  | { readonly type: "media/play"; readonly questionId: string }
-  | { readonly type: "hint/reveal"; readonly questionId: string }
-  | { readonly type: "reveal"; readonly questionId: string }
-  | { readonly type: "hide"; readonly questionId: string }
-  | { readonly type: "language/set"; readonly language: string }
-  | { readonly type: "timer/expire"; readonly questionId: string }
-  | { readonly type: "results/show"; readonly report: GradeReport }
-  | { readonly type: "results/hide" }
-  | {
-      readonly type: "attempt/restore";
-      readonly responses: ResponseMap;
-      readonly index: number;
-      readonly startedAt: number | null;
-      readonly endedAt: number | null;
-      readonly confidence?: Readonly<Record<string, Confidence>>;
-      readonly wagers?: Readonly<Record<string, number>>;
-      readonly noIdea?: readonly string[];
-      readonly mediaPlays?: Readonly<Record<string, number>>;
-    }
-  | { readonly type: "finish" };
 
 export interface SessionOptions {
   readonly language?: string | null;
@@ -155,15 +116,29 @@ export function createSessionState(options: SessionOptions = {}): SessionState {
     expired: [],
     report: null,
     showingResults: false,
+    teams: [],
+    team: -1,
+    lifelines: {},
+    undo: null,
+    roundStartedAt: null,
   };
 }
 
+/** The round this question belongs to, or null for a screen with no round. */
+function roundOf(state: SessionState, index: number): string | null {
+  return state.plan?.questions[index]?.round ?? null;
+}
+
 /** A new question means a fresh timer, or none at all. */
-function withTimer(state: SessionState, now: number): SessionState {
+export function withTimer(state: SessionState, now: number): SessionState {
   const question = currentQuestion(state);
+  const round = roundOf(state, state.index);
+  // A new round starts its clock. Stepping back inside one does not.
+  const entered = round !== null && round !== roundOf(state, state.index - 1);
   return {
     ...state,
     timer: question === null ? null : timerFor(question, now),
+    roundStartedAt: entered ? now : state.roundStartedAt,
   };
 }
 
@@ -293,6 +268,9 @@ export function sessionReducer(
         expired: [],
         report: null,
         showingResults: false,
+        lifelines: {},
+        undo: null,
+        roundStartedAt: null,
       };
 
     case "mode/set":
@@ -301,15 +279,31 @@ export function sessionReducer(
     case "interactive/set":
       return { ...state, interactive: action.interactive };
 
-    case "response/set":
+    case "response/set": {
+      const question = state.plan?.questions.find(
+        (entry) => entry.id === action.questionId,
+      );
+      const previous =
+        state.responses[action.questionId] ??
+        (question === undefined ? undefined : defaultResponse(question));
+      // One step back, and only the useful one: the empty answer a question
+      // started with. Undoing every keystroke is not an undo button.
+      const undo =
+        previous !== undefined &&
+        isEmptyResponse(previous) &&
+        !isEmptyResponse(action.response)
+          ? { questionId: action.questionId, response: previous }
+          : state.undo;
       return {
         ...state,
+        undo,
         responses: setResponse(
           state.responses,
           action.questionId,
           action.response,
         ),
       };
+    }
 
     case "answer/toggle": {
       const current = state.responses[action.questionId];
@@ -390,6 +384,14 @@ export function sessionReducer(
     case "language/set":
       return { ...state, language: action.language };
 
+    // Extra time buys the clock, not the answer. Elapsed time is untouched.
+    case "timer/extend": {
+      const timer = state.timer;
+      return timer === null
+        ? state
+        : { ...state, timer: { ...timer, totalMs: timer.totalMs + action.ms } };
+    }
+
     case "timer/expire":
       return {
         ...state,
@@ -445,7 +447,8 @@ export function sessionReducer(
       };
 
     default:
-      return state;
+      // Teams, lifelines and undo live in their own module.
+      return reducePlay(state, action);
   }
 }
 

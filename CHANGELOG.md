@@ -50,7 +50,13 @@ The rewrite. Same Trivia Syntax, new bones.
   live preview in one page. Build it with `bun run build --editor`. It is never
   in a normal build.
 - **Encrypted quizzes.** `pq-trivia encrypt` with a passphrase.
-- **Offline pack.** One folder, opens from `file://`.
+- **Offline pack.** One folder, opens from `file://`. It offers a reload when
+  a new version is packed, instead of swapping the quiz mid-round.
+- **Transcripts.** `transcript="intro.txt"` under an audio or video player,
+  for the people captions leave out.
+- **Share by seed.** A link carries the seed and the order. Never an answer.
+- **Class analytics.** One CSV, one row per question, across every saved
+  attempt on the device.
 - **Better diagnostics.** Every problem has a code, a place, a sentence and a
   suggestion.
 - **All V2 files still parse.** Default order is author order now. Shuffle is
@@ -72,7 +78,13 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Live protocol v1.** Host owns state, players get an allowlist, reconnect
   tokens, late flags, rate limits.
 - **Budgets in CI.** Core 24 KB, player 48 KB, IIFE 60 KB. Gzipped.
-- **CLI.** Validate, format, migrate, build, pack, encrypt, grade, stats, docs.
+- **CLI.** Validate, format, migrate, build, pack, encrypt, grade, stats, docs,
+  plus `keygen` and `verify` for signed packs.
+- **Plugin question types.** `defineQuestionType` and
+  `quiz.registerQuestionType`. The type grades itself and brings its own input
+  component; core stays free of Preact and the DOM.
+- **Signed packs.** Ed25519 over a SHA-256 per file, with the public key in the
+  pack. `pack --key`, `verify`.
 
 ### Changed
 

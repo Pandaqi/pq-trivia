@@ -33,6 +33,10 @@ function AnswerButton({
       class="pq-answer"
       aria-pressed={chosen}
       data-pq-selected={chosen ? "true" : "false"}
+      data-pq-eliminated={
+        screen.eliminated.includes(answer.id) ? "true" : "false"
+      }
+      disabled={screen.eliminated.includes(answer.id)}
       data-pq-correct={
         answer.correct === null ? undefined : String(answer.correct)
       }
@@ -132,6 +136,10 @@ export function ReasonedInput({
               class="pq-answer"
               aria-pressed={selected.includes(answer.id)}
               data-pq-selected={selected.includes(answer.id) ? "true" : "false"}
+              data-pq-eliminated={
+                screen.eliminated.includes(answer.id) ? "true" : "false"
+              }
+              disabled={screen.eliminated.includes(answer.id)}
               data-pq-correct={
                 answer.correct === null ? undefined : String(answer.correct)
               }

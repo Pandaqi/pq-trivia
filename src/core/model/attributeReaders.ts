@@ -28,9 +28,11 @@ import {
 } from "../values/point";
 import {
   detectType,
+  DIFFICULTY_WORDS,
   Direction,
   firstAttributeValue,
   GradingMode,
+  MAX_DIFFICULTY,
   OrderMode,
   QuestionType,
   ScoringMethod,
@@ -173,12 +175,14 @@ export function readSteps(
   return raw;
 }
 
-export function readTimer(
+/** Any duration attribute: `Timer`, `RoundTimer`. Null when absent. */
+export function readDuration(
   attributes: readonly AstAttribute[],
+  key: string,
   diagnostics: Diagnostic[],
   location: SourceLocation,
 ): number | null {
-  const raw = firstAttributeValue(attributes, "Timer");
+  const raw = firstAttributeValue(attributes, key);
   if (raw === undefined) {
     return null;
   }
@@ -189,21 +193,76 @@ export function readTimer(
   diagnostics.push(
     syntaxWarning(
       DiagnosticCodes.InvalidDuration,
-      `"Timer" should be a duration, not "${raw}".`,
+      `"${key}" should be a duration, not "${raw}".`,
       { location, suggestion: "Try 90, 1:30 or 1m30s." },
     ),
   );
   return null;
 }
 
+export function readTimer(
+  attributes: readonly AstAttribute[],
+  diagnostics: Diagnostic[],
+  location: SourceLocation,
+): number | null {
+  return readDuration(attributes, "Timer", diagnostics, location);
+}
+
+/**
+ * `Difficulty => 3`, or a word: easy, medium, hard. Null when absent, and the
+ * nearest end of the scale when the number sits outside 1 to 5.
+ */
+export function readDifficulty(
+  attributes: readonly AstAttribute[],
+  diagnostics: Diagnostic[],
+  location: SourceLocation,
+): number | null {
+  const raw = firstAttributeValue(attributes, "Difficulty");
+  if (raw === undefined) {
+    return null;
+  }
+  const word = DIFFICULTY_WORDS[raw.trim().toLowerCase()];
+  const number = word ?? coerceNumber(raw);
+  if (number === undefined) {
+    diagnostics.push(
+      syntaxWarning(
+        DiagnosticCodes.InvalidNumber,
+        `"Difficulty" should be 1 to 5, not "${raw}".`,
+        { location, suggestion: "Try 3, or easy, medium, hard." },
+      ),
+    );
+    return null;
+  }
+  return Math.max(1, Math.min(MAX_DIFFICULTY, Math.round(number)));
+}
+
+/** One slot per `Variants` line. The parser already split each line on `|`. */
+export function readVariants(
+  attributes: readonly AstAttribute[],
+): readonly (readonly string[])[] {
+  return attributes
+    .filter((attribute) => attribute.key === "Variants")
+    .map((attribute) => attribute.values.map((value) => value.trim()))
+    .filter((slot) => slot.length > 0);
+}
+
 export function readType(
   attributes: readonly AstAttribute[],
   diagnostics: Diagnostic[],
   location: SourceLocation,
+  pluginTypes: readonly string[] = [],
 ): QuestionType {
   const declared = firstAttributeValue(attributes, "Type");
   if (declared === undefined || toQuestionType(declared) !== null) {
     return detectType(attributes);
+  }
+  // A registered plugin owns its type name. `Custom` stays custom.
+  const normalized = declared
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
+  if (pluginTypes.some((id) => id.toLowerCase() === normalized)) {
+    return QuestionType.Custom;
   }
   diagnostics.push(
     syntaxWarning(

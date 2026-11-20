@@ -645,3 +645,81 @@ describe("a live wager", () => {
     bob.leave();
   });
 });
+
+describe("teams in a room", () => {
+  test("a phone joins as a group, and the board wears the group name", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "WXYZ",
+    });
+    const red = await createPlayer({
+      transport: network,
+      code: "WXYZ",
+      name: "Ada",
+      team: "Red",
+    });
+    await red.join();
+    expect(red.state().team).toBe("Red");
+    expect(host.state().players[0]?.team).toBe("Red");
+
+    host.start();
+    await tick();
+    const answer = red
+      .state()
+      .question?.answers.find((entry) => entry.text === "B");
+    red.submit(choice(answer?.id ?? ""));
+    await tick();
+    host.reveal();
+    await tick();
+    expect(red.state().leaderboard[0]?.name).toBe("Red");
+
+    host.leave();
+    red.leave();
+  });
+});
+
+describe("a watcher", () => {
+  test("sees the question, answers nothing, and takes no seat", async () => {
+    const network = memoryNetwork();
+    const host = await createHost({
+      quiz: await loadedQuiz(),
+      transport: network,
+      code: "WXYZ",
+    });
+    const watcher = await createPlayer({
+      transport: network,
+      code: "WXYZ",
+      name: "Sam",
+      watching: true,
+    });
+    await watcher.join();
+    expect(watcher.state().watching).toBe(true);
+    expect(
+      host.state().players.find((entry) => entry.name === "Sam"),
+    ).toBeDefined();
+
+    host.start();
+    await tick();
+    expect(watcher.state().question?.title).toBe("Pick B");
+    const answer = watcher
+      .state()
+      .question?.answers.find((entry) => entry.text === "B");
+    watcher.submit(choice(answer?.id ?? ""));
+    await tick();
+    expect(
+      host.state().players.find((entry) => entry.name === "Sam")?.answered,
+    ).toBe(false);
+
+    host.reveal();
+    await tick();
+    expect(watcher.state().reveal).not.toBeNull();
+    expect(watcher.state().leaderboard.some((row) => row.name === "Sam")).toBe(
+      false,
+    );
+
+    host.leave();
+    watcher.leave();
+  });
+});
