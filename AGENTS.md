@@ -1,18 +1,16 @@
 # AGENTS.md
 
-Master file. Keep it short. Details live in the links.
-
 ## What this is
 
-PQ-Trivia: a plain-text quiz engine for pub quizzes and classrooms. V2 ships. V3 is planned.
+PQ-Trivia: a plain-text quiz engine for pub quizzes and classrooms.
 
 Read `docs/` before changing anything. The syntax, the API and the guides live there.
 
-Code style rules live in `CODING_STYLE.md`. Read that too.
+Code style rules live in [CODING-STYLE](./CODING-STYLE.md)
 
 ## Writing style
 
-Write in Tiamo's voice, not the default AI voice. This covers commits, code comments, docs, UI copy, error messages and PR text.
+Write in Tiamo's voice, not the default stupid AI voice. This covers commits, code comments, docs, UI copy, error messages and PR text.
 
 - Short sentences. Bullet lists. Simple words.
 - One idea per line. Cut filler.
@@ -45,7 +43,7 @@ Adds replay protection to the multiplayer lobby
 | Need                      | Look at                                                             |
 | ------------------------- | ------------------------------------------------------------------- |
 | Syntax, API and guides    | `docs/`                                                             |
-| V2 documentation          | `docs.md`                                                           |
+| V2 documentation          | `src/v2/docs.md`                                                    |
 | Requirements list         | `todo.md`                                                           |
 | V3 code                   | `src/core/`, `src/entries/`, `cli/`                                 |
 | Renderers and platform    | `src/renderers/`, `src/platform/`                                   |
@@ -53,7 +51,7 @@ Adds replay protection to the multiplayer lobby
 | Live mode                 | `src/multiplayer/`                                                  |
 | Docs site                 | `docs/` (VitePress)                                                 |
 | Runnable examples         | `examples/` (`player`, `element`, `print`, `custom`, `multiplayer`) |
-| V2 code, frozen           | `src/v2/`, `template/`, `dist/v2/`                                  |
+| V2 code, frozen           | `src/v2/`, `dist/v2/`                                               |
 | User-facing intro         | `README.md`                                                         |
 
 ## Commands
@@ -74,9 +72,3 @@ bun run docs:reference  # regenerate docs/syntax/reference.md
 bun run release:dry     # every check, then the human checklist
 bun run preview         # serve the repo and open examples/player.html
 ```
-
-These exist once Phase 0 is done. Until then, there is nothing to build. Do not fake a green check.
-
-## Before you say it is done
-
-`CONTRIBUTING.md` has the checks. Then look at the page yourself.

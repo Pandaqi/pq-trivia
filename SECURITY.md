@@ -4,6 +4,7 @@
 
 Open a private security advisory on GitHub, or email the maintainer through
 the contact page at [thewaywardmelody.com](https://thewaywardmelody.com).
+
 Please do not open a public issue for a live problem.
 
 ## What this library does
@@ -21,12 +22,11 @@ Please do not open a public issue for a live problem.
 
 - **Offline answers are on the machine.** Restricted mode keeps answers out of
   the view model and the DOM, but the file is still the file. A determined
-  person with the source can find them. We do not pretend otherwise.
+  person with the source can find them.
 - **Multiplayer is peer to peer.** The host owns the score. A modified client
   can lie about its own answers; a host can lie about everything. The room
   code is the only secret.
-- **`file://` is limited by the browser,** not by us. The player detects it and
-  explains instead of failing silently.
+- **`file://` is limited by the browser,** not by us.
 - **Third-party media.** A quiz can point at any URL. That request leaves the
   machine. The offline pack and local media do not.
 

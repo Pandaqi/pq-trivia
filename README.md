@@ -6,14 +6,26 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-6f4b98)](LICENSE)
 [![core 24 KB gzip](https://img.shields.io/badge/core-24%20KB%20gzip-839c66)](dist/README.md)
 
-A quiz is a text file. Write questions, open a page, play.
+Create quizzes with ease, play them however you like, nothing else needed.
 
-Plain text in. Playable, printable, gradable out. No account, no backend, no
-build step for the person hosting the quiz night.
+* Quizzes are text files with a simple syntax that reads like normal English. Plain text in -> Playable, printable, gradable activity out.
+* No account, no online, no backend, no install, no ecosystem lock-in, no build step.
+* Use for educational quizzes, pub quizzes, trivia nights, anything! Free forever!
+
+Main additions in V3:
+
+* A quiz wizard to create and edit quizzes visually (instead of just text) inside your browser!
+* Multiplayer mode connecting phones to the public screen! (Similar to _Kahoot!_ but without accounts, privacy issues, or other nonsense.)
+* Loads of new features, attributes, configurations, and control over the exact quiz.
+* More languages supported by default.
+
+I've used V2 for a few years in all the quizzes I sell at [The Wayward Melody](https://thewaywardmelody.com). It's still fine if you need something simple, but V3 completes a big wishlist of features and takes the framework to the next level :)
 
 ## Twenty-second start
 
-One bundle. One page. Double-click it.
+**Playing offline/local?** Download the `dist/v3/pq-trivia.min.js` file (the "one file fits all"-bundle). 
+
+Create an `index.html` file next to it. Type something like this inside:
 
 ```html
 <script id="quiz-text" type="text/plain">
@@ -29,10 +41,9 @@ One bundle. One page. Double-click it.
 <script src="pq-trivia.min.js"></script>
 ```
 
-`pq-trivia.min.js` carries the player, Paper and the print sheet. No stylesheet,
-no second file.
+Double-click to open the file in your browser and play!
 
-Hosting from a server? Use the element instead:
+**Hosting from a server?** Put only the parts you need on the server. You can use a custom element in your `index.html` to make it even nicer:
 
 ```html
 <link rel="stylesheet" href="dist/v3/themes/paper.css" />
