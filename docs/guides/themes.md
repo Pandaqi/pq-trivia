@@ -39,6 +39,15 @@ that one stylesheet and nothing else.
 Theme URLs resolve against the page, so `file://` cannot fetch the settings
 file; serve the folder, or let the author pick it (below).
 
+Before a quiz night, ask the CLI whether the folder is complete:
+
+```bash
+bun run cli/index.ts validate my-quiz.trivia --assets
+```
+
+It reads the settings file and checks the stylesheet, every font and every
+background image. A typo in a font name is a warning in the console otherwise.
+
 ## Theme folders
 
 `theme: "forest"` loads `themes/forest/` by default. Set `subFolderTheme` to
@@ -112,7 +121,11 @@ local and become blob URLs.
 <pq-quiz src="quiz.trivia" theme-upload></pq-quiz>
 ```
 
-That puts **Load a theme folder** on the start screen. Or do it yourself:
+That puts **Load a theme folder** on the start screen, whether or not a theme
+is already loaded. Picking another folder replaces the active theme. Set
+`ThemeUpload => false` (or `theme-upload="false"`) to take the picker away.
+
+Or do it yourself:
 
 ```ts
 import { themeFromFiles, setTheme } from "pq-trivia/player";

@@ -154,6 +154,15 @@ const base: TranslationTable = {
   orderNote: "Same seed, same shuffle. Answers never move.",
   beep: "Beep in the last five seconds",
   toolbar: "Toolbar",
+  keysTitle: "Keys",
+  keysNote:
+    "Click an action, press a key. Changes apply at once and are saved on this device.",
+  changeKey: "Change {label}",
+  pressKey: "Press a key",
+  cancelKey: "Cancel",
+  keyUndo: "Undo",
+  keyFullscreen: "Fullscreen",
+  keySpace: "Space",
   pin: "Pin {label}",
   unpin: "Unpin {label}",
   toolbarNote:
@@ -165,6 +174,7 @@ const base: TranslationTable = {
   answerRoman: "i, ii, iii",
   answerNone: "No labels",
   metadataIcons: "Show icons in the header",
+  showSources: "Show sources",
   questionTypeHints: "Question type hints",
   download: "Download",
   saveJson: "Save JSON",
@@ -247,7 +257,7 @@ const base: TranslationTable = {
     "Give your best number{unit}. Each answer scores {points} {point}.",
   typeHintOddOneOut:
     "Pick the odd one out, then say why. The pick and the reason are each half.",
-  typeHintHotspot: "Click the right spot on the image, or pick a region.",
+  typeHintHotspot: "Click the right spot on the image.",
   typeHintMatrix:
     "Answer all {rows} rows against the same scale, {points} {point} each.",
   typeHintParts: "Fill in all {count} parts. Each part scores its own points.",
@@ -262,16 +272,17 @@ const base: TranslationTable = {
   clearValue: "Clear",
   sliderLabel: "Slide, or type a number",
   toleranceHint: "Stay within {tolerance} {unit} of the answer.",
-  mapHint: "Nothing picked yet. Click the image or use the list.",
+  mapHint:
+    "Nothing picked yet. Click the image, or use the arrow keys and Enter.",
+  mapMoveHint:
+    "Marker at {x} percent across, {y} percent down. Enter picks it.",
   mapPicked: "Picked {x} percent across, {y} percent down.",
-  region: "Region {number}",
-  regionList: "Regions",
   labelList: "Labels",
   itemList: "Items",
   removeItem: "Take this item back",
   matrixOne: "One answer per row.",
   matrixMany: "Tick every option that applies, on every row.",
-  needSpot: "Click the image or pick a region.",
+  needSpot: "Click the image.",
   needReason: "Pick the odd one and give a reason.",
   needRows: "Answer every row.",
   needParts: "Fill in every part.",
@@ -293,6 +304,7 @@ const base: TranslationTable = {
   confidenceWord: "Confidence",
   playLimitReached: "That clip has been played {limit} times. No more plays.",
   speak: "Speak",
+  stopListening: "Stop listening",
   speechHint:
     "Dictation uses your browser's speech service. Chrome, Edge and Safari support it; Firefox does not. Typing always works.",
 
@@ -304,8 +316,6 @@ const base: TranslationTable = {
   moveDown: "Move {text} down",
   left: "Left",
   right: "Right",
-  pickLeft: "Pick an item on the left, then its match on the right.",
-  pickMatch: 'Now pick the match for "{text}".',
   notCorrect: "Not correct",
   pointsLabel: "{points} {unit}",
 

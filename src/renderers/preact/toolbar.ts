@@ -49,9 +49,9 @@ export function pinnedActions(quiz: Quiz): readonly string[] {
   return quiz.config.toolbar ?? DEFAULT_TOOLBAR_ACTIONS;
 }
 
-export const FONT_MIN = 0.7;
-export const FONT_MAX = 1.6;
-export const FONT_STEP = 0.1;
+export const FONT_MIN = 0.5;
+export const FONT_MAX = 3;
+export const FONT_STEP = 0.2;
 
 /** The font buttons change the quiz root, so the whole slide scales. */
 export function changeFontScale(root: HTMLElement | null, delta: number): void {

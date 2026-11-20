@@ -155,7 +155,6 @@
 .pq-timer-note,
 .pq-sort-rank,
 .pq-match-pair,
-.pq-match-hint,
 .pq-field-label,
 .pq-score-max,
 .pq-review-explanation,
@@ -209,6 +208,15 @@
 
 .pq-media-missing {
   border-style: dashed;
+}
+
+.pq-sources a {
+  color: var(--pq-accent);
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--pq-ink);
+  }
 }
 
 /* A line of things: buttons, chips, filters, sources, blanks, media. */
@@ -360,12 +368,22 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--pq-slide);
-  /* Theme folders put a per-question image here. A theme that sets no image
-   * and no fade leaves the paper as it was. */
+  /* Theme folders put a per-question image here. The image sits behind a wash
+   * of the slide colour, so a light theme stays readable and a dark one keeps
+   * its dark mode. A theme with no image and no fade leaves the paper as it
+   * was. */
   background-image:
     linear-gradient(
-      rgb(0 0 0 / var(--pq-theme-fade, 0)),
-      rgb(0 0 0 / var(--pq-theme-fade, 0))
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      )
     ),
     var(--pq-theme-image, none);
   background-position: center;
@@ -388,6 +406,18 @@ body {
 
 .pq-screen-start {
   padding: var(--pq-space);
+}
+
+/* The optional hero on the start screen. Cropped, never taller than a third of
+ * the screen, so the title and the play button stay visible without scrolling. */
+.pq-banner {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  max-height: min(36vh, 20rem);
+  border-radius: var(--pq-r-md);
+  box-shadow: var(--pq-shadow-1);
+  object-fit: cover;
 }
 
 .pq-section-body {
@@ -517,6 +547,12 @@ body {
   font-weight: var(--pq-heading-weight, 500);
   line-height: 1.12;
   text-wrap: balance;
+}
+
+/* The heading is focused on screen changes for screen readers, not as a
+   keyboard stop. A hotkey jump must not paint a box around it. */
+[data-pq-heading]:focus {
+  outline: none;
 }
 
 .pq-screen-start .pq-title,

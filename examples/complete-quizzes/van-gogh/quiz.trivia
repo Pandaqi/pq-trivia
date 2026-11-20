@@ -1,0 +1,263 @@
+# The Yellow House
+
+Description => Five rounds on Vincent van Gogh. Pictures, dates and one ear.
+Author => Pandaqi
+Language => en
+Seed => yellow-house
+Syntax => 3
+Theme => vincent
+BannerImage => media/wheatfield-crows.jpg
+
+Type => Start
+Question => The Yellow House
+Comment => Five rounds on Vincent van Gogh. One point a question unless it says otherwise. The picture round is in the middle, so keep an eye on the screen.
+Buttons => play | interactive | answers | settings
+
+## The man from Zundert
+
+Question => Which Dutch town was Vincent van Gogh born in?
+Answers => Zundert
+Type => Open
+AlsoAccept => Groot-Zundert
+Grading => normalized
+Hints => It sits in North Brabant, close to the Belgian border.
+Explanation => Zundert, 30 March 1853. His father was the local minister.
+Category => Life
+Sources => https://en.wikipedia.org/wiki/Vincent_van_Gogh
+
+Question => Vincent's parents had a stillborn son exactly a year before Vincent was born. What first name did they give both boys?
+Answers => Vincent
+Type => Open
+Grading => normalized
+Hints => It is the name at the top of this quiz.
+Explanation => Vincent. The first Vincent was buried in the churchyard at Zundert. The second got the name a year later, which is either touching or grim. Probably both.
+
+Question => How many years older was Vincent than his brother Theo?
+Answers => 4
+Type => Range
+Range => 0
+Unit => years
+Explanation => Vincent was born in 1853, Theo in 1857. Theo died six months after him.
+
+Question => Which painting is this? It was his first major work.
+Media => media/potato-eaters.jpg { alt="Five peasants around a table eating potatoes under a hanging lamp", credit="Van Gogh Museum, Amsterdam" }
+Answers => The Potato Eaters
+Type => Open
+AlsoAccept => Potato Eaters | De Aardappeleters
+Grading => normalized
+Hints => He painted it in Nuenen, where his parents lived.
+Explanation => The Potato Eaters, 1885. Five peasants, one lamp, no pretty colours. He was proud of it.
+Category => Paintings
+
+Question => Before he settled on painting, Vincent trained for another job. Which one?
+Answers => Preacher | Doctor | Architect
+Type => Choice
+Correct => Preacher
+Explanation => A lay preacher in the Borinage, a coal-mining region in Belgium. He gave most of his belongings away and the church let him go.
+
+## The Yellow House
+
+Question => Which French city did Vincent move to in February 1888?
+Answers => Arles
+Type => Open
+Grading => normalized
+Hints => It is in Provence, on the Rhône.
+Explanation => Arles. In May he rented four rooms at 2 Place Lamartine, the building he painted yellow.
+Category => Places
+
+Question => Where did Vincent paint this café?
+Media => media/cafe-terrace.jpg { alt="A café terrace at night under a yellow awning, with a starry sky above", credit="Kröller-Müller Museum, Otterlo" }
+Answers => Arles | Paris | Auvers
+Type => Choice
+Correct => Arles
+Explanation => Café Terrace at Night, September 1888. It is the Place du Forum in Arles, and the café is still there.
+Category => Paintings
+
+Question => In October 1888, the painter Paul [blank] came to stay.
+Answers => Gauguin
+Type => Cloze
+Hints => He left for Tahiti a few years later.
+Explanation => Paul Gauguin. Vincent had painted sunflowers for his room.
+
+Question => After a quarrel with Gauguin in December 1888, Vincent cut off part of what?
+Answers => his ear
+Type => Open
+AlsoAccept => ear | his left ear | left ear
+Reject => his nose | his finger | his hand
+Grading => normalized
+Hints => It is on the side of your head.
+Notes => Keep it light. Someone at every table knows the whole story and wants to tell it.
+Explanation => Part of his left ear. He gave the piece to a woman at a local brothel. The exact sequence is still argued about.
+
+Question => Match each painting to the place where Vincent painted it.
+Type => Match
+#### Answers
+The Potato Eaters ~ Nuenen
+Sunflowers ~ Arles
+The Starry Night ~ Saint-Rémy
+Wheatfield with Crows ~ Auvers
+Score => 4
+Explanation => Nuenen, Arles, Saint-Rémy, Auvers. Four stops, six years.
+
+Question => Which of these did Vincent paint in Arles? Pick all that apply.
+Answers => Sunflowers | The Starry Night | Café Terrace at Night | The Bedroom
+Type => Choice
+Multiple => true
+Correct => Sunflowers | Café Terrace at Night | The Bedroom
+Scoring => partial
+Score => 3
+Explanation => The Starry Night came later, at Saint-Rémy. The other three are from 1888 and from Arles.
+
+## The studio
+
+Question => Vincent painted this from the window of his room. Where was that room?
+Media => media/starry-night.jpg { alt="A swirling night sky above a small village, with a tall dark cypress in the foreground", credit="Museum of Modern Art, New York" }
+Answers => Saint-Rémy-de-Provence
+Type => Open
+AlsoAccept => Saint-Rémy | Saint Remy | Saint-Rémy de Provence | Saint Paul de Mausole | the asylum
+Grading => normalized
+Steps => media | fade | question | hints
+Hints => It is a town in Provence, and he was in an asylum there.
+Explanation => Saint-Rémy-de-Provence, June 1889. He painted the view before sunrise. The village below came from memory.
+Category => Paintings
+ColorScheme => night
+
+Question => Which museum keeps The Starry Night?
+Answers => MoMA | Musée d'Orsay | Van Gogh Museum
+Type => Choice
+Correct => MoMA
+Explanation => The Museum of Modern Art in New York, since 1941. It rarely leaves the building.
+Sources => https://www.moma.org/collection/works/79802
+
+Question => Click the two people walking by the water.
+Media => media/starry-night-rhone.jpg { alt="A starry night over a wide river, with gaslights reflected in the water and a couple walking on the bank", credit="Musée d'Orsay, Paris" }
+Answers => 77,84
+Type => Hotspot
+HitRadius => 7
+Score => 2
+Explanation => Bottom right, arm in arm. The painting is Starry Night Over the Rhône, from September 1888.
+Category => Paintings
+
+Question => In February 1890, Vincent painted [blank] blossom for his newborn nephew.
+Media => media/almond-blossom.jpg { alt="White blossom on twisting branches against a turquoise sky", credit="Van Gogh Museum, Amsterdam" }
+Answers => almond
+Type => Cloze
+Hints => It is the first tree to flower in spring.
+Explanation => Almond blossom. Theo's son was called Vincent Willem, after his uncle.
+
+Question => True or false about The Starry Night?
+Answers => True | False
+Rows => It hangs in New York | It shows a cypress tree | Vincent sold it in his lifetime
+Correct => True | True | False
+Type => Matrix
+Score => 3
+Explanation => MoMA, yes. The cypress, yes. Sold in his lifetime, no. He never saw a buyer for that one.
+
+## A picture round
+
+RoundTimer => 6m
+
+Question => Name this painting.
+Media => media/sunflowers.jpg { alt="A vase of sunflowers against a pale blue-green background", credit="Neue Pinakothek, Munich" }
+Answers => Sunflowers
+Type => Open
+AlsoAccept => Vase with Twelve Sunflowers | Still Life: Vase with Twelve Sunflowers | Zonnebloemen
+Grading => normalized
+Hints => There are twelve of them.
+Explanation => Sunflowers, August 1888. The Munich version, with twelve flowers and a blue-green wall. He painted it for Gauguin's room.
+Category => Paintings
+
+Question => In which year did Vincent paint this bedroom?
+Media => media/bedroom.jpg { alt="A blue bedroom with a wooden bed, two chairs, a table and framed pictures on the wall", credit="Van Gogh Museum, Amsterdam" }
+Answers => 1888
+Type => Range
+Range => 1
+Unit => year
+Hints => The same year he moved to Arles.
+Explanation => October 1888. He made three versions. He wanted the colours to say rest, or sleep.
+
+Question => What was this building called?
+Media => media/yellow-house.jpg { alt="A yellow corner house under a deep blue sky, with a shop and a café on the street", credit="Van Gogh Museum, Amsterdam" }
+Answers => The Yellow House
+Type => Open
+AlsoAccept => The Yellow House (The Street) | Het gele huis | Yellow House
+Grading => normalized
+Hints => The quiz is named after it.
+Explanation => The Yellow House at 2 Place Lamartine, Arles. It was damaged in 1944 and later pulled down. The painting is all that is left.
+Category => Places
+
+Question => Which birds are flying over the field?
+Media => media/wheatfield-crows.jpg { alt="A wide golden wheatfield under a dark blue sky, with a flock of black birds", credit="Van Gogh Museum, Amsterdam" }
+Answers => Crows | Swallows | Pigeons
+Type => Choice
+Correct => Crows
+Explanation => Crows. Wheatfield with Crows, July 1890, Auvers. People call it his last painting. Nobody actually knows.
+Category => Paintings
+
+Question => Which of these is in the Musée d'Orsay?
+Answers => media/self-portrait.jpg { alt="A self-portrait with a red beard against a pale swirling blue background" } | media/starry-night.jpg { alt="A swirling night sky above a village" } | media/sunflowers.jpg { alt="A vase of sunflowers" }
+Type => Choice
+Correct => media/self-portrait.jpg { alt="A self-portrait with a red beard against a pale swirling blue background" }
+Explanation => The 1889 self-portrait. The Starry Night is at MoMA, and this version of Sunflowers is in Munich.
+
+## The afterlife
+
+Question => Which 1971 song by Don McLean opens with "Starry, starry night"?
+Answers => Vincent | American Pie | Cinnamon Girl
+Type => Choice
+Correct => Vincent
+Explanation => "Vincent", also known as "Starry, Starry Night". It reached number one in the UK.
+Category => Legacy
+
+Question => Which Amsterdam museum is devoted to his work?
+Answers => Van Gogh Museum
+Type => Open
+AlsoAccept => The Van Gogh Museum | Van Gogh Museum Amsterdam
+Reject => Rijksmuseum
+Grading => normalized
+Explanation => The Van Gogh Museum, opened in 1973. Theo's family kept the collection together, which is why it is all in one place.
+Category => Legacy
+
+Question => Put each person in the right box.
+Type => Classification
+#### Answers
+Theo van Gogh
+Jo van Gogh-Bonger
+Paul Gauguin
+Doctor Gachet
+Buckets => Family | Fellow painter | Doctor
+Correct => Theo van Gogh @ Family | Jo van Gogh-Bonger @ Family | Paul Gauguin @ Fellow painter | Doctor Gachet @ Doctor
+Score => 4
+Explanation => Theo was his brother and dealer. Jo was Theo's wife, and she got the paintings seen. Gachet looked after Vincent in Auvers.
+
+Question => About how many oil paintings did Vincent make in his ten working years?
+Answers => 860
+Type => Estimate
+Tolerance => 60
+Unit => paintings
+Slider => 700..1000
+Score => 2
+Explanation => Around 860 oil paintings, plus about 1,300 drawings and watercolours. Ten years of work.
+
+Question => Put these paintings in the order Vincent painted them, oldest first.
+Answers => The Potato Eaters | Sunflowers | The Starry Night | Wheatfield with Crows
+Type => Sort
+Correct => The Potato Eaters | Sunflowers | The Starry Night | Wheatfield with Crows
+Score => 4
+Explanation => 1885, 1888, 1889, 1890. The last one is from the final weeks.
+
+Question => How many months after Vincent did his brother Theo die?
+Answers => 6
+Type => Range
+Range => 1
+Unit => months
+Timer => 1:30
+Wager => true
+Notes => Take the bets before you reveal. Nothing focuses a room like a wager.
+Hints => Not years. Months.
+Explanation => Vincent died on 29 July 1890. Theo died on 25 January 1891, less than six months later, aged 33.
+
+Type => End
+Question => That is the yellow house.
+Credits => Questions by Pandaqi. | Paintings from Wikimedia Commons, in the public domain. | Reproductions from the Museum of Modern Art, the Musée d'Orsay, the Van Gogh Museum, the Kröller-Müller Museum and the Neue Pinakothek.
+Buttons => answers | restart | exit

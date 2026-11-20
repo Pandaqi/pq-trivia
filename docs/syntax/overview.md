@@ -139,9 +139,16 @@ like V2 did:
 Answers => photo.jpg | intro.mp3 | A text answer
 ```
 
-Images lazy-load. Audio and video never autoplay with sound. `alt` is checked
-in strict mode. `captions` adds a WebVTT track; `transcript` adds plain text
-under the player, fetched when someone opens it.
+Images lazy-load. Audio and video never autoplay with sound. Give every image
+`alt` text; it is what a screen reader says. `captions` adds a WebVTT track;
+`transcript` adds plain text under the player, fetched when someone opens it.
+
+A parser cannot see the disk. Run `validate <path> --assets` and it checks every
+local media path, including answer media, posters, captions and transcripts,
+reports images without `alt`, and checks the files a named theme needs.
+
+Media paths resolve against the page, not the quiz file. Keep the page next to
+the quiz, or set `Url` when the files sit somewhere else.
 
 ## Steps
 

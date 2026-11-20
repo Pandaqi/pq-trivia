@@ -174,51 +174,68 @@ export function OpenInput({
   const value = response.kind === ResponseKind.Open ? response.text : "";
   const [mic, setMic] = useState<Dictation | null>(null);
   const listId = `pq-suggest-${screen.id}`;
-  const supported = speechSupported();
+  const showMic = quiz.config.dictation === true && speechSupported();
   return (
     <label class="pq-field">
       <span class="pq-field-label">{t("answerPlaceholder")}</span>
       <span class="pq-input-row">
-        <input
-          class="pq-input"
-          type="text"
-          value={value}
-          autocomplete="off"
-          list={screen.suggestions.length > 0 ? listId : undefined}
-          aria-invalid={messageFor(issues, "answer") !== null}
-          onInput={(event) =>
-            quiz.setResponse(
-              screen.id,
-              setOpenText(response, event.currentTarget.value),
-            )
-          }
-        />
-        {supported ? (
-          <button
-            type="button"
-            class="pq-mic"
-            aria-pressed={mic !== null}
-            title={t("speechHint")}
-            onClick={() => {
-              if (mic !== null) {
-                mic.stop();
-                setMic(null);
-                return;
-              }
-              setMic(
-                startDictation({
-                  onText: (text) => {
-                    quiz.setResponse(screen.id, setOpenText(response, text));
-                    setMic(null);
-                  },
-                  onEnd: () => setMic(null),
-                }),
-              );
-            }}
-          >
-            {t("speak")}
-          </button>
-        ) : null}
+        <span class="pq-input-wrap">
+          <input
+            class="pq-input"
+            type="text"
+            value={value}
+            autocomplete="off"
+            list={screen.suggestions.length > 0 ? listId : undefined}
+            aria-invalid={messageFor(issues, "answer") !== null}
+            onInput={(event) =>
+              quiz.setResponse(
+                screen.id,
+                setOpenText(response, event.currentTarget.value),
+              )
+            }
+          />
+          {showMic ? (
+            <button
+              type="button"
+              class="pq-mic"
+              aria-label={mic !== null ? t("stopListening") : t("speak")}
+              aria-pressed={mic !== null}
+              title={t("speechHint")}
+              onClick={() => {
+                if (mic !== null) {
+                  mic.stop();
+                  setMic(null);
+                  return;
+                }
+                setMic(
+                  startDictation({
+                    onText: (text) => {
+                      quiz.setResponse(screen.id, setOpenText(response, text));
+                      setMic(null);
+                    },
+                    onEnd: () => setMic(null),
+                  }),
+                );
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+                <path d="M12 17v4" />
+              </svg>
+            </button>
+          ) : null}
+        </span>
       </span>
       {screen.suggestions.length === 0 ? null : (
         <datalist id={listId}>

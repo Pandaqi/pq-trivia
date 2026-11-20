@@ -246,6 +246,46 @@ Media => https://example.test/loud.png
   });
 });
 
+describe("suggestions", () => {
+  test("only Suggest feeds autocomplete, never AlsoAccept", () => {
+    const quiz = planQuiz(
+      buildQuiz(
+        [
+          "Question => Who painted this?",
+          "Answers => Vincent van Gogh",
+          "AlsoAccept => Van Gogh | Vincent",
+        ].join("\n"),
+      ),
+    );
+    const question = quiz.questions[0];
+    if (question === undefined) {
+      throw new Error("fixture lost its question");
+    }
+    expect(
+      questionScreen(question, createSessionState(), view()).suggestions,
+    ).toEqual([]);
+  });
+
+  test("an explicit Suggest list is the only list offered", () => {
+    const quiz = planQuiz(
+      buildQuiz(
+        [
+          "Question => Who painted this?",
+          "Answers => Vincent van Gogh",
+          "Suggest => Van Gogh | Vincent",
+        ].join("\n"),
+      ),
+    );
+    const question = quiz.questions[0];
+    if (question === undefined) {
+      throw new Error("fixture lost its question");
+    }
+    expect(
+      questionScreen(question, createSessionState(), view()).suggestions,
+    ).toEqual(["Van Gogh", "Vincent"]);
+  });
+});
+
 describe("question numbers", () => {
   test("a question starts with its number", () => {
     expect(questionScreen(first, loaded(), view()).numberPrefix).toBe("1. ");

@@ -191,12 +191,38 @@ export interface StepViewInput {
   readonly step: number;
   /** The answer is up, or the host asked for everything. */
   readonly complete: boolean;
+  /** Sources are hidden, so a sources step must not become a blank slide. */
+  readonly hideSources?: boolean;
+}
+
+/** Drop a hidden part. A step that only added that part is not a step. */
+function withoutSources(steps: readonly Step[]): readonly Step[] {
+  return steps
+    .map((step) => ({
+      parts: step.parts.filter((part) => part !== StepPart.Sources),
+      entered: step.entered.filter((entry) => entry.part !== StepPart.Sources),
+    }))
+    .filter((step) => step.entered.length > 0);
+}
+
+/** How many steps a screen really has once a hidden part is dropped. */
+export function visibleStepTotal(
+  raw: readonly string[],
+  hideSources: boolean,
+): number {
+  const parsed = parseSteps(raw);
+  return hideSources ? withoutSources(parsed).length : parsed.length;
 }
 
 export function stepViewOf(input: StepViewInput): StepViewModel {
   const declared =
     input.steps.length > 0 ? input.steps : (input.defaults.defaultSteps ?? []);
-  const plan = parseSteps(declared);
+  const parsed = parseSteps(declared);
+  const plan = input.hideSources === true ? withoutSources(parsed) : parsed;
+  const allParts =
+    input.hideSources === true
+      ? STEP_PARTS.filter((part) => part !== StepPart.Sources)
+      : STEP_PARTS;
   const total = Math.max(plan.length, 1);
   const index = Math.min(Math.max(input.step, 0), total - 1);
   const finished = input.complete || plan.length === 0;
@@ -206,7 +232,7 @@ export function stepViewOf(input: StepViewInput): StepViewModel {
     return {
       index: total - 1,
       total,
-      visible: STEP_PARTS,
+      visible: allParts,
       entered: [],
       transition,
       more: false,

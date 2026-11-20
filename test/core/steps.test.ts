@@ -161,6 +161,39 @@ describe("the step view", () => {
     expect(screen.steps.more).toBe(true);
   });
 
+  test("a hidden sources step does not become a blank slide", () => {
+    const quiz = planQuiz(
+      buildQuiz(
+        [
+          "Question => Which one?",
+          "Answers => A | B",
+          "Steps => question | sources | answers",
+          "Sources => https://example.test/where",
+        ].join("\n"),
+      ),
+    );
+    const question = quiz.questions[0];
+    if (question === undefined) {
+      throw new Error("fixture lost its question");
+    }
+
+    const hidden = questionScreen(question, loaded(), {
+      ...view(),
+      showSources: false,
+    });
+    expect(hidden.steps.total).toBe(2);
+    expect(hidden.steps.visible).not.toContain(StepPart.Sources);
+    expect(hidden.steps.entered.map((entry) => entry.part)).not.toContain(
+      StepPart.Sources,
+    );
+
+    const shown = questionScreen(question, loaded(), {
+      ...view(),
+      showSources: true,
+    });
+    expect(shown.steps.total).toBe(3);
+  });
+
   test("the answer being up shows everything, whatever the step", () => {
     const state = sessionReducer(
       loaded(),

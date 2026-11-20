@@ -34,7 +34,7 @@ import {
   sessionReducer,
   type SessionState,
 } from "../session/session";
-import { parseSteps } from "../model/steps";
+import { visibleStepTotal } from "../model/steps";
 import { remainingOf } from "../session/timers";
 import type { AttemptJournal, AttemptRecord } from "../session/attempts";
 import type { OrderOptions, QuizApi, QuizConfig, QuizEventMap } from "./types";
@@ -124,7 +124,11 @@ const CONTENT_KEYS: ReadonlySet<string> = new Set([
 export function createExtras(ctx: ExtrasContext): Extras {
   const reveal = (): boolean => {
     const current = currentQuestion(ctx.state());
-    if (current === null || ctx.isRestricted()) {
+    if (
+      current === null ||
+      ctx.isRestricted() ||
+      ctx.config().allowReveal === false
+    ) {
       return false;
     }
     if (ctx.state().revealed.includes(current.id)) {
@@ -161,7 +165,7 @@ export function createExtras(ctx: ExtrasContext): Extras {
       current.steps.length > 0
         ? current.steps
         : (ctx.config().defaultSteps ?? []);
-    const total = parseSteps(declared).length;
+    const total = visibleStepTotal(declared, ctx.config().showSources !== true);
     if (total === 0 || ctx.state().step >= total - 1) {
       return false;
     }
@@ -172,7 +176,11 @@ export function createExtras(ctx: ExtrasContext): Extras {
   /** V2's `a`: show the answer, press again and it goes away. */
   const toggleReveal = (): boolean => {
     const current = currentQuestion(ctx.state());
-    if (current === null || ctx.isRestricted()) {
+    if (
+      current === null ||
+      ctx.isRestricted() ||
+      ctx.config().allowReveal === false
+    ) {
       return false;
     }
     if (ctx.state().revealed.includes(current.id)) {

@@ -171,6 +171,34 @@ describe("createQuiz", () => {
     quiz.destroy();
   });
 
+  test("a hidden source step is skipped by Next", async () => {
+    const quiz = createQuiz({ config: { showSources: false } });
+    await quiz.load({
+      type: "text",
+      text: [
+        "Question => Which one?",
+        "Answers => A | B",
+        "Steps => question | sources | answers",
+        "Sources => https://example.test/where",
+      ].join("\n"),
+    });
+    quiz.goTo(0);
+    const screen = quiz.currentScreen();
+    if (screen?.kind !== ScreenKind.Question) {
+      throw new Error("expected a question screen");
+    }
+    expect(screen.steps.total).toBe(2);
+    expect(quiz.nextStep()).toBe(true);
+    const after = quiz.currentScreen();
+    if (after?.kind !== ScreenKind.Question) {
+      throw new Error("expected a question screen after the step");
+    }
+    expect(after.steps.total).toBe(2);
+    // There is no hidden source slide left to eat another press.
+    expect(quiz.nextStep()).toBe(false);
+    quiz.destroy();
+  });
+
   test("the reveal toggle puts the answer away again", async () => {
     const quiz = createQuiz();
     await quiz.load({ type: "text", text });

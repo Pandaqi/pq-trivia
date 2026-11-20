@@ -29,8 +29,11 @@ export function ReadOnlyAnswers({
   readonly screen: QuestionViewModel;
 }): JSX.Element {
   const t = useT();
+  // An open question has one expected answer, not options. "A" in front of it
+  // is the shape of a multiple-choice list with the choices missing.
+  const labelled = screen.type !== QuestionType.Open;
   return (
-    <ol class="pq-answers pq-answers-readonly">
+    <ol class="pq-answers pq-answers-readonly" data-pq-type={screen.type}>
       {screen.answers.map((answer, index) => (
         <li
           key={answer.id}
@@ -39,7 +42,8 @@ export function ReadOnlyAnswers({
             answer.correct === null ? undefined : String(answer.correct)
           }
         >
-          {answerLabel(index, quiz.config.answerLabels) === "" ? null : (
+          {!labelled ||
+          answerLabel(index, quiz.config.answerLabels) === "" ? null : (
             <span class="pq-answer-number" aria-hidden="true">
               {answerLabel(index, quiz.config.answerLabels)}
             </span>

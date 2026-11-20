@@ -86,6 +86,7 @@ export function createLoader(deps: LoaderDeps): Loader {
     if (
       deps.revealMode() === RevealMode.Always &&
       deps.config().restricted !== true &&
+      deps.config().allowReveal !== false &&
       deps.state().plan !== null
     ) {
       deps.apply(

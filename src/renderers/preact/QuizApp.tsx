@@ -28,10 +28,22 @@ import { MessageScreen } from "./screens/MessageScreen";
 import { QuestionScreen } from "./screens/QuestionScreen";
 import { ResultsScreen } from "./screens/ResultsScreen";
 import { actionFor, isTyping, keyMap } from "./keys";
-import { changeFontScale, showsButton } from "./toolbar";
+import { storedHotkeys } from "../../platform/browser/storage/hotkeys";
+import { changeFontScale, FONT_STEP, showsButton } from "./toolbar";
 import { SettingsOverlay, SettingsToggle } from "./screens/SettingsPanel";
 import { StartScreen } from "./screens/StartScreen";
 import { QuestionType } from "../../core/model/question";
+
+/** The first thing a keyboard user can act on in a question. */
+const FOCUS_SURFACE = [
+  ".pq-screen-question input.pq-input:not([disabled])",
+  ".pq-screen-question textarea.pq-input:not([disabled])",
+  ".pq-screen-question .pq-map-surface:not(.pq-map-static)",
+  ".pq-screen-question .pq-answer",
+  ".pq-screen-question .pq-match-item",
+  ".pq-screen-question .pq-sort-item",
+  ".pq-screen-question .pq-label",
+].join(", ");
 
 /** The line above the quiz: where you are, in words. */
 function screenLabel(quiz: Quiz, screen: ScreenViewModel): string {
@@ -136,6 +148,7 @@ export function QuizApp({
   const t: Translate = (key, params) =>
     DIAGNOSTIC_KEYS.has(key) ? diagnosticT(key, params) : quiz.t(key, params);
   const root = useRef<HTMLDivElement>(null);
+  const lastScreenKey = useRef<string | null>(null);
   const appliedTheme = useRef<ReturnType<typeof getTheme>>(null);
   const [themeVersion, setThemeVersion] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -205,10 +218,27 @@ export function QuizApp({
     return quiz.subscribe(sync);
   }, [quiz]);
 
+  const screen = snapshot.screen;
+  // `screen` is a new object on every response. Its kind and question id are
+  // what actually move the header, so only those may steal focus.
+  const screenKey =
+    screen?.kind === ScreenKind.Question
+      ? `question:${screen.id}`
+      : (screen?.kind ?? "none");
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       // The settings panel is modal. Escape has its own handler there.
-      if (settingsOpen || event.defaultPrevented || isTyping(event.target)) {
+      if (settingsOpen || event.defaultPrevented) {
+        return;
+      }
+      // A focused input owns the keyboard. That includes shadow DOM targets,
+      // where `event.target` is the host instead of the field.
+      const first =
+        typeof event.composedPath === "function"
+          ? (event.composedPath()[0] ?? event.target)
+          : event.target;
+      if (isTyping(first) || isTyping(document.activeElement)) {
         return;
       }
       if (event.metaKey || event.ctrlKey || event.altKey) {
@@ -225,7 +255,11 @@ export function QuizApp({
       ) {
         return;
       }
-      const name = keyMap(config).get(event.key);
+      const saved = config.allowHotkeyMapping === true ? storedHotkeys() : {};
+      const name = keyMap({
+        ...config,
+        hotkeys: { ...config.hotkeys, ...saved },
+      }).get(event.key);
       if (name === undefined) {
         return;
       }
@@ -263,7 +297,10 @@ export function QuizApp({
         return;
       }
       if (name === "fontUp" || name === "fontDown") {
-        changeFontScale(root.current, name === "fontUp" ? 0.1 : -0.1);
+        changeFontScale(
+          root.current,
+          name === "fontUp" ? FONT_STEP : -FONT_STEP,
+        );
         return;
       }
       if (config.enableSafety === true && (name === "mode" || name === "end")) {
@@ -312,15 +349,30 @@ export function QuizApp({
   }, [quiz, settingsOpen]);
 
   useEffect(() => {
-    if (focusScreens) {
-      root.current?.querySelector<HTMLElement>("[data-pq-heading]")?.focus();
+    const previous = lastScreenKey.current;
+    lastScreenKey.current = screenKey;
+    // Moving screens moves the caret with it. A field that already owns the
+    // caret keeps it, even if an effect lands late.
+    if (!focusScreens || isTyping(document.activeElement)) {
+      return;
     }
-    preloadNextQuestion(quiz);
-  }, [quiz, snapshot.screen, focusScreens]);
+    const moved = previous !== null && previous !== screenKey;
+    const field =
+      moved &&
+      screen?.kind === ScreenKind.Question &&
+      screen.interactive &&
+      !screen.revealed
+        ? root.current?.querySelector<HTMLElement>(FOCUS_SURFACE)
+        : null;
+    const heading =
+      root.current?.querySelector<HTMLElement>("[data-pq-heading]");
+    (field ?? heading)?.focus();
+  }, [quiz, screenKey, focusScreens]);
 
-  // `screen` is an object, so its identity changes every draw; kind and index
-  // are what actually moves the header.
-  const screen = snapshot.screen;
+  useEffect(() => {
+    preloadNextQuestion(quiz);
+  }, [quiz, screenKey]);
+
   const layoutMode =
     storedLayoutMode() ??
     (quiz.config.layoutMode === "inline" ? "inline" : "viewport");

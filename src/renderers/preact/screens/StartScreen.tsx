@@ -173,6 +173,15 @@ function LoadQuestions({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
     ) {
       return;
     }
+    // Probing a server for `questions-0.trivia` is a choice, not a default.
+    // A page that names its quiz should not also ask for files that are not
+    // there.
+    const explicit =
+      (quiz.config.filenames?.length ?? 0) > 0 ||
+      quiz.config.filenamePattern !== undefined;
+    if (quiz.config.autoDiscoverQuestions !== true && !explicit) {
+      return;
+    }
     void findOnlineFiles(quiz)
       .then((files) => {
         if (!cancelled) {
@@ -439,8 +448,13 @@ export function StartScreen({
 
       {quiz.config.disableUI === true ? null : (
         <p class="pq-keys">
-          {t("keys")} <kbd>→</kbd> {t("keyNext")}, <kbd>←</kbd> {t("keyBack")},{" "}
-          <kbd>r</kbd> {t("keyReveal")}, <kbd>h</kbd> {t("keyHint")}.
+          {t("keys")} <kbd>→</kbd> {t("keyNext")}, <kbd>←</kbd> {t("keyBack")}
+          {quiz.config.allowReveal === false ? null : (
+            <>
+              , <kbd>r</kbd> {t("keyReveal")}
+            </>
+          )}
+          , <kbd>h</kbd> {t("keyHint")}.
         </p>
       )}
     </main>

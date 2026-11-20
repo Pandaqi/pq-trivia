@@ -32,6 +32,7 @@ import { toQuizJson } from "../src/core/export/json";
 import { encryptQuiz } from "../src/platform/answerKey";
 import { toStandaloneHtml } from "../src/core/export/standalone";
 import { mediaOptionsFrom } from "../src/core/values/media";
+import { checkAssets } from "./assets";
 
 import {
   importContent,
@@ -58,6 +59,7 @@ import {
 const USAGE = `PQ-Trivia CLI
 
   validate <path...> [--strict]        parse and report
+              [--assets]               also check media and theme files
   format <path...> [--write] [--from-v2|--from-v3]
                                        rewrite to canonical form
   migrate <path...> [--write|--check] [--headings] [--from-v2]
@@ -204,7 +206,13 @@ if (command === "import") {
   process.exit(counted.errors > 0 ? 1 : 0);
 }
 
-const files = await resolveTargets(targets);
+const { files, problems: targetProblems } = await resolveTargets(targets);
+if (targetProblems.length > 0) {
+  for (const problem of targetProblems) {
+    console.error(problem);
+  }
+  process.exit(2);
+}
 if (files.length === 0) {
   console.error("No quiz files found.");
   process.exit(2);
@@ -237,9 +245,24 @@ if (command === "validate") {
       (total, question) => total + questionMaxScore(question),
       0,
     );
+    // The asset check runs before the summary line, so a missing file cannot
+    // hide behind an `ok` printed one line earlier.
+    const assets =
+      flags["assets"] === true ? await checkAssets(quiz, file) : null;
+    const assetErrors = assets?.problems.length ?? 0;
+    errors += counted.errors + assetErrors;
     console.log(
-      `${name}: ${quiz.questions.length} questions, ${quiz.rounds.length} rounds, ${maxScore} points${counted.errors > 0 ? ", errors" : ", ok"}`,
+      `${name}: ${quiz.questions.length} questions, ${quiz.rounds.length} rounds, ${maxScore} points${counted.errors + assetErrors > 0 ? ", errors" : ", ok"}`,
     );
+    if (assets !== null) {
+      for (const problem of assets.problems) {
+        console.log(`  ${problem.where}: ${problem.message}`);
+      }
+      const theme = assets.theme === null ? "" : `, theme "${assets.theme}"`;
+      console.log(
+        `  assets: ${assets.checked} file(s)${theme}, ${assets.problems.length} problem(s).`,
+      );
+    }
   }
   console.log(
     `\n${files.length} file(s), ${errors} error(s), ${warnings} warning(s).`,

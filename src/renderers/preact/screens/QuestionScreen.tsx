@@ -38,6 +38,12 @@ const LIFELINE_KEYS: Readonly<Record<Lifeline, string>> = {
   [Lifeline.AskRoom]: "lifelineAskRoom",
 };
 
+/** A source is a link only when it is a bare URL. Prose stays prose. */
+function sourceHref(source: string): string | null {
+  const value = source.trim();
+  return /^https?:\/\/\S+$/i.test(value) ? value : null;
+}
+
 /** 50/50, extra time and ask the room. A lifeline costs points, so it says so. */
 function Lifelines({
   quiz,
@@ -185,7 +191,14 @@ export function QuestionScreen({
   // The whole quiz counts up by default. A `QuizLimit` turns it into a
   // countdown, and the same line shows either.
   const clock = formatTimer(quiz.quizRemaining(now) ?? quiz.elapsed(now) ?? 0);
-  const hasMedia = screen.media.length > 0;
+  // A hotspot or diagram already puts the map on screen as the input. Do not
+  // print the same picture again as ordinary media underneath it.
+  const mapInput = showInputs ? screen.map : null;
+  const visibleMedia =
+    mapInput === null
+      ? screen.media
+      : screen.media.filter((item) => item.path !== mapInput.path);
+  const hasMedia = visibleMedia.length > 0;
   const manyAnswers = screen.answers.length > 1;
   // A media-only step is the clip's turn. One column, nothing beside it.
   const mediaOnly = staged && hasMedia && !showsStep(screen, StepPart.Question);
@@ -202,7 +215,7 @@ export function QuestionScreen({
   const mediaList =
     !hasMedia || !showsStep(screen, StepPart.Media) ? null : (
       <div class="pq-media-list">
-        {screen.media.map((item) => (
+        {visibleMedia.map((item) => (
           <Media
             key={item.path}
             item={item}
@@ -366,15 +379,28 @@ export function QuestionScreen({
             </p>
           )}
 
-          {screen.sources.length === 0 ||
+          {quiz.config.showSources !== true ||
+          screen.sources.length === 0 ||
           !showsStep(screen, StepPart.Sources) ? null : (
             <p
               class="pq-sources"
               data-pq-transition={stepEnter(screen, StepPart.Sources)}
             >
-              {screen.sources.map((source, index) => (
-                <span key={index}>{source}</span>
-              ))}
+              {screen.sources.map((source, index) => {
+                const href = sourceHref(source);
+                return href === null ? (
+                  <span key={index}>{source}</span>
+                ) : (
+                  <a
+                    key={index}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {source}
+                  </a>
+                );
+              })}
             </p>
           )}
 

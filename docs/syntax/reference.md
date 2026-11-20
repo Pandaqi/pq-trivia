@@ -131,6 +131,8 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `LayoutMode` | `layoutMode` | text |
 | `ThemeDisabled` | `themeDisabled` | boolean |
 | `ThemeUpload` | `themeUpload` | boolean |
+| `ShowSources` | `showSources` | boolean |
+| `Dictation` | `dictation` | boolean |
 | `PrintAnswerLines` | `printAnswerLines` | boolean |
 | `PrintTypeHints` | `printTypeHints` | boolean |
 | `EnableSafety` | `enableSafety` | boolean |
@@ -139,6 +141,7 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `DisableUI` | `disableUI` | boolean |
 | `DisableTouch` | `disableTouch` | boolean |
 | `HotkeysForbidden` | `hotkeysForbidden` | list |
+| `AllowHotkeyMapping` | `allowHotkeyMapping` | boolean |
 | `Toolbar` | `toolbar` | list |
 | `AnswerLabels` | `answerLabels` | text |
 | `MetadataIcons` | `metadataIcons` | boolean |
@@ -165,6 +168,7 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `SubFolderQuestions` | `subFolderQuestions` | text |
 | `FilenamePattern` | `filenamePattern` | text |
 | `Filenames` | `filenames` | list |
+| `AutoDiscoverQuestions` | `autoDiscoverQuestions` | boolean |
 | `FileExtensions` | `fileExtensions` | list |
 | `BannerImage` | `bannerImage` | text |
 | `Icon` | `icon` | text |
@@ -179,6 +183,7 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `QuizLimit` | `quizLimit` | duration |
 | `RoundTimer` | `roundTimer` | duration |
 | `RevealMode` | `revealMode` | text |
+| `AllowReveal` | `allowReveal` | boolean |
 | `Policy` | `policy` | text |
 | `Grading` | `grading` | text |
 

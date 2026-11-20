@@ -61,6 +61,7 @@ export class QuizElement extends HTMLElement {
       "shuffle-rounds",
       "theme",
       "theme-upload",
+      "auto-discover",
     ];
   }
 
@@ -110,7 +111,9 @@ export class QuizElement extends HTMLElement {
         ...(this.getAttribute("theme") === null
           ? {}
           : { theme: this.getAttribute("theme") as string }),
-        themeUpload: truthy(this.getAttribute("theme-upload")),
+        ...(this.hasAttribute("theme-upload")
+          ? { themeUpload: truthy(this.getAttribute("theme-upload")) }
+          : {}),
         ...(this.getAttribute("base-url") === null
           ? {}
           : { url: this.getAttribute("base-url") as string }),
@@ -143,6 +146,13 @@ export class QuizElement extends HTMLElement {
     const theme = this.getAttribute("theme");
     const source = this.getAttribute("src");
     if (source === null) {
+      // The numbered probe is opt-in. Explicit names still work: a page that
+      // writes `filenames` has already said which files it wants.
+      const explicit =
+        this.hasAttribute("filenames") || this.hasAttribute("filename");
+      if (!truthy(this.getAttribute("auto-discover")) && !explicit) {
+        return;
+      }
       try {
         await this.#loadProbed(quiz, generation);
         await this.#headerTheme(theme, generation);

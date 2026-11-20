@@ -82,6 +82,7 @@ costs extra at runtime. Import the class or the function, whichever reads better
 | `hideErrors`                                                                  | `false`            | hide the problems panel                                                      |
 | `enableSafety` / `enableMouse` / `disableKeys` / `disableUI` / `disableTouch` | `false`            | interaction switches                                                         |
 | `hotkeys` / `hotkeysForbidden` / `toolbar`                                    | none               | keys and visible buttons                                                     |
+| `allowHotkeyMapping`                                                          | `false`            | show the key mapping panel in Settings                                       |
 | `answerLabels`                                                                | `letters`          | `letters`, `lowercase`, `numbers`, `roman` or `none`                         |
 | `metadataIcons`                                                               | `true`             | icons in the question header                                                 |
 | `questionTypeHints`                                                           | `true`             | "This is an open question." under the title                                  |
@@ -99,6 +100,7 @@ costs extra at runtime. Import the class or the function, whichever reads better
 | `defaultScore`                                                                | `1`                | points for a question without `Points`                                       |
 | `restricted`                                                                  | `false`            | no answers mode, no reveal, no back                                          |
 | `revealMode`                                                                  | `never`            | `always` or `afterAnswer`                                                    |
+| `allowReveal`                                                                 | `true`             | the manual show-answer button and key                                       |
 | `policy`                                                                      | `required`         | what counts as answered                                                      |
 | `grading`                                                                     | question           | one mode for the whole quiz                                                  |
 | `allowScripts`                                                                | `false`            | sandboxed `Script` widgets                                                   |
@@ -106,7 +108,10 @@ costs extra at runtime. Import the class or the function, whichever reads better
 | `codeHighlight`                                                               | `false`            | colour fenced code                                                           |
 | `answersKey`                                                                  | none               | opens encrypted files                                                        |
 | `theme`                                                                       | none               | theme folder or `.css`, like V2                                              |
-| `themeUpload`                                                                 | `false`            | "Load a theme folder" on the start screen                                    |
+| `themeUpload`                                                                 | `true`             | "Load a theme folder" on the start screen                                    |
+| `showSources`                                                                 | `false`            | show `Sources` under a question                                              |
+| `dictation`                                                                   | `false`            | microphone on open answers                                                   |
+| `autoDiscoverQuestions`                                                       | `false`            | probe for `questions-0.trivia`, `questions-1.trivia`, …                     |
 | `layoutMode`                                                                  | `viewport`         | `viewport` fills the window and scrolls inside; `inline` grows with the page |
 | `defaultTimer`                                                                | none               | seconds for questions without `Timer`                                        |
 | `disableTextFormatting`                                                       | `false`            | show every value as written                                                  |
@@ -227,4 +232,6 @@ nothing should grow.
 Light DOM. One quiz per element. `element.quiz` gives you the controller;
 `element.manifest` is filled when a manifest loader is used. `theme="themes/forest/"`
 loads a theme folder, `theme-upload` adds the folder picker, and `Theme => name`
-in the header works when the attribute is absent.
+in the header works when the attribute is absent. `auto-discover` turns on the
+numbered `questions-0.trivia` probe when the element has no `src`; it is off by
+default, and an explicit `filenames` list works without it.

@@ -103,6 +103,22 @@
   cursor: default;
 }
 
+/* An open question has one line, not a stack of choices. It needs air above
+   and below, or it reads like a stray label. */
+.pq-answers[data-pq-type="open"] {
+  margin-block: var(--pq-gap-lg);
+}
+
+.pq-answers[data-pq-type="open"] .pq-answer {
+  padding-block: var(--pq-gap-lg);
+}
+
+/* The split container removes the list's top margin so a column of choices
+   sits tight. One open answer is not a column; it keeps the air. */
+.pq-split .pq-answers[data-pq-type="open"] {
+  margin-top: var(--pq-gap-lg);
+}
+
 .pq-answer-number,
 .pq-answer-score {
   display: inline-grid;

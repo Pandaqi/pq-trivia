@@ -227,6 +227,8 @@ export function sessionReducer(
           ...state,
           index: next,
           step: 0,
+          // A manual reveal belongs to the screen it was pressed on.
+          revealed: [],
           status: finished,
           startedAt: state.startedAt ?? now,
           endedAt: next === total ? now : state.endedAt,
@@ -241,7 +243,12 @@ export function sessionReducer(
         return state;
       }
       return withTimer(
-        { ...state, index: Math.max(state.index - 1, -1), step: 0 },
+        {
+          ...state,
+          index: Math.max(state.index - 1, -1),
+          step: 0,
+          revealed: [],
+        },
         now,
       );
     }
@@ -255,6 +262,7 @@ export function sessionReducer(
           ...state,
           index: Math.max(-1, Math.min(action.index, total)),
           step: 0,
+          revealed: [],
         },
         now,
       );
@@ -421,9 +429,18 @@ export function sessionReducer(
 
     case "attempt/restore": {
       const index = Math.max(-1, Math.min(action.index, total));
+      // A resumed attempt only saved the answers that existed. Every other
+      // question still needs its empty response, or an interactive screen has
+      // no input to render and the player cannot get past it.
+      const responses: Record<string, Response> = {};
+      for (const question of state.plan?.questions ?? []) {
+        responses[question.id] =
+          state.responses[question.id] ?? defaultResponse(question);
+      }
+      Object.assign(responses, action.responses);
       const restored: SessionState = {
         ...state,
-        responses: { ...state.responses, ...action.responses },
+        responses,
         confidence: action.confidence ?? state.confidence,
         wagers: action.wagers ?? state.wagers,
         noIdea: action.noIdea ?? state.noIdea,
@@ -431,6 +448,7 @@ export function sessionReducer(
         index,
         step: 0,
         status: statusAt(index, total),
+        revealed: [],
         startedAt: action.startedAt,
         endedAt: action.endedAt,
         // Only an interactive play is ever saved, so resuming one keeps typing

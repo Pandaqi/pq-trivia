@@ -12,6 +12,7 @@ import { installDom, type TestDom } from "./dom";
 
 const TEXT = `Title => Escape test
 Seed => escape-test
+AllowHotkeyMapping => true
 
 ## Round one
 
@@ -96,4 +97,86 @@ test("Escape closes the note before the panel", async () => {
 
   escape();
   await waitFor(() => panel() === null, "the panel to close");
+});
+
+test("key mapping applies at once and is saved", async () => {
+  localStorage.removeItem("pq-hotkeys");
+  quiz.goTo(0);
+  await settle();
+
+  document.querySelector<HTMLElement>(".pq-settings-toggle")?.click();
+  await waitFor(() => panel() !== null, "the settings panel");
+  const change = document.querySelector<HTMLButtonElement>(
+    '[data-pq-key-action="next"]',
+  );
+  expect(change).not.toBeNull();
+  change?.click();
+  await waitFor(
+    () => document.querySelector(".pq-key-capture") !== null,
+    "the key recorder",
+  );
+
+  const capture = document.querySelector<HTMLInputElement>(".pq-key-capture");
+  if (capture === null) {
+    throw new Error("the key recorder is missing");
+  }
+  capture.focus();
+  capture.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "n",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await settle();
+  expect(quiz.config.hotkeys?.["next"]).toEqual(["n"]);
+  expect(localStorage.getItem("pq-hotkeys")).not.toBeNull();
+
+  document
+    .querySelector<HTMLButtonElement>(".pq-settings-panel .pq-primary")
+    ?.click();
+  await waitFor(() => panel() === null, "the panel to close");
+  document.body.tabIndex = -1;
+  document.body.focus();
+  document.body.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "n",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await settle();
+  expect(quiz.state.index).toBe(1);
+});
+
+test("a saved key map is restored on the next mount", async () => {
+  // One page owns one quiz. Unmount the first one before "reloading", or its
+  // window listener eats the key and the new quiz never sees it.
+  mounted.destroy();
+  await settle();
+  localStorage.setItem("pq-hotkeys", JSON.stringify({ next: ["n"] }));
+  const host = document.createElement("div");
+  document.body.append(host);
+  const fresh = new Quiz({ text: TEXT });
+  const freshMounted = mountQuiz(fresh, host, {
+    attempts: false,
+    printSheet: false,
+  });
+  mounted = freshMounted;
+  await fresh.loading;
+  await settle();
+  fresh.goTo(0);
+  await settle();
+
+  document.body.tabIndex = -1;
+  document.body.focus();
+  document.body.dispatchEvent(
+    new KeyboardEvent("keydown", {
+      key: "n",
+      bubbles: true,
+      cancelable: true,
+    }),
+  );
+  await settle();
+  expect(fresh.state.index).toBe(1);
 });

@@ -54,6 +54,7 @@ import {
 } from "../../../platform/browser/storage/layoutMode";
 import { useT } from "../i18n";
 import { pinnedActions, TOOLBAR_ACTIONS } from "../toolbar";
+import { KeyMapPanel } from "../../forms/KeyMapPanel";
 
 function includedRounds(quiz: Quiz): Record<string, boolean> {
   const hidden = new Set(
@@ -99,6 +100,7 @@ export function SettingsPanel({
   const [typeHints, setTypeHints] = useState(
     quiz.config.questionTypeHints !== false,
   );
+  const [sources, setSources] = useState(quiz.config.showSources === true);
   const [pinned, setPinned] = useState<readonly string[]>(() => [
     ...pinnedActions(quiz),
   ]);
@@ -256,6 +258,17 @@ export function SettingsPanel({
           />
           {t("beep")}
         </label>
+        <label class="pq-check">
+          <input
+            type="checkbox"
+            checked={sources}
+            onChange={(event) => {
+              setSources(event.currentTarget.checked);
+              quiz.configure({ showSources: event.currentTarget.checked });
+            }}
+          />
+          {t("showSources")}
+        </label>
         <label class="pq-field">
           <span class="pq-field-label">{t("answerLabels")}</span>
           <select
@@ -302,9 +315,14 @@ export function SettingsPanel({
         </label>
       </fieldset>
 
+      <KeyMapPanel quiz={quiz} />
+
       <fieldset class="pq-settings-group" aria-label={t("toolbar")}>
         <GroupHead label={t("toolbar")} note={t("toolbarNote")} />
-        {TOOLBAR_ACTIONS.map((action) => {
+        {TOOLBAR_ACTIONS.filter(
+          (action) =>
+            action.id !== "reveal" || quiz.config.allowReveal !== false,
+        ).map((action) => {
           const checked = pinned.includes(action.id);
           return (
             <label class="pq-check" key={action.id}>
@@ -369,6 +387,13 @@ export function SettingsOverlay({
   useEffect(() => {
     const onKey = (event: KeyboardEvent): void => {
       if (event.key !== "Escape") {
+        return;
+      }
+      // The key recorder owns Escape too: it is a bindable key.
+      if (
+        (event.target as HTMLElement | null)?.closest?.(".pq-key-capture") !=
+        null
+      ) {
         return;
       }
       event.preventDefault();

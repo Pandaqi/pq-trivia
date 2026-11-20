@@ -56,15 +56,37 @@ export function relativeName(path: string): string {
   return relative(ROOT, path).replaceAll("\\", "/");
 }
 
+export interface ResolvedTargets {
+  readonly files: readonly string[];
+  /** Paths that are missing or are not quiz files. */
+  readonly problems: readonly string[];
+}
+
 export async function resolveTargets(
   targets: readonly string[],
-): Promise<string[]> {
+): Promise<ResolvedTargets> {
   const files: string[] = [];
+  const problems: string[] = [];
   for (const target of targets) {
     // An absolute path is used as given. `join` would staple it to the repo.
     const path = isAbsolute(target) ? target : join(ROOT, target);
-    if (EXTENSIONS.test(target)) {
-      files.push(path);
+    const info = await stat(path).catch(() => null);
+    if (info === null) {
+      problems.push(`${target}: no such file or folder.`);
+      continue;
+    }
+    if (info.isFile()) {
+      if (EXTENSIONS.test(target)) {
+        files.push(path);
+      } else {
+        problems.push(
+          `${target}: not a quiz file. Pass a .trivia file or a folder.`,
+        );
+      }
+      continue;
+    }
+    if (!info.isDirectory()) {
+      problems.push(`${target}: not a file or a folder.`);
       continue;
     }
     const glob = new Bun.Glob("**/*.{trivia,txt,md}");
@@ -72,7 +94,7 @@ export async function resolveTargets(
       files.push(join(path, found));
     }
   }
-  return files.sort();
+  return { files: files.sort(), problems };
 }
 
 export async function readQuiz(path: string): Promise<QuizModel> {

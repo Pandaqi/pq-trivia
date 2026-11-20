@@ -215,6 +215,8 @@ export interface QuestionScreenView {
   /** Quiz-wide defaults, from `DefaultSteps` and `DefaultStepTransition`. */
   readonly defaultSteps?: readonly string[];
   readonly defaultStepTransition?: string | null;
+  /** Whether the player may show sources. Hidden by default. */
+  readonly showSources?: boolean;
 }
 
 export type { StepViewModel } from "../model/steps";
@@ -280,10 +282,7 @@ export function questionScreen(
     )
       ? fiftyFifty(question, state.plan?.seed ?? "")
       : [],
-    suggestions:
-      question.suggestions.length > 0
-        ? question.suggestions
-        : question.alsoAccept,
+    suggestions: question.suggestions,
     slider: question.slider,
     unit: question.unit,
     tolerance: question.tolerance,
@@ -338,6 +337,7 @@ export function questionScreen(
       defaults: view,
       step: state.step,
       complete: showAnswers,
+      hideSources: view.showSources === false,
     }),
     variant: question.variant,
     background: question.background,

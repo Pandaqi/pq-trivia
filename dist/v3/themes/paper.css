@@ -155,7 +155,6 @@
 .pq-timer-note,
 .pq-sort-rank,
 .pq-match-pair,
-.pq-match-hint,
 .pq-field-label,
 .pq-score-max,
 .pq-review-explanation,
@@ -209,6 +208,15 @@
 
 .pq-media-missing {
   border-style: dashed;
+}
+
+.pq-sources a {
+  color: var(--pq-accent);
+  text-underline-offset: 0.15em;
+
+  &:hover {
+    color: var(--pq-ink);
+  }
 }
 
 /* A line of things: buttons, chips, filters, sources, blanks, media. */
@@ -360,12 +368,22 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   background: var(--pq-slide);
-  /* Theme folders put a per-question image here. A theme that sets no image
-   * and no fade leaves the paper as it was. */
+  /* Theme folders put a per-question image here. The image sits behind a wash
+   * of the slide colour, so a light theme stays readable and a dark one keeps
+   * its dark mode. A theme with no image and no fade leaves the paper as it
+   * was. */
   background-image:
     linear-gradient(
-      rgb(0 0 0 / var(--pq-theme-fade, 0)),
-      rgb(0 0 0 / var(--pq-theme-fade, 0))
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      )
     ),
     var(--pq-theme-image, none);
   background-position: center;
@@ -388,6 +406,18 @@ body {
 
 .pq-screen-start {
   padding: var(--pq-space);
+}
+
+/* The optional hero on the start screen. Cropped, never taller than a third of
+ * the screen, so the title and the play button stay visible without scrolling. */
+.pq-banner {
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  max-height: min(36vh, 20rem);
+  border-radius: var(--pq-r-md);
+  box-shadow: var(--pq-shadow-1);
+  object-fit: cover;
 }
 
 .pq-section-body {
@@ -517,6 +547,12 @@ body {
   font-weight: var(--pq-heading-weight, 500);
   line-height: 1.12;
   text-wrap: balance;
+}
+
+/* The heading is focused on screen changes for screen readers, not as a
+   keyboard stop. A hotkey jump must not paint a box around it. */
+[data-pq-heading]:focus {
+  outline: none;
 }
 
 .pq-screen-start .pq-title,
@@ -661,6 +697,22 @@ body {
 /* Answer mode: cards, not buttons. A room reads them out loud. */
 .pq-answer-static {
   cursor: default;
+}
+
+/* An open question has one line, not a stack of choices. It needs air above
+   and below, or it reads like a stray label. */
+.pq-answers[data-pq-type="open"] {
+  margin-block: var(--pq-gap-lg);
+}
+
+.pq-answers[data-pq-type="open"] .pq-answer {
+  padding-block: var(--pq-gap-lg);
+}
+
+/* The split container removes the list's top margin so a column of choices
+   sits tight. One open answer is not a column; it keeps the air. */
+.pq-split .pq-answers[data-pq-type="open"] {
+  margin-top: var(--pq-gap-lg);
 }
 
 .pq-answer-number,
@@ -1293,7 +1345,25 @@ body {
   max-height: calc(100dvh - var(--pq-gap-lg) * 2);
   margin: 0 0 0 auto;
   overflow: auto;
-  background: var(--pq-slide);
+  /* The same wash as a question slide. A settings panel that drops the theme
+     background is the one flat rectangle in an otherwise themed quiz. */
+  background-color: var(--pq-slide);
+  background-image:
+    linear-gradient(
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      )
+    ),
+    var(--pq-theme-image, none);
+  background-position: center;
+  background-size: cover;
   box-shadow: var(--pq-shadow-2);
   text-align: left;
 }
@@ -1314,7 +1384,8 @@ body {
   justify-content: space-between;
   gap: 1rem;
   padding: var(--pq-gap-lg) var(--pq-space) var(--pq-gap);
-  background: var(--pq-slide);
+  background: color-mix(in srgb, var(--pq-slide) 92%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 /* Every small heading in a panel or a card. */
@@ -1387,6 +1458,43 @@ body {
 
 .pq-settings-row {
   justify-content: flex-start;
+}
+
+/* One key binding: name, current keys, and the button that changes them. */
+.pq-key-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto auto;
+  align-items: center;
+  gap: var(--pq-gap);
+}
+
+.pq-key-current {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.pq-key-capture-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pq-gap-sm);
+}
+
+.pq-key-capture {
+  width: 9rem;
+  cursor: grabbing;
+}
+
+@media (max-width: 30rem) {
+  .pq-key-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .pq-key-current {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 /* A settings field is read at arm's length, not across a room. */
@@ -1658,14 +1766,32 @@ body {
   margin: var(--pq-gap-lg) 0;
 }
 
+.pq-match-wrap {
+  position: relative;
+}
+
+/* The lines run from the left card's right edge to the right card's left edge. */
+.pq-match-lines {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.pq-match-line {
+  opacity: 0.8;
+}
+
+.pq-match-dot {
+  pointer-events: none;
+}
+
 .pq-match-pair {
   display: block;
   font-size: var(--pq-text-xs);
-}
-
-.pq-match-hint {
-  margin: 0.2rem 0 0.8rem;
-  font-size: var(--pq-text-sm);
 }
 
 /* --- Results ---------------------------------------------------------- */
@@ -2274,8 +2400,20 @@ body {
   gap: 0.4rem;
 }
 
+.pq-input-wrap {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pq-input-wrap .pq-input {
+  width: 100%;
+  padding-right: 2.6rem;
+}
+
 /* A field with a unit beside it shares the line; the unit keeps its width. */
-.pq-input-row .pq-input {
+.pq-input-row > .pq-input {
   flex: 1 1 auto;
   width: auto;
   min-width: 0;
@@ -2290,7 +2428,6 @@ body {
 .pq-no-idea,
 .pq-confidence-key,
 .pq-numpad-key,
-.pq-region,
 .pq-bucket-name {
   border: 1px solid var(--pq-line, currentColor);
   border-radius: 0.4rem;
@@ -2303,10 +2440,56 @@ body {
 
 .pq-mic[aria-pressed="true"],
 .pq-no-idea[aria-pressed="true"],
-.pq-confidence-key[aria-pressed="true"],
-.pq-region[aria-pressed="true"] {
+.pq-confidence-key[aria-pressed="true"] {
   background: var(--pq-accent, currentColor);
   color: var(--pq-accent-ink, #fff);
+}
+
+/* The microphone sits on the field, like the points bubble on an answer. */
+.pq-input-wrap .pq-mic {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.35rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 2px solid var(--pq-slide, #fff);
+  border-radius: 50%;
+  background: var(--pq-accent, currentColor);
+  color: var(--pq-accent-ink, #fff);
+  box-shadow: var(--pq-shadow-1, 0 1px 3px rgb(0 0 0 / 20%));
+  line-height: 1;
+}
+
+.pq-input-wrap .pq-mic svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Listening: red bubble, expanding halo, and the mic itself breathes. */
+.pq-input-wrap .pq-mic[aria-pressed="true"] {
+  background: #b23b32;
+  color: #fff;
+  box-shadow: 0 0 0 4px rgb(178 59 50 / 24%);
+}
+
+.pq-input-wrap .pq-mic[aria-pressed="true"] svg {
+  animation: pq-mic-listen 1.2s ease-in-out infinite;
+}
+
+@keyframes pq-mic-listen {
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-input-wrap .pq-mic[aria-pressed="true"] svg {
+    animation: none;
+  }
 }
 
 /* The extras under a field: no idea, confidence, a wager. `.pq-center` puts
@@ -2390,7 +2573,7 @@ body {
   block-size: 1.25rem;
 }
 
-/* The map is a shortcut. The list under it is the real answer for keyboard. */
+/* The map is the answer surface. A keyboard gets a neutral crosshair. */
 .pq-map {
   position: relative;
   max-width: 40rem;
@@ -2427,12 +2610,18 @@ body {
   pointer-events: none;
 }
 
+/* The keyboard crosshair is a ring: it has moved, not been picked yet. */
+.pq-map-marker.pq-map-cursor {
+  background: transparent;
+  border: 3px dashed var(--pq-accent, #d33);
+  box-shadow: 0 0 0 3px rgb(255 255 255 / 0.8);
+}
+
 .pq-map-status {
   font-size: 0.85em;
   opacity: 0.8;
 }
 
-.pq-regions ul,
 .pq-labels,
 .pq-items {
   display: flex;

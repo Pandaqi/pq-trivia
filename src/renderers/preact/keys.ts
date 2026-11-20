@@ -11,9 +11,14 @@ const TYPING_TAGS: ReadonlySet<string> = new Set([
 
 export function isTyping(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
+  if (element === null) {
+    return false;
+  }
+  const field = element.closest?.("input, textarea, select, [contenteditable]");
   return (
-    element !== null &&
-    (TYPING_TAGS.has(element.tagName) || element.isContentEditable)
+    TYPING_TAGS.has(element.tagName) ||
+    element.isContentEditable ||
+    field != null
   );
 }
 
@@ -38,6 +43,71 @@ export const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
   fontUp: ["+", "="],
   fontDown: ["-", "_"],
 };
+
+export interface HotkeyAction {
+  readonly id: string;
+  readonly labelKey: string;
+}
+
+/** The actions a player can bind, in the order the panel lists them. */
+export const HOTKEY_ACTIONS: readonly HotkeyAction[] = [
+  { id: "next", labelKey: "next" },
+  { id: "prev", labelKey: "previous" },
+  { id: "nextRound", labelKey: "nextRound" },
+  { id: "prevRound", labelKey: "prevRound" },
+  { id: "reveal", labelKey: "showAnswer" },
+  { id: "hint", labelKey: "hint" },
+  { id: "undo", labelKey: "keyUndo" },
+  { id: "mode", labelKey: "mode" },
+  { id: "start", labelKey: "goToStart" },
+  { id: "end", labelKey: "endQuiz" },
+  { id: "language", labelKey: "language" },
+  { id: "media", labelKey: "mediaWord" },
+  { id: "fullscreen", labelKey: "keyFullscreen" },
+  { id: "fontUp", labelKey: "fontPlus" },
+  { id: "fontDown", labelKey: "fontMinus" },
+];
+
+/** V2 names still work in a quiz file and in the settings panel. */
+const HOTKEY_ALIASES: Readonly<Record<string, string>> = {
+  "font-size-plus": "fontUp",
+  "font-size-min": "fontDown",
+  "next-section": "nextRound",
+  "prev-section": "prevRound",
+};
+
+function canonicalAction(raw: string): string | null {
+  const name = HOTKEY_ALIASES[raw] ?? raw;
+  return name in DEFAULT_KEYS ? name : null;
+}
+
+/**
+ * The keys each action has now. A custom action replaces the defaults, like
+ * V2. Later entries still win when two actions share one key.
+ */
+export function effectiveKeys(
+  config: Quiz["config"],
+): Map<string, readonly string[]> {
+  const forbidden = new Set(config.hotkeysForbidden ?? []);
+  const out = new Map<string, readonly string[]>();
+  for (const [name, keys] of Object.entries(DEFAULT_KEYS)) {
+    if (!forbidden.has(name)) {
+      out.set(name, keys);
+    }
+  }
+  for (const [raw, keys] of Object.entries(config.hotkeys ?? {})) {
+    const name = canonicalAction(raw);
+    if (name === null || forbidden.has(name) || forbidden.has(raw)) {
+      continue;
+    }
+    const values = (typeof keys === "string" ? [keys] : keys).filter(
+      (key) => typeof key === "string" && key.length > 0,
+    );
+    // An empty list is a deliberate "no keys", just as V2 allowed.
+    out.set(name, values);
+  }
+  return out;
+}
 
 export function actionFor(name: string): Action | null {
   switch (name) {
@@ -89,27 +159,8 @@ export function actionFor(name: string): Action | null {
 
 export function keyMap(config: Quiz["config"]): Map<string, string> {
   const map = new Map<string, string>();
-  const forbidden = new Set(config.hotkeysForbidden ?? []);
-  for (const [name, keys] of Object.entries(DEFAULT_KEYS)) {
-    if (forbidden.has(name)) {
-      continue;
-    }
+  for (const [name, keys] of effectiveKeys(config)) {
     for (const key of keys) {
-      map.set(key, name);
-    }
-  }
-  const aliases: Readonly<Record<string, string>> = {
-    "font-size-plus": "fontUp",
-    "font-size-min": "fontDown",
-    "next-section": "nextRound",
-    "prev-section": "prevRound",
-  };
-  for (const [raw, keys] of Object.entries(config.hotkeys ?? {})) {
-    const name = aliases[raw] ?? raw;
-    if (forbidden.has(name) || forbidden.has(raw)) {
-      continue;
-    }
-    for (const key of typeof keys === "string" ? [keys] : keys) {
       map.set(key, name);
     }
   }

@@ -173,6 +173,8 @@ export interface QuizConfig {
   readonly disableTouch?: boolean;
   readonly hotkeys?: Readonly<Record<string, string | readonly string[]>>;
   readonly hotkeysForbidden?: readonly string[];
+  /** Show the key mapping panel in Settings. Off by default. */
+  readonly allowHotkeyMapping?: boolean;
   readonly toolbar?: readonly string[];
   /** A, B, C (default), 1, 2, 3, i, ii, iii, or nothing. */
   readonly answerLabels?: AnswerLabels;
@@ -203,6 +205,8 @@ export interface QuizConfig {
   readonly mediaFormats?: readonly string[];
   readonly filenamePattern?: string;
   readonly filenames?: readonly string[];
+  /** Probe for `questions-0.trivia`, `questions-1.trivia`, … Off by default. */
+  readonly autoDiscoverQuestions?: boolean;
   readonly fileExtensions?: readonly string[];
   readonly subFolderQuestions?: string;
   readonly subFolderMedia?: string;
@@ -219,6 +223,8 @@ export interface QuizConfig {
   /** No answer mode, no reveal, no backwards. For tests and classrooms. */
   readonly restricted?: boolean;
   readonly revealMode?: RevealMode;
+  /** The manual “show answer” button and key. On unless turned off. */
+  readonly allowReveal?: boolean;
   readonly policy?: InteractivePolicy;
   /** One grading mode for the whole quiz. Question settings win when unset. */
   readonly grading?: GradingMode;
@@ -258,6 +264,10 @@ export interface QuizConfig {
   readonly theme?: string;
   /** Show "Insert a theme folder" on the start screen. On unless turned off. */
   readonly themeUpload?: boolean;
+  /** Show sources under a question. Off by default: they can give answers away. */
+  readonly showSources?: boolean;
+  /** The microphone button on text answers. Off by default. */
+  readonly dictation?: boolean;
   /**
    * Ruled space on written-answer questions in print. Off by default: most
    * quizzes want the question, not a worksheet.

@@ -155,6 +155,15 @@ const base: TranslationTable = {
   orderNote: "Zelfde notendop, zelfde volgorde. Antwoorden blijven staan.",
   beep: "Piep in de laatste vijf seconden",
   toolbar: "Werkbalk",
+  keysTitle: "Toetsen",
+  keysNote:
+    "Klik een actie, druk op een toets. Wijzigingen gelden meteen en worden op dit apparaat bewaard.",
+  changeKey: "Wijzig {label}",
+  pressKey: "Druk op een toets",
+  cancelKey: "Annuleer",
+  keyUndo: "Ongedaan maken",
+  keyFullscreen: "Volledig scherm",
+  keySpace: "Spatie",
   pin: "Pin {label} vast",
   unpin: "Haal {label} los",
   toolbarNote:
@@ -166,6 +175,7 @@ const base: TranslationTable = {
   answerRoman: "i, ii, iii",
   answerNone: "Geen labels",
   metadataIcons: "Toon iconen in de kop",
+  showSources: "Toon bronnen",
   questionTypeHints: "Hints over het vraagtype",
   download: "Downloaden",
   saveJson: "Bewaar JSON",
@@ -249,7 +259,7 @@ const base: TranslationTable = {
     "Geef je beste getal{unit}. Elk antwoord is {points} {point}.",
   typeHintOddOneOut:
     "Kies de uitzondering en zeg waarom. De keuze en de reden zijn elk de helft.",
-  typeHintHotspot: "Klik de juiste plek op de afbeelding, of kies een regio.",
+  typeHintHotspot: "Klik de juiste plek op de afbeelding.",
   typeHintMatrix:
     "Beantwoord alle {rows} rijen op dezelfde schaal, {points} {point} per rij.",
   typeHintParts:
@@ -266,16 +276,17 @@ const base: TranslationTable = {
   clearValue: "Leeg",
   sliderLabel: "Schuif, of typ een getal",
   toleranceHint: "Blijf binnen {tolerance} {unit} van het antwoord.",
-  mapHint: "Nog niets gekozen. Klik de afbeelding of gebruik de lijst.",
+  mapHint:
+    "Nog niets gekozen. Klik de afbeelding, of gebruik de pijltjes en Enter.",
+  mapMoveHint:
+    "Markering op {x} procent breed, {y} procent hoog. Enter kiest hem.",
   mapPicked: "Gekozen op {x} procent breed, {y} procent hoog.",
-  region: "Regio {number}",
-  regionList: "Regio's",
   labelList: "Labels",
   itemList: "Items",
   removeItem: "Haal dit item terug",
   matrixOne: "Eén antwoord per rij.",
   matrixMany: "Vink elke optie aan die klopt, op elke rij.",
-  needSpot: "Klik de afbeelding of kies een regio.",
+  needSpot: "Klik de afbeelding.",
   needReason: "Kies de uitzondering en geef een reden.",
   needRows: "Beantwoord elke rij.",
   needParts: "Vul elk onderdeel in.",
@@ -297,6 +308,7 @@ const base: TranslationTable = {
   confidenceWord: "Zekerheid",
   playLimitReached: "Dat fragment is {limit} keer afgespeeld. Niet meer.",
   speak: "Spreek in",
+  stopListening: "Stop met luisteren",
   speechHint:
     "Dicteren gebruikt de spraakdienst van je browser. Chrome, Edge en Safari ondersteunen het; Firefox niet. Typen werkt altijd.",
 
@@ -308,8 +320,6 @@ const base: TranslationTable = {
   moveDown: "Verplaats {text} omlaag",
   left: "Links",
   right: "Rechts",
-  pickLeft: "Kies links een item en daarna de match rechts.",
-  pickMatch: 'Kies nu de match voor "{text}".',
   notCorrect: "Niet juist",
   pointsLabel: "{points} {unit}",
 

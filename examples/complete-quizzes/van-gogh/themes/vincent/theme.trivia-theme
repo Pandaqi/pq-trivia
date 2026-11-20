@@ -1,0 +1,33 @@
+Label => Vincent
+Stylesheet => style.css
+BackgroundAlpha => 0.16
+BoldHeadings => true
+
+--pq-paper => light-dark(#f4ead4, #171410)
+--pq-paper-deep => light-dark(#ece0c4, #100e0b)
+--pq-slide => light-dark(#fbf5e6, #201c16)
+--pq-ink => light-dark(#26221c, #f4ead4)
+--pq-muted => light-dark(#6d6456, #b8ab93)
+--pq-line => light-dark(#d9c7a4, #463c2c)
+--pq-line-strong => light-dark(#b9a274, #6d5c40)
+--pq-accent => light-dark(#274e8a, #e8b44a)
+--pq-accent-ink => light-dark(#fffaf0, #201c16)
+--pq-honey => #edb23a
+--pq-honey-soft => light-dark(#f8e3ae, #4a3a16)
+--pq-fern => light-dark(#5f7040, #a9bd7e)
+
+Font => heading | Cormorant Garamond | regular | fonts/CormorantGaramond.woff2
+Font => heading | Cormorant Garamond | bold | fonts/CormorantGaramond.woff2
+Font => body | Karla | regular | fonts/Karla.woff2
+Font => body | Karla | bold | fonts/Karla.woff2
+Font => body | Karla | italic | fonts/Karla-Italic.woff2
+
+### Background
+bg-stars.svg
+bg-wheat.svg
+
+### ColorScheme night
+Light => #e8d9b0
+Dark => #0b1830
+Background => #0d1b34
+Text => #f7ecc9

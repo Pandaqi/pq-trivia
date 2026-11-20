@@ -41,6 +41,7 @@ export function screenFor(
   media: MediaOptions = {},
   numbers = true,
   steps: StepDefaults = {},
+  showSources = false,
 ): ScreenViewModel | null {
   if (
     quiz === null ||
@@ -108,6 +109,7 @@ export function screenFor(
         roundQuestions.reduce((sum, item) => sum + questionMaxScore(item), 0),
       seed: state.plan.seed,
       isRoundStart: round !== null && previous?.round !== question.round,
+      showSources,
       ...(steps.defaultSteps === undefined
         ? {}
         : { defaultSteps: steps.defaultSteps }),

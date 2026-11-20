@@ -323,7 +323,25 @@
   max-height: calc(100dvh - var(--pq-gap-lg) * 2);
   margin: 0 0 0 auto;
   overflow: auto;
-  background: var(--pq-slide);
+  /* The same wash as a question slide. A settings panel that drops the theme
+     background is the one flat rectangle in an otherwise themed quiz. */
+  background-color: var(--pq-slide);
+  background-image:
+    linear-gradient(
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      ),
+      color-mix(
+        in srgb,
+        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        transparent
+      )
+    ),
+    var(--pq-theme-image, none);
+  background-position: center;
+  background-size: cover;
   box-shadow: var(--pq-shadow-2);
   text-align: left;
 }
@@ -344,7 +362,8 @@
   justify-content: space-between;
   gap: 1rem;
   padding: var(--pq-gap-lg) var(--pq-space) var(--pq-gap);
-  background: var(--pq-slide);
+  background: color-mix(in srgb, var(--pq-slide) 92%, transparent);
+  backdrop-filter: blur(8px);
 }
 
 /* Every small heading in a panel or a card. */
@@ -417,6 +436,43 @@
 
 .pq-settings-row {
   justify-content: flex-start;
+}
+
+/* One key binding: name, current keys, and the button that changes them. */
+.pq-key-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto auto;
+  align-items: center;
+  gap: var(--pq-gap);
+}
+
+.pq-key-current {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.pq-key-capture-row {
+  display: flex;
+  align-items: center;
+  gap: var(--pq-gap-sm);
+}
+
+.pq-key-capture {
+  width: 9rem;
+  cursor: grabbing;
+}
+
+@media (max-width: 30rem) {
+  .pq-key-row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .pq-key-current {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
 }
 
 /* A settings field is read at arm's length, not across a room. */

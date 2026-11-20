@@ -1,0 +1,54 @@
+/* Vincent. Ultramarine, chrome yellow, and two fonts that behave. */
+
+.pq-quiz {
+  --pq-font-label: "Karla", "Segoe UI", system-ui, sans-serif;
+  --pq-r-sm: 0.2rem;
+  --pq-r-md: 0.45rem;
+  --pq-r-organic: 0.9rem 0.55rem 1rem 0.65rem;
+}
+
+@media screen {
+  .pq-quiz .pq-title {
+    letter-spacing: 0.005em;
+  }
+
+  /* A painted line under the big titles, like the edge of a canvas. */
+  .pq-quiz .pq-screen-start .pq-title,
+  .pq-quiz .pq-screen-section .pq-title {
+    padding-bottom: 0.22em;
+    border-bottom: 3px double var(--pq-accent);
+  }
+
+  .pq-quiz .pq-kicker {
+    color: var(--pq-accent);
+    letter-spacing: 0.18em;
+  }
+
+  /* Answers get a thin brush of colour on the left when they are live. */
+  .pq-quiz .pq-answer:not(.pq-answer-static) {
+    border-left: 4px solid transparent;
+  }
+
+  .pq-quiz .pq-answer:not(.pq-answer-static):hover {
+    border-left-color: var(--pq-honey);
+  }
+
+  .pq-quiz .pq-answer[data-pq-selected="true"] {
+    border-left-color: var(--pq-accent);
+  }
+
+  /* Pictures sit on the page like a print, not a web card. */
+  .pq-quiz .pq-media img,
+  .pq-quiz .pq-media video {
+    border-radius: 0.15rem;
+    box-shadow: 0 8px 26px -16px rgb(38 34 28 / 0.75);
+  }
+
+  .pq-quiz .pq-media-credit {
+    letter-spacing: 0.02em;
+  }
+
+  .pq-quiz .pq-banner {
+    border-radius: var(--pq-r-sm);
+  }
+}

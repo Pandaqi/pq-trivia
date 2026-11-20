@@ -111,6 +111,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
       config,
       config.questionNumbers !== false,
       config,
+      config.showSources === true,
     );
   }
   function buildReport(): GradeReport | null {
@@ -156,7 +157,7 @@ export function createQuiz(options: CreateQuizOptions = {}): QuizApi {
       return;
     }
     const response = state.responses[question.id] ?? defaultResponse(question);
-    const mode = revealMode();
+    const mode = config.allowReveal === false ? RevealMode.Never : revealMode();
     const should =
       mode === RevealMode.Always ||
       (mode === RevealMode.AfterAnswer && !isEmptyResponse(response));

@@ -8,6 +8,7 @@ import type { QuestionViewModel } from "../../../core/session/viewModel";
 import { useT } from "../i18n";
 import {
   changeFontScale,
+  FONT_STEP,
   pinnedActions,
   TOOLBAR_ACTIONS,
   type ToolbarAction,
@@ -35,6 +36,7 @@ export function Toolbar({ quiz, screen, onNext }: ToolbarProps): JSX.Element {
   const canReveal =
     isQuestion &&
     quiz.config.restricted !== true &&
+    quiz.config.allowReveal !== false &&
     (revealed || screen?.revealable === true);
   const hintCount = screen?.hints.revealed.length ?? 0;
   const canHint =
@@ -62,10 +64,10 @@ export function Toolbar({ quiz, screen, onNext }: ToolbarProps): JSX.Element {
         quiz.prevRound();
         break;
       case "font-plus":
-        changeFontScale(root, 0.1);
+        changeFontScale(root, FONT_STEP);
         break;
       case "font-minus":
-        changeFontScale(root, -0.1);
+        changeFontScale(root, -FONT_STEP);
         break;
       case "reveal":
         quiz.toggleReveal();

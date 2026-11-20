@@ -1,24 +1,23 @@
 /**
  * Click on the image. Hotspot and diagram share the frame.
  *
- * The image is a shortcut, never the only way in. Every region and every
- * target is also a button in a visible list, so a keyboard and a screen reader
- * can answer the same question. Clicking the image is extra, not required.
+ * A hotspot has one job: pick a spot. Do not list the answers beside it; that
+ * turns the map into a giveaway. A diagram still lists its draggable labels.
  */
 
 import type { ComponentChildren, JSX } from "preact";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import { inlineToPlainText, parseInline } from "../../core/format/inline";
 import {
   ResponseKind,
   setHotspotPoint,
   setMatchPairs,
 } from "../../core/session/responses";
-import { parsePoint } from "../../core/values/point";
 import type { QuestionViewModel } from "../../core/session/viewModel";
 import { useT } from "../preact/i18n";
 import { Inline } from "../preact/components/Inline";
 import { Media } from "../preact/components/Media";
+import type { Point } from "../../core/values/point";
 import { allowDrop, connectPair, dragPayload } from "./drag";
 import { FieldError } from "./fields";
 import type { InputProps } from "./fields";
@@ -26,6 +25,7 @@ import type { InputProps } from "./fields";
 interface MapClick {
   readonly clientX: number;
   readonly clientY: number;
+  readonly detail?: number;
   readonly currentTarget: {
     getBoundingClientRect(): {
       readonly left: number;
@@ -36,26 +36,34 @@ interface MapClick {
   };
 }
 
-function percentOf(event: MapClick): { x: number; y: number } | null {
+function clampPercent(value: number): number {
+  return Math.round(Math.min(100, Math.max(0, value)));
+}
+
+function percentOf(event: MapClick): Point | null {
   const box = event.currentTarget.getBoundingClientRect();
   if (box.width === 0 || box.height === 0) {
     return null;
   }
-  const x = ((event.clientX - box.left) / box.width) * 100;
-  const y = ((event.clientY - box.top) / box.height) * 100;
   return {
-    x: Math.round(Math.min(100, Math.max(0, x))),
-    y: Math.round(Math.min(100, Math.max(0, y))),
+    x: clampPercent(((event.clientX - box.left) / box.width) * 100),
+    y: clampPercent(((event.clientY - box.top) / box.height) * 100),
   };
 }
 
 function MapFrame({
   screen,
   onPick,
+  onKeyDown,
+  keyboardPoint = null,
+  describedBy,
   children,
 }: {
   readonly screen: QuestionViewModel;
-  readonly onPick?: (event: MapClick) => void;
+  readonly onPick?: (point: Point) => void;
+  readonly onKeyDown?: (event: KeyboardEvent) => void;
+  readonly keyboardPoint?: Point | null;
+  readonly describedBy?: string;
   readonly children?: ComponentChildren;
 }): JSX.Element | null {
   if (screen.map === null) {
@@ -73,10 +81,18 @@ function MapFrame({
           type="button"
           class="pq-map-surface"
           aria-label={inlineToPlainText(screen.title)}
+          aria-describedby={describedBy}
+          onKeyDown={onKeyDown}
           onClick={(event) => {
+            // Keyboard activation has no pointer coordinates. Use the
+            // crosshair instead of the top-left corner.
+            if (event.detail === 0) {
+              onPick(keyboardPoint ?? { x: 50, y: 50 });
+              return;
+            }
             const point = percentOf(event);
             if (point !== null) {
-              onPick(event);
+              onPick(point);
             }
           }}
         >
@@ -102,70 +118,75 @@ export function HotspotInput({
 }: InputProps): JSX.Element {
   const t = useT();
   const chosen = response.kind === ResponseKind.Hotspot ? response.point : null;
-  const regions = screen.answers
-    .map((answer, index) => ({
-      answer,
-      index,
-      point: parsePoint(answer.text.replace(/^.*@/, "")),
-    }))
-    .filter((entry) => entry.point !== null);
+  const [cursor, setCursor] = useState<Point | null>(null);
+  const statusId = `pq-map-status-${screen.id}`;
+
+  useEffect(() => {
+    setCursor(null);
+  }, [screen.id]);
+
+  const pick = (point: Point): void => {
+    setCursor(null);
+    quiz.setResponse(screen.id, setHotspotPoint(response, point));
+  };
+
+  // Arrow keys move a neutral crosshair. Enter or Space drops it. No list of
+  // answer locations: the player has to know the map, as with a mouse.
+  const onMapKey = (event: KeyboardEvent): void => {
+    const step = event.shiftKey ? 10 : 2;
+    let dx = 0;
+    let dy = 0;
+    if (event.key === "ArrowLeft") {
+      dx = -step;
+    } else if (event.key === "ArrowRight") {
+      dx = step;
+    } else if (event.key === "ArrowUp") {
+      dy = -step;
+    } else if (event.key === "ArrowDown") {
+      dy = step;
+    }
+    if (dx !== 0 || dy !== 0) {
+      event.preventDefault();
+      event.stopPropagation();
+      const start = cursor ?? chosen ?? { x: 50, y: 50 };
+      setCursor({
+        x: clampPercent(start.x + dx),
+        y: clampPercent(start.y + dy),
+      });
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+      pick(cursor ?? chosen ?? { x: 50, y: 50 });
+    }
+  };
+
+  const shown = cursor ?? chosen;
   return (
     <div class="pq-hotspot">
       <MapFrame
         screen={screen}
-        onPick={(event) => {
-          const point = percentOf(event);
-          if (point !== null) {
-            quiz.setResponse(screen.id, setHotspotPoint(response, point));
-          }
-        }}
+        onPick={pick}
+        onKeyDown={onMapKey}
+        keyboardPoint={cursor}
+        describedBy={statusId}
       >
-        {chosen === null ? null : (
+        {shown === null ? null : (
           <span
-            class="pq-map-marker"
-            style={`left:${chosen.x}%;top:${chosen.y}%`}
+            class={`pq-map-marker${cursor === null ? "" : " pq-map-cursor"}`}
+            style={`left:${shown.x}%;top:${shown.y}%`}
             aria-hidden="true"
           />
         )}
       </MapFrame>
-      <p class="pq-map-status" role="status">
-        {chosen === null
-          ? t("mapHint")
-          : t("mapPicked", { x: chosen.x, y: chosen.y })}
+      <p class="pq-map-status" id={statusId} role="status">
+        {cursor !== null
+          ? t("mapMoveHint", { x: cursor.x, y: cursor.y })
+          : chosen === null
+            ? t("mapHint")
+            : t("mapPicked", { x: chosen.x, y: chosen.y })}
       </p>
-      <div class="pq-regions">
-        <p class="pq-field-label" id={`pq-regions-${screen.id}`}>
-          {t("regionList")}
-        </p>
-        <ul aria-labelledby={`pq-regions-${screen.id}`}>
-          {regions.map((entry) => (
-            <li key={entry.answer.id}>
-              <button
-                type="button"
-                class="pq-region"
-                aria-pressed={
-                  chosen !== null &&
-                  entry.point !== null &&
-                  chosen.x === entry.point.x &&
-                  chosen.y === entry.point.y
-                }
-                onClick={() => {
-                  if (entry.point !== null) {
-                    quiz.setResponse(
-                      screen.id,
-                      setHotspotPoint(response, entry.point),
-                    );
-                  }
-                }}
-              >
-                {entry.answer.text.includes("@")
-                  ? entry.answer.text.split("@")[0]
-                  : t("region", { number: entry.index + 1 })}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
       <FieldError issues={issues} field="answer" />
     </div>
   );

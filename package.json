@@ -34,7 +34,7 @@
     "size": "bun run scripts/size.ts",
     "bench": "bun run scripts/bench.ts",
     "test": "bun test",
-    "check:content": "bun run cli/index.ts validate examples/quick-start-template/template/quiz.trivia test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict",
+    "check:content": "bun run cli/index.ts validate examples/quick-start-template/template/quiz.trivia test/fixtures/simple.trivia test/fixtures/all-types.trivia test/fixtures/v2-real.trivia --strict && bun run cli/index.ts validate examples/complete-quizzes --strict --assets",
     "validate": "bun run cli/index.ts validate",
     "format": "bun run cli/index.ts format",
     "docs": "bun run cli/index.ts docs",

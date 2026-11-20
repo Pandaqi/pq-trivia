@@ -107,7 +107,7 @@ export interface QuestionModel {
   readonly negate: boolean;
   /** One line per answer, shown after the reveal. */
   readonly feedback: readonly string[];
-  /** Autocomplete suggestions. Falls back to `AlsoAccept`. */
+  /** Autocomplete suggestions. Only what `Suggest` says; aliases stay hidden. */
   readonly suggestions: readonly string[];
   /** Matrix: one statement per row. */
   readonly rows: readonly string[];

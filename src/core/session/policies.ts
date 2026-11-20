@@ -138,7 +138,7 @@ function messageFor(question: QuestionModel): readonly [string, string] {
     case QuestionType.Estimate:
       return ["Enter a number.", "needNumber"];
     case QuestionType.Hotspot:
-      return ["Click the image or pick a region.", "needSpot"];
+      return ["Click the image.", "needSpot"];
     case QuestionType.OddOneOut:
       return ["Pick the odd one out and say why.", "needReason"];
     case QuestionType.Matrix:

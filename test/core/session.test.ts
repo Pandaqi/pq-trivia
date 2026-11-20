@@ -77,6 +77,50 @@ describe("session", () => {
     expect(state.endedAt).toBe(400);
   });
 
+  test("a manual reveal belongs to one screen only", () => {
+    const first = plan.questions[0]?.id ?? "";
+    let state = sessionReducer(
+      createSessionState(),
+      { type: "load/success", plan },
+      0,
+    );
+    state = sessionReducer(state, { type: "nav/next" }, 100);
+    state = sessionReducer(state, { type: "reveal", questionId: first }, 0);
+    expect(state.revealed).toEqual([first]);
+
+    state = sessionReducer(state, { type: "nav/next" }, 200);
+    state = sessionReducer(state, { type: "nav/prev" }, 300);
+    expect(state.index).toBe(0);
+    expect(state.revealed).toEqual([]);
+  });
+
+  test("a resumed attempt gives every question a response", () => {
+    const first = plan.questions[0];
+    const second = plan.questions[1];
+    let state = sessionReducer(
+      createSessionState(),
+      { type: "load/success", plan },
+      0,
+    );
+    state = sessionReducer(
+      state,
+      {
+        type: "attempt/restore",
+        responses:
+          first === undefined ? {} : { [first.id]: defaultResponse(first) },
+        index: 1,
+        startedAt: 0,
+        endedAt: null,
+      },
+      0,
+    );
+
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    expect(state.responses[first?.id ?? ""]).toBeDefined();
+    expect(state.responses[second?.id ?? ""]).toBeDefined();
+  });
+
   test("choice responses are sets of answer IDs", () => {
     const question = plan.questions[0];
     if (question === undefined) {
