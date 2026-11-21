@@ -42,9 +42,26 @@ async function violations(): Promise<string[]> {
   );
 }
 
-/** Preact draws effects on a microtask, so state changes need one tick. */
-async function settle(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0));
+/**
+ * Preact draws on its own schedule: one tick is enough on one machine and short
+ * on the next. Poll for what the test is about to read instead of guessing.
+ */
+async function waitFor(ready: () => boolean): Promise<void> {
+  for (let attempt = 0; attempt < 200; attempt += 1) {
+    if (ready()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
+async function screen(kind: string): Promise<void> {
+  await waitFor(() => document.querySelector(`.pq-screen-${kind}`) !== null);
+  expect(document.querySelector(`.pq-screen-${kind}`)).not.toBeNull();
+}
+
+function hintText(): string {
+  return document.querySelector(".pq-type-hint")?.textContent ?? "";
 }
 
 let dom: TestDom;
@@ -58,7 +75,9 @@ beforeAll(async () => {
   quiz = new Quiz({ text: TEXT });
   mounted = mountQuiz(quiz, host, { attempts: false, printSheet: false });
   await quiz.loading;
-  await settle();
+  // The start screen only appears once the app has subscribed to the quiz, so
+  // waiting for it means the controls below act on a live player.
+  await screen("start");
 });
 
 afterAll(async () => {
@@ -76,28 +95,27 @@ describe("the player", () => {
 
   test("an open question says so", async () => {
     quiz.goTo(0);
-    await settle();
+    await screen("question");
+    await waitFor(() => hintText().length > 0);
 
-    const hint = document.querySelector(".pq-type-hint");
-    expect(hint?.textContent).toBe("This is an open question.");
+    expect(hintText()).toBe("This is an open question.");
   });
 
   test("the question screen has no axe violations", async () => {
-    expect(document.querySelector(".pq-screen-question")).not.toBeNull();
+    await screen("question");
     expect(await violations()).toEqual([]);
   });
 
   test("a choice question counts the answers it wants", async () => {
     quiz.goTo(1);
-    await settle();
+    await waitFor(() => hintText().includes("Pick 2 answers"));
 
-    const hint = document.querySelector(".pq-type-hint");
-    expect(hint?.textContent).toContain("Pick 2 answers");
+    expect(hintText()).toContain("Pick 2 answers");
   });
 
   test("the hints can be turned off", async () => {
     quiz.configure({ questionTypeHints: false });
-    await settle();
+    await waitFor(() => document.querySelector(".pq-type-hint") === null);
 
     expect(document.querySelector(".pq-type-hint")).toBeNull();
   });
@@ -105,9 +123,8 @@ describe("the player", () => {
   test("the results screen has no axe violations", async () => {
     quiz.goToEnd();
     quiz.showResults();
-    await settle();
+    await screen("results");
 
-    expect(document.querySelector(".pq-screen-results")).not.toBeNull();
     expect(await violations()).toEqual([]);
   });
 
