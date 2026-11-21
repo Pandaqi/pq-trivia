@@ -20,5 +20,6 @@ jobs:
       - run: bun run check
       - run: bun run lint
       - run: bun run test
-      - run: bun run build
+      # The editor is a shipped artifact, so its build and budget belong here.
+      - run: bun run build:editor
       - run: bun run size

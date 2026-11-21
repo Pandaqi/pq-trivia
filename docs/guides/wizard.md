@@ -10,10 +10,13 @@ bun run build --editor
 ```
 
 ```html
-<link rel="stylesheet" href="dist/v3/themes/paper.css" />
+<link rel="stylesheet" href="themes/paper.css" />
 <div data-pq-wizard></div>
-<script type="module" src="dist/v3/editor.js"></script>
+<script type="module" src="editor.js"></script>
 ```
+
+A build writes `editor.js`, its chunks and the theme to `dist/v3/`. Copy them
+beside the page. From the package the door is `@pandaqi/pq-trivia/editor`.
 
 Every `[data-pq-wizard]` element gets one. Or mount it yourself:
 
@@ -28,7 +31,7 @@ wizard.text(); // the current buffer
 wizard.destroy(); // gives the page back
 ```
 
-From the package, the same door is `mountEditor` in `pq-trivia/editor`. The
+From the package, the same door is `mountEditor` in `@pandaqi/pq-trivia/editor`. The
 bundle also exports `mountQuizWizard`.
 
 ## Four panes, one buffer

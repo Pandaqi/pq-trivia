@@ -301,7 +301,7 @@ if (version !== pkg.version) {
 }
 
 function banner(name: string): string {
-  return `/*! PQ-Trivia v${version} | ${name} | MIT | https://pq-trivia.dev */`;
+  return `/*! PQ-Trivia v${version} | ${name} | MIT | https://pandaqi.github.io/pq-trivia/ */`;
 }
 
 /** Entries that ship as IIFE and a fixed file name. */
@@ -391,6 +391,13 @@ async function copyThemes(): Promise<void> {
   const printCss = await readFile(join(outThemes, "print.css"), "utf8");
   const proof = `/* Generated from print.css. Do not edit.\n * On screen it shows the print layout; production links print.css with media="print". */\n${unwrapMediaPrint(printCss)}`;
   await Bun.write(join(outThemes, "print.proof.css"), proof);
+
+  // The OFL text travels with the embedded Figtree subsets. A font without
+  // its licence is not a font you can ship.
+  await Bun.write(
+    join(outThemes, "Figtree-OFL.txt"),
+    Bun.file(join(themeDir, "fonts", "Figtree-OFL.txt")),
+  );
 }
 
 async function build(languages: readonly string[]): Promise<boolean> {
@@ -488,6 +495,20 @@ console.log(
 const built = await build(languages);
 if (!built) {
   process.exit(1);
+}
+
+// Declarations are part of the package. Watch mode skips them: the next save
+// rebuilds the JavaScript anyway, and a type emit on every keystroke is noise.
+if (!WATCH) {
+  console.log("\nTypes: dist/types");
+  const types = Bun.spawnSync(["bun", "run", "types"], {
+    cwd: ROOT,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  if (types.exitCode !== 0) {
+    process.exit(1);
+  }
 }
 
 if (WATCH) {

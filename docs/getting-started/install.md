@@ -5,7 +5,9 @@ separate CSS.
 
 ## One file
 
-Copy `dist/v3/pq-trivia.min.js` next to your `index.html`:
+Download [`pq-trivia.min.js`](https://github.com/Pandaqi/pq-trivia/releases/latest/download/pq-trivia.min.js)
+from the latest release, or run `bun run build` in this repo and take it from
+`dist/v3/`. Put it next to your `index.html`:
 
 ```html
 <script id="quiz-text" type="text/plain">
@@ -17,11 +19,12 @@ Copy `dist/v3/pq-trivia.min.js` next to your `index.html`:
 ```
 
 Open the page. That is the whole setup, `file://` included. The theme, the print
-sheet and the live code are inside the bundle.
+sheet and the live code are inside the bundle, Trystero too.
 
-The QR encoder is the one optional second file. Copy `pq-qr.min.js` beside the
-bundle and a live lobby can draw a join QR. Without it the lobby shows the room
-code and the link.
+The QR encoder is the one optional second file. Put
+[`pq-qr.min.js`](https://github.com/Pandaqi/pq-trivia/releases/latest/download/pq-qr.min.js)
+beside the bundle and a live lobby can draw a join QR. Without it the lobby
+shows the room code and the link.
 
 ## From this repo
 
@@ -30,7 +33,8 @@ bun install
 bun run build
 ```
 
-Then copy what you need from `dist/v3/`:
+Then copy what you need from `dist/v3/`. The release assets and the npm tarball
+hold the same files:
 
 | File                       | Use                                                  |
 | -------------------------- | ---------------------------------------------------- |
@@ -63,20 +67,22 @@ The wizard is not in a normal build. Add it with `bun run build --editor`; see
 ></pq-quiz>
 ```
 
-A theme folder is optional. Without `theme`, Paper is what you see.
+Those two files are `dist/v3/player.js` and `dist/v3/themes/paper.css` after a
+build. Copy them next to the page. A theme folder is optional. Without `theme`,
+Paper is what you see.
 
 ## From a package
 
-The package is not on npm yet. When it is:
-
 ```bash
-bun add pq-trivia
+bun add @pandaqi/pq-trivia
 ```
 
 ```ts
-import { createQuiz } from "pq-trivia";
-import "pq-trivia/themes/paper.css";
+import { createQuiz } from "@pandaqi/pq-trivia";
+import "@pandaqi/pq-trivia/themes/paper.css";
 ```
+
+Types travel with the package. No `@types` install.
 
 ## Big quiz, worker parsing
 

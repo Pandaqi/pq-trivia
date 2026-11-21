@@ -8,7 +8,7 @@
  *   const quiz = new Quiz({ text, id: "quiz" });
  *   const other = new Quiz({ text }); // into the body
  *
- * Import it from `pq-trivia`. `pq-trivia/core` still hands out the DOM-free
+ * Import it from `@pandaqi/pq-trivia`. `@pandaqi/pq-trivia/core` still hands out the DOM-free
  * class, and `mountQuiz` is there for hosts that want to pick the element
  * after creating the quiz.
  */

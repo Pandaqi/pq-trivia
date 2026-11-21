@@ -38,7 +38,8 @@ export const DiagnosticCodes = {
 export type DiagnosticCode =
   (typeof DiagnosticCodes)[keyof typeof DiagnosticCodes];
 
-export const DOCS_BASE = "https://pq-trivia.dev/docs/reference/diagnostics";
+export const DOCS_BASE =
+  "https://pandaqi.github.io/pq-trivia/syntax/reference.html";
 
 export interface SourceLocation {
   readonly file: string;

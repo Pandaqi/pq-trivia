@@ -9,7 +9,7 @@ import {
   DiagnosticCodes,
   ResponseKind,
   syntaxWarning,
-} from "pq-trivia";
+} from "@pandaqi/pq-trivia";
 
 const confidence = defineQuestionType({
   id: "confidence",

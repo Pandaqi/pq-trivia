@@ -1,9 +1,10 @@
 {
-  "name": "pq-trivia",
-  "version": "3.0.0-dev.0",
-  "private": true,
+  "name": "@pandaqi/pq-trivia",
+  "version": "3.0.0",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "description": "Plain-text quiz engine for pub quizzes and classrooms.",
   "license": "MIT",
   "keywords": [
@@ -21,12 +22,14 @@
   "bugs": {
     "url": "https://github.com/Pandaqi/pq-trivia/issues"
   },
+  "types": "./dist/types/entries/player.d.ts",
   "scripts": {
     "check": "bun check -p tsconfig.json && bun check -p tsconfig.core.json && bun check -p tsconfig.scripts.json",
     "lint": "bun run scripts/lint.ts",
     "layers": "bun run scripts/lint.ts --layers-only",
     "fmt": "bun fmt",
     "fmt:check": "bun fmt --check",
+    "types": "bun x tsc -p tsconfig.declarations.json",
     "build": "bun run scripts/build.ts",
     "build:editor": "bun run scripts/build.ts --editor",
     "build:lang": "bun run scripts/build.ts",
@@ -47,34 +50,58 @@
     "release:dry": "bun run scripts/release.ts"
   },
   "exports": {
-    ".": "./dist/v3/player.js",
-    "./core": "./dist/v3/core.js",
-    "./headless": "./dist/v3/headless.js",
-    "./browser": "./dist/v3/browser.js",
-    "./multiplayer": "./dist/v3/multiplayer.js",
-    "./editor": "./dist/v3/editor.js",
-    "./animations": "./dist/v3/animations.js",
+    ".": {
+      "types": "./dist/types/entries/player.d.ts",
+      "import": "./dist/v3/player.js"
+    },
+    "./core": {
+      "types": "./dist/types/entries/core.d.ts",
+      "import": "./dist/v3/core.js"
+    },
+    "./headless": {
+      "types": "./dist/types/entries/headless.d.ts",
+      "import": "./dist/v3/headless.js"
+    },
+    "./browser": {
+      "types": "./dist/types/entries/browser.d.ts",
+      "import": "./dist/v3/browser.js"
+    },
+    "./multiplayer": {
+      "types": "./dist/types/entries/multiplayer.d.ts",
+      "import": "./dist/v3/multiplayer.js"
+    },
+    "./editor": {
+      "types": "./dist/types/entries/editor.d.ts",
+      "import": "./dist/v3/editor.js"
+    },
+    "./animations": {
+      "types": "./dist/types/entries/animations.d.ts",
+      "import": "./dist/v3/animations.js"
+    },
     "./themes/*": "./dist/v3/themes/*",
     "./package.json": "./package.json"
   },
   "files": [
-    "dist/v3",
+    "dist/v3/*.js",
+    "dist/v3/themes/*.css",
+    "dist/v3/themes/*.txt",
+    "dist/types/**/*.d.ts",
     "README.md",
     "LICENSE"
   ],
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "dependencies": {
-    "preact": "^11.2.0",
-    "trystero": "^0.27.0",
-    "uqr": "^0.1.3"
+    "preact": "^11.2.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.0",
     "axe-core": "^4.14.1",
     "happy-dom": "^21.0.4",
+    "trystero": "^0.27.0",
+    "typescript": "^7.0.2",
+    "uqr": "^0.1.3",
     "vitepress": "^1.6.4"
   },
   "engines": {

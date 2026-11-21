@@ -1,5 +1,5 @@
 /**
- * `pq-trivia/multiplayer`. Separate entry, separate bundle.
+ * `@pandaqi/pq-trivia/multiplayer`. Separate entry, separate bundle.
  *
  * The default player build imports none of this. Add it when a night needs
  * phones, not before.

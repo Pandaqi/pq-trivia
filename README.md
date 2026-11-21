@@ -16,7 +16,7 @@ and more languages. V2 files still parse.
 
 ## Twenty-second start
 
-Download `dist/v3/pq-trivia.min.js`, the one-file bundle.
+Download [`pq-trivia.min.js`](https://github.com/Pandaqi/pq-trivia/releases/latest/download/pq-trivia.min.js), the one-file bundle. Or take the package: `bun add @pandaqi/pq-trivia`.
 
 Create an `index.html` next to it:
 
@@ -39,11 +39,15 @@ Double-click the file. That is a quiz.
 **Hosting it?** Put only what you need on the server, and use the element:
 
 ```html
-<link rel="stylesheet" href="dist/v3/themes/paper.css" />
-<script type="module" src="dist/v3/player.js"></script>
+<link rel="stylesheet" href="themes/paper.css" />
+<script type="module" src="player.js"></script>
 
 <pq-quiz src="my-quiz.trivia" seed="quiz-night"></pq-quiz>
 ```
+
+Those two files are `dist/v3/player.js` and `dist/v3/themes/paper.css` after a
+local `bun run build`. Copy them next to the page. From the package, the same
+doors are `@pandaqi/pq-trivia` and `@pandaqi/pq-trivia/themes/paper.css`.
 
 ## What it does
 
@@ -55,20 +59,35 @@ Double-click the file. That is a quiz.
 | **Languages**| One file per language, shared IDs or order, eight UI languages.       |
 | **Looks**    | Paper theme, theme folders, fonts, backgrounds, tokens, animation.  |
 | **Offline**  | One folder on a USB stick. `file://` with no network.               |
-| **Live**     | Phones join by code. Separate bundle.                               |
+| **Live**     | Phones join by code. Bundled, off by default.                       |
 | **Exports**  | Embedded JSON, standalone HTML, GIFT, QTI, CSV.                     |
 | **Tools**    | Validate, format, migrate, pack, encrypt, grade. Bun only.          |
 | **Author**   | The wizard: slides, forms, Trivia Syntax and a preview in one page. |
 
 ## Install
 
+From npm:
+
+```bash
+bun add @pandaqi/pq-trivia
+```
+
+```ts
+import { createQuiz } from "@pandaqi/pq-trivia";
+import "@pandaqi/pq-trivia/themes/paper.css";
+```
+
+Or build this repo:
+
 ```bash
 bun install
 bun run build
 ```
 
-Copy from `dist/v3/`. `bun run build --languages nl` ships one interface
-language. `bun run build --editor` adds the wizard.
+A build writes everything to `dist/v3/`; copy from there. `bun run build
+--languages nl` ships one interface language. `bun run build:editor` adds the
+wizard. Types land in `dist/types/`. Neither folder is in git: the release
+assets and the npm tarball carry the built files.
 
 The [install guide](docs/getting-started/install.md) has the three paths: one
 script tag, an ES module, or a package.
@@ -90,11 +109,11 @@ The docs are a VitePress site: `bun run docs:dev`.
 Runnable demos live in `examples/feature-demos/`: `index.html` links them all.
 `examples/quick-start-template/` is the smallest folder that works.
 
-| Folder           | What                                                    |
-| ---------------- | ------------------------------------------------------- |
-| `dist/v3/`       | Current.                                                |
-| `dist/v2/`       | Frozen V2. `pq-trivia.min.js`, 108 KB. Works, unchanged. |
-| `dist/v1-final/` | Older still.                                            |
+| Folder                       | What                                                    |
+| ---------------------------- | ------------------------------------------------------- |
+| `dist/v3/`                   | Current. Built by `bun run build`, not in git.          |
+| [`dist/v2/`](dist/v2/)       | Frozen V2. `pq-trivia.min.js`, 108 KB. Works, unchanged. |
+| [`dist/v1-final/`](dist/v1-final/) | Older still.                                      |
 
 V2 files parse unchanged. See [migrating from V2](docs/getting-started/migrating-from-v2.md).
 
@@ -114,8 +133,8 @@ Read `docs/` before changing anything. Read `CODING-STYLE.md` too.
 
 ## Built with
 
-Preact for the renderer. Trystero, only when you want phones. VitePress for the
-docs. Nothing else.
+Preact for the renderer. Trystero, bundled into the live build. VitePress for
+the docs. Nothing else.
 
 ## License
 

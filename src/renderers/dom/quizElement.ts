@@ -5,7 +5,7 @@
  * mounted with JS or wrote a tag. One element, one quiz.
  *
  * This is the lean path: one fetch, sync parsing. Manifests, worker parsing
- * and the IndexedDB cache live in `pq-trivia/browser`, for hosts who ask.
+ * and the IndexedDB cache live in `@pandaqi/pq-trivia/browser`, for hosts who ask.
  */
 
 import { isEncryptedQuiz } from "../../core/export/embedded";
@@ -41,7 +41,7 @@ function truthy(value: string | null): boolean {
 }
 
 export class QuizElement extends HTMLElement {
-  /** Set by a host that wants worker parsing, e.g. from `pq-trivia/browser`. */
+  /** Set by a host that wants worker parsing, e.g. from `@pandaqi/pq-trivia/browser`. */
   static parser: ParseHook | null = null;
 
   static get observedAttributes(): readonly string[] {

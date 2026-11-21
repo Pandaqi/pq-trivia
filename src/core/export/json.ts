@@ -1,8 +1,8 @@
 /**
  * JSON v3. The save format.
  *
- * It carries a `$schema`, a schema version and answers as IDs, so a consumer
- * can validate it before trusting it. Readable by default, compact on request.
+ * It carries a schema version and answers as IDs, so a consumer can validate
+ * it before trusting it. Readable by default, compact on request.
  */
 
 import type { QuizModel } from "../model/quiz";
@@ -10,13 +10,11 @@ import {
   fromEmbedded,
   toEmbedded,
   toEmbeddedJson,
-  EMBEDDED_SCHEMA_URL,
   EMBEDDED_VERSION,
   type EmbeddedOptions,
   type ImportResult,
 } from "./embedded";
 
-export const JSON_SCHEMA_URL = EMBEDDED_SCHEMA_URL;
 export const JSON_SCHEMA_VERSION = EMBEDDED_VERSION;
 
 export interface JsonOptions extends EmbeddedOptions {
@@ -35,7 +33,6 @@ export function fromQuizJson(input: unknown): ImportResult {
 export function quizJsonSchema(): Readonly<Record<string, unknown>> {
   return {
     $schema: "https://json-schema.org/draft/2020-12/schema",
-    $id: JSON_SCHEMA_URL,
     title: "PQ-Trivia quiz",
     type: "object",
     required: ["schemaVersion", "meta", "questions"],

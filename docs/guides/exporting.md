@@ -16,7 +16,7 @@ import {
   downloadQuizQti,
   downloadQuizGrades,
   downloadQuizTrivia,
-} from "pq-trivia";
+} from "@pandaqi/pq-trivia";
 
 downloadQuizJson(quiz);     // embedded JSON v3
 downloadQuizHandout(quiz);  // one HTML file, answers included
@@ -84,7 +84,7 @@ The settings panel copies a link with the seed and the order flags in it:
 travel in a URL.
 
 ```js
-import { shareQuizUrl, copyQuizShareLink } from "pq-trivia";
+import { shareQuizUrl, copyQuizShareLink } from "@pandaqi/pq-trivia";
 
 shareQuizUrl(quiz); // the full URL, or null outside a page
 await copyQuizShareLink(quiz);
@@ -97,7 +97,7 @@ answered, correct, correct percent, points and average points. The summary at
 the top counts graded attempts and the average score.
 
 ```js
-import { downloadQuizAttempts } from "pq-trivia";
+import { downloadQuizAttempts } from "@pandaqi/pq-trivia";
 
 await downloadQuizAttempts(quiz); // false when nothing is saved
 ```
@@ -106,7 +106,7 @@ The settings panel has **Save class analytics**. The saved attempts are the same
 records the resume prompt reads, so nothing is collected twice.
 
 `analyticsCsv(attempts)` is the function behind it. It lives in
-`src/core/export/analytics.ts` and is not part of `pq-trivia/core`; import it
+`src/core/export/analytics.ts` and is not part of `@pandaqi/pq-trivia/core`; import it
 directly if you keep your own list of attempts.
 
 ## Grading a stack of answers

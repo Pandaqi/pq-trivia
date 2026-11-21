@@ -9,9 +9,9 @@
  * whole point. The room code is generated when you press the button; nobody
  * types one.
  *
- * Trystero is not inlined (it is a signalling stack, not a button). Load it in
- * the page and call `PQTrivia.registerTrystero(module)`; without it a room is
- * local to this browser, which is still enough to rehearse.
+ * Trystero is inlined too, so a room works between devices with nothing else
+ * installed. A page with its own signal stack can still call
+ * `PQTrivia.registerTrystero(module)` before opening a room.
  */
 
 import fonts from "../themes/fonts.css" with { type: "text" };
@@ -77,7 +77,7 @@ let quizHost: HTMLElement | null = null;
 let liveHost: HTMLElement | null = null;
 let transport: RoomTransport | null = null;
 
-/** Trystero when the page handed it over, a local room otherwise. */
+/** Trystero, with a same-browser fallback when WebRTC is unavailable. */
 async function transportFor(): Promise<RoomTransport> {
   if (transport !== null) {
     return transport;

@@ -1,5 +1,5 @@
 /**
- * The wizard's public door: `import { mountEditor } from "pq-trivia/editor"`.
+ * The wizard's public door: `import { mountEditor } from "@pandaqi/pq-trivia/editor"`.
  *
  * Text helpers are exported too. A host that only wants the serializer or the
  * block spans gets them without the UI.

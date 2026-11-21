@@ -112,7 +112,7 @@ bun run cli/index.ts encrypt quiz.trivia --passphrase "the usual one"
 The file is AES-GCM. Loading it needs `answersKey`:
 
 ```ts
-import { Quiz, browserAnswerKey } from "pq-trivia";
+import { Quiz, browserAnswerKey } from "@pandaqi/pq-trivia";
 
 const quiz = new Quiz({
   load: { type: "encrypted", data: locked },

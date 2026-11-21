@@ -5,6 +5,11 @@ docs/.vitepress/dist/
 docs/.vitepress/cache/
 .pq-build/
 
+# Build output. `bun run build` makes it. The frozen v1-final and v2 files
+# and dist/README.md stay tracked: nothing regenerates those.
+dist/v3/
+dist/types/
+
 # Screenshots from a review run. Worth looking at, not source.
 test/artifacts/
 .DS_Store

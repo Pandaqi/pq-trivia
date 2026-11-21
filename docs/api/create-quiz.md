@@ -1,7 +1,7 @@
 # createQuiz
 
 ```ts
-import { createQuiz } from "pq-trivia";
+import { createQuiz } from "@pandaqi/pq-trivia";
 
 const quiz = createQuiz({
   config: { seed: "quiz-night", shuffleQuestions: false },
@@ -10,12 +10,10 @@ const quiz = createQuiz({
 await quiz.load({ type: "text", text, file: "quiz.trivia" });
 ```
 
-Until the package is on npm, import from `./dist/v3/player.js`.
-
 ## The one-liner
 
 ```ts
-import { Quiz } from "pq-trivia";
+import { Quiz } from "@pandaqi/pq-trivia";
 
 const quiz = new Quiz({ text, id: "quiz", seed: "quiz-night" });
 ```
@@ -36,7 +34,7 @@ new Quiz({ load: { type: "inline", data: embeddedJson }, id: "quiz" });
 Give both `text` and `load` and `load` wins. Give neither and the quiz waits for
 `quiz.load()`.
 
-The same class without the mount lives in `pq-trivia/core`. `mountQuiz(quiz,
+The same class without the mount lives in `@pandaqi/pq-trivia/core`. `mountQuiz(quiz,
 element)` still picks the element by hand, and `<pq-quiz>` still exists.
 
 `new Quiz({ ... })` takes every config key inline, or in `config`. It is a thin
@@ -220,7 +218,7 @@ await quiz.load({ type: "model", quiz: preparedModel });
 Above 1 MB, move parsing off the main thread:
 
 ```ts
-import { createWorkerParser } from "pq-trivia/browser";
+import { createWorkerParser } from "@pandaqi/pq-trivia/browser";
 const quiz = createQuiz({ parseText: createWorkerParser() });
 ```
 
@@ -349,7 +347,7 @@ quiz.views.set(ScreenKind.Results, (screen, quiz) => {
 ## Themes
 
 ```ts
-import { loadTheme, setTheme, themeFromFiles } from "pq-trivia/player";
+import { loadTheme, setTheme, themeFromFiles } from "@pandaqi/pq-trivia/player";
 
 setTheme(await loadTheme("themes/forest/")); // a folder, or a .css file
 setTheme(await themeFromFiles(Array.from(input.files ?? []))); // stays local

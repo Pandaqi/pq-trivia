@@ -32,8 +32,10 @@ The parser is forgiving; it tells you what it did not understand.
 
 ## 2. Make the page
 
-Copy `dist/v3/pq-trivia.min.js` next to your page. Put the quiz text in the page
-and point one script tag at the bundle.
+Get `pq-trivia.min.js` from the [latest
+release](https://github.com/Pandaqi/pq-trivia/releases/latest/download/pq-trivia.min.js),
+or from `dist/v3/` after `bun run build`. Put it next to your page. Put the quiz
+text in the page and point one script tag at the bundle.
 
 ```html
 <!doctype html>
@@ -77,10 +79,13 @@ bun run preview
 ```
 
 ```html
-<link rel="stylesheet" href="dist/v3/themes/paper.css" />
-<script type="module" src="dist/v3/player.js"></script>
+<link rel="stylesheet" href="themes/paper.css" />
+<script type="module" src="player.js"></script>
 <pq-quiz src="my-quiz.trivia" seed="friday"></pq-quiz>
 ```
+
+A build writes those files to `dist/v3/`. Copy `player.js` and `themes/` beside
+your page and the paths above hold.
 
 For a USB stick or a phone, build an offline pack:
 

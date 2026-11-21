@@ -20,10 +20,12 @@ there — but there is no QR to scan.
 
 ## Two transports
 
-| Transport          | Reach                    | Setup                           |
-| ------------------ | ------------------------ | ------------------------------- |
-| `BroadcastChannel` | Same browser, two tabs   | None                            |
-| Trystero           | Real devices over WebRTC | `bun add trystero`, one `appId` |
+Trystero is inside `multiplayer.js` and the one-file build. Nothing to install.
+
+| Transport          | Reach                    | Setup            |
+| ------------------ | ------------------------ | ---------------- |
+| `BroadcastChannel` | Same browser, two tabs   | None             |
+| Trystero           | Real devices over WebRTC | One `appId` only |
 
 ```js
 import {

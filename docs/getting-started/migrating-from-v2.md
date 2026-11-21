@@ -129,11 +129,12 @@ One file, no server:
 <script src="pq-trivia.min.js"></script>
 ```
 
-Or served, with an element and a theme folder:
+Or served, with an element and a theme folder. Copy `player.js` and `themes/`
+from `dist/v3/` after a build, and keep them beside the page:
 
 ```html
-<link rel="stylesheet" href="dist/v3/themes/paper.css" />
-<script type="module" src="dist/v3/player.js"></script>
+<link rel="stylesheet" href="themes/paper.css" />
+<script type="module" src="player.js"></script>
 <pq-quiz src="questions/quiz.txt" theme="themes/forest/" seed="my-seed"></pq-quiz>
 ```
 
@@ -157,7 +158,7 @@ into `style.css`. `QuizTheme` itself is not part of V3; the CSS is the contract.
 ## The new API
 
 ```ts
-import { Quiz } from "pq-trivia";
+import { Quiz } from "@pandaqi/pq-trivia";
 
 new Quiz({ text: myText, id: "quiz", seed: "my-seed" });
 ```

@@ -1,7 +1,7 @@
 /**
  * Core entry. No DOM, no renderer, no platform code.
  *
- * `import { parse, buildQuiz, planQuiz } from "pq-trivia/core"` and you have
+ * `import { parse, buildQuiz, planQuiz } from "@pandaqi/pq-trivia/core"` and you have
  * a quiz engine in a Worker, a CLI or a test.
  */
 

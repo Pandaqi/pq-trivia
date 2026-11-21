@@ -32,12 +32,11 @@ const BUDGETS: Readonly<Record<string, number>> = {
   // Core plus `createQuiz`. Not in the spec budget list, but worth watching.
   "headless.js": 120,
   "player.js": 180,
-  "pq-trivia.js": 105,
   // Phase 10 added pools, variants, streaks, lifelines, teams and the score
-  // rules. Measured 127.4 after the full diagnostic copy. The QR encoder moved
-  // to `pq-qr.min.js`, which the one-file bundle loads when a lobby opens.
-  "pq-trivia.min.js": 210,
-  "pq-trivia.core.min.js": 42,
+  // rules. The QR encoder moved to `pq-qr.min.js`, which the one-file bundle
+  // loads when a lobby opens. Trystero is now inside the live entry, and the
+  // one-file build carries that entry: measured 261.9.
+  "pq-trivia.min.js": 280,
   // The wizard itself. The player arrives as a lazy chunk, so this number is
   // the forms and the buffer, never the quiz screen.
   "editor.js": 60,
@@ -48,9 +47,10 @@ const BUDGETS: Readonly<Record<string, number>> = {
   // The player, fetched only when a preview opens.
   "chunk-preview.js": 80,
   // The separate live bundle. Preact is already in the player, but a host page
-  // that only runs a lobby should not need the whole player. Measured 41.3
-  // after room and diagnostic strings moved into the locale files.
-  "multiplayer.js": 100,
+  // that only runs a lobby should not need the whole player. It now carries
+  // Trystero too, so a room needs nothing else: measured 118.6, up from 41.3
+  // when the transport was a runtime import.
+  "multiplayer.js": 130,
   // The join QR, split out. A lobby that never shows one never downloads it.
   "chunk-qr.js": 8,
   // The same encoder as a script, for the one-file bundle.

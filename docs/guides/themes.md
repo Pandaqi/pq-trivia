@@ -152,7 +152,7 @@ already loaded. Picking another folder replaces the active theme. Set
 Or do it yourself:
 
 ```ts
-import { themeFromFiles, setTheme } from "pq-trivia/player";
+import { themeFromFiles, setTheme } from "@pandaqi/pq-trivia/player";
 
 const files = input.files; // <input type="file" webkitdirectory multiple>
 setTheme(await themeFromFiles(Array.from(files)));

@@ -24,7 +24,6 @@ import { parseQuestionValue, ValueMask } from "../values/qval";
 import type { MediaDescriptor } from "../values/media";
 import type { AstQuestion } from "../syntax/ast";
 
-export const EMBEDDED_SCHEMA_URL = "https://pq-trivia.dev/schema/v3/quiz.json";
 export const EMBEDDED_VERSION = 3;
 
 export interface EmbeddedAnswer {
@@ -59,7 +58,6 @@ export interface EmbeddedRound {
 }
 
 export interface EmbeddedQuizV3 {
-  readonly $schema: string;
   readonly schemaVersion: number;
   readonly meta: {
     readonly title: string;
@@ -127,7 +125,6 @@ export function toEmbedded(
   }));
 
   return {
-    $schema: EMBEDDED_SCHEMA_URL,
     schemaVersion: EMBEDDED_VERSION,
     meta: {
       title: quiz.meta.title,

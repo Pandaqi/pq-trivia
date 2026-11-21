@@ -1,10 +1,12 @@
 /**
  * Trystero: P2P rooms over WebRTC. No server, no account.
  *
- * Optional peer dependency. It is loaded with a dynamic import, so a build
- * without Trystero still works and only the multiplayer bundle ever asks.
+ * Bundled with the multiplayer entry and the one-file build, so a host never
+ * installs or imports it. `registerTrysteroModule` stays for a custom signal
+ * stack, but the ordinary path needs nothing.
  */
 
+import { joinRoom as bundledJoinRoom } from "trystero";
 import { parseEnvelope } from "../protocol";
 import type { Envelope } from "../types";
 import type { Room, RoomMessage, RoomTransport, Unsubscribe } from "./types";
@@ -16,44 +18,48 @@ export interface TrysteroOptions {
   readonly relayUrls?: readonly string[];
 }
 
+interface PeerContext {
+  readonly peerId: string;
+  readonly userId: string;
+}
+
+interface SelfInfo {
+  readonly peerId: string;
+  readonly userId: string;
+}
+
+interface MessageAction {
+  send(data: unknown, options?: { readonly target?: string }): Promise<void>;
+  onMessage(
+    handler: (data: unknown, context: PeerContext) => unknown,
+  ): Unsubscribe;
+}
+
 interface TrysteroRoom {
-  onPeerJoin(callback: (peerId: string) => void): void;
-  onPeerLeave(callback: (peerId: string) => void): void;
-  makeAction(name: string): unknown;
-  leave(): void;
+  getSelf(): Promise<SelfInfo>;
+  onPeerJoin(handler: (context: PeerContext) => unknown): Unsubscribe;
+  onPeerLeave(handler: (context: PeerContext) => unknown): Unsubscribe;
+  makeAction(name: string): MessageAction;
+  leave(): Promise<void>;
 }
 
 type JoinRoom = (config: unknown, roomId: string) => TrysteroRoom;
-type SendAction = (data: unknown, to?: string | readonly string[]) => void;
-type ReceiveAction = (callback: (data: unknown, from: string) => void) => void;
 
 interface TrysteroModule {
   readonly joinRoom: JoinRoom;
-  readonly selfId: string;
 }
 
 const ACTION_NAME = "pq-message";
-const MODULE_NAME = "trystero";
 
-/** A non-literal specifier, so a build without Trystero never resolves it. */
-async function loadModule(name: string): Promise<unknown> {
-  return await import(name);
-}
+/** The copy that ships in the bundle. */
+const BUNDLED: TrysteroModule = {
+  joinRoom: bundledJoinRoom as unknown as JoinRoom,
+};
+
+let registered: TrysteroModule | null = null;
 
 function isJoinRoom(value: unknown): value is JoinRoom {
   return typeof value === "function";
-}
-
-function actionPair(value: unknown): [SendAction, ReceiveAction] | null {
-  if (!Array.isArray(value)) {
-    return null;
-  }
-  const send = value[0];
-  const receive = value[1];
-  if (typeof send !== "function" || typeof receive !== "function") {
-    return null;
-  }
-  return [send as SendAction, receive as ReceiveAction];
 }
 
 function asModule(value: unknown): TrysteroModule | null {
@@ -62,21 +68,14 @@ function asModule(value: unknown): TrysteroModule | null {
   }
   const record = value as Record<string, unknown>;
   const joinRoom = record["joinRoom"];
-  const selfId = record["selfId"];
-  if (!isJoinRoom(joinRoom) || typeof selfId !== "string") {
-    return null;
-  }
-  return { joinRoom, selfId };
+  return isJoinRoom(joinRoom) ? { joinRoom } : null;
 }
 
-let registered: TrysteroModule | null = null;
-
 /**
- * Hand Trystero over instead of letting this module import it.
+ * Hand Trystero over instead of using the bundled copy.
  *
- * A one-file bundle cannot resolve a bare specifier at runtime, so its page
- * loads Trystero itself and calls this. Returns false when the object is not
- * Trystero, which is the only check that matters.
+ * Returns false when the object is not Trystero, which is the only check that
+ * matters.
  */
 export function registerTrysteroModule(value: unknown): boolean {
   const parsed = asModule(value);
@@ -87,25 +86,8 @@ export function registerTrysteroModule(value: unknown): boolean {
   return true;
 }
 
-export async function loadTrystero(
-  name: string = MODULE_NAME,
-): Promise<TrysteroModule> {
-  if (registered !== null) {
-    return registered;
-  }
-  let module: unknown;
-  try {
-    module = await loadModule(name);
-  } catch {
-    throw new Error(
-      "Trystero is not installed. Run `bun add trystero`, or use the BroadcastChannel transport.",
-    );
-  }
-  const parsed = asModule(module);
-  if (parsed === null) {
-    throw new Error("Trystero loaded, but joinRoom or selfId is missing.");
-  }
-  return parsed;
+export async function loadTrystero(): Promise<TrysteroModule> {
+  return registered ?? BUNDLED;
 }
 
 function subscribe<T>(
@@ -121,7 +103,7 @@ function subscribe<T>(
 class TrysteroRoomAdapter implements Room {
   readonly selfId: string;
   readonly #room: TrysteroRoom;
-  readonly #send: SendAction;
+  readonly #action: MessageAction;
   readonly #messages = new Set<(message: RoomMessage) => void>();
   readonly #joins = new Set<(peerId: string) => void>();
   readonly #leaves = new Set<(peerId: string) => void>();
@@ -129,33 +111,27 @@ class TrysteroRoomAdapter implements Room {
   constructor(room: TrysteroRoom, selfId: string) {
     this.#room = room;
     this.selfId = selfId;
-    const pair = actionPair(room.makeAction(ACTION_NAME));
-    if (pair === null) {
-      throw new Error("Trystero did not return a data action.");
-    }
-    const [send, receive] = pair;
-    this.#send = send;
-    receive((data, from) => {
+    this.#action = room.makeAction(ACTION_NAME);
+    this.#action.onMessage((data, context) => {
       const envelope = parseEnvelope(data);
       if (envelope === null) {
         return;
       }
-      this.#messages.forEach((handler) => handler({ envelope, from }));
+      this.#messages.forEach((handler) =>
+        handler({ envelope, from: context.peerId }),
+      );
     });
-    room.onPeerJoin((peerId) => {
-      this.#joins.forEach((handler) => handler(peerId));
+    room.onPeerJoin((context) => {
+      this.#joins.forEach((handler) => handler(context.peerId));
     });
-    room.onPeerLeave((peerId) => {
-      this.#leaves.forEach((handler) => handler(peerId));
+    room.onPeerLeave((context) => {
+      this.#leaves.forEach((handler) => handler(context.peerId));
     });
   }
 
   send(envelope: Envelope, to?: string): void {
-    if (to === undefined) {
-      this.#send(envelope);
-      return;
-    }
-    this.#send(envelope, [to]);
+    const options = to === undefined ? undefined : { target: to };
+    void this.#action.send(envelope, options).catch(() => undefined);
   }
 
   onMessage(handler: (message: RoomMessage) => void): Unsubscribe {
@@ -171,7 +147,7 @@ class TrysteroRoomAdapter implements Room {
   }
 
   leave(): void {
-    this.#room.leave();
+    void this.#room.leave();
   }
 }
 
@@ -183,11 +159,10 @@ export async function createTrysteroTransport(
   if (options.relayUrls !== undefined) {
     config["relayUrls"] = options.relayUrls;
   }
-  function connect(code: string): Room {
-    return new TrysteroRoomAdapter(
-      module.joinRoom(config, `pq-live-${code}`),
-      module.selfId,
-    );
+  async function connect(code: string): Promise<Room> {
+    const room = module.joinRoom(config, `pq-live-${code}`);
+    const self = await room.getSelf();
+    return new TrysteroRoomAdapter(room, self.peerId);
   }
   return {
     async create(code) {
