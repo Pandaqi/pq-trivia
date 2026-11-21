@@ -14,6 +14,7 @@
  * local to this browser, which is still enough to rehearse.
  */
 
+import fonts from "../themes/fonts.css" with { type: "text" };
 import paperBase from "../themes/paper.base.css" with { type: "text" };
 import paperAnswers from "../themes/paper.answers.css" with { type: "text" };
 import paperControls from "../themes/paper.controls.css" with { type: "text" };
@@ -58,6 +59,7 @@ import { mountQuiz } from "../renderers/preact/mount";
 import { defineQuizElement } from "../renderers/dom/quizElement";
 
 const PAPER = [
+  fonts,
   paperBase,
   paperAnswers,
   paperControls,

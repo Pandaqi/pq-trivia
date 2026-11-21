@@ -3,11 +3,115 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import type { Diagnostic } from "../../../core/syntax/diagnostics";
+import { pluralKey } from "../../../core/values/marks";
 import {
   diagnosticMessage,
   diagnosticSuggestion,
 } from "../../../i18n/diagnostics";
 import { useT } from "../i18n";
+import { getTheme, themeAudit } from "../../../platform/browser/theme";
+import type { ThemeIssue } from "../../../platform/browser/theme";
+import type { Quiz } from "../../../core/session/quiz";
+
+/**
+ * A theme can look fine to its author and vanish for everyone else. This box
+ * floats over the page with colours of its own, so the warning about low
+ * contrast never suffers from low contrast. It fades, and a click dismisses it.
+ */
+export function ThemeAudit({
+  revision,
+  enabled,
+}: {
+  readonly revision: string;
+  readonly enabled: boolean;
+}): JSX.Element | null {
+  const t = useT();
+  const [issues, setIssues] = useState<readonly ThemeIssue[]>([]);
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    setIssues([]);
+    if (!enabled) {
+      return;
+    }
+    const theme = getTheme();
+    if (theme === null) {
+      return;
+    }
+    let cancelled = false;
+    // The stylesheet may still be loading. Judge it once it lands.
+    void theme.ready
+      .then(() => themeAudit({ enabled }))
+      .then((found) => {
+        if (!cancelled) {
+          setIssues(found);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [revision, enabled]);
+  if (!enabled || dismissed || issues.length === 0) {
+    return null;
+  }
+  const dismiss = (): void => setDismissed(true);
+  return (
+    <div class="pq-audit" role="alert" onClick={dismiss}>
+      <div class="pq-audit-copy">
+        {issues.map((issue, index) => (
+          <p key={index}>
+            {issue.kind === "contrast"
+              ? t("themeLowContrast", {
+                  ratio: issue.ratio.toFixed(1),
+                  pair: `${issue.foreground} / ${issue.background}`,
+                })
+              : issue.kind === "image"
+                ? t("themeImageSmall", {
+                    file: issue.file,
+                    width: issue.width,
+                    height: issue.height,
+                  })
+                : t("themeImageMissing", { file: issue.file })}
+          </p>
+        ))}
+      </div>
+      <button
+        type="button"
+        class="pq-audit-close"
+        aria-label={t("close")}
+        onClick={(event) => {
+          event.stopPropagation();
+          dismiss();
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
+/** The switch for the audit, in Settings. */
+export function ThemeAuditToggle({
+  quiz,
+}: {
+  readonly quiz: Quiz;
+}): JSX.Element {
+  const t = useT();
+  const [on, setOn] = useState(quiz.config.themeAudit !== false);
+  return (
+    <label class="pq-check">
+      <input
+        type="checkbox"
+        checked={on}
+        onChange={(event) => {
+          const next = event.currentTarget.checked;
+          setOn(next);
+          quiz.configure({ themeAudit: next });
+        }}
+      />
+      {t("themeAuditLabel")}
+    </label>
+  );
+}
 
 /** One localized line, with the reference for the full explanation. */
 export function ProblemRow({
@@ -79,7 +183,7 @@ export function Problems({
         class="pq-problems-reopen"
         onClick={() => setOpen(true)}
       >
-        {t(problems.length === 1 ? "problemsReopen" : "problemsReopenPlural", {
+        {t(pluralKey(problems.length, "problemsReopen"), {
           count: problems.length,
         })}
       </button>
@@ -89,7 +193,7 @@ export function Problems({
   return (
     <aside class="pq-problems-panel" aria-label={t("problemsWithQuiz")}>
       <p class="pq-problems-title">
-        {t(problems.length === 1 ? "problemsFound" : "problemsFoundPlural", {
+        {t(pluralKey(problems.length, "problemsFound"), {
           count: problems.length,
         })}
         <button

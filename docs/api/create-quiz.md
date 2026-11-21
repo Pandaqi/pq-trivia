@@ -153,7 +153,8 @@ duration: `QuizLimit => 45m`.
 | `language`                      | header             | Content language now               |
 | `languageDefault`               | first language     | Root language                      |
 | `languages`                     | found              | Shortlist of languages             |
-| `translations`                  | built-in `en`/`nl` | UI strings per language            |
+| `translations`                  | built-in languages | UI strings per language            |
+| `uiLanguage`                    | follows quiz       | Interface language, `null` follows  |
 | `syncPropertiesWithTranslations`| `false`            | Copy layout and scoring from root  |
 
 ### Interface

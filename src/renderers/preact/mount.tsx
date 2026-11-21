@@ -16,6 +16,7 @@ import { applyHeadFromQuiz } from "../../platform/browser/head";
 import { consumePrintKind, type PrintKind } from "../../platform/browser/print";
 import { browserTimerSound } from "../../platform/browser/sound";
 import { createBrowserJournal } from "../../platform/browser/storage/local";
+import { storedUiLanguage } from "../../platform/browser/storage/uiLanguage";
 import {
   getTheme,
   loadTheme,
@@ -59,6 +60,14 @@ export function mountQuiz(
   target: Element,
   options: MountOptions = {},
 ): MountedQuiz {
+  // The reader's saved choice wins over the author's default, like the theme
+  // mode and the layout. An empty string means "follow the quiz".
+  const savedUiLanguage = storedUiLanguage();
+  if (savedUiLanguage !== null) {
+    quiz.configure({
+      uiLanguage: savedUiLanguage === "" ? null : savedUiLanguage,
+    });
+  }
   render(
     h(QuizApp, {
       quiz,

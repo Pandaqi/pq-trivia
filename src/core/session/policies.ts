@@ -39,6 +39,8 @@ export interface ResponseIssue {
   readonly message: string;
   /** UI dictionary key. The player prefers this. */
   readonly key: string;
+  /** Values for the placeholders in that key. */
+  readonly params?: Readonly<Record<string, string | number>>;
 }
 
 function issue(
@@ -46,8 +48,9 @@ function issue(
   field: string,
   message: string,
   key = "needAnswer",
+  params: Readonly<Record<string, string | number>> = {},
 ): ResponseIssue {
-  return { questionId: question.id, field, message, key };
+  return { questionId: question.id, field, message, key, params };
 }
 
 function isComplete(question: QuestionModel, response: Response): boolean {
@@ -212,6 +215,7 @@ function completenessIssues(
             "pairs",
             `Connect all ${expected} pairs.`,
             "needPairs",
+            { count: expected },
           ),
         );
       }

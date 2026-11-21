@@ -8,14 +8,15 @@
 
 import { QuestionType } from "../../core/model/question";
 import type { QuestionTypeHint } from "../../core/session/viewModel";
+import { pluralKey } from "../../core/values/marks";
 import type { Translate } from "./i18n";
 
 export function typeHintText(
   t: Translate,
   hint: QuestionTypeHint,
 ): string | null {
-  const answers = t(hint.correctCount === 1 ? "answer_one" : "answer_other");
-  const points = t(hint.pointsPerAnswer === 1 ? "point_one" : "point_other");
+  const answers = t(pluralKey(hint.correctCount, "answer"));
+  const points = t(pluralKey(hint.pointsPerAnswer, "point"));
   const score = { points: hint.pointsPerAnswer, point: points };
   switch (hint.kind) {
     case QuestionType.Open:

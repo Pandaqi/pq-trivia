@@ -264,6 +264,7 @@ const IIFE_ENTRIES: Readonly<Record<string, string>> = {
  */
 const THEME_PARTS: Readonly<Record<string, readonly string[]>> = {
   "paper.css": [
+    "fonts.css",
     "paper.base.css",
     "paper.answers.css",
     "paper.controls.css",

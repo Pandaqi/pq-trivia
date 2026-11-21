@@ -12,6 +12,7 @@ strings, no code.
 ```bash
 bun run build --languages nl
 bun run build --languages nl,en
+bun run build --languages pt-br
 bun run build --languages none
 ```
 
@@ -20,6 +21,9 @@ bun run build --languages none
 - `--languages none` (or `--no-languages`) ships no strings. Every label shows
   its key (`next`, `play`, `settings`) until the host fills them with
   `translations`.
+
+The codes are the file names in `src/i18n/locales/`: `de`, `en`, `es`, `fr`,
+`it`, `nl`, `pl` and `pt-br`. A dash is fine in a code, and in the flag.
 
 Filtered builds write the same files as a normal build. Run the one you want
 last. `bun run size` measures what is actually in `dist/v3`.
@@ -42,10 +46,10 @@ budget. Every other build leaves it out and removes an old copy.
 One file in `src/i18n/locales/`, named after its code.
 
 ```ts
-// src/i18n/locales/de.ts
+// src/i18n/locales/sv.ts
 import type { TranslationTable } from "../types";
 
-export const de: TranslationTable = { next: "Weiter" };
+export const svBase: TranslationTable = { next: "Nästa" };
 ```
 
 Then add it to `src/i18n/locales/index.ts` and the `*Locales.ts` registries in

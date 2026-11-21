@@ -42,7 +42,7 @@ function questionMeta(
     ? t("liveAnswersOf", { index: question.index + 1, total: question.total })
     : t("questionOf", { index: question.index + 1, total: question.total });
   const round = question.roundName === null ? "" : ` · ${question.roundName}`;
-  const unit = t(pluralKey(question.points, "point_one", "point_other"));
+  const unit = t(pluralKey(question.points, "point"));
   return `${base}${round} · ${question.points} ${unit}`;
 }
 
@@ -180,7 +180,7 @@ function StakePicker({
   if (max <= 0) {
     return null;
   }
-  const unit = t(pluralKey(max, "point_one", "point_other"));
+  const unit = t(pluralKey(max, "point"));
   return (
     <label class="pq-live-stake">
       <span>{t("liveWagerUpTo", { max, unit })}</span>
@@ -310,7 +310,7 @@ export function PlayerView({
     stake > 0
       ? t("liveSentStake", {
           points: stake,
-          unit: t(pluralKey(stake, "point_one", "point_other")),
+          unit: t(pluralKey(stake, "point")),
         })
       : t("liveSent");
 
@@ -325,16 +325,9 @@ export function PlayerView({
         {question.roundQuestions === 0 ? null : (
           <p class="pq-live-round">
             {question.roundQuestions}{" "}
-            {t(
-              pluralKey(
-                question.roundQuestions,
-                "question_one",
-                "question_other",
-              ),
-            )}
+            {t(pluralKey(question.roundQuestions, "question"))}
             {" · "}
-            {question.roundPoints}{" "}
-            {t(pluralKey(question.roundPoints, "point_one", "point_other"))}
+            {question.roundPoints} {t(pluralKey(question.roundPoints, "point"))}
           </p>
         )}
         {question.roundSecret === null ? null : (

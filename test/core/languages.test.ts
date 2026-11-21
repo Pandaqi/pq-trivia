@@ -5,7 +5,7 @@ import {
   mergeModels,
   splitByLanguage,
 } from "../../src/core/quiz/languages";
-import { translate } from "../../src/i18n/dictionary";
+import { resolveLanguage, translate } from "../../src/i18n/dictionary";
 import { buildQuiz } from "../../src/core/model/quiz";
 import { ResponseKind } from "../../src/core/session/responses";
 
@@ -33,6 +33,7 @@ describe("language files", () => {
   test("the filename carries the language", () => {
     expect(languageFromFile("questions.nl.trivia")).toBe("NL");
     expect(languageFromFile("questions.en.md")).toBe("EN");
+    expect(languageFromFile("questions.pt-br.trivia")).toBe("PT-BR");
     expect(languageFromFile("quiz.trivia")).toBeNull();
   });
 
@@ -83,8 +84,34 @@ describe("language files", () => {
   });
 
   test("another language does not silently fall back", () => {
-    expect(translate("de", "next")).toBe("next");
+    expect(translate("xx", "next")).toBe("next");
     expect(translate("nl", "next")).toBe("Volgende");
+  });
+
+  test("a region tag finds its table, or its base language", () => {
+    const brazilian = translate("pt-br", "next");
+    expect(translate("pt", "next")).toBe(brazilian);
+    expect(translate("pt-BR", "next")).toBe(brazilian);
+    expect(translate("pt_BR", "next")).toBe(brazilian);
+    expect(translate("nl-BE", "next")).toBe("Volgende");
+    expect(translate("de-AT", "next")).toBe("Weiter");
+    expect(resolveLanguage("pt-BR")).toBe("pt-br");
+    expect(resolveLanguage("DE-at")).toBe("de");
+  });
+
+  test("the interface can speak another language than the quiz", async () => {
+    const quiz = createQuiz({
+      config: { languageDefault: "NL", uiLanguage: "de", seed: "ui" },
+    });
+    await quiz.load({
+      type: "text",
+      text: "Question => Een\nAnswers => 1",
+      file: "quiz.nl.trivia",
+    });
+    expect(quiz.state.language).toBe("NL");
+    expect(quiz.t("next")).toBe("Weiter");
+    quiz.configure({ uiLanguage: null });
+    expect(quiz.t("next")).toBe("Volgende");
   });
 
   test("a host can replace one UI string", async () => {

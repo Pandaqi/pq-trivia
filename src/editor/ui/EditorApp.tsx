@@ -13,6 +13,7 @@ import {
   type EditorLayout,
 } from "../layout";
 import type { EditorOptions, PreviewPlace } from "../mount";
+import { pluralKey } from "../../core/values/marks";
 import type { Translate } from "../../i18n/types";
 import {
   diagnosticMessage,
@@ -290,7 +291,5 @@ export function EditorApp({ store, options }: EditorAppProps): JSX.Element {
 }
 
 function countLabel(total: number, t: Translate): string {
-  return t(total === 1 ? "problemsFound" : "problemsFoundPlural", {
-    count: total,
-  });
+  return t(pluralKey(total, "problemsFound"), { count: total });
 }

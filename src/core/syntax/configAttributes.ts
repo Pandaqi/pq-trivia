@@ -122,6 +122,7 @@ export const CONFIG_HEADER_ROWS: readonly ConfigHeaderRow[] = [
   row("LayoutMode", "layoutMode", ConfigValueKind.Text),
   row("ThemeDisabled", "themeDisabled", ConfigValueKind.Boolean),
   row("ThemeUpload", "themeUpload", ConfigValueKind.Boolean),
+  row("ThemeAudit", "themeAudit", ConfigValueKind.Boolean),
   row("ShowSources", "showSources", ConfigValueKind.Boolean),
   row("Dictation", "dictation", ConfigValueKind.Boolean),
   row("PrintAnswerLines", "printAnswerLines", ConfigValueKind.Boolean),
@@ -219,6 +220,10 @@ export const CONFIG_CODE_ONLY = [
     why: "The player mounts into this element. A shared quiz file should not pick its own place on the page.",
   },
   { key: "language", why: "The `Language` header sets the current language." },
+  {
+    key: "uiLanguage",
+    why: "The reader's interface language, not the quiz's. Two languages can meet on one screen, so the file does not pick this.",
+  },
   {
     key: "languages",
     why: "The `Languages` header lists what the files carry.",

@@ -131,6 +131,7 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `LayoutMode` | `layoutMode` | text |
 | `ThemeDisabled` | `themeDisabled` | boolean |
 | `ThemeUpload` | `themeUpload` | boolean |
+| `ThemeAudit` | `themeAudit` | boolean |
 | `ShowSources` | `showSources` | boolean |
 | `Dictation` | `dictation` | boolean |
 | `PrintAnswerLines` | `printAnswerLines` | boolean |
@@ -202,6 +203,7 @@ These have no honest text form. Set them in `createQuiz({ config })` or `new Qui
 | `forbidInlineLists` | A parser option. The header is read while parsing, so it would arrive too late for its own file. |
 | `id` | The player mounts into this element. A shared quiz file should not pick its own place on the page. |
 | `language` | The `Language` header sets the current language. |
+| `uiLanguage` | The reader's interface language, not the quiz's. Two languages can meet on one screen, so the file does not pick this. |
 | `languages` | The `Languages` header lists what the files carry. |
 | `seed` | The `Seed` header sets the plan seed. |
 | `settings` | Host controls are functions. Add them with `settings` in code. |

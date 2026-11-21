@@ -102,7 +102,40 @@ with `languageDefault`, or switch with `setLanguage`; the interface follows.
 Build with `--languages` to ship only the ones you need, including none. See
 [builds](builds.html).
 
-Override any string:
+Settings has two dropdowns. The first picks the quiz language, from the files
+you loaded. The second picks the interface language, from the ones this build
+carries. Leave the second on "Same as quiz" and the buttons follow the quiz.
+The interface choice is remembered across reloads, like the layout, including
+"Same as quiz". It also wins over `uiLanguage` from the host. A reader who
+picked German keeps German, even when the page ships a different default.
+
+| Code    | Language            |
+| ------- | ------------------- |
+| `en`    | English             |
+| `nl`    | Dutch               |
+| `de`    | German              |
+| `fr`    | French              |
+| `es`    | Spanish             |
+| `it`    | Italian             |
+| `pl`    | Polish              |
+| `pt-br` | Portuguese (Brazil) |
+
+### Codes and regions
+
+Short codes are the canonical ones. One set of Dutch strings serves both the
+Netherlands and Belgium, so there is no `nl-nl`. A region gets its own file only
+when the text really differs, which Portuguese does.
+
+Every tag still resolves:
+
+- `pt`, `pt-BR` and `pt_br` all find `pt-br`.
+- `nl-BE` finds `nl`.
+- `de-AT` finds `de`.
+
+Content works the same way: `Language => PT-BR` and `questions.pt-br.trivia`
+both load as `PT-BR`.
+
+### Override any string
 
 ```ts
 createQuiz({
@@ -122,8 +155,12 @@ A missing key shows the key itself. No language silently fills in for another.
 
 ```ts
 quiz.t("next"); // "Volgende"
-quiz.t("pointsLabel", { points: 2, unit: quiz.t("point_other") });
+quiz.t("pointsLabel", { points: 2, unit: quiz.t("point_few") });
 ```
+
+Counts name one of three keys: `point_one`, `point_few`, `point_other`.
+Polish draws the line at 2–4 and 22–24. A language with a single plural word
+repeats it in `_few` and `_other`, so the key is always there.
 
 ### Keys worth knowing
 
@@ -142,7 +179,7 @@ quiz.t("pointsLabel", { points: 2, unit: quiz.t("point_other") });
 | `bandExcellent`                 | Excellent                      | Uitstekend                              |
 | `lockedTitle`                   | Locked quiz                    | Beveiligde quiz                         |
 
-The full table is in `src/i18n/dictionary.ts`. Keys are stable; hosts may use
+The full table is in `src/i18n/locales/en.ts`. Keys are stable; hosts may use
 them in `translations`.
 
 ## What is translated and what is not

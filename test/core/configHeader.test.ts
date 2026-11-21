@@ -57,6 +57,13 @@ Correct => A
     expect(quiz.rounds.map((round) => round.name)).toEqual(["General"]);
   });
 
+  test("the theme audit can be turned off in the header", () => {
+    const quiz = buildQuiz(
+      "Title => Quiet\nThemeAudit => false\n\n## Round one\nQuestion => Q\nAnswers => A\n",
+    );
+    expect(quiz.meta.config["themeAudit"]).toBe(false);
+  });
+
   test("code wins over the file", async () => {
     const quiz = createQuiz({ config: { languageDefault: "en" } });
     await quiz.load({ type: "text", text: QUIZ });

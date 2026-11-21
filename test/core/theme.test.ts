@@ -79,6 +79,20 @@ describe("theme settings", () => {
     expect(fontOptions(bold)).toEqual({ weight: "700", style: "normal" });
   });
 
+  test("a theme can pin its colour scheme", () => {
+    expect(parseThemeSettings("ColorScheme => light").colorScheme).toBe(
+      "light",
+    );
+    expect(parseThemeSettings("color-scheme => dark").colorScheme).toBe("dark");
+    expect(parseThemeSettings("ColorScheme => auto").colorScheme).toBe(
+      "light dark",
+    );
+    expect(parseThemeSettings("Label => Plain").colorScheme).toBeNull();
+    const wrong = parseThemeSettings("ColorScheme => neon");
+    expect(wrong.colorScheme).toBeNull();
+    expect(wrong.issues).toHaveLength(1);
+  });
+
   test("unknown settings are reported, not fatal", () => {
     const settings = parseThemeSettings("Colour => red");
     expect(settings.issues).toHaveLength(1);

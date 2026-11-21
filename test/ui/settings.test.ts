@@ -149,6 +149,146 @@ test("key mapping applies at once and is saved", async () => {
   expect(quiz.state.index).toBe(1);
 });
 
+test("both language dropdowns work, and the interface choice survives a reload", async () => {
+  mounted.destroy();
+  await settle();
+  localStorage.removeItem("pq-ui-language");
+
+  const files = [
+    {
+      name: "quiz.en.trivia",
+      text: "Title => Two\n\n## Round\n\nQuestion => One\nAnswers => 1\n",
+    },
+    {
+      name: "quiz.nl.trivia",
+      text: "Title => Twee\n\n## Round\n\nQuestion => Een\nAnswers => 1\n",
+    },
+  ];
+  const selectors = (): HTMLSelectElement[] => [
+    ...document.querySelectorAll<HTMLSelectElement>(
+      ".pq-settings-panel select",
+    ),
+  ];
+  const open = async (quiz: Quiz): Promise<MountedQuiz> => {
+    const host = document.createElement("div");
+    document.body.append(host);
+    const instance = mountQuiz(quiz, host, {
+      attempts: false,
+      printSheet: false,
+    });
+    await quiz.loading;
+    await settle();
+    document.querySelector<HTMLElement>(".pq-settings-toggle")?.click();
+    await waitFor(() => panel() !== null, "the settings panel");
+    return instance;
+  };
+
+  const first = new Quiz({
+    load: { type: "files", files },
+    languageDefault: "EN",
+    seed: "lang",
+  });
+  mounted = await open(first);
+  expect(first.languages()).toEqual(["EN", "NL"]);
+  // The language group is first: quiz, then interface, on "same as quiz".
+  expect(selectors()[0]?.value).toBe("EN");
+  expect(selectors()[1]?.value).toBe("");
+
+  const quizSelect = selectors()[0];
+  if (quizSelect === undefined) {
+    throw new Error("the quiz language select is missing");
+  }
+  quizSelect.value = "NL";
+  quizSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  await settle();
+  expect(first.state.language).toBe("NL");
+  // Auto followed the quiz, so the panel itself is Dutch now.
+  expect(panel()?.querySelector(".pq-settings-title")?.textContent).toBe(
+    "Instellingen",
+  );
+
+  const uiSelect = selectors()[1];
+  if (uiSelect === undefined) {
+    throw new Error("the interface language select is missing");
+  }
+  uiSelect.value = "de";
+  uiSelect.dispatchEvent(new Event("change", { bubbles: true }));
+  await settle();
+  expect(localStorage.getItem("pq-ui-language")).toBe("de");
+  expect(panel()?.querySelector(".pq-settings-title")?.textContent).toBe(
+    "Einstellungen",
+  );
+
+  mounted.destroy();
+  await settle();
+
+  // A reload: new quiz, same files. The saved interface language wins.
+  const second = new Quiz({
+    load: { type: "files", files },
+    languageDefault: "EN",
+    seed: "lang",
+  });
+  mounted = await open(second);
+  expect(second.state.language).toBe("EN");
+  expect(selectors()[1]?.value).toBe("de");
+  expect(panel()?.querySelector(".pq-settings-title")?.textContent).toBe(
+    "Einstellungen",
+  );
+
+  localStorage.removeItem("pq-ui-language");
+});
+
+test("a saved interface language beats the host default", async () => {
+  mounted.destroy();
+  await settle();
+  localStorage.setItem("pq-ui-language", "de");
+
+  const host = document.createElement("div");
+  document.body.append(host);
+  const quiz = new Quiz({
+    load: {
+      type: "text",
+      text: "Question => Een\nAnswers => 1\n",
+      file: "quiz.nl.trivia",
+    },
+    languageDefault: "NL",
+    config: { uiLanguage: "fr", seed: "precedence" },
+  });
+  mounted = mountQuiz(quiz, host, { attempts: false, printSheet: false });
+  await quiz.loading;
+  await settle();
+
+  // The reader picked German before; the page's French default must not win.
+  expect(quiz.config.uiLanguage).toBe("de");
+  expect(quiz.t("next")).toBe("Weiter");
+  expect(localStorage.getItem("pq-ui-language")).toBe("de");
+
+  // "Same as quiz" is a choice too, so it is remembered as well.
+  mounted.destroy();
+  await settle();
+  localStorage.setItem("pq-ui-language", "auto");
+  const followHost = document.createElement("div");
+  document.body.append(followHost);
+  const follow = new Quiz({
+    load: {
+      type: "text",
+      text: "Question => Een\nAnswers => 1\n",
+      file: "quiz.nl.trivia",
+    },
+    languageDefault: "NL",
+    config: { uiLanguage: "fr", seed: "auto" },
+  });
+  mounted = mountQuiz(follow, followHost, {
+    attempts: false,
+    printSheet: false,
+  });
+  await follow.loading;
+  await settle();
+  expect(follow.config.uiLanguage).toBeNull();
+  expect(follow.t("next")).toBe("Volgende");
+  localStorage.removeItem("pq-ui-language");
+});
+
 test("a saved key map is restored on the next mount", async () => {
   // One page owns one quiz. Unmount the first one before "reloading", or its
   // window listener eats the key and the new quiz never sees it.

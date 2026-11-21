@@ -13,17 +13,24 @@ import { planQuiz } from "../plan/plan";
 import { applyFlow } from "../session/flow";
 import { syncModels } from "./languages";
 import type { QuizConfig } from "./types";
-import { builtinLanguages, translate } from "../../i18n/dictionary";
+import { defaultLanguage, translate } from "../../i18n/dictionary";
 
-/** The language the interface speaks: the chosen one, or the first we carry. */
+/**
+ * The language the interface speaks: the host's choice, then the quiz's own
+ * language, then English.
+ */
 export function uiLanguageOf(
   language: string | null,
   config: QuizConfig,
 ): string {
+  const chosen = config.uiLanguage;
+  if (chosen !== undefined && chosen !== null && chosen.length > 0) {
+    return chosen;
+  }
   if (language !== null && language.length > 0) {
     return language;
   }
-  return config.languageDefault ?? builtinLanguages()[0] ?? "";
+  return config.languageDefault ?? defaultLanguage();
 }
 
 /** One UI string, with the quiz's own overrides on top. */

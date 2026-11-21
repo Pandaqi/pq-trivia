@@ -87,41 +87,53 @@ export function KeyMapPanel({
         const isRecording = recording === action.id;
         return (
           <div class="pq-key-row" key={action.id}>
-            <span class="pq-field-label">{t(action.labelKey)}</span>
-            <span class="pq-keys pq-key-current">
-              {keys.length === 0
-                ? t("none")
-                : keys.map((key) => <kbd key={key}>{keyLabel(key)}</kbd>)}
+            <strong>{t(action.labelKey)}</strong>
+            <span class="pq-key-capture-row">
+              {isRecording ? (
+                <>
+                  <input
+                    ref={capture}
+                    class="pq-input pq-key-capture"
+                    type="text"
+                    readOnly
+                    value={t("pressKey")}
+                    aria-label={t("pressKey")}
+                    onKeyDown={applyKey}
+                    onBlur={() => {
+                      if (recording === action.id) {
+                        setRecording(null);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    class="pq-link"
+                    onClick={() => setRecording(null)}
+                  >
+                    {t("cancelKey")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span class="pq-keys pq-key-current">
+                    {keys.length === 0
+                      ? t("none")
+                      : keys.map((key) => <kbd key={key}>{keyLabel(key)}</kbd>)}
+                  </span>
+                  <button
+                    type="button"
+                    class="pq-link"
+                    data-pq-key-action={action.id}
+                    aria-label={t("changeKey", {
+                      label: t(action.labelKey),
+                    })}
+                    onClick={() => setRecording(action.id)}
+                  >
+                    {t("changeKeyShort")}
+                  </button>
+                </>
+              )}
             </span>
-            {isRecording ? (
-              <span class="pq-key-capture-row">
-                <input
-                  ref={capture}
-                  class="pq-input pq-key-capture"
-                  type="text"
-                  readOnly
-                  value={t("pressKey")}
-                  aria-label={t("pressKey")}
-                  onKeyDown={applyKey}
-                  onBlur={() => {
-                    if (recording === action.id) {
-                      setRecording(null);
-                    }
-                  }}
-                />
-                <button type="button" onClick={() => setRecording(null)}>
-                  {t("cancelKey")}
-                </button>
-              </span>
-            ) : (
-              <button
-                type="button"
-                data-pq-key-action={action.id}
-                onClick={() => setRecording(action.id)}
-              >
-                {t("changeKey", { label: t(action.labelKey) })}
-              </button>
-            )}
           </div>
         );
       })}

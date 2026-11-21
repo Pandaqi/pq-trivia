@@ -308,7 +308,7 @@ export function QuestionScreen({
             {iconFor("⭐")}
             {t("pointsLabel", {
               points: screen.points,
-              unit: t(pluralKey(screen.points, "point_one", "point_other")),
+              unit: t(pluralKey(screen.points, "point")),
             })}
           </span>
         )}

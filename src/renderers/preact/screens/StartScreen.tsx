@@ -10,6 +10,7 @@ import {
 } from "../../../platform/browser/source";
 import { setTheme, themeFromFiles } from "../../../platform/browser/theme";
 import type { StartViewModel } from "../../../core/session/viewModel";
+import { pluralKey } from "../../../core/values/marks";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { Problems } from "../components/Problems";
@@ -40,7 +41,7 @@ function ThemePicker({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
     }
   };
   return (
-    <section class="pq-theme-picker" aria-label={t("themeLoad")}>
+    <>
       <label class="pq-link pq-insert-button">
         {t("themeLoad")}
         <input
@@ -61,7 +62,7 @@ function ThemePicker({ quiz }: { readonly quiz: Quiz }): JSX.Element | null {
           {note}
         </p>
       )}
-    </section>
+    </>
   );
 }
 
@@ -321,12 +322,8 @@ export function StartScreen({
   const t = useT();
   const date = quiz.config.dateCreation;
   const facts = [
-    `${screen.questionCount} ${t(
-      screen.questionCount === 1 ? "question_one" : "question_other",
-    )}`,
-    `${screen.roundCount} ${t(
-      screen.roundCount === 1 ? "round_one" : "round_other",
-    )}`,
+    `${screen.questionCount} ${t(pluralKey(screen.questionCount, "question"))}`,
+    `${screen.roundCount} ${t(pluralKey(screen.roundCount, "round"))}`,
   ];
   if (screen.seed.length > 0) {
     facts.push(t("printSeed", { seed: screen.seed }));

@@ -48,8 +48,8 @@ export function FieldError({
   }
   const params =
     found.key === "needBlank"
-      ? { number: Number(field.replace("blank-", "")) + 1 }
-      : {};
+      ? { number: Number(field.replace("blank-", "")) + 1, ...found.params }
+      : (found.params ?? {});
   return (
     <span class="pq-field-error" role="alert">
       {t(found.key, params)}

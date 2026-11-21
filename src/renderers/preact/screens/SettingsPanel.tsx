@@ -55,6 +55,13 @@ import {
 import { useT } from "../i18n";
 import { pinnedActions, TOOLBAR_ACTIONS } from "../toolbar";
 import { KeyMapPanel } from "../../forms/KeyMapPanel";
+import {
+  setStoredUiLanguage,
+  storedUiLanguage,
+} from "../../../platform/browser/storage/uiLanguage";
+import { ThemeAuditToggle } from "../components/Problems";
+import { builtinLanguages } from "../../../i18n/dictionary";
+import { languageName } from "../../../i18n/codes";
 
 function includedRounds(quiz: Quiz): Record<string, boolean> {
   const hidden = new Set(
@@ -80,6 +87,12 @@ export function SettingsPanel({
 }): JSX.Element {
   const t = useT();
   const [draftSeed, setDraftSeed] = useState(seed);
+  const [quizLanguage, setQuizLanguage] = useState(quiz.state.language ?? "");
+  const [uiLanguage, setUiLanguage] = useState(
+    storedUiLanguage() ?? quiz.config.uiLanguage ?? "",
+  );
+  const quizLanguages = quiz.languages();
+  const uiLanguages = builtinLanguages();
   const [questions, setQuestions] = useState(
     quiz.config.shuffleQuestions ?? false,
   );
@@ -138,6 +151,50 @@ export function SettingsPanel({
 
   return (
     <>
+      <fieldset class="pq-settings-group" aria-label={t("settingsLanguage")}>
+        <legend>{t("settingsLanguage")}</legend>
+        {quizLanguages.length === 0 ? null : (
+          <label class="pq-field">
+            <span class="pq-field-label">{t("quizLanguage")}</span>
+            <select
+              class="pq-input"
+              value={quizLanguage}
+              onChange={(event) => {
+                const next = event.currentTarget.value;
+                setQuizLanguage(next);
+                quiz.setLanguage(next);
+              }}
+            >
+              {quizLanguages.map((code) => (
+                <option key={code} value={code}>
+                  {languageName(code)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <label class="pq-field">
+          <span class="pq-field-label">{t("uiLanguageLabel")}</span>
+          <select
+            class="pq-input"
+            value={uiLanguage}
+            onChange={(event) => {
+              const next = event.currentTarget.value;
+              setUiLanguage(next);
+              setStoredUiLanguage(next === "" ? null : next);
+              quiz.configure({ uiLanguage: next === "" ? null : next });
+            }}
+          >
+            <option value="">{t("uiLanguageAuto")}</option>
+            {uiLanguages.map((code) => (
+              <option key={code} value={code}>
+                {languageName(code)}
+              </option>
+            ))}
+          </select>
+        </label>
+      </fieldset>
+
       {teamsOn ? (
         <fieldset class="pq-settings-group" aria-label={t("teams")}>
           <GroupHead label={t("teams")} note={t("teamsNote")} />
@@ -269,6 +326,7 @@ export function SettingsPanel({
           />
           {t("showSources")}
         </label>
+        <ThemeAuditToggle quiz={quiz} />
         <label class="pq-field">
           <span class="pq-field-label">{t("answerLabels")}</span>
           <select

@@ -1,0 +1,33 @@
+Label => Antique
+Stylesheet => style.css
+BoldHeadings => false
+ColorScheme => light dark
+
+--pq-font-heading => "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif
+--pq-heading-weight => 500
+--pq-font-body => "Segoe UI", system-ui, "Trebuchet MS", Helvetica, sans-serif
+--pq-font-label => "Trebuchet MS", "Segoe UI", system-ui, sans-serif
+
+--pq-ink => light-dark(#2f2a33, #f3ebdd)
+--pq-muted => light-dark(#5f585e, #b9b0a4)
+--pq-paper => light-dark(#faf5ea, #1d2522)
+--pq-paper-deep => light-dark(#f2e9d9, #141a18)
+--pq-slide => light-dark(#fffdf7, #24302a)
+--pq-line => light-dark(#d9d0be, #46564a)
+--pq-line-strong => light-dark(#b9ad99, #63755f)
+--pq-strip => light-dark(#2f2a33, #121815)
+--pq-strip-ink => light-dark(#fbf7ee, #f3ebdd)
+
+--pq-accent => light-dark(#6f4b98, #c6a8e8)
+--pq-accent-ink => light-dark(#fffdf7, #1d2522)
+--pq-honey => #f5c65d
+--pq-honey-soft => light-dark(#fbe7b4, #4a3d20)
+--pq-fern => light-dark(#839c66, #a8c48a)
+--pq-fern-soft => light-dark(#dce6cc, #2f3d2a)
+--pq-berry => light-dark(#a9556b, #e39aa9)
+--pq-right => light-dark(#3e7a4c, #8cc4a0)
+--pq-wrong => light-dark(#a03a3a, #e79a92)
+--pq-warn => light-dark(#8a5a12, #e9c47a)
+--pq-code-bg => #221f26
+--pq-code-ink => #f6f1e6
+--pq-pop => light-dark(#ffffff, #33413a)

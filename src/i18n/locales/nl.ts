@@ -1,5 +1,6 @@
 /** NL interface strings. Add a file here to add a language. */
 
+import { diagnosticPairs } from "../diagnosticCopy";
 import type { TranslationTable } from "../types";
 
 const base: TranslationTable = {
@@ -10,12 +11,16 @@ const base: TranslationTable = {
   seed: "Notendop",
   none: "geen",
   question_one: "vraag",
+  question_few: "vragen",
   question_other: "vragen",
   round_one: "ronde",
+  round_few: "rondes",
   round_other: "rondes",
   point_one: "punt",
+  point_few: "punten",
   point_other: "punten",
   answer_one: "antwoord",
+  answer_few: "antwoorden",
   answer_other: "antwoorden",
 
   typeHintOpen: "Dit is een open vraag.",
@@ -123,6 +128,10 @@ const base: TranslationTable = {
   secretQuestion: "Wat was het geheime thema van deze ronde?",
   quizWord: "Quiz",
   language: "Taal",
+  settingsLanguage: "Taal",
+  quizLanguage: "Quiztaal",
+  uiLanguageLabel: "Interfacetaal",
+  uiLanguageAuto: "Zelfde als de quiz",
 
   startKicker: "PQ-Trivia",
   keys: "Toetsen:",
@@ -136,6 +145,13 @@ const base: TranslationTable = {
   themeLoad: "Voeg een themamap in",
   themeLoaded: "Thema geladen: {label}",
   themeError: "Die map kon niet worden geladen: {message}",
+  themeLowContrast:
+    "Weinig contrast {ratio}:1 ({pair}). Tekst kan onleesbaar zijn.",
+  themeImageSmall:
+    "Achtergrondafbeelding {file} is maar {width}×{height}px. Hij rekt uit en wordt wazig.",
+  themeImageMissing:
+    "Achtergrondafbeelding {file} ontbreekt. Controleer de bestandsnaam.",
+  themeAuditLabel: "Themacontrole",
 
   lockedTitle: "Beveiligde quiz",
   lockedBody:
@@ -156,6 +172,7 @@ const base: TranslationTable = {
   keysNote:
     "Klik een actie, druk op een toets. Wijzigingen gelden meteen en worden op dit apparaat bewaard.",
   changeKey: "Wijzig {label}",
+  changeKeyShort: "Wijzig",
   pressKey: "Druk op een toets",
   cancelKey: "Annuleer",
   keyUndo: "Ongedaan maken",
@@ -324,11 +341,13 @@ const base: TranslationTable = {
 
   problemsWithQuiz: "Problemen met deze quiz",
   problemsDismiss: "Problemen sluiten",
-  problemsFound: "{count} probleem gevonden",
-  problemsFoundPlural: "{count} problemen gevonden",
+  problemsFound_one: "{count} probleem gevonden",
+  problemsFound_few: "{count} problemen gevonden",
+  problemsFound_other: "{count} problemen gevonden",
   problemsMore: "…en nog {count}. Los de eerste op en herlaad.",
-  problemsReopen: "{count} probleem",
-  problemsReopenPlural: "{count} problemen",
+  problemsReopen_one: "{count} probleem",
+  problemsReopen_few: "{count} problemen",
+  problemsReopen_other: "{count} problemen",
 
   printQuestion: "Vraag",
   printAnswer: "Antwoord",
@@ -626,7 +645,8 @@ const editor: TranslationTable = {
   descHeaderDescription: "Eén regel over de quiz.",
   descHeaderAuthor: "Wie het schreef.",
   descHeaderTheme: "Naam van een themamap, of een pad ernaartoe.",
-  descHeaderLanguage: "Tweeletterige code voor de taal van de inhoud.",
+  descHeaderLanguage:
+    "Taalcode van de inhoud. Twee letters, of een tag zoals pt-BR.",
   descHeaderLanguages:
     "Elke taal waarin de quiz bestaat, gescheiden door een streep.",
   descHeaderDate: "Waarvoor de quiz is.",
@@ -663,16 +683,8 @@ const editor: TranslationTable = {
   editorAltDown: "Alt+↓",
 };
 
-function nlDiagnosticCopy(
-  pairs: readonly (readonly [string, string])[],
-): TranslationTable {
-  return Object.fromEntries(
-    pairs.map(([text, value]) => [`diag:${text}`, value]),
-  );
-}
-
 const diagnostics: TranslationTable = {
-  ...nlDiagnosticCopy([
+  ...diagnosticPairs([
     [
       '"{0}" and "{1}" look like the same question ({2}% alike).',
       '"{0}" en "{1}" lijken op dezelfde vraag ({2}% gelijk).',

@@ -131,8 +131,7 @@ export function PrintQuestion({
           <span class="pq-meta-category">{category}</span>
         ))}
         <span class="pq-points">
-          {question.score}{" "}
-          {t(pluralKey(question.score, "point_one", "point_other"))}
+          {question.score} {t(pluralKey(question.score, "point"))}
         </span>
       </p>
 

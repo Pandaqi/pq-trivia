@@ -16,9 +16,18 @@ import {
   type ThemeFont,
   type ThemeSettings,
 } from "../../core/quiz/theme";
+import {
+  checkContrast,
+  CONTRAST_TOKENS,
+  type ContrastPair,
+} from "../../core/values/contrast";
 
 export interface ThemeRuntime {
   readonly settings: ThemeSettings;
+  /** Resolves when the stylesheet has loaded, or failed. */
+  readonly ready: Promise<void>;
+  /** Background images, already resolved, for the audit. */
+  readonly images: readonly string[];
   /** Apply tokens, fonts, a colour scheme and a background for this screen. */
   apply(root: HTMLElement, key: string, scheme?: string | null): void;
   /** Remove the stylesheet, the fonts and any blob URLs. */
@@ -72,6 +81,13 @@ function createRuntime(
     doc === null || settings.stylesheet.trim().length === 0
       ? null
       : doc.createElement("link");
+  const ready =
+    link === null
+      ? Promise.resolve()
+      : new Promise<void>((settle) => {
+          link.addEventListener("load", () => settle(), { once: true });
+          link.addEventListener("error", () => settle(), { once: true });
+        });
   if (doc !== null && link !== null) {
     link.rel = "stylesheet";
     link.href = resolve(settings.stylesheet.trim());
@@ -92,9 +108,16 @@ function createRuntime(
 
   return {
     settings,
+    ready,
+    images: settings.backgrounds.map((path) => resolve(path)),
     apply(root, key, scheme = null) {
       for (const [name, value] of Object.entries(settings.tokens)) {
         root.style.setProperty(name, value);
+      }
+      if (settings.colorScheme === null) {
+        root.style.removeProperty("color-scheme");
+      } else {
+        root.style.setProperty("color-scheme", settings.colorScheme);
       }
       const colors = scheme === null ? undefined : settings.schemes[scheme];
       for (const [name, value] of [
@@ -231,6 +254,161 @@ export async function themeFromFiles(
     return urls.get(wanted) ?? urls.get(normalize(path)) ?? path;
   };
   return createRuntime(settings, resolve, cleanups);
+}
+
+/**
+ * The contrast verdict for the theme on screen. The browser resolves the CSS
+ * variables, so a `light-dark()` token is judged by the colour it actually
+ * paints, not by the text of its declaration.
+ */
+export type ThemeIssue =
+  | ({ readonly kind: "contrast" } & ContrastPair)
+  | {
+      readonly kind: "image";
+      readonly file: string;
+      readonly width: number;
+      readonly height: number;
+    }
+  | { readonly kind: "imageMissing"; readonly file: string };
+
+/** A background drawn at twice its width or more will look soft. */
+const IMAGE_UPSCALE_LIMIT = 2;
+
+/** An SVG has no fixed resolution, so stretching it is free. */
+function isVector(path: string): boolean {
+  return /\.svg(?:[?#]|$)/i.test(path);
+}
+
+function fileName(path: string): string {
+  const tail = path.split("/").pop() ?? path;
+  const clean = tail.split("?")[0] ?? tail;
+  try {
+    return decodeURIComponent(clean);
+  } catch {
+    return clean;
+  }
+}
+
+export type ImageResult =
+  { readonly width: number; readonly height: number } | "missing" | null;
+
+/** The audit's inputs, so a test can hand it a theme without a browser. */
+export interface ThemeAuditOptions {
+  readonly enabled?: boolean;
+  readonly root?: HTMLElement | null;
+  readonly warnings?: readonly ContrastPair[];
+  readonly theme?: Pick<ThemeRuntime, "images"> | null;
+  readonly shownWidth?: number;
+  readonly measure?: (src: string) => Promise<ImageResult>;
+}
+
+function imageSize(src: string): Promise<ImageResult> {
+  return new Promise((settle) => {
+    if (typeof Image === "undefined") {
+      settle(null);
+      return;
+    }
+    const image = new Image();
+    const timer = setTimeout(() => settle(null), 4000);
+    image.onload = () => {
+      clearTimeout(timer);
+      settle({ width: image.naturalWidth, height: image.naturalHeight });
+    };
+    image.onerror = () => {
+      clearTimeout(timer);
+      settle("missing");
+    };
+    image.src = src;
+  });
+}
+
+/**
+ * The ad-hoc theme audit. Contrast is instant; backgrounds have to load first.
+ * Only images that are stretched past twice their width are reported, so a
+ * deliberately tiny tile is not called a mistake.
+ */
+export async function themeAudit(
+  options: ThemeAuditOptions = {},
+): Promise<ThemeIssue[]> {
+  if (options.enabled === false) {
+    return [];
+  }
+  const host =
+    options.root !== undefined
+      ? options.root
+      : typeof document === "undefined"
+        ? null
+        : document.querySelector<HTMLElement>(".pq-quiz");
+  const issues: ThemeIssue[] = (options.warnings ?? themeWarnings(host)).map(
+    (pair) => ({ kind: "contrast", ...pair }),
+  );
+  const theme = options.theme !== undefined ? options.theme : active;
+  if (theme === null) {
+    return issues;
+  }
+  const shown = options.shownWidth ?? host?.clientWidth ?? 0;
+  if (shown <= 0) {
+    return issues;
+  }
+  const measure = options.measure ?? imageSize;
+  const seen = new Set<string>();
+  for (const path of theme.images) {
+    if (seen.has(path)) {
+      continue;
+    }
+    seen.add(path);
+    if (isVector(path)) {
+      continue;
+    }
+    const size = await measure(path);
+    if (size === "missing") {
+      issues.push({ kind: "imageMissing", file: fileName(path) });
+      continue;
+    }
+    if (size !== null && size.width * IMAGE_UPSCALE_LIMIT < shown) {
+      issues.push({
+        kind: "image",
+        file: fileName(path),
+        width: size.width,
+        height: size.height,
+      });
+    }
+  }
+  return issues;
+}
+
+export function themeWarnings(
+  root?: HTMLElement | null,
+): readonly ContrastPair[] {
+  if (typeof document === "undefined") {
+    return [];
+  }
+  const host = root ?? document.querySelector<HTMLElement>(".pq-quiz");
+  if (host === null) {
+    return [];
+  }
+  const probe = document.createElement("span");
+  probe.setAttribute("aria-hidden", "true");
+  probe.style.position = "absolute";
+  probe.style.width = "0";
+  probe.style.height = "0";
+  probe.style.overflow = "hidden";
+  probe.style.opacity = "0";
+  probe.style.pointerEvents = "none";
+  host.append(probe);
+  const colors: Record<string, string> = {};
+  try {
+    for (const token of CONTRAST_TOKENS) {
+      probe.style.color = `var(${token})`;
+      const value = getComputedStyle(probe).color.trim();
+      if (value.length > 0) {
+        colors[token] = value;
+      }
+    }
+  } finally {
+    probe.remove();
+  }
+  return checkContrast(colors);
 }
 
 let active: ThemeRuntime | null = null;

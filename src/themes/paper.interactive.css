@@ -701,15 +701,12 @@
 
 /* --- Insert a file or a theme on the start screen ---------------------- */
 
-.pq-theme-picker {
-  justify-items: center;
-}
-
 .pq-insert-button {
   display: inline-flex;
   align-items: center;
   gap: var(--pq-gap-sm);
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
   /* A file picker is a footnote on the start screen, not a call to action. */
   font-size: 0.68rem;
   letter-spacing: 0.06em;

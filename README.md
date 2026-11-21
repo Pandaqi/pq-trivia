@@ -52,7 +52,7 @@ Double-click the file. That is a quiz.
 | **Play**     | Interactive, graded, results, review, resume. Keyboard first.       |
 | **Print**    | Whole quiz, answer sheet, answer form, grade table, flash cards.    |
 | **Types**    | Open, choice, list, range, estimate, sort, rank, match, cloze, matrix, parts, classification, diagram, hotspot, odd one out. |
-| **Languages**| One file per language, shared IDs or order, translated UI.          |
+| **Languages**| One file per language, shared IDs or order, eight UI languages.       |
 | **Looks**    | Paper theme, theme folders, fonts, backgrounds, tokens, animation.  |
 | **Offline**  | One folder on a USB stick. `file://` with no network.               |
 | **Live**     | Phones join by code. Separate bundle.                               |

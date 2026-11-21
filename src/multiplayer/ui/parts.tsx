@@ -362,7 +362,7 @@ function MyResult({
   if (mine === undefined) {
     return null;
   }
-  const unit = t(pluralKey(Math.abs(mine.points), "point_one", "point_other"));
+  const unit = t(pluralKey(mine.points, "point"));
   return (
     <p class="pq-live-result" data-pq-correct={String(mine.correct)}>
       <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}

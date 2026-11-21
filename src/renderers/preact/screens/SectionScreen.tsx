@@ -4,6 +4,7 @@ import type { JSX } from "preact";
 import type { Quiz } from "../../../core/session/quiz";
 import type { TimerSound } from "../../../core/session/timers";
 import type { QuestionViewModel } from "../../../core/session/viewModel";
+import { pluralKey } from "../../../core/values/marks";
 import { Actions } from "../components/Actions";
 import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
@@ -29,8 +30,8 @@ function roundSizeLabel(
   questions: number,
   points: number,
 ): string {
-  const questionWord = t(questions === 1 ? "question_one" : "question_other");
-  const pointWord = t(points === 1 ? "point_one" : "point_other");
+  const questionWord = t(pluralKey(questions, "question"));
+  const pointWord = t(pluralKey(points, "point"));
   return `${questions} ${questionWord} · ${points} ${pointWord}`;
 }
 

@@ -80,7 +80,7 @@ function metaLine(
     return roundName ?? t("roundWord");
   }
   if (state.index < 0) {
-    const unit = pluralKey(state.total, "question_one", "question_other");
+    const unit = pluralKey(state.total, "question");
     return `${state.total} ${t(unit)}`;
   }
   const base = inAnswers

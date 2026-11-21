@@ -8,6 +8,7 @@
 import type { JSX } from "preact";
 import { answerRefs } from "../../../core/model/answers";
 import { QuestionType, type QuestionModel } from "../../../core/model/question";
+import { pluralKey } from "../../../core/values/marks";
 import { useT } from "../i18n";
 
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -56,8 +57,8 @@ export function PrintForm({
             >
               <caption>
                 {round.name} · {items.length}{" "}
-                {t(items.length === 1 ? "question_one" : "question_other")} ·{" "}
-                {points} {t(points === 1 ? "point_one" : "point_other")}
+                {t(pluralKey(items.length, "question"))} · {points}{" "}
+                {t(pluralKey(points, "point"))}
               </caption>
               <thead>
                 <tr>

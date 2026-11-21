@@ -7,6 +7,7 @@
  * that has a screen needs them.
  */
 
+import { DEFAULT_LANGUAGE, normalizeTag, resolveLanguageTag } from "./codes";
 import { LOCALES } from "./locales";
 import type { Translate, TranslationTable } from "./types";
 
@@ -20,10 +21,18 @@ export function builtinLanguages(): readonly string[] {
   return Object.keys(LOCALES).sort();
 }
 
-/** `nl-BE`, `NL` and `nl` all mean the same table. */
+/** `pt_BR`, `pt` and `pt-br` all find the Brazilian table. */
 function languageCode(language: string | null | undefined): string {
-  const [base] = (language ?? "").toLowerCase().split("-");
-  return base ?? "";
+  return resolveLanguageTag(language, (code) => Object.hasOwn(LOCALES, code));
+}
+
+/** English, unless a filtered build left it out. */
+export function defaultLanguage(): string {
+  const languages = builtinLanguages();
+  if (languages.includes(DEFAULT_LANGUAGE)) {
+    return DEFAULT_LANGUAGE;
+  }
+  return languages[0] ?? DEFAULT_LANGUAGE;
 }
 
 export function translate(
@@ -34,7 +43,8 @@ export function translate(
 ): string {
   const code = languageCode(language);
   const builtin = LOCALES[code] ?? {};
-  const table = { ...builtin, ...(overrides[code] ?? {}) };
+  const tagged = overrides[normalizeTag(language)] ?? {};
+  const table = { ...builtin, ...(overrides[code] ?? {}), ...tagged };
   // No language silently falls back to another. A missing key is a missing
   // key: the host sees it and can fill it in.
   const template = table[key] ?? key;
@@ -51,23 +61,7 @@ export function translator(
   return (key, params = {}) => translate(language, key, params, overrides);
 }
 
-/** What the page and the browser can tell us, without needing a DOM lib. */
-interface LanguageGlobals {
-  readonly document?: { readonly documentElement?: { readonly lang?: string } };
-  readonly navigator?: { readonly language?: string };
-}
-
 /** The page's language, then the browser's, then the default. */
 export function resolveLanguage(raw?: string | null): string {
-  const given = languageCode(raw);
-  if (given.length > 0) {
-    return given;
-  }
-  const env = globalThis as LanguageGlobals;
-  const page = languageCode(env.document?.documentElement?.lang);
-  if (page.length > 0) {
-    return page;
-  }
-  const browser = languageCode(env.navigator?.language);
-  return browser.length > 0 ? browser : "en";
+  return resolveLanguageTag(raw, (code) => Object.hasOwn(LOCALES, code));
 }

@@ -61,6 +61,11 @@
   opacity: 0.75;
 }
 
+/* One column, so three actions never wrap into a ragged row. */
+.pq-start-actions {
+  flex-direction: column;
+}
+
 .pq-start-actions button {
   min-width: 12rem;
 }
@@ -438,40 +443,47 @@
   justify-content: flex-start;
 }
 
-/* One key binding: name, current keys, and the button that changes them. */
+/* One key binding: name, then its keys and the control beside them. Two
+   columns, so every row starts and ends in the same place. */
 .pq-key-row {
   display: grid;
-  grid-template-columns: minmax(7rem, 1fr) auto auto;
+  grid-template-columns: minmax(6rem, 1fr) auto;
   align-items: center;
   gap: var(--pq-gap);
+  min-height: 2rem;
 }
 
 .pq-key-current {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 0.25rem;
+  font-size: var(--pq-text-sm);
   text-align: left;
 }
 
+/* Keys and their control travel together: change, or record and cancel. */
 .pq-key-capture-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--pq-gap-sm);
 }
 
 .pq-key-capture {
-  width: 9rem;
+  width: 8rem;
   cursor: grabbing;
 }
 
 @media (max-width: 30rem) {
   .pq-key-row {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
+    gap: var(--pq-gap-sm);
   }
 
-  .pq-key-current {
-    grid-column: 1 / -1;
-    grid-row: 2;
+  .pq-key-capture-row {
+    justify-content: flex-start;
   }
 }
 

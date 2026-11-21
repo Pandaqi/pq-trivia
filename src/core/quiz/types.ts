@@ -117,6 +117,11 @@ export interface QuizConfig {
   readonly seed?: string;
   /** The language on screen now. `setLanguage` changes it. */
   readonly language?: string | null;
+  /**
+   * The interface language. Unset or `null` follows the quiz, so a Dutch quiz
+   * opens with Dutch buttons.
+   */
+  readonly uiLanguage?: string | null;
   /** V2's `languageDefault`: the root language and the one shown first. */
   readonly languageDefault?: string;
   /** V2's `languages`: a shortlist, or empty for whatever the files say. */
@@ -264,6 +269,8 @@ export interface QuizConfig {
   readonly theme?: string;
   /** Show "Insert a theme folder" on the start screen. On unless turned off. */
   readonly themeUpload?: boolean;
+  /** Check the theme for unreadable text and tiny images. On unless turned off. */
+  readonly themeAudit?: boolean;
   /** Show sources under a question. Off by default: they can give answers away. */
   readonly showSources?: boolean;
   /** The microphone button on text answers. Off by default. */

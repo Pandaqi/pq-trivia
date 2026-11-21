@@ -3,6 +3,7 @@
 import type { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getTheme, subscribeTheme } from "../../platform/browser/theme";
+import { ThemeAudit } from "./components/Problems";
 import type { ViewRenderer } from "../../core/session/registry";
 import { SessionStatus, type SessionState } from "../../core/session/session";
 import type { TimerSound } from "../../core/session/timers";
@@ -18,7 +19,8 @@ import {
   DIAGNOSTIC_KEYS,
   DIAGNOSTIC_LOCALES,
 } from "../../i18n/diagnosticLocales";
-import { resolveLanguage, translator } from "../../i18n/dictionary";
+import { translator } from "../../i18n/dictionary";
+import { uiLanguageOf } from "../../core/quiz/languageOptions";
 import type { Translate } from "../../i18n/types";
 import { preloadNextQuestion } from "../../platform/browser/preload";
 import { storedLayoutMode } from "../../platform/browser/storage/layoutMode";
@@ -142,7 +144,10 @@ export function QuizApp({
     screen: quiz.currentScreen(),
   }));
   const diagnosticT = translator(
-    resolveLanguage(snapshot.state.language ?? quiz.config.language),
+    uiLanguageOf(
+      snapshot.state.language ?? quiz.config.language ?? null,
+      quiz.config,
+    ),
     DIAGNOSTIC_LOCALES,
   );
   const t: Translate = (key, params) =>
@@ -447,6 +452,11 @@ export function QuizApp({
       {settingsAllowed && !inStrip ? settingsButton : null}
 
       <UiContext.Provider value={t}>
+        <ThemeAudit
+          key={themeVersion}
+          revision={`${themeVersion}:${screenKey}`}
+          enabled={quiz.config.themeAudit !== false}
+        />
         <CodeHighlightContext.Provider
           value={quiz.config.codeHighlight === true}
         >

@@ -2,6 +2,7 @@ Label => Forest
 Stylesheet => style.css
 BackgroundAlpha => 0.55
 BoldHeadings => true
+ColorScheme => light
 
 Font => heading | Lora | regular | Lora-Regular.woff2
 Font => heading | Lora | bold | Lora-Bold.woff2

@@ -31,7 +31,7 @@ export function languageFromFile(name: string | undefined): string | null {
     return null;
   }
   const candidate = parts[parts.length - 2]?.trim() ?? "";
-  if (!/^[a-z]{2,3}$/i.test(candidate)) {
+  if (!/^[a-z]{2,3}(-[a-z0-9]{2,4})?$/i.test(candidate)) {
     return null;
   }
   const lower = candidate.toLowerCase();

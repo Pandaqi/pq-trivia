@@ -70,6 +70,30 @@ Text => #f5f2ea
 The four values become `--pq-scheme-light`, `--pq-scheme-dark`,
 `--pq-scheme-bg` and `--pq-scheme-text` on the quiz root. No scheme, no change.
 
+## Readable colours
+
+A theme that sets its own paper must keep its ink readable on it. The player
+measures the text tokens against their surfaces and shows a warning under
+4.5:1, the WCAG AA line. It checks `--pq-ink` on `--pq-paper` and `--pq-slide`,
+`--pq-muted` on paper, and both ink-on-strip pairs.
+
+A theme that pins a light paper should pin its colour scheme too:
+
+```txt
+ColorScheme => light
+```
+
+Without it, `light-dark()` tokens still follow the reader's dark mode: the ink
+turns light while the paper stays light. The setting applies `color-scheme` on
+the quiz root, the same as the CSS rule would.
+
+The audit checks five text/surface pairs against WCAG AA (4.5:1): ink on paper,
+ink on slide, muted text on paper, accent ink on accent, and strip ink on strip.
+It also loads each background, warns when one is stretched past twice its width,
+and names a background file that is not there. The warning floats over the page in its own colours, so it stays readable
+in any theme. It fades after twelve seconds and a click dismisses it. Turn it off
+with `ThemeAudit => false` or the setting in Settings.
+
 ## `theme.trivia-theme`
 
 The settings file uses the same `Key => Value` syntax as the quiz.
@@ -102,6 +126,7 @@ bg-waves.svg
 | `Background`      | Images to choose from per question. Both `a \| b` and one per line work.                   |
 | `BackgroundAlpha` | 0 to 1. Lower fades the image behind the paper.                                            |
 | `BoldHeadings`    | `true` makes headings use the bold face.                                                   |
+| `ColorScheme`     | `light`, `dark`, `light dark` or `normal`. Pin it when the paper is pinned.                 |
 | `--pq-*`          | Any CSS custom property. Applied on the quiz root.                                         |
 
 `### Background` is the same block syntax the quiz uses: one value per line,
@@ -180,6 +205,14 @@ Class => spotlight center
 
 Order does not matter. Every theme keeps these five, so content written on Paper
 still works when a theme folder adds its own colours.
+
+## Default type
+
+The default theme bundles Figtree, a variable sans with weights 300 to 900. Two
+WOFF2 subsets (latin and latin-ext) ride inside the player, so the default look
+needs no network. Figtree is under the SIL Open Font License; the full text is
+in `src/themes/fonts/Figtree-OFL.txt`. Antique, the old serif and cream look,
+lives in `examples/themes/antique/`.
 
 ## Extra themes
 

@@ -4,6 +4,8 @@
  */
 
 .pq-quiz {
+  /* The light scheme is in theme.trivia-theme, next to the rest of the
+     theme. A pinned light paper needs a pinned scheme. */
   --pq-r-organic: 0.35rem;
 }
 

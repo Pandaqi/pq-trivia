@@ -10,6 +10,7 @@
 import { h, type JSX } from "preact";
 import { QuestionType } from "../../core/model/question";
 import { CONFIDENCE_LEVELS, Confidence } from "../../core/session/responses";
+import { pluralKey } from "../../core/values/marks";
 import { useT } from "../preact/i18n";
 import { ChoiceInput, ReasonedInput } from "./choice";
 import { ClassificationInput } from "./classification";
@@ -107,7 +108,7 @@ function WagerPicker({ quiz, screen }: InputProps): JSX.Element | null {
       <span class="pq-field-label">
         {t("wagerLabel", {
           max: screen.wagerMax,
-          unit: t(screen.wagerMax === 1 ? "point_one" : "point_other"),
+          unit: t(pluralKey(screen.wagerMax, "point")),
         })}
       </span>
       <input

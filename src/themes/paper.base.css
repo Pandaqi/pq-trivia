@@ -13,39 +13,39 @@
 :root {
   color-scheme: light dark;
 
-  --pq-font-heading:
-    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
-  --pq-font-body: "Segoe UI", system-ui, "Trebuchet MS", Helvetica, sans-serif;
-  --pq-font-label: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  /* Figtree is bundled with the player: one variable file, two subsets. */
+  --pq-font-heading: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --pq-font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --pq-font-label: "Figtree", "Segoe UI", system-ui, sans-serif;
   --pq-font-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
 
-  /* Ink and paper. Sampled from Pandaqi's own palette. */
-  --pq-ink: light-dark(#2f2a33, #f3ebdd);
-  --pq-muted: light-dark(#5f585e, #b9b0a4);
-  --pq-paper: light-dark(#faf5ea, #1d2522);
-  --pq-paper-deep: light-dark(#f2e9d9, #141a18);
-  --pq-slide: light-dark(#fffdf7, #24302a);
-  --pq-line: light-dark(#d9d0be, #46564a);
-  --pq-line-strong: light-dark(#b9ad99, #63755f);
-  --pq-strip: light-dark(#2f2a33, #121815);
-  --pq-strip-ink: light-dark(#fbf7ee, #f3ebdd);
+  /* Neutral paper, warm ink. The antique palette lives in examples/themes. */
+  --pq-ink: light-dark(#24211f, #f5f1ea);
+  --pq-muted: light-dark(#5f5952, #b7b0a6);
+  --pq-paper: light-dark(#f7f4ef, #1c1a18);
+  --pq-paper-deep: light-dark(#ede8e0, #141210);
+  --pq-slide: light-dark(#fffefa, #24211e);
+  --pq-line: light-dark(#d9d2c7, #47413a);
+  --pq-line-strong: light-dark(#b6aca0, #675f55);
+  --pq-strip: light-dark(#24211f, #121110);
+  --pq-strip-ink: light-dark(#fbf8f2, #f5f1ea);
 
-  --pq-accent: light-dark(#6f4b98, #c6a8e8);
-  --pq-accent-ink: light-dark(#fffdf7, #1d2522);
-  --pq-honey: #f5c65d;
-  --pq-honey-soft: light-dark(#fbe7b4, #4a3d20);
-  --pq-fern: light-dark(#839c66, #a8c48a);
-  --pq-fern-soft: light-dark(#dce6cc, #2f3d2a);
-  --pq-berry: light-dark(#a9556b, #e39aa9);
-  --pq-right: light-dark(#3e7a4c, #8cc4a0);
-  --pq-wrong: light-dark(#a03a3a, #e79a92);
+  --pq-accent: light-dark(#a8431f, #f2a982);
+  --pq-accent-ink: light-dark(#fffaf5, #241a15);
+  --pq-honey: #f4b942;
+  --pq-honey-soft: light-dark(#fbe6bd, #46381d);
+  --pq-fern: light-dark(#5d7a4d, #a7c38c);
+  --pq-fern-soft: light-dark(#dfe8d2, #2e3927);
+  --pq-berry: light-dark(#a8506a, #e7a2b3);
+  --pq-right: light-dark(#3a7449, #8ec6a1);
+  --pq-wrong: light-dark(#a63a34, #eaa096);
   --pq-warn: light-dark(#8a5a12, #e9c47a);
-  --pq-code-bg: #221f26;
+  --pq-code-bg: #201e1c;
   --pq-code-ink: #f6f1e6;
   --pq-scan: #fff;
-  --pq-veil: light-dark(rgb(20 16 24 / 0.45), rgb(0 0 0 / 0.6));
+  --pq-veil: light-dark(rgb(20 18 16 / 0.45), rgb(0 0 0 / 0.6));
   /* A surface that floats: notes, bubbles, anything over the page. */
-  --pq-pop: light-dark(#ffffff, #33413a);
+  --pq-pop: light-dark(#ffffff, #37322d);
 
   /* Shape. */
   --pq-r-sm: 0.4rem;
@@ -114,6 +114,77 @@
   --pq-warn: #6b4300;
   --pq-shadow-1: none;
   --pq-shadow-2: none;
+}
+
+/* --- Theme audit -------------------------------------------------------
+ * Fixed colours on purpose. A warning about unreadable text must stay
+ * readable in every theme, so this block touches no token.
+ */
+
+.pq-audit {
+  position: fixed;
+  inset-block-start: 0.75rem;
+  inset-inline: 0;
+  z-index: 1000;
+  display: flex;
+  gap: 0.75rem;
+  width: min(44rem, calc(100vw - 1.5rem));
+  margin-inline: auto;
+  padding: 0.9rem 1.1rem;
+  border: 2px solid #ffd166;
+  border-radius: 0.6rem;
+  background: #191817;
+  color: #fffdf8;
+  box-shadow: 0 14px 34px rgb(0 0 0 / 0.45);
+  font-family: system-ui, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  cursor: pointer;
+  animation: pq-audit-fade 12s ease forwards;
+}
+
+.pq-audit p {
+  margin: 0;
+  color: inherit;
+}
+
+.pq-audit p + p {
+  margin-block-start: 0.35rem;
+}
+
+.pq-audit-close {
+  align-self: flex-start;
+  padding: 0 0.25rem;
+  border: 0;
+  background: transparent;
+  color: #ffd166;
+  font: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pq-audit-close:focus-visible {
+  outline: 3px solid #ffd166;
+  outline-offset: 2px;
+}
+
+@keyframes pq-audit-fade {
+  0%,
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pq-audit {
+    animation: none;
+  }
 }
 
 /* --- The vocabulary --------------------------------------------------- */
@@ -243,7 +314,6 @@
 /* A column of things. */
 .pq-field,
 .pq-settings-group,
-.pq-theme-picker,
 .pq-live-settings,
 .pq-live-roster,
 .pq-live-progress,
@@ -544,7 +614,7 @@ body {
   margin: 0;
   font-family: var(--pq-font-heading);
   font-size: var(--pq-title-size);
-  font-weight: var(--pq-heading-weight, 500);
+  font-weight: var(--pq-heading-weight, 750);
   line-height: 1.12;
   text-wrap: balance;
 }

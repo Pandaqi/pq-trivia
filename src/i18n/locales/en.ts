@@ -1,5 +1,6 @@
 /** EN interface strings. Add a file here to add a language. */
 
+import { sameDiagnosticCopy } from "../diagnosticCopy";
 import type { TranslationTable } from "../types";
 
 const base: TranslationTable = {
@@ -10,12 +11,16 @@ const base: TranslationTable = {
   seed: "Seed",
   none: "none",
   question_one: "question",
+  question_few: "questions",
   question_other: "questions",
   round_one: "round",
+  round_few: "rounds",
   round_other: "rounds",
   point_one: "point",
+  point_few: "points",
   point_other: "points",
   answer_one: "answer",
+  answer_few: "answers",
   answer_other: "answers",
 
   typeHintOpen: "This is an open question.",
@@ -122,6 +127,10 @@ const base: TranslationTable = {
   secretQuestion: "What was the secret theme of this round?",
   quizWord: "Quiz",
   language: "Language",
+  settingsLanguage: "Language",
+  quizLanguage: "Quiz language",
+  uiLanguageLabel: "Interface language",
+  uiLanguageAuto: "Same as quiz",
 
   startKicker: "PQ-Trivia",
   keys: "Keys:",
@@ -135,6 +144,12 @@ const base: TranslationTable = {
   themeLoad: "Insert a theme folder",
   themeLoaded: "Loaded theme: {label}",
   themeError: "That folder did not load: {message}",
+  themeLowContrast: "Low contrast {ratio}:1 ({pair}). Text may be unreadable.",
+  themeImageSmall:
+    "Background image {file} is only {width}×{height}px. It will stretch and look soft.",
+  themeImageMissing:
+    "Background image {file} is not there. Check the filename.",
+  themeAuditLabel: "Theme audit",
 
   lockedTitle: "Locked quiz",
   lockedBody:
@@ -155,6 +170,7 @@ const base: TranslationTable = {
   keysNote:
     "Click an action, press a key. Changes apply at once and are saved on this device.",
   changeKey: "Change {label}",
+  changeKeyShort: "Change",
   pressKey: "Press a key",
   cancelKey: "Cancel",
   keyUndo: "Undo",
@@ -320,11 +336,13 @@ const base: TranslationTable = {
 
   problemsWithQuiz: "Problems with this quiz",
   problemsDismiss: "Dismiss problems",
-  problemsFound: "{count} problem found",
-  problemsFoundPlural: "{count} problems found",
+  problemsFound_one: "{count} problem found",
+  problemsFound_few: "{count} problems found",
+  problemsFound_other: "{count} problems found",
   problemsMore: "…and {count} more. Fix the first ones, then reload.",
-  problemsReopen: "{count} problem",
-  problemsReopenPlural: "{count} problems",
+  problemsReopen_one: "{count} problem",
+  problemsReopen_few: "{count} problems",
+  problemsReopen_other: "{count} problems",
 
   printQuestion: "Question",
   printAnswer: "Answer",
@@ -613,7 +631,8 @@ const editor: TranslationTable = {
   descHeaderDescription: "One line about the quiz.",
   descHeaderAuthor: "Who wrote it.",
   descHeaderTheme: "A theme folder name, or a path to one.",
-  descHeaderLanguage: "Two-letter code for the content language.",
+  descHeaderLanguage:
+    "Language code of the content. Two letters, or a tag like pt-BR.",
   descHeaderLanguages: "Every language the quiz ships in, separated by a bar.",
   descHeaderDate: "When the quiz is for.",
   descHeaderSeed: "Same seed, same shuffle, every time.",
@@ -646,11 +665,6 @@ const editor: TranslationTable = {
   editorAltUp: "Alt+↑",
   editorAltDown: "Alt+↓",
 };
-
-/** Default copy. The normalized sentence is also the key. */
-function sameDiagnosticCopy(texts: readonly string[]): TranslationTable {
-  return Object.fromEntries(texts.map((text) => [`diag:${text}`, text]));
-}
 
 const diagnostics: TranslationTable = {
   ...sameDiagnosticCopy([

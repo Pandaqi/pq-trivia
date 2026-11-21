@@ -44,6 +44,12 @@ export interface ThemeSettings {
   /** 0 hides the images, 1 shows them fully. Null leaves the stylesheet alone. */
   readonly backgroundAlpha: number | null;
   readonly boldHeadings: boolean;
+  /**
+   * `ColorScheme => light`. A theme that pins a light paper must pin the
+   * scheme too, or `light-dark()` tokens keep following the reader's dark
+   * mode and the ink turns light on a light page.
+   */
+  readonly colorScheme: string | null;
   /** `--pq-accent => #2f6b4f` lines. Applied on the quiz root. */
   readonly tokens: Readonly<Record<string, string>>;
   /** `### ColorScheme night` with Light/Dark/Background/Text lines. */
@@ -120,6 +126,7 @@ export function parseThemeSettings(text: string): ThemeSettings {
   let stylesheet = "style.css";
   let backgroundAlpha: number | null = null;
   let boldHeadings = false;
+  let colorScheme: string | null = null;
   const fonts: ThemeFont[] = [];
   const backgrounds: string[] = [];
   const tokens: Record<string, string> = {};
@@ -187,6 +194,28 @@ export function parseThemeSettings(text: string): ThemeSettings {
 
       return;
     }
+    if (
+      name === "colorscheme" ||
+      name === "color-scheme" ||
+      name === "scheme"
+    ) {
+      const wanted = lower(value);
+      if (
+        wanted === "light" ||
+        wanted === "dark" ||
+        wanted === "light dark" ||
+        wanted === "normal"
+      ) {
+        colorScheme = wanted;
+      } else if (wanted === "auto") {
+        colorScheme = "light dark";
+      } else {
+        issues.push(
+          `ColorScheme "${value}" is not light, dark, light dark or normal.`,
+        );
+      }
+      return;
+    }
     issues.push(`Unknown theme setting "${key}".`);
   };
 
@@ -241,6 +270,7 @@ export function parseThemeSettings(text: string): ThemeSettings {
     backgrounds,
     backgroundAlpha,
     boldHeadings,
+    colorScheme,
     tokens,
     schemes,
     issues,

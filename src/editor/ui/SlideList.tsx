@@ -174,12 +174,9 @@ export function SlideList({
                   {problems > 0 ? (
                     <span
                       class="pq-editor-badge"
-                      aria-label={t(
-                        problems === 1
-                          ? "problemsReopen"
-                          : "problemsReopenPlural",
-                        { count: problems },
-                      )}
+                      aria-label={t(pluralKey(problems, "problemsReopen"), {
+                        count: problems,
+                      })}
                     >
                       {problems}
                     </span>
@@ -218,12 +215,8 @@ export function SlideList({
       </ol>
       <p class="pq-editor-hint">
         {t("editorSlideCount", {
-          questions: `${questions} ${t(
-            pluralKey(questions, "question_one", "question_other"),
-          )}`,
-          rounds: `${rounds} ${t(
-            pluralKey(rounds, "round_one", "round_other"),
-          )}`,
+          questions: `${questions} ${t(pluralKey(questions, "question"))}`,
+          rounds: `${rounds} ${t(pluralKey(rounds, "round"))}`,
         })}
       </p>
     </nav>

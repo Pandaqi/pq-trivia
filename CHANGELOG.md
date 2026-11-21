@@ -12,6 +12,15 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Theme folders.** A folder with `theme.trivia-theme`, a stylesheet, fonts and
   background images. `theme="themes/forest/"`, or `Theme => forest` in the
   header. Pick a folder from disk at quiz start with `theme-upload`.
+- **Theme audit.** A theme is checked against WCAG AA when it loads, plus a
+  look at its background images. Warnings float in a readable box of their own,
+  fade after twelve seconds, and can be clicked away. `ThemeAudit => false` or
+  a setting turns the audit off.
+- **Readable colours in any theme.** `ColorScheme => light` pins the scheme
+  from the theme file. A light-paper theme no longer inherits dark-mode ink.
+- **A new default voice.** Figtree, bundled as two small WOFF2 subsets, replaces
+  the serif default. The old cream-and-serif look lives in
+  `examples/themes/antique/`.
 - **One file.** `pq-trivia.min.js` has the player, Paper and the print sheet
   inside. Put the quiz in `<script id="quiz-text">` and open the page.
 - **`#### Key` blocks.** `#### Answers` with one value per line, ending at the
@@ -19,11 +28,19 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Languages are back.** One file per language, `Language` + shared `ID`,
   order matching, `SyncAll`, a start-screen picker and `L` to switch mid-quiz.
   Answers, hints and reveals survive the switch.
-- **English and Dutch interface.** Every screen, button and validation message
-  goes through one dictionary, and hosts can override any key.
+- **Eight interface languages.** English, Dutch, German, French, Spanish,
+  Italian, Polish and Portuguese (Brazil). Every screen, button and validation
+  message goes through one dictionary, and hosts can override any key. Counts
+  pick one, few or other, so Polish writes 3 punkty and 5 punktów.
 - **Filtered builds.** `bun run build --languages nl` ships one language,
   `--languages none` ships no interface strings at all. English is not a
   fallback; a missing key stays a key.
+- **Language tags.** Short codes stay canonical (`nl`, not `nl-nl`). A region
+  is accepted anyway: `pt-BR` and `pt` find `pt-br`, `nl-BE` finds `nl`.
+- **Two language dropdowns.** Settings picks the quiz language and the
+  interface language. The interface follows the quiz until you say otherwise.
+  The interface choice is remembered across reloads and wins over the host's
+  default.
 - **Section screens and timers.** `addMissingSectionScreens` opens each round
   with its name, and `allowTimerOnSections` lets that screen count down.
 - **Paths follow the config.** `subFolderMedia`, `subFolderTheme`,

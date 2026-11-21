@@ -85,12 +85,12 @@ function Cover({
       <p class="pq-cover-banner">
         {t("printStats", {
           questions: `${questions.length} ${t(
-            questions.length === 1 ? "question_one" : "question_other",
+            pluralKey(questions.length, "question"),
           )}`,
           points: `${pointsOf(questions)} ${t(
-            pointsOf(questions) === 1 ? "point_one" : "point_other",
+            pluralKey(pointsOf(questions), "point"),
           )}`,
-          rounds: `${rounds} ${t(rounds === 1 ? "round_one" : "round_other")}`,
+          rounds: `${rounds} ${t(pluralKey(rounds, "round"))}`,
         })}
       </p>
       {seed.length === 0 ? null : (
@@ -308,15 +308,9 @@ export function PrintSheet({
                   <p class="pq-round-stats">
                     {t("printStats", {
                       questions: `${items.length} ${t(
-                        pluralKey(
-                          items.length,
-                          "question_one",
-                          "question_other",
-                        ),
+                        pluralKey(items.length, "question"),
                       )}`,
-                      points: `${points} ${t(
-                        pluralKey(points, "point_one", "point_other"),
-                      )}`,
+                      points: `${points} ${t(pluralKey(points, "point"))}`,
                       rounds: "",
                     })}
                   </p>

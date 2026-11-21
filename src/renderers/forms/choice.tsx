@@ -62,7 +62,7 @@ function AnswerButton({
           class="pq-answer-score"
           aria-label={t("pointsLabel", {
             points: answer.points,
-            unit: t(pluralKey(answer.points, "point_one", "point_other")),
+            unit: t(pluralKey(answer.points, "point")),
           })}
         >
           +{answer.points}
