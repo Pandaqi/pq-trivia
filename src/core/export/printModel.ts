@@ -10,7 +10,12 @@ import { answerRefs } from "../model/answers";
 import type { QuizMeta } from "../model/quiz";
 import type { QuestionModel } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
-import { MediaKind, mediaForConfig, type MediaOptions } from "../values/media";
+import {
+  answerKeyOf,
+  MediaKind,
+  mediaForConfig,
+  type MediaOptions,
+} from "../values/media";
 import { visiblePlan } from "./visible";
 
 export enum PrintPageKind {
@@ -84,7 +89,9 @@ function questionFor(
   const showCorrect =
     options.variant === "answers" || options.variant === "grade";
   const refs = answerRefs(question);
-  const correct = new Set(question.correct.map((value) => value.text));
+  const correct = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   const parts = Math.max(question.correct.length, 1);
   const perAnswer = Math.round((question.score / parts) * 10) / 10;
   const [title = "", ...body] = question.text.map((value) => value.text);
@@ -96,8 +103,11 @@ function questionFor(
     body,
     answers: refs.map((ref) => ({
       text: ref.value.text,
-      correct: showCorrect ? correct.has(ref.value.text) : false,
-      points: showCorrect && correct.has(ref.value.text) ? perAnswer : null,
+      correct: showCorrect ? correct.has(answerKeyOf(ref.value.text)) : false,
+      points:
+        showCorrect && correct.has(answerKeyOf(ref.value.text))
+          ? perAnswer
+          : null,
     })),
     media: question.media
       .map((descriptor) => mediaForConfig(descriptor, options.media ?? {}))

@@ -51,9 +51,7 @@ function NodeView({
           class="pq-blank"
           role="img"
           aria-label={t("blank", { number: 1 })}
-        >
-          ____
-        </span>
+        />
       );
     case InlineKind.Break:
       return <br />;

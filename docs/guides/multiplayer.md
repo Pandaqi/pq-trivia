@@ -133,6 +133,25 @@ host.setRevealMode(RevealMode.Round);
 host.setSections(false); // keep the round title on the projector only
 ```
 
+## The winner
+
+A live quiz ends with confetti, a flash and the champion's name on the host
+screen. A phone that won gets its own small party. The setting lives in the quiz
+header:
+
+```txt
+Celebration => false
+```
+
+Or turn it off for a host page you built yourself:
+
+```js
+mountLive({ target, role: LiveRole.Host, quiz, transport, celebration: false });
+```
+
+The player's phone is its own page, so it only knows what you pass it. A player
+joining by link keeps the celebration unless the page says otherwise.
+
 ## What a player receives
 
 A question, its answers, its media and its points. Not the correct answers. Not

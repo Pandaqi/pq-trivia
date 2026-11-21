@@ -81,6 +81,8 @@ export interface QuestionReport {
   readonly answered: boolean;
   readonly correct: boolean;
   readonly kind: GradeKind;
+  /** Earned on paper, before a streak bonus. */
+  readonly basePoints: number;
   readonly points: number;
   readonly maxPoints: number;
   readonly parts: readonly GradePart[];
@@ -175,7 +177,9 @@ function percentOf(points: number, maxPoints: number): number {
   if (maxPoints <= 0) {
     return 0;
   }
-  return Math.round((points / maxPoints) * 1000) / 10;
+  // A streak bonus can lift the points over the paper maximum. The percentage
+  // still ends at a perfect 100, or a great run reads as 164 percent.
+  return Math.min(100, Math.round((points / maxPoints) * 1000) / 10);
 }
 
 /** Where each band starts, as a percentage of the maximum. */
@@ -254,6 +258,8 @@ export function gradeAttempt(
   let lifelinesUsed = 0;
   let lifelineSpent = 0;
   let possible = 0;
+  /** The paper score, before streak bonuses. Percentages use this one. */
+  let earnedBase = 0;
   const rules: PointRules = {
     preset: options.preset ?? ScoringPreset.Standard,
     negativeMarking: options.negativeMarking ?? DEFAULT_NEGATIVE_MARK,
@@ -303,6 +309,7 @@ export function gradeAttempt(
     lifelinesUsed += used.length;
     lifelineSpent += spent;
     possible = round2(possible + pointed.maxPoints);
+    earnedBase = round2(earnedBase + settled.points);
     const wager = settled.stake > 0 ? settled.stake : null;
     // A lifeline may eat this question. It may not push the question below
     // zero, and it never turns a penalty into a bigger one.
@@ -325,6 +332,7 @@ export function gradeAttempt(
       correct: result.correct,
       kind: result.kind,
       points: paid,
+      basePoints: settled.points,
       maxPoints: pointed.maxPoints,
       parts: result.parts,
       noIdea: options.noIdea?.includes(question.id) === true,
@@ -353,12 +361,12 @@ export function gradeAttempt(
     }
   });
 
-  // A stake and a streak raise what this attempt could have earned, so a
-  // perfect run still tops out at 100 percent. A score never goes below zero.
+  // Streak bonuses can lift the score over the paper maximum. The percentage
+  // is the paper score, so a missed question never reads as 100 percent.
   const sum = questions.reduce((total, entry) => total + entry.points, 0);
   const points = Math.max(0, round2(sum));
   const maxPoints = possible;
-  const percent = percentOf(points, maxPoints);
+  const percent = percentOf(Math.max(0, earnedBase), maxPoints);
   const correct = questions.filter((entry) => entry.correct).length;
   const answered = questions.filter((entry) => entry.answered).length;
   const startedAt = options.startedAt ?? null;
@@ -395,6 +403,10 @@ export function gradeAttempt(
         (total, entry) => total + entry.maxPoints,
         0,
       );
+      const roundBase = bucket.items.reduce(
+        (total, entry) => total + entry.basePoints,
+        0,
+      );
       return {
         id: bucket.items[0]?.round ?? "",
         name: bucket.name,
@@ -402,7 +414,7 @@ export function gradeAttempt(
         correct: bucket.items.filter((entry) => entry.correct).length,
         points: Math.round(roundPoints * 100) / 100,
         maxPoints: roundMax,
-        percent: percentOf(roundPoints, roundMax),
+        percent: percentOf(Math.max(0, roundBase), roundMax),
         drawn:
           plan.rounds.find((round) => round.id === bucket.items[0]?.round)
             ?.drawn ?? [],
@@ -417,13 +429,17 @@ export function gradeAttempt(
         (total, entry) => total + entry.maxPoints,
         0,
       );
+      const categoryBase = items.reduce(
+        (total, entry) => total + entry.basePoints,
+        0,
+      );
       return {
         name,
         questions: items.length,
         correct: items.filter((entry) => entry.correct).length,
         points: Math.round(categoryPoints * 100) / 100,
         maxPoints: categoryMax,
-        percent: percentOf(categoryPoints, categoryMax),
+        percent: percentOf(Math.max(0, categoryBase), categoryMax),
       };
     }),
   };

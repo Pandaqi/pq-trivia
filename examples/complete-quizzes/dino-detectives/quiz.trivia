@@ -1,0 +1,289 @@
+# Dino Detectives
+
+Description => Five rounds of dinosaurs, fossils and very big teeth. Made for curious kids and the grown-ups beside them.
+Author => Pandaqi
+Language => en
+Seed => dino-detectives
+Syntax => 3
+Theme => jurassic
+BannerImage => media/banner.jpg
+Celebration => true
+Streaks => true
+Lifelines => 50/50 | extra-time
+
+Type => Start
+Question => Dino Detectives
+Comment => Five rounds. One point a question unless it says otherwise. Bring a pencil for the picture round, or use the buttons.
+Buttons => play | interactive | answers | settings
+
+## Meet the dinosaurs
+
+Question => What does the word "dinosaur" mean?
+Answers => Terrible lizard
+Type => Open
+AlsoAccept => Fearful lizard | Terrible reptile | Terrible lizards
+Grading => normalized
+Hints => The first half means "fearful" or "terrible". The second half means "lizard".
+Explanation => From the Greek deinos (terrible) and sauros (lizard). Richard Owen made up the name in 1842.
+Category => Words
+
+Question => Which of these was NOT a dinosaur?
+Answers => T. rex | Triceratops | Pterodactyl | Stegosaurus
+Type => Choice
+Correct => Pterodactyl
+Feedback => A dinosaur, and a famous one. | A dinosaur with a frill. | A pterosaur. It flew, but it was not a dinosaur. | A dinosaur with plates on its back.
+Explanation => Pterodactyls were pterosaurs: flying cousins of the dinosaurs, not dinosaurs themselves.
+Category => Families
+
+Question => Name the three periods of the Mesozoic Era. Any order.
+#### Answers
+Triassic
+Jurassic
+Cretaceous
+Type => List
+Scoring => partial
+Grading => normalized
+Suggest => Triassic | Jurassic | Cretaceous
+Score => 3
+Explanation => Triassic, Jurassic, Cretaceous. The dinosaurs lived through all three, for about 165 million years.
+Category => Timeline
+
+Question => True or false about dinosaurs?
+Answers => True | False
+Rows => Some dinosaurs had feathers | Every dinosaur was huge | Birds are living dinosaurs | Every dinosaur ate meat
+Correct => True | False | True | False
+Type => Matrix
+Scoring => partial
+Score => 4
+Explanation => Feathers, yes. Huge, no: many were the size of a chicken. Birds are the dinosaurs that survived. And plenty of dinosaurs ate plants.
+Category => Facts
+
+Question => A dinosaur that eats only plants is called a [blank].
+Answers => herbivore
+Type => Cloze
+AlsoAccept => plant-eater | plant eater | a herbivore
+Grading => normalized
+Hints => It starts with "herb".
+Explanation => Herbivore. A meat-eater is a carnivore. An omnivore eats both.
+Category => Words
+
+## Bones and fossils
+
+Question => Put each label on the right spot in the dig site.
+Description => A fossil dig with a dinosaur skull, a leg bone and an egg.
+Media => media/dig-site.svg { alt="A cartoon fossil dig with a dinosaur skull, a long leg bone and an egg", credit="Made for this quiz" }
+Type => Diagram
+Answers => Skull | Leg bone | Egg
+Targets => A @ 20,30 | B @ 50,72 | C @ 79,32
+Correct => Skull @ A | Leg bone @ B | Egg @ C
+Scoring => partial
+Score => 3
+Hints => The skull is the round thing with teeth. The egg is the oval on the right.
+Explanation => Three finds, one hole in the ground. A real dig is slower and involves more tea.
+Category => Digging
+
+Question => Click the amber with the insect inside.
+Media => media/amber.svg { alt="Three pieces of amber on a wooden table, one with a small insect trapped inside", credit="Made for this quiz" }
+Answers => 69,48
+Type => Hotspot
+HitRadius => 7
+Score => 2
+Hints => Look for the piece with legs and antennae.
+Explanation => Amber is tree resin that went hard over millions of years. Small creatures sometimes got stuck in it, which is very bad luck for the insect and very good luck for us.
+Category => Digging
+
+Question => About how many million years ago did the non-bird dinosaurs disappear?
+Answers => 66
+Type => Range
+Range => 5
+Unit => million years
+Hints => It is between 60 and 70.
+Explanation => About 66 million years ago. The last of the non-bird dinosaurs were gone, and the age of mammals began.
+Category => Timeline
+
+Question => What is this spiral fossil called?
+Media => media/ammonite.jpg { alt="A spiral ammonite fossil in a square block of grey stone", credit="Made for this quiz" }
+Answers => Ammonite
+Type => Open
+AlsoAccept => Ammonites | Ammonoid | Ammonoids
+Grading => normalized
+Hints => It starts with "amm".
+Explanation => An ammonite. These sea creatures lived in coiled shells and died out with the dinosaurs.
+Category => Fossils
+
+Question => A scientist who studies fossils is called a [blank].
+Answers => palaeontologist
+Type => Cloze
+AlsoAccept => paleontologist | palaeontologists | paleontologists
+Grading => normalized
+Suggest => palaeontologist | paleontologist
+Hints => The American spelling drops the "a".
+Explanation => Palaeontologist. In the US it is spelled paleontologist. Either way, they spend a lot of time with a small brush.
+Category => Words
+
+Question => How long could a T. rex grow, from nose to tail?
+Answers => 12
+Type => Estimate
+Tolerance => 2
+Unit => metres
+Slider => 4..20
+Score => 2
+Hints => About the length of a bus.
+Explanation => Around 12 metres. Its teeth were up to 20 centimetres long, and its arms were famously small.
+Category => Giants
+
+## Dinner time
+
+Question => Put each dinosaur in the right lunch box.
+Type => Classification
+Answers => T. rex | Triceratops | Stegosaurus | Velociraptor | Brachiosaurus
+Buckets => Meat | Plants
+Correct => T. rex @ Meat | Velociraptor @ Meat | Triceratops @ Plants | Stegosaurus @ Plants | Brachiosaurus @ Plants
+Scoring => partial
+Score => 5
+Explanation => T. rex and Velociraptor hunted. The others ate plants, and spent a lot of the day chewing.
+Category => Food
+
+Question => Which one did not eat meat?
+Answers => T. rex | Velociraptor | Triceratops | Spinosaurus
+Type => OddOneOut
+Correct => Triceratops
+AlsoAccept => it ate plants | plants | it was a plant eater | because it ate plants
+Hints => Look at the horns.
+Explanation => Triceratops had a beak for cropping plants. The other three were hunters.
+Category => Food
+
+Question => Which of these did NOT live in the Cretaceous period?
+Answers => Triceratops | T. rex | Stegosaurus | Ankylosaurus
+Type => Choice
+Correct => Triceratops | T. rex | Ankylosaurus
+Negate => true
+Scoring => partial
+Feedback => Cretaceous, and very common. | Cretaceous, and very toothy. | Jurassic. Wrong period. | Cretaceous, with a club on its tail.
+Score => 3
+Explanation => Stegosaurus lived in the Jurassic, tens of millions of years before the others.
+Category => Timeline
+
+Question => Match each dinosaur to its nickname.
+#### Answers
+T. rex ~ Tyrant king
+Triceratops ~ Three-horned face
+Stegosaurus ~ Roof lizard
+Velociraptor ~ Swift thief
+Type => Match
+Scoring => partial
+Score => 4
+Reveal => zoom-in
+Explanation => The names are descriptions in Greek. Tyrannosaurus rex really does mean "tyrant lizard king".
+Category => Words
+
+## Giants and small fries
+
+Question => Rank these dinosaurs from longest to shortest.
+Answers => Argentinosaurus | Brachiosaurus | Triceratops | Velociraptor
+Type => Rank
+Scoring => partial
+Correct => Argentinosaurus | Brachiosaurus | Triceratops | Velociraptor
+Score => 3
+Hints => The chicken-sized one goes last.
+Explanation => Argentinosaurus may have reached 30 metres. Brachiosaurus was around 20. Triceratops was about 9, and Velociraptor about 2.
+Category => Giants
+
+Question => How many horns did Triceratops have, and how many claws on each T. rex hand?
+Type => Parts
+Scoring => partial
+Parts => number: Horns: 2 | number: Claws: 2
+Answers => 3 || 2
+Score => 4
+Hints => One horn sits on the nose. The other two are above the eyes.
+Explanation => Three horns, two claws. The T. rex arms were short, but they were not useless.
+Category => Body
+
+Question => Sort these from smallest to biggest.
+Answers => Velociraptor | Triceratops | Brachiosaurus | Argentinosaurus
+Type => Sort
+Scoring => partial
+AnswersOrder => shuffle
+Score => 4
+Explanation => Velociraptor, Triceratops, Brachiosaurus, Argentinosaurus. The last one is only known from a handful of bones.
+Category => Giants
+
+Question => Which of these is a Triceratops?
+Answers => media/triceratops.svg { alt="A cartoon dinosaur with three horns and a big red frill" } | media/stegosaurus.svg { alt="A cartoon dinosaur with orange plates along its back" } | media/brachiosaurus.svg { alt="A cartoon dinosaur with a very long neck" }
+Type => Choice
+Correct => media/triceratops.svg
+Explanation => The horns and the frill are the giveaway. The plates belong to Stegosaurus, and the long neck to Brachiosaurus.
+Category => Pictures
+
+Question => In which period did the {1} live?
+Answers => Cretaceous | Jurassic | Triassic
+Type => Choice
+Correct => Cretaceous
+Variants => T. rex | Triceratops | Velociraptor
+Score => 2
+Explanation => All three lived in the Cretaceous. The Jurassic had Stegosaurus and Brachiosaurus.
+Category => Timeline
+
+## The last day
+
+Question => What do most scientists think ended the age of the dinosaurs?
+Media => media/asteroid.jpg { alt="A bright asteroid streaks across an orange sunset above a green plain with long-necked dinosaurs", credit="Made for this quiz" }
+Answers => A giant asteroid | A worldwide flood | A long cold winter | A volcano in France
+Type => Choice
+Correct => A giant asteroid
+Steps => media | question | answers
+ColorScheme => night
+Hints => It came from space.
+Explanation => A 10-kilometre asteroid hit near Chicxulub, in Mexico, about 66 million years ago. The dust darkened the sky and the food chains fell apart.
+Category => The end
+
+Question => Which animals alive today are the direct descendants of dinosaurs?
+Answers => Birds
+Type => Open
+AlsoAccept => birds | avian dinosaurs | birds and their cousins
+Reject => lizards | crocodiles | mammals
+Grading => normalized
+Hints => Look up.
+Explanation => Birds. Crocodiles are close cousins, but birds are the dinosaurs that made it through.
+Category => The end
+
+Question => True or false about the last day of the dinosaurs?
+Answers => True | False
+Rows => The asteroid hit near Mexico | Every dinosaur died on the same day | Birds survived
+Correct => True | False | True
+Type => Matrix
+Scoring => partial
+Score => 3
+Explanation => The crater is at Chicxulub. The dying took a long time, and birds survived. They are still everywhere.
+Category => The end
+
+Question => From the first dinosaurs to the last, about how many million years passed?
+Answers => 165
+Type => Range
+Range => 20
+Unit => million years
+Score => 3
+Wager => true
+Timer => 1:30
+Hints => More than 100. Less than 200.
+Notes => Take the bets before the reveal. Nothing focuses a room like a wager.
+Explanation => About 165 million years, from the Triassic to the end of the Cretaceous. Humans have been here for a few hundred thousand.
+Category => Timeline
+
+Question => Riddle: I had three horns, a big frill, and I ate plants. Who am I?
+Answers => Triceratops
+Type => Open
+AlsoAccept => triceratops | Triceratops horridus
+Class => center spotlight
+Layout => center
+Transition => zoom-in
+Score => 2
+Hints => You met me in the picture round.
+Explanation => Triceratops. The frill may have been for display, defence, or both. Nobody can ask one.
+Category => Pictures
+
+Type => End
+Question => Case closed, detectives.
+Comment => That is the end of the dig. If you missed one, the answers are a click away.
+Credits => Questions by Pandaqi. | Art made for this quiz. | Facts checked against the Natural History Museum and Wikipedia.
+Buttons => answers | restart | exit

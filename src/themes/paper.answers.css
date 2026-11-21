@@ -185,6 +185,12 @@
   margin-inline: auto;
   padding-top: var(--pq-gap);
 
+  /* Stacked slides read top-down. Stretching the two grid rows split the
+     content apart and left a hole between the question and its answers. */
+  @media (max-width: 59.99rem) {
+    align-content: start;
+  }
+
   /* A split stacks on a phone and splits on a desk. */
   @media (min-width: 60rem) {
     &:not(.pq-split-single) {

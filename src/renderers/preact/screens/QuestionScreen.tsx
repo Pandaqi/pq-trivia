@@ -57,7 +57,19 @@ function Lifelines({
     quiz.config.lifelines ?? [],
     quiz.config.restricted === true,
   );
-  if (allowed.length === 0 || screen.revealed) {
+  const shown = allowed.filter((lifeline) => {
+    if (lifeline === Lifeline.ExtraTime) {
+      return screen.timerMs !== null;
+    }
+    if (lifeline === Lifeline.FiftyFifty) {
+      return (
+        screen.type === QuestionType.Choice ||
+        screen.type === QuestionType.OddOneOut
+      );
+    }
+    return true;
+  });
+  if (shown.length === 0 || screen.revealed) {
     return null;
   }
   const used = quiz.state.lifelines[screen.id] ?? [];
@@ -67,7 +79,7 @@ function Lifelines({
       role="group"
       aria-label={t("lifelines")}
     >
-      {allowed.map((lifeline) => (
+      {shown.map((lifeline) => (
         <button
           key={lifeline}
           type="button"
@@ -191,9 +203,13 @@ export function QuestionScreen({
   // The whole quiz counts up by default. A `QuizLimit` turns it into a
   // countdown, and the same line shows either.
   const clock = formatTimer(quiz.quizRemaining(now) ?? quiz.elapsed(now) ?? 0);
-  // A hotspot or diagram already puts the map on screen as the input. Do not
-  // print the same picture again as ordinary media underneath it.
-  const mapInput = showInputs ? screen.map : null;
+  // A hotspot or diagram already puts the map on screen as the input. The
+  // hotspot reveal draws its own marked map too. Do not print the same picture
+  // again as ordinary media beside it.
+  const mapInput =
+    showInputs || (showAnswers && screen.type === QuestionType.Hotspot)
+      ? screen.map
+      : null;
   const visibleMedia =
     mapInput === null
       ? screen.media

@@ -9,7 +9,7 @@ import {
   syntaxWarning,
   type Diagnostic,
 } from "../syntax/diagnostics";
-import { MediaKind } from "../values/media";
+import { answerKeyOf, MediaKind } from "../values/media";
 import { insidePercent, parsePoint } from "../values/point";
 import { QuestionType, type QuestionModel } from "./question";
 import type { QuizModel } from "./quiz";
@@ -45,6 +45,7 @@ export function validateQuestion(question: QuestionModel): Diagnostic[] {
   }
 
   const answers = answerTexts(question);
+  const answerKeys = new Set(answers.map((answer) => answerKeyOf(answer)));
 
   switch (question.type) {
     case QuestionType.Choice:
@@ -61,7 +62,7 @@ export function validateQuestion(question: QuestionModel): Diagnostic[] {
         );
       }
       for (const correct of question.correct) {
-        if (!answers.includes(correct.text.trim())) {
+        if (!answerKeys.has(answerKeyOf(correct.text))) {
           diagnostics.push(
             syntaxError(
               DiagnosticCodes.CorrectNotInAnswers,

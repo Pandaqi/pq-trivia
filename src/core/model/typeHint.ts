@@ -3,7 +3,7 @@
  * them into words, so core stays free of interface strings.
  */
 
-import { QuestionType, ScoringMethod, type QuestionModel } from "./question";
+import { pointsPerPart, QuestionType, type QuestionModel } from "./question";
 
 export interface QuestionTypeHint {
   readonly kind: QuestionType;
@@ -32,10 +32,7 @@ export function typeHintOf(question: QuestionModel): QuestionTypeHint | null {
     return null;
   }
   const parts = Math.max(question.correct.length, 1);
-  const pointsPerAnswer =
-    question.scoring === ScoringMethod.Partial
-      ? Math.round((question.score / parts) * 10) / 10
-      : question.score;
+  const pointsPerAnswer = pointsPerPart(question);
   return {
     kind: question.type,
     answerCount: question.answers.length,

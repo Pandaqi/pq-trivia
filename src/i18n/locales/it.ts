@@ -30,6 +30,8 @@ const base: TranslationTable = {
     "Più risposte. Dai {count} {answer}, {points} {point} ciascuna.",
   typeHintRange:
     "Rispondi con un numero. Puoi sbagliarti al massimo di {range}.",
+  typeHintRangeUnit:
+    "Rispondi con un numero (in {unit}). Puoi sbagliarti al massimo di {range}.",
   typeHintSort:
     "Metti le opzioni nell'ordine giusto. Ogni posto corretto vale {points} {point}.",
   typeHintMatch: "Collega ogni coppia. Ogni coppia vale {points} {point}.",
@@ -271,7 +273,9 @@ const base: TranslationTable = {
   typeHintRank:
     "Metti le opzioni in ordine. Ogni coppia vicina vale {points} {point}.",
   typeHintEstimate:
-    "Dai il tuo numero migliore{unit}. Ogni risposta vale {points} {point}.",
+    "Dai il tuo numero migliore. Ogni risposta vale {points} {point}.",
+  typeHintEstimateUnit:
+    "Dai il tuo numero migliore (in {unit}). Ogni risposta vale {points} {point}.",
   typeHintOddOneOut:
     "Trova l'intruso e spiega perché. Scelta e motivo valgono metà ciascuno.",
   typeHintHotspot: "Clicca il punto giusto sull'immagine.",
@@ -360,6 +364,8 @@ const base: TranslationTable = {
   answeredOf: "Hai risposto a {answered} domande su {total}.",
   endReadAloud: "Ora scorri le risposte e guarda chi ha vinto.",
   thatIsAll: "Tutto qui",
+  celebratePerfect: "Perfetto! Ogni punto.",
+  celebrateExcellent: "Brillante! Un punteggio da vantare.",
 
   close: "Chiudi",
   loading: "Caricamento…",
@@ -467,6 +473,10 @@ const live: TranslationTable = {
   liveYourAnswers: "Le tue risposte",
   liveNoAnswer: "nessuna risposta",
   liveWinner: "Vincitore",
+  liveChampion: "Campione",
+  liveChampions: "Campioni",
+  liveYouWon: "Hai vinto!",
+  liveNice: "Bene!",
   liveTheme: "Tema: {theme}",
 };
 

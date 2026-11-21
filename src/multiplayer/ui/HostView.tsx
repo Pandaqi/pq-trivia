@@ -7,6 +7,8 @@ import { pluralKey } from "../../core/values/marks";
 import type { HostRoom } from "../host";
 import { RevealMode, RoomPhase, type LivePlayer } from "../types";
 import { teamStyle } from "../../shared/teamColours";
+import { Celebration } from "../../shared/celebration";
+import { winnersOf } from "../board";
 import { useT } from "../../renderers/preact/i18n";
 import type { Translate } from "../../i18n/types";
 import {
@@ -227,9 +229,11 @@ function HostControls({
 export function HostView({
   host,
   joinLink,
+  celebration,
 }: {
   readonly host: HostRoom;
   readonly joinLink: string;
+  readonly celebration: boolean;
 }): JSX.Element {
   useHost(host);
   const t = useT();
@@ -258,16 +262,25 @@ export function HostView({
       name: player.team ?? player.name,
       score: player.score,
     }));
+  const winners = winnersOf(standings);
+  const championNames = standings
+    .filter((row) => winners.has(row.id))
+    .map((row) => row.name);
 
   // The quiz is over. The last question does not get to keep the board at its
   // feet: the board is the slide, and it gets the whole screen.
   if (phase === RoomPhase.Ended) {
+    const champion =
+      celebration && championNames.length > 0
+        ? `${t(championNames.length === 1 ? "liveChampion" : "liveChampions")}: ${championNames.join(" & ")}`
+        : null;
     return (
       <main class="pq-screen pq-live-screen pq-live-end">
         <p class="pq-live-kicker">{t("liveLiveQuiz")}</p>
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
           {t("liveThatIsQuiz")}
         </h1>
+        {champion === null ? null : <Celebration message={champion} />}
         <Leaderboard rows={standings} />
       </main>
     );

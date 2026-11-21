@@ -174,6 +174,32 @@ Everything in Paper is a token, so a theme can be one stylesheet with ten lines.
 | `--pq-heading-weight`                    | heading weight, set by `BoldHeadings` |
 | `--pq-r-sm` … `--pq-r-lg`                | corners                               |
 | `--pq-space`                             | page rhythm                           |
+| `--pq-confetti-1` … `--pq-confetti-5`    | the celebration colours               |
+
+## Celebrations
+
+A winner gets confetti, one bright flash and a line that says it. A brilliant
+result gets the same on the results page. On by default.
+
+Turn it off in the header:
+
+```txt
+Celebration => false
+```
+
+A theme repaints the party with five tokens. Nothing else changes.
+
+```txt
+--pq-confetti-1 => #e4552c
+--pq-confetti-2 => #f5b82e
+--pq-confetti-3 => #3f7d3a
+--pq-confetti-4 => #b23a6b
+--pq-confetti-5 => #3f8fbf
+```
+
+Reduced motion removes the confetti and the flash. The words stay. A live room
+shows the winner's celebration on the big screen and on the winning phone;
+`mountLive({ celebration: false })` turns off the screens you pass it.
 
 ## Per-question styling
 

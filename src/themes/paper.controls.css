@@ -595,7 +595,10 @@
 .pq-blank {
   display: inline-block;
   min-width: 3.5em;
+  height: 1em;
+  font-size: min(1em, 1.5rem);
   border-bottom: 2px dotted currentColor;
+  vertical-align: baseline;
 }
 
 .pq-visually-hidden,

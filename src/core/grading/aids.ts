@@ -6,7 +6,7 @@
  */
 
 import { answerRefs } from "../model/answers";
-import type { QuestionModel } from "../model/question";
+import { QuestionType, type QuestionModel } from "../model/question";
 import {
   defaultResponse,
   setResponse,
@@ -19,6 +19,7 @@ import type {
   TeamState,
 } from "../session/session";
 import { derivedRng, shuffleWith } from "../plan/shuffle";
+import { answerKeyOf } from "../values/media";
 
 export enum Lifeline {
   FiftyFifty = "50-50",
@@ -63,6 +64,23 @@ export function parseLifeline(raw: string): Lifeline | null {
   return LIFELINE_ALIASES[key] ?? null;
 }
 
+/** A lifeline still has to fit the question in front of the player. */
+export function lifelineFits(
+  lifeline: Lifeline,
+  question: QuestionModel,
+): boolean {
+  if (lifeline === Lifeline.ExtraTime) {
+    return question.timerMs !== null;
+  }
+  if (lifeline === Lifeline.FiftyFifty) {
+    return (
+      question.type === QuestionType.Choice ||
+      question.type === QuestionType.OddOneOut
+    );
+  }
+  return true;
+}
+
 /** What the host allows. Restricted mode allows nothing. */
 export function allowedLifelines(
   values: readonly string[],
@@ -94,13 +112,14 @@ export function fiftyFifty(
   question: QuestionModel,
   seed: string,
 ): readonly string[] {
-  const correct = new Set(question.correct.map((value) => value.text));
+  const correct = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   const wrong = answerRefs(question)
-    .filter((ref) =>
-      question.negate
-        ? correct.has(ref.value.text)
-        : !correct.has(ref.value.text),
-    )
+    .filter((ref) => {
+      const hit = correct.has(answerKeyOf(ref.value.text));
+      return question.negate ? hit : !hit;
+    })
     .map((ref) => ref.id);
   return shuffleWith(wrong, derivedRng(seed, `fifty:${question.id}`)).slice(
     0,

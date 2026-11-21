@@ -17,6 +17,8 @@ import {
   type RevealPayload,
 } from "../types";
 import { assignTeamColours } from "../../shared/teamColours";
+import { Celebration } from "../../shared/celebration";
+import { winnersOf } from "../board";
 import { Leaderboard, LiveBadge, RevealPanel, signed } from "./parts";
 import { PlayerAnswer } from "./PlayerAnswer";
 
@@ -200,8 +202,10 @@ function StakePicker({
 
 export function PlayerView({
   player,
+  celebration,
 }: {
   readonly player: PlayerRoom;
+  readonly celebration: boolean;
 }): JSX.Element {
   usePlayer(player);
   const t = useT();
@@ -217,6 +221,7 @@ export function PlayerView({
   // screen is out of date.
   const myScore =
     state.players.find((item) => item.id === state.id)?.score ?? 0;
+  const won = state.id !== null && winnersOf(state.leaderboard).has(state.id);
 
   // Each question starts with nothing on the line.
   useEffect(() => setStake(0), [question?.id]);
@@ -242,6 +247,7 @@ export function PlayerView({
         <h1 class="pq-live-heading" data-pq-heading tabIndex={-1}>
           {t("liveThatIsQuiz")}
         </h1>
+        {celebration && won ? <Celebration message={t("liveYouWon")} /> : null}
         <Leaderboard rows={state.leaderboard} selfId={state.id} />
         {state.history.length === 0 ? null : (
           <section class="pq-live-history" aria-label={t("liveYourAnswers")}>

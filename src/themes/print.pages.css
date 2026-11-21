@@ -85,9 +85,15 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    break-after: page;
     break-inside: avoid;
     background: var(--pq-paper);
+  }
+
+  /* A break goes before the next sheet, never after the last one. Chrome
+     prints one blank page for a trailing `break-after: page`. */
+  .pq-print-page + .pq-print-page,
+  .pq-print-page + .pq-print-flow {
+    break-before: page;
   }
 
   /* Forms, answer sheets and the media list are documents, not slides. They

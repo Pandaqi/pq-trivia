@@ -24,6 +24,8 @@ import {
   type QuestionModel,
 } from "../model/question";
 import type { QuizPlan } from "../plan/plan";
+import { gradeQuestion } from "../grading/grading";
+import type { GradePart } from "../grading/types";
 import { bankAt, type GradeReport } from "../grading/report";
 import { stakingLimit } from "../grading/wager";
 import { PlayMode, type Progress, type SessionState } from "./session";
@@ -31,7 +33,7 @@ import { stepViewOf, type StepViewModel } from "../model/steps";
 import { MediaKind, type MediaOptions } from "../values/media";
 import { toMediaViewModel, type MediaViewModel } from "../values/mediaView";
 import type { HotspotTarget, SliderRange } from "../values/point";
-import type { Confidence } from "./responses";
+import { defaultResponse, type Confidence } from "./responses";
 import { fiftyFifty, Lifeline } from "../grading/aids";
 
 export { toMediaViewModel };
@@ -62,6 +64,8 @@ export interface QuestionViewModel {
   readonly title: readonly InlineNode[];
   readonly body: readonly InlineNode[];
   readonly answers: readonly AnswerViewModel[];
+  /** The graded parts once the answer is shown. Null while it is hidden. */
+  readonly gradeParts: readonly GradePart[] | null;
   readonly media: readonly MediaViewModel[];
   /** The image a hotspot or diagram sits on. Null for every other type. */
   readonly map: MediaViewModel | null;
@@ -240,6 +244,12 @@ export function questionScreen(
     mediaOptions,
     state.mediaPlays[question.id] ?? 0,
   );
+  const gradeParts = showAnswers
+    ? gradeQuestion(
+        question,
+        state.responses[question.id] ?? defaultResponse(question),
+      ).parts
+    : null;
 
   const typeHint = typeHintOf(question);
   const hintCount = state.hints[question.id] ?? 0;
@@ -272,6 +282,7 @@ export function questionScreen(
     ),
     body: bodyValues.flatMap((value) => inlineValue(value, formatText)),
     answers,
+    gradeParts,
     media,
     map: isMapType
       ? (declaredMedia.find((item) => item.kind === MediaKind.Image) ?? null)

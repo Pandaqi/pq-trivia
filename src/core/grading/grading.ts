@@ -10,6 +10,7 @@ import { answerRefs } from "../model/answers";
 import { groupedAnswers } from "../model/parts";
 import {
   GradingMode,
+  isMappingType,
   questionMaxScore,
   QuestionType,
   ScoringMethod,
@@ -20,6 +21,7 @@ import {
   isEmptyResponse,
   type Response,
 } from "../session/responses";
+import { answerKeyOf } from "../values/media";
 import { matchText, normalizeText, parseNumber } from "./normalize";
 import { closePoints, gradeKind, part, round2 } from "./parts";
 import {
@@ -189,11 +191,9 @@ function gradeNumber(
     normalizedCorrect: expected === null ? [] : [String(expected)],
   };
 }
-
 function gradeRange(question: QuestionModel, response: Response): GradeResult {
   return gradeNumber(question, response, question.range ?? 0, null);
 }
-
 /** `Tolerance` is the margin, in the answer's own unit. */
 function gradeEstimate(
   question: QuestionModel,
@@ -206,7 +206,6 @@ function gradeEstimate(
     question.unit,
   );
 }
-
 function gradeChoice(
   question: QuestionModel,
   response: Response,
@@ -216,15 +215,17 @@ function gradeChoice(
   const refs = answerRefs(question);
   const selected =
     response.kind === ResponseKind.Choice ? response.selected : [];
-  const correctTexts = new Set(question.correct.map((value) => value.text));
+  // A media answer is its file, not the alt text around it.
+  const correctTexts = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   // `Negate => true` lists the true statements; the odd one out is the answer.
-  const wanted = (ref: (typeof refs)[number]): boolean =>
-    question.negate
-      ? !correctTexts.has(ref.value.text)
-      : correctTexts.has(ref.value.text);
+  const wanted = (ref: (typeof refs)[number]): boolean => {
+    const hit = correctTexts.has(answerKeyOf(ref.value.text));
+    return question.negate ? !hit : hit;
+  };
   const correctIds = refs.filter(wanted).map((ref) => ref.id);
   const maxPoints = questionMaxScore(question);
-
   if (correctIds.length <= 1) {
     const wantedId = correctIds[0];
     const won =
@@ -432,7 +433,9 @@ export function gradeQuestion(
   options: GradeOptions = {},
 ): GradeResult {
   const mode = modeOf(question, options);
-  if (isEmptyResponse(response)) {
+  // A pair or a placement still has a right answer when nothing was given.
+  // Grading it empty gives the reveal its rows, with no points earned.
+  if (isEmptyResponse(response) && !isMappingType(question.type)) {
     const maxPoints = questionMaxScore(question);
     return {
       questionId: question.id,
@@ -492,5 +495,4 @@ export function gradeQuestion(
 export function questionTitle(question: QuestionModel): string {
   return question.text[0]?.text ?? question.id;
 }
-
 export { PAIR_SYMBOL };

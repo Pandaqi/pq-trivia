@@ -128,6 +128,28 @@ describe("choice", () => {
     expect(picked.kind).toBe(GradeKind.Unanswered);
     expect(picked.points).toBe(0);
   });
+
+  test("a media answer is matched by its path, not its alt text", () => {
+    const media = planQuiz(
+      buildQuiz(`
+Question => Pick the map
+Answers => map.png { alt="A map" } | other.png
+Type => Choice
+Correct => map.png
+Score => 2
+`),
+    );
+    const question = media.questions[0];
+    if (question === undefined) throw new Error("missing media question");
+    const first = answerRefs(question)[0];
+    if (first === undefined) throw new Error("missing media answer");
+    const picked = graded(question, {
+      kind: ResponseKind.Choice,
+      selected: [first.id],
+    });
+    expect(picked.correct).toBe(true);
+    expect(picked.points).toBe(2);
+  });
 });
 
 describe("open", () => {
@@ -249,6 +271,36 @@ describe("report", () => {
     expect(report.percent).toBe(0);
     expect(retryIds(report).length).toBe(plan.questions.length);
     expect(report.band).toBe(GradeBand.Practice);
+  });
+
+  test("a perfect streak run still reads as 100 percent", () => {
+    const streakPlan = planQuiz(
+      buildQuiz(`
+Streaks => true
+
+Question => One
+Answers => A
+
+Question => Two
+Answers => B
+
+Question => Three
+Answers => C
+
+Question => Four
+Answers => D
+`),
+    );
+    const responses: Record<string, Response> = {};
+    for (const question of streakPlan.questions) {
+      responses[question.id] = {
+        kind: ResponseKind.Open,
+        text: question.answers[0]?.text ?? "",
+      };
+    }
+    const report = gradeAttempt(streakPlan, responses, { streaks: true });
+    expect(report.points).toBeGreaterThan(report.maxPoints);
+    expect(report.percent).toBe(100);
   });
 
   test("categories are grouped and scored separately", () => {

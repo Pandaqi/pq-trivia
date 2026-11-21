@@ -270,6 +270,33 @@ export function detectType(attributes: readonly AstAttribute[]): QuestionType {
   return QuestionType.Open;
 }
 
+/** Types whose answers are pairs or placements, not labels on their own. */
+export function isMappingType(type: QuestionType): boolean {
+  return (
+    type === QuestionType.Diagram ||
+    type === QuestionType.Classification ||
+    type === QuestionType.Match
+  );
+}
+
+/** What one correct part adds to the question. Per-correct pays the full score. */
+export function pointsPerPart(question: QuestionModel): number {
+  if (question.scoring === ScoringMethod.PerCorrect) {
+    return question.score;
+  }
+  // Rank scores the neighbours, not the items: four dinosaurs, three pairs.
+  let count = Math.max(question.correct.length, 1);
+  if (question.type === QuestionType.Rank) {
+    count = Math.max(question.correct.length - 1, 1);
+  } else if (
+    question.type === QuestionType.Parts &&
+    question.parts.length > 0
+  ) {
+    count = question.parts.length;
+  }
+  return Math.round((question.score / count) * 10) / 10;
+}
+
 export function questionMaxScore(question: QuestionModel): number {
   if (question.type === QuestionType.Section) {
     return 0;

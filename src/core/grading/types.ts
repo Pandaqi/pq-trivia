@@ -11,7 +11,7 @@ export enum GradeKind {
 }
 
 export interface GradePart {
-  /** What this part is: "Blank 2", "Pair 1", "Position 3". */
+  /** What this part is: "Blank 2", "T. rex", "Position 3". */
   readonly label: string;
   readonly expected: string;
   readonly given: string;

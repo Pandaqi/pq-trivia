@@ -204,8 +204,32 @@
   font-weight: 600;
 }
 
+.pq-live-result {
+  position: relative;
+}
+
 .pq-live-result[data-pq-correct="true"] {
   color: var(--pq-right);
+}
+
+/* A right answer gets a word, not just a tick. */
+.pq-live-cheer {
+  display: inline-block;
+  margin-left: 0.45rem;
+  padding: 0 0.45rem;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-right);
+  color: var(--pq-slide);
+  font-family: var(--pq-font-label);
+  font-size: var(--pq-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  animation: pq-banner-pop 380ms ease-out both;
+}
+
+/* The burst needs a centre to fly out of. */
+.pq-live-reveal-item {
+  position: relative;
 }
 
 .pq-live-result[data-pq-correct="false"] {

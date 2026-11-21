@@ -5,12 +5,16 @@
 /* --- Timer ------------------------------------------------------------- */
 
 .pq-timer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--pq-gap);
-  max-width: 30rem;
-  margin: 0 auto var(--pq-gap);
+  display: grid;
+  justify-items: center;
+  gap: var(--pq-gap-sm);
+  width: auto;
+  margin: 0 calc(var(--pq-space) * -1) calc(var(--pq-gap-sm) - var(--pq-space));
+  padding: var(--pq-gap-sm) 0 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
   font-family: var(--pq-font-label);
 
   &[data-pq-urgency="warn"] .pq-timer-value {
@@ -26,13 +30,17 @@
 
 .pq-timer-value {
   margin: 0;
-  font-size: var(--pq-text-md);
+  color: var(--pq-ink);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
 
 .pq-timer-bar {
-  flex: 1;
-  height: var(--pq-bar);
+  width: 100%;
+  height: 0.5rem;
   border-radius: var(--pq-r-pill);
   background: var(--pq-paper-deep);
   overflow: hidden;
@@ -75,6 +83,10 @@
 
 .pq-sort {
   margin: var(--pq-gap-lg) 0;
+}
+
+.pq-split .pq-match {
+  margin: 0;
 }
 
 /* One row of a sort, a match column or a given pair: same card, same line. */
@@ -475,10 +487,11 @@
   font-size: var(--pq-text-sm);
 }
 
-/* The first step is often just the clip. Give it the room it was given. */
+/* The first step is often just the clip. Give it the room it was given, but
+ * leave the step button on screen. A 720p laptop still has to click Next. */
 [data-pq-step="media"] .pq-media-list img,
 [data-pq-step="media"] .pq-media-list video {
-  max-height: 72vh;
+  max-height: min(72vh, calc(100vh - 18rem));
 }
 
 /* --- Motion ------------------------------------------------------------ */
@@ -912,6 +925,32 @@
   gap: 0.5rem;
 }
 
+.pq-parts .pq-field-label {
+  color: var(--pq-ink);
+  font-size: clamp(1.25rem, 2.4vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pq-part-static {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.pq-part-line {
+  display: block;
+  min-height: 2.2rem;
+  border-bottom: 1px solid var(--pq-line, rgba(0, 0, 0, 0.25));
+}
+
+.pq-matrix-dot {
+  display: inline-block;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid var(--pq-line-strong, currentColor);
+  border-radius: 50%;
+}
+
 .pq-matrix {
   width: 100%;
   border-collapse: collapse;
@@ -982,11 +1021,63 @@
   opacity: 0.8;
 }
 
+/* The answer view of a hotspot: the place, not two numbers. */
+.pq-hotspot-reveal {
+  margin: var(--pq-gap) auto 0;
+}
+
+.pq-hotspot-reveal-map {
+  position: relative;
+  width: min(100%, 40rem);
+  margin-inline: auto;
+}
+
+.pq-hotspot-reveal-map img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--pq-r-md);
+}
+
+.pq-map-marker-right {
+  background: var(--pq-right);
+}
+
+.pq-map-marker-given {
+  background: var(--pq-wrong);
+  border-style: dashed;
+}
+
+.pq-hotspot-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--pq-gap);
+  margin-top: var(--pq-gap-sm);
+  font-size: 0.85em;
+}
+
+.pq-hotspot-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+
+.pq-hotspot-dot-given {
+  background: var(--pq-wrong);
+}
+
+.pq-hotspot-dot-right {
+  background: var(--pq-right);
+}
+
 .pq-labels,
 .pq-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.6rem;
   list-style: none;
   padding: 0;
   margin: 0.25rem 0 0;
@@ -1018,13 +1109,34 @@
 
 .pq-label,
 .pq-placed {
-  border: 1px solid var(--pq-line, currentColor);
-  border-radius: 0.4rem;
-  background: var(--pq-surface, transparent);
-  color: inherit;
-  padding: 0.3rem 0.55rem;
-  font: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--pq-tap);
+  padding: 0.45rem 0.95rem;
+  border: var(--pq-border-strong);
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-honey-soft);
+  color: var(--pq-ink);
+  box-shadow: var(--pq-shadow-1);
+  font: 700 var(--pq-text-md) / 1.2 var(--pq-font-label);
+  text-align: center;
   cursor: grab;
+}
+
+.pq-label:not(.pq-label-static):hover {
+  border-color: var(--pq-accent);
+  box-shadow: var(--pq-shadow-2);
+}
+
+.pq-label:focus-visible {
+  outline: var(--pq-focus);
+  outline-offset: 2px;
+}
+
+.pq-label-static,
+.pq-bucket-static {
+  cursor: default;
 }
 
 .pq-label[aria-pressed="true"] {
@@ -1047,9 +1159,10 @@
 }
 
 .pq-bucket {
+  position: relative;
   border: 1px dashed var(--pq-line, rgba(0, 0, 0, 0.25));
   border-radius: 0.5rem;
-  padding: 0.5rem;
+  padding: 1.25rem 0.6rem 0.6rem;
   min-height: 4rem;
 }
 
@@ -1063,8 +1176,17 @@
 }
 
 .pq-bucket-name {
-  width: 100%;
-  font-weight: 600;
+  position: absolute;
+  top: 0;
+  left: 0.65rem;
+  width: auto;
+  transform: translateY(-50%);
+  padding: 0.18rem 0.6rem;
+  border-radius: var(--pq-r-pill);
+  background: var(--pq-paper-deep);
+  color: var(--pq-ink);
+  font: 700 var(--pq-text-sm) / 1.2 var(--pq-font-label);
+  letter-spacing: 0.04em;
 }
 
 .pq-answer-feedback {
@@ -1279,4 +1401,278 @@
   background: var(--pq-accent, currentColor);
   color: var(--pq-accent-ink, #fff);
   font-size: 0.8em;
+}
+
+/* --- Celebration -------------------------------------------------------
+ * A winner gets the lot: confetti, one bright flash, and a line that says it.
+ * A correct answer gets a small ring. Both are decoration; the text says it.
+ */
+
+.pq-celebration {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The flash is one frame of daylight, then gone. */
+.pq-celebration::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 45%,
+    rgb(255 255 255 / 0.72),
+    transparent 58%
+  );
+  animation: pq-celebration-flash 620ms ease-out both;
+}
+
+.pq-confetti {
+  position: absolute;
+  inset: 0;
+}
+
+.pq-confetti-piece {
+  position: absolute;
+  top: -4vh;
+  left: var(--pq-confetti-left);
+  width: var(--pq-confetti-size);
+  height: calc(var(--pq-confetti-size) * 1.5);
+  border-radius: 2px;
+  background: var(--pq-confetti-colour);
+  opacity: 0;
+  animation: pq-confetti-fall var(--pq-confetti-fall) var(--pq-confetti-delay)
+    cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+.pq-celebration-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: fit-content;
+  max-width: min(44rem, calc(100vw - 2rem));
+  margin: var(--pq-gap) auto;
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--pq-honey);
+  border-radius: var(--pq-r-pill);
+  background: linear-gradient(
+    100deg,
+    var(--pq-honey),
+    color-mix(in srgb, var(--pq-honey) 55%, var(--pq-accent))
+  );
+  color: var(--pq-code-bg);
+  box-shadow: var(--pq-shadow-2);
+  font-family: var(--pq-font-heading);
+  font-size: var(--pq-text-md);
+  font-weight: 700;
+  text-align: center;
+  animation: pq-banner-pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.pq-celebration-emoji {
+  font-size: 1.25em;
+  line-height: 1;
+}
+
+/* A right answer's own little party, around the verdict. */
+.pq-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.pq-burst-piece {
+  position: absolute;
+  width: var(--pq-burst-size);
+  height: calc(var(--pq-burst-size) * 1.5);
+  border-radius: 2px;
+  background: var(--pq-burst-colour);
+  animation: pq-burst-out 720ms ease-out both;
+}
+
+/* --- Alive -------------------------------------------------------------
+ * Small movements that say "this is a thing you can press". Nothing here
+ * changes layout; everything stops when the reader asks for less motion.
+ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .pq-screen-start .pq-header,
+  .pq-screen-end .pq-header,
+  .pq-screen-results .pq-header {
+    animation: pq-slide-up 260ms ease-out both;
+  }
+
+  .pq-answer:not([disabled]) {
+    transition:
+      transform 150ms ease,
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .pq-answer:not([disabled]):hover {
+    transform: translateY(-2px);
+  }
+
+  .pq-answer:not([disabled]):active {
+    transform: translateY(1px) scale(0.995);
+  }
+
+  .pq-quiz button:not([disabled]) {
+    transition:
+      transform 120ms ease,
+      filter 120ms ease;
+  }
+
+  .pq-quiz button:not([disabled]):active {
+    transform: scale(0.97);
+  }
+
+  .pq-media img {
+    transition: transform 320ms ease;
+  }
+
+  .pq-media img:hover {
+    transform: scale(1.015);
+  }
+
+  .pq-progress > span {
+    transition: width 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pq-timer[data-pq-urgency="urgent"] .pq-timer-value {
+    animation: pq-timer-throb 900ms ease-in-out infinite;
+  }
+
+  .pq-live-board li {
+    animation: pq-stagger 280ms ease-out both;
+
+    &:nth-child(2) {
+      animation-delay: 50ms;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 100ms;
+    }
+
+    &:nth-child(4) {
+      animation-delay: 150ms;
+    }
+
+    &:nth-child(5) {
+      animation-delay: 200ms;
+    }
+  }
+
+  .pq-live-board li[data-pq-winner="true"] {
+    animation: pq-winner-pop 620ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+}
+
+@keyframes pq-confetti-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -8vh, 0) rotate(0);
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  85% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--pq-confetti-drift), 108vh, 0)
+      rotate(var(--pq-confetti-spin));
+  }
+}
+
+@keyframes pq-celebration-flash {
+  0% {
+    opacity: 0;
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pq-banner-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(6px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.04) translateY(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pq-burst-out {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.4) rotate(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(
+        calc(-50% + var(--pq-burst-x)),
+        calc(-50% + var(--pq-burst-y))
+      )
+      scale(1) rotate(var(--pq-burst-spin));
+  }
+}
+
+@keyframes pq-timer-throb {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes pq-winner-pop {
+  0% {
+    transform: scale(0.94);
+  }
+
+  55% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* The live room can sit outside `.pq-quiz`, so it gets its own quiet switch. */
+@media (prefers-reduced-motion: reduce) {
+  .pq-confetti {
+    display: none;
+  }
+
+  .pq-celebration::after,
+  .pq-confetti-piece,
+  .pq-burst-piece,
+  .pq-celebration-banner,
+  .pq-live-cheer {
+    animation: none;
+  }
 }

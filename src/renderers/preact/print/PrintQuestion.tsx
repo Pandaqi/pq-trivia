@@ -19,9 +19,8 @@ import { Inline } from "../components/Inline";
 import { Media } from "../components/Media";
 import { useT } from "../i18n";
 import { typeHintText } from "../typeHint";
-import { markOf, pluralKey } from "../../../core/values/marks";
-
-const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+import { pluralKey } from "../../../core/values/marks";
+import { PrintOptions } from "./PrintOptions";
 
 export function PrintQuestion({
   question,
@@ -53,15 +52,21 @@ export function PrintQuestion({
 }): JSX.Element {
   const t = useT();
   const [title = "", ...body] = question.text.map((value) => value.text);
-  const correctTexts = new Set(question.correct.map((value) => value.text));
   const refs = answerRefs(question);
   const hints = question.hints.slice(0, state.hints[question.id] ?? 0);
-  const isChoice = question.type === QuestionType.Choice;
-  const isOrdered =
-    question.type === QuestionType.Sort || question.type === QuestionType.Match;
+  const isDiagram = question.type === QuestionType.Diagram;
+  const isMatch = question.type === QuestionType.Match;
+  const hasOptions =
+    question.type === QuestionType.Choice ||
+    question.type === QuestionType.OddOneOut ||
+    question.type === QuestionType.Sort ||
+    question.type === QuestionType.Rank ||
+    question.type === QuestionType.Matrix ||
+    question.type === QuestionType.Classification ||
+    question.type === QuestionType.Parts;
   const typed = isOpenType(question.type);
   const hasMedia = question.media.length > 0;
-  const split = hasMedia || isChoice || isOrdered;
+  const split = hasMedia || hasOptions;
   const front = face === "front";
   const back = face === "back";
   const reveal = back || (face === null && showAnswers);
@@ -70,53 +75,38 @@ export function PrintQuestion({
   const hintText =
     typeHints && !reveal && hint !== null ? typeHintText(t, hint) : null;
 
-  const answers = (
-    <ul class="pq-answers">
-      {refs.map((ref, answerIndex) => {
-        const correct = correctTexts.has(ref.value.text);
-        return (
-          <li key={ref.id}>
-            <div
-              class="pq-answer"
-              data-pq-correct={reveal ? String(correct) : undefined}
-            >
-              <span class="pq-answer-number" aria-hidden="true">
-                {LETTERS[answerIndex] ?? answerIndex + 1}
+  const options = <PrintOptions question={question} reveal={reveal} />;
+  // A diagram needs its lettered targets on the map, or the labels cannot be
+  // placed on paper. Every other media list stays a plain figure.
+  const mediaList = hasMedia ? (
+    <div class={isDiagram ? "pq-print-map" : "pq-media-list"}>
+      {question.media.map((item) => {
+        const view = toMediaViewModel(item, question.alt, media);
+        return isDiagram ? (
+          <div key={item.path} class="pq-print-map-image">
+            <Media item={view} />
+            {question.targets.map((target) => (
+              <span
+                key={target.label}
+                class="pq-print-target"
+                style={`left:${target.x}%;top:${target.y}%`}
+              >
+                {target.label}
               </span>
-              <span class="pq-answer-text">{ref.value.text}</span>
-              {reveal ? (
-                <span class="pq-mark" aria-hidden="true">
-                  {markOf(correct)}
-                </span>
-              ) : null}
-              {reveal && correct ? (
-                <span class="pq-answer-score" aria-hidden="true">
-                  +{question.score}
-                </span>
-              ) : null}
-            </div>
-          </li>
+            ))}
+          </div>
+        ) : (
+          <Media key={item.path} item={view} />
         );
       })}
-    </ul>
-  );
-
-  const splitMedia = hasMedia ? (
-    <div class="pq-media-list">
-      {question.media.map((item) => (
-        <Media
-          key={item.path}
-          item={toMediaViewModel(item, question.alt, media)}
-        />
-      ))}
     </div>
   ) : null;
-  const splitChoices = !hasMedia && isChoice ? answers : null;
   const splitRight =
     split && !front ? (
       <div class="pq-split-right">
-        {splitMedia}
-        {splitChoices}
+        {mediaList}
+        {!hasMedia && hasOptions ? options : null}
+        {isDiagram && hasMedia ? options : null}
       </div>
     ) : null;
 
@@ -147,8 +137,8 @@ export function PrintQuestion({
               <Inline nodes={parseInline(body.join("\n")).nodes} />
             </p>
           )}
-          {hasMedia && isChoice && !front ? answers : null}
-          {isChoice && front ? answers : null}
+          {hasMedia && hasOptions && !isDiagram && !front ? options : null}
+          {front && hasOptions ? options : null}
           {typed && !reveal && answerLines ? (
             <div class="pq-field">
               <span class="pq-field-label">{t("printAnswer")}</span>
@@ -166,7 +156,7 @@ export function PrintQuestion({
               </span>
             </p>
           ) : null}
-          {isOrdered && !front ? (
+          {isMatch && !front ? (
             <ol class="pq-answers-plain">
               {refs.map((ref) => (
                 <li key={ref.id}>{ref.value.text}</li>

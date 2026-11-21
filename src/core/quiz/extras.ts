@@ -14,6 +14,7 @@ import {
   allowedLifelines,
   EXTRA_TIME_MS,
   Lifeline,
+  lifelineFits,
   parseLifeline,
 } from "../grading/aids";
 import { cleanTeamNames } from "../grading/teams";
@@ -353,6 +354,9 @@ export function createExtras(ctx: ExtrasContext): Extras {
       return false;
     }
     if ((state.lifelines[question.id] ?? []).includes(lifeline)) {
+      return false;
+    }
+    if (!lifelineFits(lifeline, question)) {
       return false;
     }
     // Extra time on a question without a timer is a donation, not a lifeline.

@@ -180,7 +180,7 @@ export function gradeMatch(
     .filter((pair): pair is [string, string] => pair !== null);
   const perPart = closePoints(questionMaxScore(question), expected.length);
   const used = new Set<number>();
-  const parts = expected.map((pair, index) => {
+  const parts = expected.map((pair) => {
     const wanted = `${pair[0]} ${PAIR_SYMBOL} ${pair[1]}`;
     let hit = -1;
     for (let cursor = 0; cursor < given.length; cursor += 1) {
@@ -204,7 +204,7 @@ export function gradeMatch(
     const found = hit >= 0 ? given[hit] : undefined;
     const answer =
       found === undefined ? "" : `${found[0]} ${PAIR_SYMBOL} ${found[1]}`;
-    return part(`Pair ${index + 1}`, wanted, answer, hit >= 0, perPart.points);
+    return part(pair[0], wanted, answer, hit >= 0, perPart.points);
   });
   const won = parts.every((entry) => entry.correct);
   const points = scoringPoints(question, parts);

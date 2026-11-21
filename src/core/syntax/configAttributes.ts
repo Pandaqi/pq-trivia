@@ -123,6 +123,7 @@ export const CONFIG_HEADER_ROWS: readonly ConfigHeaderRow[] = [
   row("ThemeDisabled", "themeDisabled", ConfigValueKind.Boolean),
   row("ThemeUpload", "themeUpload", ConfigValueKind.Boolean),
   row("ThemeAudit", "themeAudit", ConfigValueKind.Boolean),
+  row("Celebration", "celebration", ConfigValueKind.Boolean),
   row("ShowSources", "showSources", ConfigValueKind.Boolean),
   row("Dictation", "dictation", ConfigValueKind.Boolean),
   row("PrintAnswerLines", "printAnswerLines", ConfigValueKind.Boolean),

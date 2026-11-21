@@ -11,6 +11,7 @@ import {
   type TeamColour,
 } from "../../shared/teamColours";
 import { ranksOf, winnersOf } from "../board";
+import { CelebrationBurst } from "../../shared/celebration";
 import type {
   LeaderRow,
   LivePlayer,
@@ -289,6 +290,7 @@ export function Leaderboard({
             >
               <span class="pq-live-rank">{ranks.get(row.id) ?? index + 1}</span>
               <span class="pq-live-name">
+                {won ? <span aria-hidden="true">🏆 </span> : null}
                 {row.name}
                 {won ? (
                   <span class="pq-live-winner">{t("liveWinner")}</span>
@@ -368,6 +370,7 @@ function MyResult({
       <span aria-hidden="true">{mine.correct ? "✓" : "✗"}</span>{" "}
       {mine.late ? `${t("liveLate")} ` : ""}
       {`${signed(mine.points)} ${unit}`}
+      {mine.correct ? <span class="pq-live-cheer">{t("liveNice")}</span> : null}
       {mine.stake === null
         ? ""
         : ` · ${t("liveStaked", { points: mine.stake })}`}
@@ -403,6 +406,7 @@ export function RevealPanel({
         const mine = mineOf(item);
         return (
           <div class="pq-live-reveal-item" key={item.questionId}>
+            {mine?.correct === true ? <CelebrationBurst /> : null}
             {single ? null : (
               <p class="pq-live-kicker">
                 {t("liveQuestionNumber", { number: item.index + 1 })}

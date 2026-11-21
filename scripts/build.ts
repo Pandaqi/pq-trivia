@@ -6,6 +6,7 @@
 
 import { mkdir, readdir, readFile, rm, watch } from "node:fs/promises";
 import { join } from "node:path";
+import type { TranslationTable } from "../src/i18n/types";
 import { minifyCss } from "./css";
 type BuildPlugin = NonNullable<
   NonNullable<Parameters<typeof Bun.build>[0]>["plugins"]
@@ -94,6 +95,42 @@ interface LocaleFiles {
   readonly loader: string;
 }
 
+/**
+ * One key list, one value list per language. Repeating three hundred keys in
+ * eight object literals is most of what gzip was asked to squeeze; the arrays
+ * say the same thing once.
+ */
+function compactLocales(
+  exportName: string,
+  codes: readonly string[],
+  tables: readonly TranslationTable[],
+): string {
+  const keys = [...new Set(tables.flatMap((table) => Object.keys(table)))];
+  const values = tables.map((table) => keys.map((key) => table[key] ?? null));
+  return `import type { TranslationTable } from "../src/i18n/types";
+
+const KEYS = ${JSON.stringify(keys)};
+const CODES = ${JSON.stringify(codes)};
+const VALUES: (string | null)[][] = ${JSON.stringify(values)};
+
+function tableAt(index: number): TranslationTable {
+  const values = VALUES[index] ?? [];
+  const table: Record<string, string> = {};
+  for (let at = 0; at < KEYS.length; at += 1) {
+    const key = KEYS[at];
+    const value = values[at];
+    if (key !== undefined && value !== null && value !== undefined) {
+      table[key] = value;
+    }
+  }
+  return table;
+}
+
+export const ${exportName}: Readonly<Record<string, TranslationTable>> =
+  Object.fromEntries(CODES.map((code, index) => [code, tableAt(index)]));
+`;
+}
+
 async function writeLocales(
   languages: readonly string[],
 ): Promise<LocaleFiles> {
@@ -118,13 +155,28 @@ async function writeLocales(
     await Bun.write(path, body);
     return path;
   };
+  // A fresh query keeps watch mode honest: a changed locale file is read
+  // again instead of served from the module cache.
+  const stamp = `${Date.now()}-${Math.random()}`;
+  const readTables = async (
+    suffix: "Base" | "Live",
+  ): Promise<readonly TranslationTable[]> =>
+    Promise.all(
+      names.map(async ({ code, name }) => {
+        const module = (await import(
+          `../src/i18n/locales/${code}.ts?${stamp}`
+        )) as Record<string, TranslationTable | undefined>;
+        return module[`${name}${suffix}`] ?? {};
+      }),
+    );
+  const codes = names.map(({ code }) => code);
   const locales = await write(
     "locales.ts",
-    `${imports("Base")}\n\nexport const LOCALES = { ${entries} };\n`,
+    compactLocales("LOCALES", codes, await readTables("Base")),
   );
   const live = await write(
     "liveLocales.ts",
-    `${imports("Live")}\n\nexport const LIVE_LOCALES = { ${entries} };\n`,
+    compactLocales("LIVE_LOCALES", codes, await readTables("Live")),
   );
   // The wizard shows diagnostics too, so its table carries both halves.
   const editorImports = names

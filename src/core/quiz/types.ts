@@ -271,6 +271,8 @@ export interface QuizConfig {
   readonly themeUpload?: boolean;
   /** Check the theme for unreadable text and tiny images. On unless turned off. */
   readonly themeAudit?: boolean;
+  /** Confetti, a flash and a banner when someone wins or scores very well. */
+  readonly celebration?: boolean;
   /** Show sources under a question. Off by default: they can give answers away. */
   readonly showSources?: boolean;
   /** The microphone button on text answers. Off by default. */

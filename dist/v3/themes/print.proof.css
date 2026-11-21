@@ -87,9 +87,15 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    break-after: page;
     break-inside: avoid;
     background: var(--pq-paper);
+  }
+
+  /* A break goes before the next sheet, never after the last one. Chrome
+     prints one blank page for a trailing `break-after: page`. */
+  .pq-print-page + .pq-print-page,
+  .pq-print-page + .pq-print-flow {
+    break-before: page;
   }
 
   /* Forms, answer sheets and the media list are documents, not slides. They
@@ -323,6 +329,17 @@
 
 /* Print, question pages: bar, two halves, answers, hints, fields. Built into print.css. */
 
+  /* Coloured paper survives the print dialog. */
+  .pq-meta-strip,
+  .pq-answer,
+  .pq-answer-number,
+  .pq-answer-score,
+  .pq-print-target,
+  .pq-label {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
   /* Question page: the coloured bar, then two balanced halves. */
   .pq-meta-strip {
     margin: 0 0 6mm;
@@ -332,8 +349,6 @@
     color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8.5pt;
     letter-spacing: 0.08em;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
   }
 
   .pq-meta-strip > .pq-points {
@@ -352,8 +367,30 @@
     display: grid;
     grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
     gap: 10mm;
+    align-content: center;
     align-items: center;
     flex: 1 1 auto;
+  }
+
+  /* Portrait has no room for two columns. Stack the halves exactly like the
+     screen does at phone and tablet widths, and centre the column on the
+     page. Landscape keeps the compact left/right layout. */
+  @media (orientation: portrait) {
+    .pq-split {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 6mm;
+      width: 100%;
+      max-width: 160mm;
+      margin-inline: auto;
+    }
+
+    .pq-split-right {
+      align-items: center;
+      padding-top: 4mm;
+      padding-left: 0;
+      border-top: 0.5pt dashed var(--pq-line);
+      border-left: 0;
+    }
   }
 
   /* Nothing on the left means the whole slide is centred, both ways. The
@@ -454,8 +491,6 @@
   }
 
   .pq-answer {
-    display: flex;
-    align-items: center;
     gap: 3mm;
     min-height: 0;
     padding: 2mm 3mm;
@@ -471,27 +506,14 @@
       var(--pq-round-accent, var(--pq-ink)) 24%,
       var(--pq-paper)
     ) !important;
-    box-shadow: none !important;
-    font-size: var(--pq-answer-size);
-    transform: none !important;
-    opacity: 1;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
   }
 
   .pq-answer-number {
-    display: inline-grid;
-    place-items: center;
-    flex: 0 0 auto;
     width: 5.5mm;
     height: 5.5mm;
-    border-radius: 50%;
     background: var(--pq-round-accent, var(--pq-ink)) !important;
     color: var(--pq-accent-ink, var(--pq-paper)) !important;
     font-size: 8pt;
-    font-weight: 700;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
   }
 
   .pq-answer[data-pq-correct="false"] {
@@ -533,8 +555,6 @@
     font-size: 8pt;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
   }
 
   .pq-answer-text {
@@ -549,6 +569,154 @@
     padding-left: 6mm;
     color: var(--pq-muted);
     font-size: 11pt;
+  }
+
+  /* Paper options in the same shapes as the screen. No cursor, no shadow. */
+  .pq-print-map {
+    display: grid;
+    gap: 4mm;
+    width: 100%;
+  }
+
+  .pq-print-map-image {
+    position: relative;
+    width: 100%;
+  }
+
+  .pq-print-map-image .pq-media {
+    display: block;
+    margin: 0;
+  }
+
+  .pq-print-map-image .pq-media img {
+    display: block;
+    width: 100%;
+    max-height: 88mm;
+    object-fit: contain;
+  }
+
+  .pq-print-target {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    min-width: 5mm;
+    min-height: 5mm;
+    padding: 0 1mm;
+    border: 0.8pt solid var(--pq-ink);
+    border-radius: 50%;
+    background: var(--pq-paper);
+    color: var(--pq-ink);
+    font-size: 8pt;
+    font-weight: 700;
+    transform: translate(-50%, -50%);
+  }
+
+  .pq-labels,
+  .pq-items {
+    gap: 2mm;
+    margin: 0;
+  }
+
+  .pq-label {
+    min-height: 0;
+    padding: 1.2mm 2.4mm;
+    border: 0.8pt solid var(--pq-line-strong);
+    border-radius: 1.2mm;
+    background: color-mix(
+      in srgb,
+      var(--pq-round-accent, var(--pq-ink)) 18%,
+      var(--pq-paper)
+    ) !important;
+    font-size: 10pt;
+  }
+
+  .pq-label-target {
+    color: var(--pq-muted);
+    font-size: 8pt;
+    font-weight: 400;
+  }
+
+  .pq-classification {
+    gap: 4mm;
+  }
+
+  .pq-buckets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5mm;
+  }
+
+  .pq-bucket {
+    min-height: 18mm;
+    padding: 5mm 3mm 2mm;
+    border: 0.8pt dashed var(--pq-line-strong);
+    border-radius: 1.2mm;
+    break-inside: avoid;
+  }
+
+  .pq-bucket-name {
+    padding: 0.4mm 2mm;
+    border: 0.6pt solid var(--pq-line-strong);
+    background: var(--pq-paper);
+    font-size: 8.5pt;
+  }
+
+  .pq-bucket ul {
+    gap: 1.5mm;
+    margin: 0;
+  }
+
+  .pq-bucket .pq-label {
+    padding: 1mm 2mm;
+    font-size: 9pt;
+  }
+
+  .pq-matrix {
+    font-size: 10.5pt;
+  }
+
+  .pq-matrix th,
+  .pq-matrix td {
+    padding: 1.5mm 2mm;
+    border-bottom: 0.6pt solid var(--pq-line);
+    vertical-align: middle;
+  }
+
+  .pq-matrix td {
+    text-align: center;
+  }
+
+  .pq-matrix-dot {
+    display: inline-block;
+    width: 3.5mm;
+    height: 3.5mm;
+    border: 0.8pt solid var(--pq-line-strong);
+    border-radius: 50%;
+  }
+
+  .pq-print-mark {
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .pq-parts {
+    gap: 4mm;
+  }
+
+  .pq-part-static {
+    gap: 1.5mm;
+  }
+
+  .pq-part-static .pq-field-label {
+    color: var(--pq-ink);
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .pq-part-line {
+    display: block;
+    min-height: 7mm;
+    border-bottom: 0.8pt solid var(--pq-ink);
   }
 
   .pq-hints,

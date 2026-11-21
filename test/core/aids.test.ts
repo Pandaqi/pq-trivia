@@ -4,6 +4,7 @@ import {
   EXTRA_TIME_MS,
   fiftyFifty,
   lifelineCost,
+  lifelineFits,
   Lifeline,
   parseLifeline,
 } from "../../src/core/grading/aids";
@@ -43,6 +44,22 @@ describe("lifelines", () => {
     expect(lifelineCost([])).toBe(0);
     expect(lifelineCost([Lifeline.FiftyFifty])).toBe(1);
     expect(lifelineCost([Lifeline.FiftyFifty, Lifeline.AskRoom])).toBe(3);
+  });
+
+  test("a lifeline fits the question it sits on", () => {
+    const matrix = buildQuiz(`
+Question => Mark each row
+Answers => True | False
+Rows => One | Two
+Correct => True | False
+Type => Matrix
+`).questions[0];
+    if (choice === undefined || matrix === undefined) {
+      throw new Error("fixture is broken");
+    }
+    expect(lifelineFits(Lifeline.FiftyFifty, choice)).toBe(true);
+    expect(lifelineFits(Lifeline.FiftyFifty, matrix)).toBe(false);
+    expect(lifelineFits(Lifeline.ExtraTime, choice)).toBe(false);
   });
 
   test("50/50 takes away two wrong answers", () => {

@@ -34,12 +34,16 @@ export function typeHintText(
         ...score,
       });
     case QuestionType.Range:
-      return t("typeHintRange", { range: hint.range ?? 0 });
+      return hint.unit === null || hint.unit.trim().length === 0
+        ? t("typeHintRange", { range: hint.range ?? 0 })
+        : t("typeHintRangeUnit", {
+            range: hint.range ?? 0,
+            unit: hint.unit,
+          });
     case QuestionType.Estimate:
-      return t("typeHintEstimate", {
-        ...score,
-        unit: hint.unit ?? "",
-      });
+      return hint.unit === null || hint.unit.trim().length === 0
+        ? t("typeHintEstimate", score)
+        : t("typeHintEstimateUnit", { ...score, unit: hint.unit });
     case QuestionType.Sort:
       return t("typeHintSort", score);
     case QuestionType.Rank:

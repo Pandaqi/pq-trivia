@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PQ-Trivia print proof</title>
-    <link rel="stylesheet" href="../dist/v3/themes/paper.css" />
+    <link rel="stylesheet" href="../../dist/v3/themes/paper.css" />
     <!-- Generated copy of print.css with the @media print wrapper removed. -->
     <link
       rel="stylesheet"
-      href="../dist/v3/themes/print.proof.css"
+      href="../../dist/v3/themes/print.proof.css"
       media="all"
     />
     <style>
@@ -81,6 +81,16 @@
       #sheet {
         padding: 12mm;
       }
+
+      /* The printer already applies the @page margin. Keeping the screen
+         gutter here would add a second one, and the last sheet would spill
+         onto an otherwise blank page. */
+      @media print {
+        #sheet {
+          height: 100%;
+          padding: 0;
+        }
+      }
     </style>
   </head>
   <body>
@@ -120,7 +130,7 @@
     <div id="sheet"></div>
 
     <script type="module">
-      import { createQuiz, mountPrintSheet } from "../dist/v3/player.js";
+      import { createQuiz, mountPrintSheet } from "../../dist/v3/player.js";
 
       const text = `
 Title => Print Proof

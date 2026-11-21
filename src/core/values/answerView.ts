@@ -10,11 +10,13 @@ import { InlineKind, parseInline, type InlineNode } from "../format/inline";
 import { answerRefs } from "../model/answers";
 import {
   OrderMode,
+  pointsPerPart,
   ScoringMethod,
   type QuestionModel,
 } from "../model/question";
 import { derivedRng, shuffleWith } from "../plan/shuffle";
 import {
+  answerKeyOf,
   mediaForConfig,
   MediaKind,
   parseMediaDescriptor,
@@ -53,19 +55,24 @@ export function buildAnswers(
   mediaOptions: MediaOptions,
   plays: number,
 ): AnswerViewModel[] {
-  const correctTexts = new Set(question.correct.map((value) => value.text));
+  const correctTexts = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   const declared = answerRefs(question);
   const refs =
     question.answersOrder === OrderMode.Shuffle
       ? shuffleWith(declared, derivedRng(question.id, "answers"))
       : declared;
   const parts = Math.max(question.correct.length, 1);
-  const pointsPerAnswer =
-    question.scoring === ScoringMethod.Partial
-      ? Math.round((question.score / parts) * 10) / 10
-      : question.score;
-  const isCorrect = (text: string): boolean =>
-    question.negate ? !correctTexts.has(text) : correctTexts.has(text);
+  const pointsPerAnswer = pointsPerPart(question);
+  // All-or-nothing pays nothing until every part is right. A +1 on each card
+  // would add up to a score the player can never get.
+  const showPoints =
+    question.scoring !== ScoringMethod.AllOrNothing || parts === 1;
+  const isCorrect = (text: string): boolean => {
+    const hit = correctTexts.has(answerKeyOf(text));
+    return question.negate ? !hit : hit;
+  };
 
   return refs.map((ref) => {
     const correct = showAnswers ? isCorrect(ref.value.text) : null;
@@ -87,7 +94,7 @@ export function buildAnswers(
           )
         : null,
       correct,
-      points: correct === true ? pointsPerAnswer : null,
+      points: correct === true && showPoints ? pointsPerAnswer : null,
       feedback: feedback === undefined ? null : parseInline(feedback).nodes,
     };
   });

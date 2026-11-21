@@ -1,0 +1,94 @@
+/* Jurassic. Thick outlines, warm paper and a jungle of green. */
+
+.pq-quiz {
+  --pq-font-heading: "Trebuchet MS", "Verdana", system-ui, sans-serif;
+  --pq-font-body: "Segoe UI", "Verdana", system-ui, sans-serif;
+  --pq-font-label: "Trebuchet MS", "Verdana", system-ui, sans-serif;
+  --pq-title-size: clamp(2rem, 5.2vw, 4rem);
+}
+
+@media screen {
+  .pq-quiz .pq-title {
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+
+  /* A chunky highlighter under the big titles. */
+  .pq-quiz .pq-screen-start .pq-title,
+  .pq-quiz .pq-screen-section .pq-title {
+    padding-bottom: 0.18em;
+    border-bottom: 6px solid var(--pq-honey);
+  }
+
+  .pq-quiz .pq-kicker {
+    color: var(--pq-fern);
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  /* Cards look like stickers: a line and a flat shadow. */
+  .pq-quiz .pq-answer,
+  .pq-quiz .pq-match-item,
+  .pq-quiz .pq-sort-item {
+    border: 2px solid var(--pq-line-strong);
+    border-radius: var(--pq-r-md);
+    background: var(--pq-slide);
+    box-shadow: 3px 3px 0
+      color-mix(in srgb, var(--pq-line-strong) 45%, transparent);
+  }
+
+  .pq-quiz .pq-answer:not(.pq-answer-static):hover {
+    border-color: var(--pq-accent);
+    box-shadow: 5px 5px 0 color-mix(in srgb, var(--pq-accent) 25%, transparent);
+  }
+
+  .pq-quiz .pq-answer[data-pq-selected="true"] {
+    border-color: var(--pq-accent);
+    background: var(--pq-honey-soft);
+  }
+
+  .pq-quiz .pq-primary {
+    border: 2px solid var(--pq-ink);
+    box-shadow: 4px 4px 0 var(--pq-ink);
+  }
+
+  .pq-quiz .pq-primary:active {
+    box-shadow: 1px 1px 0 var(--pq-ink);
+  }
+
+  /* Pictures sit in a cream mount, like a museum card. */
+  .pq-quiz .pq-media img,
+  .pq-quiz .pq-media video {
+    border: 8px solid var(--pq-slide);
+    border-radius: var(--pq-r-md);
+    box-shadow: 0 10px 24px -14px rgb(46 62 34 / 0.7);
+  }
+
+  .pq-quiz .pq-screen-start {
+    gap: var(--pq-gap);
+  }
+
+  .pq-quiz .pq-screen-start .pq-title {
+    font-size: clamp(2rem, 4.6vw, 3.4rem);
+  }
+
+  .pq-quiz .pq-banner {
+    max-height: min(21vh, 12rem);
+    border: 8px solid var(--pq-slide);
+    border-radius: var(--pq-r-md);
+    box-shadow: 0 16px 30px -18px rgb(46 62 34 / 0.75);
+  }
+
+  .pq-quiz .pq-explanation {
+    border-left: 5px solid var(--pq-honey);
+    padding-left: 0.8rem;
+  }
+
+  .pq-quiz .pq-progress {
+    background: var(--pq-paper-deep);
+
+    > span {
+      background: linear-gradient(90deg, var(--pq-fern), var(--pq-honey));
+    }
+  }
+}

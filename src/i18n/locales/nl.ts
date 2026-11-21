@@ -30,6 +30,8 @@ const base: TranslationTable = {
     "Meerdere antwoorden. Geef {count} {answer}, {points} {point} per antwoord.",
   typeHintRange:
     "Antwoord met een getal. Je mag er hoogstens {range} naast zitten.",
+  typeHintRangeUnit:
+    "Antwoord met een getal (in {unit}). Je mag er hoogstens {range} naast zitten.",
   typeHintSort:
     "Zet de opties in de juiste volgorde. Elke juiste plek levert {points} {point} op.",
   typeHintMatch: "Verbind elk paar. Elk paar levert {points} {point} op.",
@@ -268,8 +270,9 @@ const base: TranslationTable = {
 
   typeHintRank:
     "Zet de opties in de juiste volgorde. Elk buurpaar levert {points} {point} op.",
-  typeHintEstimate:
-    "Geef je beste getal{unit}. Elk antwoord is {points} {point}.",
+  typeHintEstimate: "Geef je beste getal. Elk antwoord is {points} {point}.",
+  typeHintEstimateUnit:
+    "Geef je beste getal (in {unit}). Elk antwoord is {points} {point}.",
   typeHintOddOneOut:
     "Kies de uitzondering en zeg waarom. De keuze en de reden zijn elk de helft.",
   typeHintHotspot: "Klik de juiste plek op de afbeelding.",
@@ -360,6 +363,8 @@ const base: TranslationTable = {
   endReadAloud: "Speel nu de antwoorden door en zie wie won.",
   answeredOf: "Je beantwoordde {answered} van {total} vragen.",
   thatIsAll: "Dat was het",
+  celebratePerfect: "Perfect! Elk punt.",
+  celebrateExcellent: "Schitterend! Daar mag je mee opscheppen.",
 
   close: "Sluiten",
   loading: "Laden…",
@@ -466,6 +471,10 @@ const live: TranslationTable = {
   liveYourAnswers: "Jouw antwoorden",
   liveNoAnswer: "geen antwoord",
   liveWinner: "Winnaar",
+  liveChampion: "Kampioen",
+  liveChampions: "Kampioenen",
+  liveYouWon: "Jij wint!",
+  liveNice: "Mooi!",
   liveTheme: "Thema: {theme}",
 };
 

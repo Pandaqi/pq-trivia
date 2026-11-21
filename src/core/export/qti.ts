@@ -9,6 +9,7 @@ import { inlineToPlainText, parseInline } from "../format/inline";
 import { QuestionType, type QuestionModel } from "../model/question";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import { answerKeyOf } from "../values/media";
 import { visiblePlan } from "./visible";
 
 function escapeXml(text: string): string {
@@ -33,10 +34,14 @@ function prompt(question: QuestionModel): string {
 }
 
 function choiceItem(question: QuestionModel, index: number): string {
-  const correct = new Set(question.correct.map((value) => value.text));
+  const correct = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   const correctIds = question.answers
     .map((value, position) =>
-      correct.has(value.text) ? `A${index + 1}_${position + 1}` : null,
+      correct.has(answerKeyOf(value.text))
+        ? `A${index + 1}_${position + 1}`
+        : null,
     )
     .filter((id): id is string => id !== null);
   const maxChoices =

@@ -9,6 +9,7 @@ import { inlineToPlainText, parseInline } from "../format/inline";
 import { QuestionType, type QuestionModel } from "../model/question";
 import type { QuizMeta } from "../model/quiz";
 import type { QuizPlan } from "../plan/plan";
+import { answerKeyOf } from "../values/media";
 import { visiblePlan } from "./visible";
 
 function escapeGift(text: string): string {
@@ -41,11 +42,13 @@ function pairOf(text: string): [string, string] | null {
 }
 
 function choices(question: QuestionModel): string {
-  const correct = new Set(question.correct.map((value) => value.text));
+  const correct = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   return question.answers
     .map(
       (value) =>
-        `${correct.has(value.text) ? "=" : "~"}${escapeGift(plain(value.text))}`,
+        `${correct.has(answerKeyOf(value.text)) ? "=" : "~"}${escapeGift(plain(value.text))}`,
     )
     .join("\n");
 }

@@ -39,6 +39,8 @@ export interface MountLiveOptions {
   readonly team?: string;
   /** Interface language. Defaults to the page, then the browser. */
   readonly language?: string;
+  /** Winner confetti on the room's screens. On unless turned off. */
+  readonly celebration?: boolean;
 }
 
 export interface MountedLive {
@@ -137,6 +139,8 @@ function LiveShell({
   const code = currentCode(options);
   const watching = options.watching === true || watchingFromUrl();
   const team = options.team ?? teamFromUrl();
+  const celebration =
+    options.celebration ?? options.quiz?.config.celebration !== false;
   const [host, setHost] = useState<HostRoom | null>(null);
   const [player, setPlayer] = useState<PlayerRoom | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -245,7 +249,11 @@ function LiveShell({
   if (options.role === LiveRole.Host) {
     if (host !== null) {
       return (
-        <HostView host={host} joinLink={options.joinLink ?? joinUrl(code)} />
+        <HostView
+          host={host}
+          joinLink={options.joinLink ?? joinUrl(code)}
+          celebration={celebration}
+        />
       );
     }
     return (
@@ -265,7 +273,7 @@ function LiveShell({
   }
 
   if (player !== null) {
-    return <PlayerView player={player} />;
+    return <PlayerView player={player} celebration={celebration} />;
   }
 
   // The join form comes before the player has a screen, so it borrows one.

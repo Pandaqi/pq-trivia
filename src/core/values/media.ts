@@ -123,6 +123,14 @@ function unquote(value: string): string {
   return trimmed;
 }
 
+/**
+ * What an answer points at, for comparison. A media answer is its file, not
+ * the alt text beside it, so `Correct => map.png` matches a longer descriptor.
+ */
+export function answerKeyOf(text: string): string {
+  return parseMediaDescriptor(text).path.trim();
+}
+
 /** `crowd.jpg { alt="A hall", fit=cover, loop }` */
 export function parseMediaDescriptor(raw: string): MediaDescriptor {
   let text = raw.trim();

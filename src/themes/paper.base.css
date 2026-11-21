@@ -37,6 +37,12 @@
   --pq-fern: light-dark(#5d7a4d, #a7c38c);
   --pq-fern-soft: light-dark(#dfe8d2, #2e3927);
   --pq-berry: light-dark(#a8506a, #e7a2b3);
+  /* Celebration. A theme repaints the confetti without touching the code. */
+  --pq-confetti-1: var(--pq-honey);
+  --pq-confetti-2: var(--pq-accent);
+  --pq-confetti-3: var(--pq-fern);
+  --pq-confetti-4: var(--pq-berry);
+  --pq-confetti-5: var(--pq-right);
   --pq-right: light-dark(#3a7449, #8ec6a1);
   --pq-wrong: light-dark(#a63a34, #eaa096);
   --pq-warn: light-dark(#8a5a12, #e9c47a);
@@ -437,21 +443,24 @@ body {
   overflow-x: clip;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: var(--pq-slide);
+  /* A question with its own colour scheme brings its own surface. Drape the
+   * theme image in that colour, not in the light slide, or cream text ends up
+   * on a grey wash. */
+  --pq-screen-wash: var(--pq-scheme-bg, var(--pq-slide));
+  background: var(--pq-screen-wash);
   /* Theme folders put a per-question image here. The image sits behind a wash
-   * of the slide colour, so a light theme stays readable and a dark one keeps
-   * its dark mode. A theme with no image and no fade leaves the paper as it
-   * was. */
+   * of the surface colour, so light and dark schemes both stay readable. A
+   * theme with no image and no fade leaves the paper as it was. */
   background-image:
     linear-gradient(
       color-mix(
         in srgb,
-        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        var(--pq-screen-wash) calc(var(--pq-theme-fade, 0) * 100%),
         transparent
       ),
       color-mix(
         in srgb,
-        var(--pq-slide) calc(var(--pq-theme-fade, 0) * 100%),
+        var(--pq-screen-wash) calc(var(--pq-theme-fade, 0) * 100%),
         transparent
       )
     ),

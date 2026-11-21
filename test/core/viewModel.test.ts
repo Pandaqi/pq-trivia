@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { buildAnswers } from "../../src/core/values/answerView";
 import { InlineKind } from "../../src/core/format/inline";
 import { MediaKind } from "../../src/core/values/media";
 import { ScoringMethod } from "../../src/core/model/question";
@@ -80,6 +81,24 @@ describe("answer content", () => {
     expect(screen.answers[1]?.media?.path).toBe("shot.png");
     expect(screen.answers[1]?.media?.kind).toBe(MediaKind.Image);
     expect(screen.answers[0]?.media).toBeNull();
+  });
+
+  test("a media answer is correct by path, not by its alt text", () => {
+    const quiz = planQuiz(
+      buildQuiz(`
+Question => Pick the map
+Answers => map.png { alt="A map" } | other.png
+Type => Choice
+Correct => map.png
+`),
+    );
+    const question = quiz.questions[0];
+    if (question === undefined) {
+      throw new Error("fixture lost its question");
+    }
+    const answers = buildAnswers(question, true, {}, 0);
+    expect(answers[0]?.correct).toBe(true);
+    expect(answers[1]?.correct).toBe(false);
   });
 });
 

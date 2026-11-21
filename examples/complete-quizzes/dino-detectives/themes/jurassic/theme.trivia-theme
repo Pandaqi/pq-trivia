@@ -1,0 +1,41 @@
+Label => Jurassic
+Stylesheet => style.css
+BackgroundAlpha => 0.2
+BoldHeadings => true
+ColorScheme => light
+
+--pq-paper => #fff6df
+--pq-paper-deep => #ffe9bd
+--pq-slide => #fffdf3
+--pq-ink => #24321f
+--pq-muted => #5d6b52
+--pq-line => #d7c89a
+--pq-line-strong => #a9b07a
+--pq-accent => #b2381c
+--pq-accent-ink => #fffdf3
+--pq-honey => #f5b82e
+--pq-honey-soft => #ffe6a8
+--pq-fern => #3f7d3a
+--pq-fern-soft => #dcefc9
+--pq-berry => #b23a6b
+--pq-right => #2f7a3a
+--pq-wrong => #b02a2a
+--pq-r-sm => 0.45rem
+--pq-r-md => 0.9rem
+--pq-r-organic => 1.4rem 1rem 1.5rem 1.1rem
+
+--pq-confetti-1 => #e4552c
+--pq-confetti-2 => #f5b82e
+--pq-confetti-3 => #3f7d3a
+--pq-confetti-4 => #b23a6b
+--pq-confetti-5 => #3f8fbf
+
+### Background
+bg-leaves.svg
+bg-fossil.svg
+
+### ColorScheme night
+Light => #fff1c9
+Dark => #101c12
+Background => #132018
+Text => #fff1c9

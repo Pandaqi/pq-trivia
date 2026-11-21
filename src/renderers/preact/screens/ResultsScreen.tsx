@@ -16,7 +16,9 @@ import {
 import type { Quiz } from "../../../core/session/quiz";
 import type { ResultsViewModel } from "../../../core/session/viewModel";
 import { useT, type Translate } from "../i18n";
+import { pluralKey } from "../../../core/values/marks";
 import { Scoreboard } from "../components/Teams";
+import { Celebration } from "../../../shared/celebration";
 
 const BAND_KEYS: Readonly<Record<string, string>> = {
   [GradeBand.Excellent]: "bandExcellent",
@@ -122,7 +124,10 @@ function ReviewCard({
           {t("question_one")} {question.index + 1}
         </p>
         <p class="pq-review-points">
-          {question.points} / {question.maxPoints}
+          {question.points}
+          {question.points > question.maxPoints
+            ? null
+            : ` / ${question.maxPoints}`}
           {question.multiplier > 1 ? (
             <span class="pq-review-multiplier">×{question.multiplier}</span>
           ) : null}
@@ -208,6 +213,14 @@ export function ResultsScreen({
     [ReportFilter.Wrong]: t("filterWrong"),
     [ReportFilter.Unanswered]: t("filterSkipped"),
   };
+  let cheer: string | null = null;
+  if (
+    quiz.config.celebration !== false &&
+    report.band === GradeBand.Excellent
+  ) {
+    cheer =
+      report.percent >= 100 ? t("celebratePerfect") : t("celebrateExcellent");
+  }
 
   return (
     <main class="pq-screen pq-screen-results" data-pq-band={report.band}>
@@ -219,7 +232,14 @@ export function ResultsScreen({
         {quiz.config.hideScore === true ? null : (
           <p class="pq-score">
             <strong class="pq-score-points">{report.points}</strong>
-            <span class="pq-score-max"> / {report.maxPoints}</span>
+            {report.points > report.maxPoints ? (
+              <span class="pq-score-max">
+                {" "}
+                {t(pluralKey(report.points, "point"))}
+              </span>
+            ) : (
+              <span class="pq-score-max"> / {report.maxPoints}</span>
+            )}
             <span class="pq-score-percent">{report.percent}%</span>
           </p>
         )}
@@ -250,6 +270,8 @@ export function ResultsScreen({
         </dl>
       </header>
 
+      {cheer === null ? null : <Celebration message={cheer} />}
+
       <Scoreboard quiz={quiz} />
 
       {report.rounds.length === 0 ? null : (
@@ -271,7 +293,10 @@ export function ResultsScreen({
                   {round.correct} / {round.questions}
                 </td>
                 <td>
-                  {round.points} / {round.maxPoints}
+                  {round.points}
+                  {round.points > round.maxPoints
+                    ? null
+                    : ` / ${round.maxPoints}`}
                 </td>
                 <td>{round.percent}%</td>
               </tr>

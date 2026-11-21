@@ -15,6 +15,7 @@ import {
 } from "../model/question";
 import type { Response } from "../session/responses";
 import { ResponseKind } from "../session/responses";
+import { answerKeyOf } from "../values/media";
 import { nearestPoint, parsePoint } from "../values/point";
 import { matchText, parseNumber } from "./normalize";
 import { closePoints, gradeKind, part, round2 } from "./parts";
@@ -104,9 +105,11 @@ export function gradeOddOneOut(
     response.kind === ResponseKind.Reasoned ? response.selected : [];
   const reason = response.kind === ResponseKind.Reasoned ? response.reason : "";
   const refs = answerRefs(question);
-  const wanted = new Set(question.correct.map((value) => value.text));
+  const wanted = new Set(
+    question.correct.map((value) => answerKeyOf(value.text)),
+  );
   const wantedIds = refs
-    .filter((ref) => wanted.has(ref.value.text))
+    .filter((ref) => wanted.has(answerKeyOf(ref.value.text)))
     .map((ref) => ref.id);
   const pickWon =
     wantedIds.length === 1 &&
@@ -287,7 +290,9 @@ function mappingsOf(
   return pairs;
 }
 
-function expectedBuckets(question: QuestionModel): Array<[string, string]> {
+export function expectedBuckets(
+  question: QuestionModel,
+): Array<[string, string]> {
   const declared = mappingsOf(question.correct);
   return declared.length > 0 ? declared : mappingsOf(question.answers);
 }
@@ -353,7 +358,9 @@ export function gradeClassification(
 }
 
 /** Labels onto targets. Explicit `Correct` wins; answer order pairs them. */
-function expectedLabels(question: QuestionModel): Array<[string, string]> {
+export function expectedLabels(
+  question: QuestionModel,
+): Array<[string, string]> {
   const declared = mappingsOf(question.correct);
   if (declared.length > 0) {
     return declared;

@@ -132,6 +132,7 @@ Put these under the top header, next to `Title` and `Seed`. The same keys work i
 | `ThemeDisabled` | `themeDisabled` | boolean |
 | `ThemeUpload` | `themeUpload` | boolean |
 | `ThemeAudit` | `themeAudit` | boolean |
+| `Celebration` | `celebration` | boolean |
 | `ShowSources` | `showSources` | boolean |
 | `Dictation` | `dictation` | boolean |
 | `PrintAnswerLines` | `printAnswerLines` | boolean |
