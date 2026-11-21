@@ -2,7 +2,7 @@
 
 A theme is a folder, like V2:
 
-```
+```txt
 themes/forest/
   theme.trivia-theme   settings, in plain text
   style.css            the look
@@ -26,18 +26,18 @@ const quiz = createQuiz({ config: { theme: "themes/forest/" } });
 mountQuiz(quiz, target);
 ```
 
-Or in the quiz file's header, where `forest` is a name under `themes/`:
+Or in the quiz header, where `forest` is a name under `themes/`:
 
 ```txt
 Theme => forest
 ```
 
-A header value with a slash is used as a path. An attribute wins over the
-header. `theme="./theme.css"` also works when a folder is overkill: it links
-that one stylesheet and nothing else.
+A header value with a slash is used as a path. An attribute wins over the header.
+`theme="./theme.css"` also works when a folder is overkill: it links that one
+stylesheet and nothing else.
 
-Theme URLs resolve against the page, so `file://` cannot fetch the settings
-file; serve the folder, or let the author pick it (below).
+Theme URLs resolve against the page's base URL, so `file://` cannot fetch the
+settings file. Serve the folder, or let the author pick it.
 
 Before a quiz night, ask the CLI whether the folder is complete:
 
@@ -46,7 +46,7 @@ bun run cli/index.ts validate my-quiz.trivia --assets
 ```
 
 It reads the settings file and checks the stylesheet, every font and every
-background image. A typo in a font name is a warning in the console otherwise.
+background image. A typo in a font name is a console warning otherwise.
 
 ## Theme folders
 
@@ -68,8 +68,7 @@ Text => #f5f2ea
 ```
 
 The four values become `--pq-scheme-light`, `--pq-scheme-dark`,
-`--pq-scheme-bg` and `--pq-scheme-text` on the quiz root, and the screen uses
-them. No scheme, no change.
+`--pq-scheme-bg` and `--pq-scheme-text` on the quiz root. No scheme, no change.
 
 ## `theme.trivia-theme`
 
@@ -97,7 +96,7 @@ bg-waves.svg
 
 | Key               | Job                                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------------ |
-| `Label`           | Name shown to the author.                                                                  |
+| `Label`           | Name shown to the author                                                                  |
 | `Stylesheet`      | File to load. Defaults to `style.css`.                                                     |
 | `Font`            | `slot \| family \| variant \| file`. Variants: `regular`, `italic`, `bold`, `bold-italic`. |
 | `Background`      | Images to choose from per question. Both `a \| b` and one per line work.                   |
@@ -121,8 +120,8 @@ local and become blob URLs.
 <pq-quiz src="quiz.trivia" theme-upload></pq-quiz>
 ```
 
-That puts **Load a theme folder** on the start screen, whether or not a theme
-is already loaded. Picking another folder replaces the active theme. Set
+That puts **Load a theme folder** on the start screen, whether or not a theme is
+already loaded. Picking another folder replaces the active theme. Set
 `ThemeUpload => false` (or `theme-upload="false"`) to take the picker away.
 
 Or do it yourself:
@@ -134,8 +133,8 @@ const files = input.files; // <input type="file" webkitdirectory multiple>
 setTheme(await themeFromFiles(Array.from(files)));
 ```
 
-The folder needs a `theme.trivia-theme` (or just a `style.css`). Paths inside
-the settings are resolved inside the picked folder.
+The folder needs a `theme.trivia-theme`, or just a `style.css`. Paths inside the
+settings resolve inside the picked folder.
 
 ## Tokens
 
@@ -163,25 +162,24 @@ Background => image: themes/forest/bg-waves.svg
 
 ### Built-in classes
 
-Five classes ship with Paper, so an author can set the mood without a
-stylesheet. Write the short name; the prefix is added for you.
+Five classes ship with Paper, so an author can set the mood without a stylesheet.
+Write the short name; the prefix is added for you.
 
-| Write       | What it does                                            |
-| ----------- | ------------------------------------------------------- |
-| `center`    | Centres the text.                                        |
+| Write       | What it does                                              |
+| ----------- | --------------------------------------------------------- |
+| `center`    | Centres the text.                                         |
 | `dark`      | A dark panel, for a question that should feel like a card. |
-| `invert`    | Flips the colours. Good on a screenshot with a white page. |
-| `quote`     | Italics, for a line someone said.                        |
-| `spotlight` | Dims the edges, so the middle is the only thing lit.     |
+| `invert`    | Flips the colours.                                        |
+| `quote`     | Italics, for a line someone said.                         |
+| `spotlight` | Dims the edges, so the middle is the only thing lit.      |
 
 ```txt
 Question => Name this painting.
 Class => spotlight center
 ```
 
-The first class takes the spotlight, the second centres the text. Order does not
-matter. Every theme keeps these five, so content written on Paper still works
-when a theme folder adds its own colours.
+Order does not matter. Every theme keeps these five, so content written on Paper
+still works when a theme folder adds its own colours.
 
 ## Extra themes
 

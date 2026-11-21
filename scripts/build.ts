@@ -172,6 +172,30 @@ let localeFiles: LocaleFiles = {
   diagnostic: "",
   loader: "",
 };
+/**
+ * The one-file bundle leaves `uqr` out: ten kilobytes of encoder for a lobby
+ * that only reaches the same browser until the page loads Trystero, and the
+ * lobby already falls back to the room code and the link. `src/entries/qr.ts`
+ * ships the encoder as `pq-qr.min.js`; `parts.tsx` loads that script when its
+ * dynamic import rejects.
+ */
+const QR_STUB_PLUGIN: BuildPlugin = {
+  name: "pq-qr-stub",
+  setup(build) {
+    build.onResolve({ filter: /^\.\/qr$/ }, (args) => {
+      const importer = args.importer.replaceAll("\\", "/");
+      return importer.endsWith("/src/multiplayer/ui/parts.tsx")
+        ? { path: "pq-qr", namespace: "pq-qr-stub" }
+        : undefined;
+    });
+    build.onLoad({ filter: /.*/, namespace: "pq-qr-stub" }, () => ({
+      contents:
+        "export function encode() { throw new Error('The QR encoder is in pq-qr.min.js.'); }",
+      loader: "js",
+    }));
+  },
+};
+
 const LOCALE_PLUGIN: BuildPlugin = {
   name: "pq-locales",
   setup(build) {
@@ -231,6 +255,8 @@ function banner(name: string): string {
 /** Entries that ship as IIFE and a fixed file name. */
 const IIFE_ENTRIES: Readonly<Record<string, string>> = {
   standalone: "pq-trivia.min.js",
+  // The encoder the one-file bundle fetches when a lobby opens.
+  qr: "pq-qr.min.js",
 };
 
 /**
@@ -360,7 +386,8 @@ async function build(languages: readonly string[]): Promise<boolean> {
       format: iifeName === undefined ? entry.format : "iife",
       // Dynamic imports (the QR encoder) become their own file instead of
       // riding along in a bundle most lobbies never need. Only the ESM
-      // entries can split; the IIFE ones are one file by design.
+      // entries can split; the IIFE ones are one file by design, so the
+      // one-file bundle loads `pq-qr.min.js` as a sibling script instead.
       splitting: iifeName === undefined,
       minify: true,
       sourcemap: "external",
@@ -372,7 +399,11 @@ async function build(languages: readonly string[]): Promise<boolean> {
         chunk: "chunk-[name].[ext]",
       },
       banner: banner(entry.name),
-      plugins: [LOCALE_PLUGIN, CSS_PLUGIN],
+      plugins: [
+        LOCALE_PLUGIN,
+        CSS_PLUGIN,
+        ...(iifeName === undefined ? [] : [QR_STUB_PLUGIN]),
+      ],
     });
 
     if (!result.success) {

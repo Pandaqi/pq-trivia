@@ -1,7 +1,7 @@
 # Install
 
-PQ-Trivia is one JavaScript file, with the default theme and print sheet inside
-it. No account, no server, no separate CSS.
+PQ-Trivia is a JavaScript file and a quiz text file. No account, no server, no
+separate CSS.
 
 ## One file
 
@@ -16,7 +16,12 @@ Copy `dist/v3/pq-trivia.min.js` next to your `index.html`:
 <script src="pq-trivia.min.js"></script>
 ```
 
-Open the page. That is the whole setup, `file://` included.
+Open the page. That is the whole setup, `file://` included. The theme, the print
+sheet and the live code are inside the bundle.
+
+The QR encoder is the one optional second file. Copy `pq-qr.min.js` beside the
+bundle and a live lobby can draw a join QR. Without it the lobby shows the room
+code and the link.
 
 ## From this repo
 
@@ -27,13 +32,23 @@ bun run build
 
 Then copy what you need from `dist/v3/`:
 
-| File               | Use                                            |
-| ------------------ | ---------------------------------------------- |
-| `pq-trivia.min.js` | One `<script>` tag, theme and print inlined.   |
-| `player.js`        | ES module, core plus the Preact player.        |
-| `core.js`          | Parser, model, plan, session, grading. No DOM. |
-| `themes/paper.css` | The default theme.                             |
-| `themes/print.css` | Print layout. Link it with `media="print"`.    |
+| File                       | Use                                                  |
+| -------------------------- | ---------------------------------------------------- |
+| `pq-trivia.min.js`         | One `<script>` tag. Theme and print inside.          |
+| `pq-qr.min.js`             | QR encoder, loaded on demand by the one-file bundle. |
+| `player.js`                | ES module: core plus the Preact player.              |
+| `core.js`                  | Parser, model, plan, session, grading. No DOM.       |
+| `headless.js`              | Core plus `createQuiz`. No DOM.                      |
+| `browser.js`               | Worker parsing, IndexedDB cache, manifests.          |
+| `multiplayer.js`           | Live rooms over BroadcastChannel or Trystero.        |
+| `animations.js`            | The full animation preset list.                      |
+| `themes/paper.css`         | The default theme.                                   |
+| `themes/print.css`         | Print layout. Link it with `media="print"`.          |
+| `themes/high-contrast.css` | Overrides for contrast.                              |
+| `themes/large-print.css`   | Bigger type.                                         |
+
+The wizard is not in a normal build. Add it with `bun run build --editor`; see
+[the wizard](../guides/wizard.html).
 
 ## Served, with an element
 
@@ -63,27 +78,28 @@ import { createQuiz } from "pq-trivia";
 import "pq-trivia/themes/paper.css";
 ```
 
-## Optional bundles
+## Big quiz, worker parsing
 
-Nothing here is in the default build. Load it when you need it.
-
-| Bundle           | What it adds                                       |
-| ---------------- | -------------------------------------------------- |
-| `browser.js`     | Worker parsing, IndexedDB cache, manifest loading. |
-| `multiplayer.js` | Live rooms over BroadcastChannel or Trystero.      |
-| `animations.js`  | The full preset list.                              |
-| `editor.js`      | The QuizWizard: build a quiz in the page.           |
-
-Big quiz in an element? Hand it the worker parser:
+Above about 1 MB, parsing on the main thread is noticeable. Hand it the worker:
 
 ```js
 import { QuizElement } from "./player.js";
-import { workerParser } from "./browser.js";
+import { createWorkerParser } from "./browser.js";
 
-QuizElement.parser = workerParser();
+QuizElement.parser = createWorkerParser();
+```
+
+Or with the factory:
+
+```ts
+import { createQuiz } from "./player.js";
+import { createWorkerParser } from "./browser.js";
+
+const quiz = createQuiz({ parseText: createWorkerParser() });
 ```
 
 ## Requirements
 
 A browser from this decade. `BigInt`, ES modules, CSS custom properties.
-Nothing else. The core runs in Bun, a Worker or a test without a DOM.
+
+The core runs in Bun, a Worker or a test without a DOM.

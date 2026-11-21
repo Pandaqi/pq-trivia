@@ -12,6 +12,24 @@ export const ATTRIBUTE_DESCRIPTIONS: Readonly<Record<string, string>> = {
   Correct:
     "Which answers count. Defaults to the first, or to all for list, sort, match and cloze.",
   Range: "Error margin. Implies Type => Range.",
+  Tolerance: "Estimate: how far off the answer may be. Falls back to Range.",
+  Unit: "Shown after a number: km, kg, years. Never graded.",
+  Slider: "Show a slider with this range, like 0..100.",
+  HitRadius:
+    "How close a click must land, in percent of the image. Eight by default.",
+  Negate:
+    "Flip the choice: the player picks the false options, not the true ones.",
+  Feedback: "One line per answer, shown after the reveal.",
+  Suggest: "Autocomplete suggestions for text and number answers.",
+  Rows: "Matrix: one statement per row.",
+  Scale: "Matrix: the shared scale. True and False when absent.",
+  Multiple: "Matrix: tick more than one box per row.",
+  Parts: "Parts: one `kind: label: weight` per part, answers split by ||.",
+  Buckets: "Classification: the named buckets.",
+  Targets:
+    "Hotspot and diagram: `label @ x,y` points on the image, in percent.",
+  PlayLimit: "How many times a clip may play.",
+  Buzzer: "Live only: the first correct answer wins the question.",
   ID: "Stable reference for translations, storage and flow.",
   Section: "Assign this question to a round.",
   PlaceAt: "Rounds only: fix this round at a position, counting from one.",

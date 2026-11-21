@@ -1,10 +1,8 @@
 # Languages
 
-V2's localization is back, including switching while people are playing.
-
 Two things are translated, and they are separate:
 
-- **Questions**: `Language`, `Translation` and `SyncAll` in the quiz file.
+- **Content**: `Language`, `Translation` and `SyncAll` in the quiz file.
 - **Interface**: every label, button and status line, in the languages your
   build carries, with your own strings on top.
 
@@ -18,9 +16,9 @@ questions.nl.trivia
 ```
 
 That is the whole contract. The last part before the extension is the language
-code. Both files must have the same rounds in the same order, and their
-questions must line up. V2 matched by order; V3 does the same, and it keeps
-answers when you switch.
+code. Both files need the same rounds in the same order, and their questions
+must line up. If you leave the IDs out, questions are linked by position inside
+their round. Answers survive the switch.
 
 ```ts
 await quiz.load({
@@ -34,8 +32,13 @@ quiz.languages(); // ["EN", "NL"]
 quiz.setLanguage("NL");
 ```
 
-`<pq-quiz filenames="questions.en.trivia,questions.nl.trivia">` does the same
-without JavaScript. So does the V2 naming pattern:
+Without JavaScript:
+
+```html
+<pq-quiz filenames="questions.en.trivia,questions.nl.trivia"></pq-quiz>
+```
+
+The V2 naming pattern works too:
 `<pq-quiz filename="questions" file-extensions="trivia">` loads
 `questions-0.trivia`, `questions-1.trivia`, and so on.
 
@@ -55,12 +58,9 @@ Language => NL
 Answers => 1953
 ```
 
-The `ID` is the link. The order does not have to match when IDs do. If you leave
-the IDs out, questions are linked by their position inside their round, exactly
-like V2's file method.
-
-`Translation => some-id` is an explicit pointer for the rare case where the ID
-itself is translated.
+The `ID` is the link, so the order does not have to match. `Translation =>
+some-id` is an explicit pointer for the rare case where the ID itself is
+translated.
 
 ## Choosing the language
 
@@ -73,8 +73,8 @@ const quiz = createQuiz({
 });
 ```
 
-- `languageDefault` is the root: the language shown first, and the one
-  translations copy properties from.
+- `languageDefault` is the root: shown first, and the one translations copy
+  properties from.
 - `languages` is a shortlist. Leave it out and every language found in the
   files is available.
 - `quiz.languages()` lists what actually loaded.
@@ -93,15 +93,14 @@ createQuiz({ config: { syncPropertiesWithTranslations: true } });
 A translation keeps its own text, answers and hints. Everything it leaves at the
 default (score, timer, media, layout, background, colour scheme, classes,
 grading, placement, flow) is copied from the root language. `SyncAll => true`
-asks for the same for one question even when the global option is off;
-`SyncAll => false` opts one question out.
+asks for the same for one question; `SyncAll => false` opts one question out.
 
 ## The interface
 
-The default build carries every language file in `src/i18n/locales/`. Pick the language with
-`languageDefault` or switch with `setLanguage`; the interface follows. Build
-with `--languages` to ship only the ones you need, including none. See
-[builds](builds.md).
+The default build carries every file in `src/i18n/locales/`. Pick the language
+with `languageDefault`, or switch with `setLanguage`; the interface follows.
+Build with `--languages` to ship only the ones you need, including none. See
+[builds](builds.html).
 
 Override any string:
 
@@ -120,7 +119,6 @@ createQuiz({
 ```
 
 A missing key shows the key itself. No language silently fills in for another.
-Hosts can read one string directly:
 
 ```ts
 quiz.t("next"); // "Volgende"
@@ -150,6 +148,6 @@ them in `translations`.
 ## What is translated and what is not
 
 Question text, answers, hints, sources and explanations are content. They come
-from the file in the language you wrote; V3 never machine-translates them.
-Only the interface, the generated secret question and validation messages have
+from the file in the language you wrote; nothing is machine-translated. Only the
+interface, the generated secret question and validation messages have
 dictionaries.

@@ -8,18 +8,29 @@ A pub with bad Wi-Fi is the normal case, not the edge case.
 bun run cli/index.ts pack questions/my-quiz.trivia --out dist/pack/night
 ```
 
-The folder contains the text, the player, both themes, a manifest and a service
-worker. Open `index.html` from the folder. No network, no server.
+The folder holds:
 
-Local media is copied next to the HTML. An absolute URL still needs the
-network.
+| File               | What it is                                                   |
+| ------------------ | ------------------------------------------------------------ |
+| `index.html`       | The page. The quiz text is inside it.                        |
+| `quiz.trivia`      | The same quiz as a file you can edit.                        |
+| `pq-trivia.min.js` | The player.                                                  |
+| `pq-qr.min.js`     | The QR encoder, loaded only when a lobby draws one.          |
+| `style.css`        | Paper, for the screen.                                       |
+| `print.css`        | The print sheet.                                             |
+| `manifest.json`    | The pack's inventory: name, version, seed, count, file list. |
+| `sw.js`            | The service worker.                                          |
+| `media/…`          | Local media, under `subFolderMedia` (default `media/`).      |
+
+Open `index.html` from the folder. No network, no server. An absolute media URL
+still needs the network.
 
 ## Updating a pack
 
 The service worker caches the pack under a name that includes a content hash.
 Change the quiz, pack again, upload the folder, and the next visit finds the new
-worker. A small bar says "A new version is ready" and waits for a click. It
-does not swap the quiz out from under a player mid-round.
+worker. A small bar says "A new version is ready" and waits for a click. It does
+not swap the quiz out from under a player mid-round.
 
 ## `file://`
 
@@ -59,13 +70,17 @@ again. Private window? It keeps a small memory cache and moves on.
 }
 ```
 
-One manifest means no name guessing and no `HEAD` probing. Without one, a
-single `.trivia` file is fetched by its exact URL.
+One manifest means no name guessing and no `HEAD` probing. Without one, a single
+`.trivia` file is fetched by its exact URL.
+
+This is the loader manifest that `browser.js` reads. A pack writes a different
+`manifest.json`: an inventory of its own files, with the title, seed and question
+count. The player never fetches that one.
 
 ## Media in a pack
 
-`pq-trivia pack quiz.trivia` copies the media it can find next to the HTML, and
-adds every file to the service worker's cache list. A pack that points at a
+`pack` copies local media into `media/` (or the quiz's `subFolderMedia` folder)
+and adds every file to the service worker's cache list. A pack that points at a
 folder on your laptop is a pack that breaks in the pub.
 
 Absolute URLs are left alone: they belong to somebody else's network, and the
@@ -87,3 +102,29 @@ signature. Keep the private key off the web; the public key travels with the
 pack.
 
 No key? The pack still works. It just cannot prove where it came from.
+
+## Encrypted quizzes
+
+```bash
+bun run cli/index.ts encrypt quiz.trivia --passphrase "the usual one"
+```
+
+The file is AES-GCM. Loading it needs `answersKey`:
+
+```ts
+import { Quiz, browserAnswerKey } from "pq-trivia";
+
+const quiz = new Quiz({
+  load: { type: "encrypted", data: locked },
+  config: { answersKey: browserAnswerKey },
+});
+
+if (quiz.locked()) {
+  await quiz.unlock(passphrase);
+}
+```
+
+`browserAnswerKey` is the key object itself. Pass it once; `quiz.unlock` takes the
+passphrase.
+
+There is no recovery. Lose the passphrase and the file stays locked.

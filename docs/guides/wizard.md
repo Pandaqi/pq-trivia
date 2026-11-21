@@ -6,7 +6,7 @@ The wizard is its own bundle. A normal build leaves it out, so a player page
 never downloads an authoring tool.
 
 ```bash
-bun run build:editor
+bun run build --editor
 ```
 
 ```html
@@ -28,25 +28,27 @@ wizard.text(); // the current buffer
 wizard.destroy(); // gives the page back
 ```
 
+From the package, the same door is `mountEditor` in `pq-trivia/editor`. The
+bundle also exports `mountQuizWizard`.
+
 ## Four panes, one buffer
 
 | Pane          | What it does                                                  |
 | ------------- | ------------------------------------------------------------- |
-| Slides        | pick a block, add one, remove one, Alt+↑/↓ to reorder          |
-| Form          | the fields for this slide, generated from the attribute table  |
-| Trivia Syntax | this block, or the whole file, exactly as written             |
-| Preview       | the real player, running on the current text                  |
+| Slides        | Pick a block, add one, remove one, Alt+↑/↓ to reorder         |
+| Details       | The fields for this slide, generated from the attribute table  |
+| Syntax        | This block, or the whole file, exactly as written             |
+| Preview       | The real player, running on the current text                  |
 
 The text is the model. A form edit rewrites that block's text. A text edit
 reparses, and the forms follow. There is no hidden state to lose.
 
 The preview is the real player, loaded as its own chunk the first time you open
-it. `editor.js` stays small; a host that never previews never downloads the
-player twice. Pass `previewOpen: false` to start with that pane closed.
+it. `editor.js` stays small. Pass `previewOpen: false` to start with that pane
+closed.
 
-It also leaves your caret alone (`mountQuiz`'s `focusScreens: false`) and reopens
-the question you were on after each edit, so a tweak never throws you back to
-the start screen.
+It leaves your caret alone and reopens the question you were on after each
+edit, so a tweak never throws you back to the start screen.
 
 ## Editing
 
@@ -66,8 +68,8 @@ the start screen.
   order.
 - **Open folder** asks for directory access where the browser has it. Picked
   media lands in `media/` inside it, and **Save to folder** writes back there.
-- Nothing is stored anywhere. Close the tab and the buffer is gone, which is
-  why Save sits in the toolbar.
+- Nothing is stored anywhere. Close the tab and the buffer is gone, which is why
+  Save sits in the toolbar.
 
 ## What it will not do
 
@@ -79,5 +81,5 @@ the start screen.
 ## A field is missing
 
 Then the wizard does not know the attribute yet. Add a row to
-`src/core/syntax/attributeRegistry.ts` and the form grows one. That is the whole
-coupling between the two.
+`src/core/syntax/attributeRegistry.ts` and a sentence to `attributeDocs.ts`. The
+form grows one, and so does the reference. That is the whole coupling.

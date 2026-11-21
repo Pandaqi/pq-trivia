@@ -3,7 +3,7 @@
  *
  * Parser, model, plan, session, grading and the JSON save format. No controller
  * and no DOM. The big exporters (QTI, GIFT, standalone HTML) live behind their
- * own modules so this artifact stays inside its 15 KB budget.
+ * own modules, so this artifact stays inside its budget.
  */
 
 export {

@@ -1,26 +1,26 @@
 # Migrating from V2
 
-V2 still ships in `dist/v2/` and still works. Nothing here forces you to move.
+V2 still ships in `dist/v2/` and still works. Nothing forces you to move.
 
 ## What stays
 
 - Every V2 line still works: questions, answers, scores, types, order,
-  comments, masks. Only the headings moved down one level (see below).
+  comments, masks. Only the headings moved down one level.
 - `dist/v2/pq-trivia.min.js` stays downloadable.
 - Embedded JSON loads through `load({ type: "inline", data })`, with a warning.
-- Theme folders still work: stylesheet, fonts, background images, settings.
+- Theme folders still work: stylesheet, fonts, backgrounds, settings.
 
 ## What changed on purpose
 
-| Change                                           | Why                                     | What you do                                              |
-| ------------------------------------------------ | --------------------------------------- | -------------------------------------------------------- |
-| Author order is the default                      | Shuffling by default surprised everyone | Turn on shuffle in Settings, or `shuffleQuestions: true` |
-| Raw HTML is off                                  | A quiz file could run script            | Use the syntax, or opt in                                |
-| `FormatText` / `HiddenAtPlay` need real booleans | `"false"` was truthy                    | Write `false`                                            |
-| Theme URLs resolve from the base                 | The old way broke on file pages         | `theme="themes/forest/"`, or `Theme => forest`           |
-| Theme settings are a file, not JS                | No script to run, no object to import   | Move `QuizTheme` values into `theme.trivia-theme`        |
-| `rtf` upload is gone                             | It never worked                         | Convert to `.txt`                                        |
-| Export does not reshuffle                        | That was a bug                          | Nothing                                                  |
+| Change                                            | Why                                    | What you do                                              |
+| ------------------------------------------------- | -------------------------------------- | -------------------------------------------------------- |
+| Author order is the default                       | Shuffling by default surprised people  | Turn on shuffle in Settings, or `shuffleQuestions: true` |
+| Raw HTML is off                                   | A quiz file could run script           | Use the syntax, or opt in                                |
+| `FormatText` and `HiddenAtPlay` need real booleans | `"false"` was truthy                   | Write `false`                                            |
+| Theme URLs resolve from the page's base URL       | The old way broke on file pages        | `theme="themes/forest/"`, or `Theme => forest`           |
+| Theme settings are a file, not JS                 | No script to run, no object to import  | Move `QuizTheme` values into `theme.trivia-theme`        |
+| `rtf` upload is gone                              | It never worked                        | Convert to `.txt`                                        |
+| Export does not reshuffle                         | That was a bug                         | Nothing                                                  |
 
 ## Headings moved one level
 
@@ -44,16 +44,17 @@ bun run cli/index.ts migrate questions/ --headings --write
 ```
 
 The command reads the headings around them and shifts `#`, `##` and `###` one
-level. It keeps a `.bak`. A file with a single `#` heading is ambiguous (title
-or round); add `--from-v2` to force the old reading. `--check` exits 1 when work
-is needed. The formatter leaves ambiguous files untouched. It cannot guess, so
-it does not. Add `--from-v2` or `--from-v3` (`--current` is the same) to pick a
-reading. Files with no quiz content are skipped by both commands.
+level. It keeps a `.bak`.
+
+A file with a single `#` heading is ambiguous: it could be a title or a round.
+Add `--from-v2` to force the old reading. `--check` exits 1 when work is needed.
+The formatter leaves ambiguous files untouched, and skips files with no quiz
+content.
 
 ## V2 options, one by one
 
-Almost every V2 option has a V3 home. The few that do not are named at the end
-of this table, with the reason, rather than left silently missing.
+Almost every V2 option has a V3 home. The few that do not are named with the
+reason.
 
 | V2                                                                                                                       | V3                                                                                                      |
 | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
@@ -74,7 +75,7 @@ of this table, with the reason, rather than left silently missing.
 | `allowInput`                                                                                                             | `restricted` config                                                                                     |
 | `defaultScore`, `minScore`, `maxScore`, `hideScore`, `hideScoreOnAnswers`                                                | Same options; scores are clamped when the plan is built                                                 |
 | `defaultAuthor`, `defaultCategory`, `hideAuthor`, `hideCategory`                                                         | Same options                                                                                            |
-| `possibleAuthors`, `possibleCategories`                                                                                  | Same options; an outside value produces a warning, as in V2                                             |
+| `possibleAuthors`, `possibleCategories`                                                                                  | Same options; an outside value produces a warning, as in V2                                              |
 | `showPropertiesWithoutDiversity`                                                                                         | Same option                                                                                             |
 | `include`, `exclude`, `groupBy`, `minAnswers`, `maxAnswers`, `questionTypesAllowed`, `excludeSections`, `filterSections` | Same names on `QuizConfig`                                                                              |
 | `randomizeMedia`                                                                                                         | `randomizeMedia`, or `MediaOrder => shuffle`                                                            |
@@ -133,11 +134,7 @@ Or served, with an element and a theme folder:
 ```html
 <link rel="stylesheet" href="dist/v3/themes/paper.css" />
 <script type="module" src="dist/v3/player.js"></script>
-<pq-quiz
-  src="questions/quiz.txt"
-  theme="themes/forest/"
-  seed="my-seed"
-></pq-quiz>
+<pq-quiz src="questions/quiz.txt" theme="themes/forest/" seed="my-seed"></pq-quiz>
 ```
 
 ## Your old theme
@@ -154,9 +151,8 @@ A V2 `QuizTheme` object maps almost line for line to a folder:
 | `boldHeadings`                 | `BoldHeadings => true`                                  |
 | `colors`                       | `--pq-accent => #2f6b4f`, and the other `--pq-*` tokens |
 
-The folder keeps `style.css`, the font files and the images. `inline` CSS can
-move into `style.css`. `QuizTheme` itself is not part of V3; the CSS is the
-contract.
+The folder keeps `style.css`, the font files and the images. Inline CSS can move
+into `style.css`. `QuizTheme` itself is not part of V3; the CSS is the contract.
 
 ## The new API
 
@@ -166,30 +162,16 @@ import { Quiz } from "pq-trivia";
 new Quiz({ text: myText, id: "quiz", seed: "my-seed" });
 ```
 
-`new Quiz(params)` is still one line, and still mounts itself: `id` fills an
-existing `#quiz` (or any selector), and without one the quiz appends to the
-body. The text loads in the constructor; add `await quiz.loading` if you need to
-wait. Config keys go inline, like V2, though the names are the V3 ones. The CLI
-`migrate` renames the old ones for you.
-
-## Migrate a folder
-
-```bash
-bun run cli/index.ts migrate questions/ --check          # exit 1 if work is needed
-bun run cli/index.ts migrate questions/ --headings --write  # headings only
-bun run cli/index.ts migrate questions/ --write          # canonical, with .bak files
-```
-
-The formatter rewrites attribute names, booleans and list separators. It does
-not touch your text, answers or order.
+`new Quiz(params)` still mounts itself: `id` fills an existing `#quiz` (or any
+selector), and without one the quiz appends to the body. The text loads in the
+constructor; `await quiz.loading` if you need to wait. Config keys go inline,
+like V2, with the V3 names. The CLI `migrate` renames the old ones for you.
 
 ## If something breaks
-
-Run:
 
 ```bash
 bun run cli/index.ts validate questions/ --strict
 ```
 
-Every diagnostic has a code, a location and a suggestion. If a real V2 file
-does not parse, that is a bug worth an issue.
+Every diagnostic has a code, a location and a suggestion. If a real V2 file does
+not parse, that is a bug worth an issue.

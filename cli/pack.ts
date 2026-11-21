@@ -64,6 +64,7 @@ export async function packCommand(
     "index.html",
     "quiz.trivia",
     "pq-trivia.min.js",
+    "pq-qr.min.js",
     "style.css",
     "print.css",
     "manifest.json",
@@ -157,6 +158,10 @@ self.addEventListener("fetch", (event) => {
     await copyFile(
       join(ROOT, "dist/v3/pq-trivia.min.js"),
       join(outDir, "pq-trivia.min.js"),
+    );
+    await copyFile(
+      join(ROOT, "dist/v3/pq-qr.min.js"),
+      join(outDir, "pq-qr.min.js"),
     );
     await copyFile(
       join(ROOT, "dist/v3/themes/paper.css"),

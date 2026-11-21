@@ -29,8 +29,8 @@ const BUDGETS: Readonly<Record<string, number>> = {
   "player.js": 106,
   "pq-trivia.js": 105,
   // Phase 10 added pools, variants, streaks, lifelines, teams and the score
-  // rules. Measured 127.4 after the full diagnostic copy, so the number carries
-  // some air.
+  // rules. Measured 127.4 after the full diagnostic copy. The QR encoder moved
+  // to `pq-qr.min.js`, which the one-file bundle loads when a lobby opens.
   "pq-trivia.min.js": 129,
   "pq-trivia.core.min.js": 42,
   // The wizard itself. The player arrives as a lazy chunk, so this number is
@@ -48,6 +48,8 @@ const BUDGETS: Readonly<Record<string, number>> = {
   "multiplayer.js": 43,
   // The join QR, split out. A lobby that never shows one never downloads it.
   "chunk-qr.js": 8,
+  // The same encoder as a script, for the one-file bundle.
+  "pq-qr.min.js": 8,
   // Optional extras: worker parser, IndexedDB cache, manifest loading.
   "browser.js": 14,
   "parse.worker.js": 8,

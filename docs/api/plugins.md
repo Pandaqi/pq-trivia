@@ -52,8 +52,8 @@ Type => Confidence
 
 ## What the plugin gets
 
-`grade(question, response)` is pure. Return points, and say whether the answer
-is correct. `maxPoints` defaults to the question's score, and points are clamped
+`grade(question, response)` is pure. Return points and say whether the answer is
+correct. `maxPoints` defaults to the question's score, and points are clamped
 between zero and that maximum. Throw and core falls back to the self-reported
 custom grade, so a broken plugin costs a question, not the quiz.
 
@@ -86,7 +86,7 @@ questions are validated then.
 ## Rules
 
 - An id is lowercase letters, digits and dashes: `confidence`, `odd-words`.
-- `built-in` names are taken. Use your own.
+- Built-in type names are taken. Use your own.
 - A plugin has no DOM access through core. Input components live in your code.
 - Custom types are not part of any default build. They cost what your code
   costs.

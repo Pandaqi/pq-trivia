@@ -20,6 +20,51 @@ import type {
 } from "../types";
 
 type QrMatrix = readonly (readonly boolean[])[];
+type QrModule = { readonly encode: QrEncoder };
+type QrEncoder = (
+  text: string,
+  options: { readonly ecc: "M"; readonly border: number },
+) => { readonly data: QrMatrix };
+
+/** The one-file bundle's own URL, while it is still the script being run. */
+const SCRIPT_URL =
+  typeof document === "undefined"
+    ? ""
+    : ((document.currentScript as HTMLScriptElement | null)?.src ?? "");
+
+let encoderScript: Promise<QrModule> | null = null;
+
+/** `pq-qr.min.js` beside the one-file bundle. The ES modules use their chunk. */
+function encoderFromScript(): Promise<QrModule> {
+  if (typeof document === "undefined" || SCRIPT_URL === "") {
+    return Promise.reject(new Error("No QR script."));
+  }
+  encoderScript ??= new Promise<QrModule>((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = new URL("pq-qr.min.js", SCRIPT_URL).href;
+    script.async = true;
+    script.onload = () => {
+      const api = (globalThis as { PQTriviaQR?: QrModule }).PQTriviaQR;
+      if (api === undefined) {
+        reject(new Error("No QR encoder."));
+      } else {
+        resolve(api);
+      }
+    };
+    script.onerror = () => reject(new Error("No QR script."));
+    document.head.append(script);
+  });
+  return encoderScript;
+}
+
+/** The chunk in the ES modules, the sibling script in the one-file bundle. */
+function loadEncoder(): Promise<QrModule> {
+  const ready = (globalThis as { PQTriviaQR?: QrModule }).PQTriviaQR;
+  if (ready !== undefined) {
+    return Promise.resolve(ready);
+  }
+  return import("./qr").catch(encoderFromScript);
+}
 
 /**
  * The join link as a QR code: one path, drawn from the module matrix.
@@ -33,7 +78,7 @@ function JoinQr({ link }: { readonly link: string }): JSX.Element | null {
   // screen is the only place that needs it, so it loads on its own.
   useEffect(() => {
     let live = true;
-    void import("./qr")
+    void loadEncoder()
       .then(({ encode }) => {
         if (live) {
           setMatrix(encode(link, { ecc: "M", border: 3 }).data);

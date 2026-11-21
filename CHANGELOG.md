@@ -14,8 +14,8 @@ The rewrite. Same Trivia Syntax, new bones.
   header. Pick a folder from disk at quiz start with `theme-upload`.
 - **One file.** `pq-trivia.min.js` has the player, Paper and the print sheet
   inside. Put the quiz in `<script id="quiz-text">` and open the page.
-- **`### Key` blocks.** `### Answers` with one value per line, ending at the next
-  key or heading. `##` stays the question shorthand.
+- **`#### Key` blocks.** `#### Answers` with one value per line, ending at the
+  next key or heading. `###` stays the question shorthand.
 - **Languages are back.** One file per language, `Language` + shared `ID`,
   order matching, `SyncAll`, a start-screen picker and `L` to switch mid-quiz.
   Answers, hints and reveals survive the switch.
@@ -40,6 +40,8 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Orders that listen.** `AnswersOrder` and `MediaOrder` finally do something.
 - **V2 keys and marks.** Space, `<` and `>`, `a` and `m` work; `~strike~` is
   back; `Sources` show under the question.
+- **More question types.** Estimate, rank, matrix, parts, classification,
+  diagram, hotspot and odd one out, next to the old ones.
 - **Interactive play.** Type answers, get graded, see results, review what you
   missed, resume an unfinished attempt.
 - **Real print.** Cover, rounds, one question per page, answer sheet, answer
@@ -52,8 +54,7 @@ The rewrite. Same Trivia Syntax, new bones.
 - **Encrypted quizzes.** `pq-trivia encrypt` with a passphrase.
 - **Offline pack.** One folder, opens from `file://`. It offers a reload when
   a new version is packed, instead of swapping the quiz mid-round.
-- **Transcripts.** `transcript="intro.txt"` under an audio or video player,
-  for the people captions leave out.
+- **Transcripts.** `transcript="intro.txt"` under an audio or video player.
 - **Share by seed.** A link carries the seed and the order. Never an answer.
 - **Class analytics.** One CSV, one row per question, across every saved
   attempt on the device.
@@ -73,13 +74,14 @@ The rewrite. Same Trivia Syntax, new bones.
 - **`<pq-quiz>` element.** Light DOM. One quiz per element.
 - **Events and view models.** `ScreenViewModel` is the renderer contract.
 - **Worker parsing.** `createWorkerParser()` above 1 MB, with a sync fallback.
-- **IndexedDB cache.** Text with ETag revalidation, 200 MB LRU, quota handling.
+- **IndexedDB cache.** Text with ETag revalidation, LRU eviction, quota handling.
 - **Manifests.** Explicit file lists. No probing, no `HEAD` requests.
 - **Live protocol v1.** Host owns state, players get an allowlist, reconnect
   tokens, late flags, rate limits.
-- **Budgets in CI.** Core 24 KB, player 48 KB, IIFE 60 KB. Gzipped.
-- **CLI.** Validate, format, migrate, build, pack, encrypt, grade, stats, docs,
-  plus `keygen` and `verify` for signed packs.
+- **Budgets in CI.** A gzipped limit for every artifact, checked by
+  `bun run size`.
+- **CLI.** Validate, format, migrate, build, import, pack, encrypt, grade,
+  stats, docs, plus `keygen` and `verify` for signed packs.
 - **Plugin question types.** `defineQuestionType` and
   `quiz.registerQuestionType`. The type grades itself and brings its own input
   component; core stays free of Preact and the DOM.
@@ -91,7 +93,7 @@ The rewrite. Same Trivia Syntax, new bones.
 - Author order is the default. `shuffleQuestions: true` when you want chaos.
 - Raw HTML is off. Use the syntax.
 - `FormatText` and `HiddenAtPlay` need real booleans.
-- Theme URLs resolve from the base, not the page.
+- Theme URLs resolve from the page's base URL, not the old fixed folder.
 - The toolbar no longer mutates config. `document.body` is never wiped.
 - Export no longer reshuffles.
 - `rtf` upload removed. It never worked.

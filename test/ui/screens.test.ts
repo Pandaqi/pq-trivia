@@ -92,7 +92,7 @@ describe("the player", () => {
     await settle();
 
     const hint = document.querySelector(".pq-type-hint");
-    expect(hint?.textContent).toContain("wanting 2 answers");
+    expect(hint?.textContent).toContain("Pick 2 answers");
   });
 
   test("the hints can be turned off", async () => {

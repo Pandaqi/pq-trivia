@@ -4,28 +4,21 @@
 
 [![CI](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml/badge.svg)](https://github.com/Pandaqi/pq-trivia/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6f4b98)](LICENSE)
-[![core 24 KB gzip](https://img.shields.io/badge/core-24%20KB%20gzip-839c66)](dist/README.md)
 
-Create quizzes with ease, play them however you like, nothing else needed.
+Write a quiz as plain text. Play it in a browser, print it, or grade it.
 
-* Quizzes are text files with a simple syntax that reads like normal English. Plain text in -> Playable, printable, gradable activity out.
-* No account, no online, no backend, no install, no ecosystem lock-in, no build step.
-* Use for educational quizzes, pub quizzes, trivia nights, anything! Free forever!
+- Quizzes are text files with a syntax that reads like English.
+- No account, no backend, no build step.
+- Pub quizzes, classrooms, trivia nights. Whatever you need it for.
 
-Main additions in V3:
-
-* A quiz wizard to create and edit quizzes visually (instead of just text) inside your browser!
-* Multiplayer mode connecting phones to the public screen! (Similar to _Kahoot!_ but without accounts, privacy issues, or other nonsense.)
-* Loads of new features, attributes, configurations, and control over the exact quiz.
-* More languages supported by default.
-
-I've used V2 for a few years in all the quizzes I sell at [The Wayward Melody](https://thewaywardmelody.com). It's still fine if you need something simple, but V3 completes a big wishlist of features and takes the framework to the next level :)
+V3 adds a visual quiz editor, phones-in-the-room live mode, more question types
+and more languages. V2 files still parse.
 
 ## Twenty-second start
 
-**Playing offline/local?** Download the `dist/v3/pq-trivia.min.js` file (the "one file fits all"-bundle). 
+Download `dist/v3/pq-trivia.min.js`, the one-file bundle.
 
-Create an `index.html` file next to it. Type something like this inside:
+Create an `index.html` next to it:
 
 ```html
 <script id="quiz-text" type="text/plain">
@@ -41,9 +34,9 @@ Create an `index.html` file next to it. Type something like this inside:
 <script src="pq-trivia.min.js"></script>
 ```
 
-Double-click to open the file in your browser and play!
+Double-click the file. That is a quiz.
 
-**Hosting from a server?** Put only the parts you need on the server. You can use a custom element in your `index.html` to make it even nicer:
+**Hosting it?** Put only what you need on the server, and use the element:
 
 ```html
 <link rel="stylesheet" href="dist/v3/themes/paper.css" />
@@ -54,42 +47,31 @@ Double-click to open the file in your browser and play!
 
 ## What it does
 
-|               |                                                                                |
-| ------------- | ------------------------------------------------------------------------------ |
-| **Play**      | Interactive, graded, results, review, resume. Keyboard first.                  |
-| **Print**     | Whole quiz, answer sheet, answer form, grade table, flash cards.               |
-| **Types**     | Open, choice, list, range, sort, match, cloze, sections, start/end.            |
-| **Languages** | One file per language, shared IDs or order, translated UI, live switching. |
-| **Looks**     | Paper theme, theme folders, fonts, randomized backgrounds, tokens, animations. |
-| **Offline**   | One folder on a USB stick. `file://` with no network.                          |
-| **Live**      | Optional phones-in-the-room bundle. Separate. Zero weight by default.          |
-| **Exports**   | Embedded JSON, standalone HTML, GIFT, QTI, CSV.                                |
-| **Tools**     | Validate, format, migrate, pack, encrypt, grade. Bun only.                     |
-| **Author**    | The wizard: slides, forms, Trivia Syntax and a preview in one page. Separate.  |
-
-## Sizes
-
-Gzipped, measured by `bun run size`:
-
-| File                      | Budget                |
-| ------------------------- | --------------------- |
-| `core.js`                 | 24 KB                 |
-| `player.js`               | 52 KB                 |
-| `pq-trivia.min.js` (IIFE) | 60 KB                 |
-| `multiplayer.js`          | 22 KB, separate       |
-| `browser.js`              | 8 KB, optional extras |
+|              |                                                                    |
+| ------------ | ------------------------------------------------------------------ |
+| **Play**     | Interactive, graded, results, review, resume. Keyboard first.       |
+| **Print**    | Whole quiz, answer sheet, answer form, grade table, flash cards.    |
+| **Types**    | Open, choice, list, range, estimate, sort, rank, match, cloze, matrix, parts, classification, diagram, hotspot, odd one out. |
+| **Languages**| One file per language, shared IDs or order, translated UI.          |
+| **Looks**    | Paper theme, theme folders, fonts, backgrounds, tokens, animation.  |
+| **Offline**  | One folder on a USB stick. `file://` with no network.               |
+| **Live**     | Phones join by code. Separate bundle.                               |
+| **Exports**  | Embedded JSON, standalone HTML, GIFT, QTI, CSV.                     |
+| **Tools**    | Validate, format, migrate, pack, encrypt, grade. Bun only.          |
+| **Author**   | The wizard: slides, forms, Trivia Syntax and a preview in one page. |
 
 ## Install
 
 ```bash
 bun install
 bun run build
-# or only the interface language you need
-bun run build --languages nl
 ```
 
-Copy from `dist/v3/`. The [install guide](docs/getting-started/install.md) has
-the three paths: one script tag, an ES module, or a package.
+Copy from `dist/v3/`. `bun run build --languages nl` ships one interface
+language. `bun run build --editor` adds the wizard.
+
+The [install guide](docs/getting-started/install.md) has the three paths: one
+script tag, an ES module, or a package.
 
 ## Documentation
 
@@ -103,16 +85,17 @@ the three paths: one script tag, an ES module, or a package.
 
 The docs are a VitePress site: `bun run docs:dev`.
 
-## Older versions
+## Demos and older versions
 
-| Folder           | What                                                     |
-| ---------------- | -------------------------------------------------------- |
-| `dist/v3/`       | Current.                                                 |
+Runnable demos live in `examples/feature-demos/`: `index.html` links them all.
+`examples/quick-start-template/` is the smallest folder that works.
+
+| Folder           | What                                                    |
+| ---------------- | ------------------------------------------------------- |
+| `dist/v3/`       | Current.                                                |
 | `dist/v2/`       | Frozen V2. `pq-trivia.min.js`, 108 KB. Works, unchanged. |
-| `dist/v1-final/` | Older still.                                             |
-| `template/`      | The V2 starter folder. Still works, still points at V2.  |
+| `dist/v1-final/` | Older still.                                            |
 
-V3 demos live in `examples/`: player, element, print, custom, multiplayer.
 V2 files parse unchanged. See [migrating from V2](docs/getting-started/migrating-from-v2.md).
 
 ## Working on it
@@ -120,19 +103,19 @@ V2 files parse unchanged. See [migrating from V2](docs/getting-started/migrating
 ```bash
 bun run check     # types
 bun run lint      # layers and hygiene
-bun test          # under a second
+bun test          # under a minute
 bun run build
 bun run size      # budgets
 bun run bench     # 10k questions
 bun run release:dry
 ```
 
-Read `docs/` before changing anything. Read `CODING_STYLE.md` too.
+Read `docs/` before changing anything. Read `CODING-STYLE.md` too.
 
 ## Built with
 
-Preact for the renderer. Trystero, only in the multiplayer bundle. VitePress
-for these docs. Nothing else.
+Preact for the renderer. Trystero, only when you want phones. VitePress for the
+docs. Nothing else.
 
 ## License
 

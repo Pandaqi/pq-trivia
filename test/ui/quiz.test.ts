@@ -84,7 +84,7 @@ describe("print", () => {
       ...document.querySelectorAll(".pq-print-sheet .pq-type-hint"),
     ];
     expect(hints.map((node) => node.textContent)).toContain(
-      "This is a multiple choice question wanting 1 answer, 1 point each.",
+      "Multiple choice. Pick 1 answer, 1 point each.",
     );
   });
 

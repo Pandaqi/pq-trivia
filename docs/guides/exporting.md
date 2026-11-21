@@ -1,6 +1,6 @@
 # Exporting
 
-Everything here is a pure function. The plan is never mutated, the author's
+Every export is a pure function. The plan is never mutated, and the author's
 order is never reshuffled.
 
 ## From the page
@@ -8,36 +8,80 @@ order is never reshuffled.
 The results screen downloads JSON or a handout. The toolbar prints.
 
 ```js
-import { downloadQuizJson, downloadQuizHandout } from "pq-trivia";
+import {
+  downloadQuizJson,
+  downloadQuizHandout,
+  downloadQuizCsv,
+  downloadQuizGift,
+  downloadQuizQti,
+  downloadQuizGrades,
+  downloadQuizTrivia,
+} from "pq-trivia";
 
-downloadQuizJson(quiz); // embedded JSON v3
-downloadQuizHandout(quiz); // one HTML file, answers included
+downloadQuizJson(quiz);     // embedded JSON v3
+downloadQuizHandout(quiz);  // one HTML file, answers included
+downloadQuizCsv(quiz);      // one row per question
+downloadQuizGift(quiz);     // Moodle
+downloadQuizQti(quiz);      // Canvas
+downloadQuizGrades(quiz);   // results so far, as CSV
+downloadQuizTrivia(quiz);   // the source text back
+```
+
+Or use the controller:
+
+```js
+quiz.export.embedded();
+quiz.export.csv();
+quiz.export.gift();
+quiz.export.qti();
+quiz.export.grades(); // null before there is a plan
 ```
 
 ## From the CLI
 
 ```bash
-bun run cli/index.ts build quiz.trivia --format html  --out quiz.html
-bun run cli/index.ts build quiz.trivia --format json  --out quiz.json
-bun run cli/index.ts build quiz.trivia --format gift  --out quiz.gift
-bun run cli/index.ts build quiz.trivia --format qti   --out quiz.xml
-bun run cli/index.ts build quiz.trivia --format csv   --out questions.csv
+bun run cli/index.ts build quiz.trivia --format html --out quiz.html
+bun run cli/index.ts build quiz.trivia --format html --answers --out handout.html
+bun run cli/index.ts build quiz.trivia --format json --out quiz.json
+bun run cli/index.ts build quiz.trivia --format gift --out quiz.gift
+bun run cli/index.ts build quiz.trivia --format qti  --out quiz.xml
+bun run cli/index.ts build quiz.trivia --format csv  --out questions.csv
 ```
 
 | Format           | Use                                 |
 | ---------------- | ----------------------------------- |
-| Embedded JSON v3 | offline packs, other tools          |
-| Standalone HTML  | one file to email or host           |
-| HTML handout     | print, with answers                 |
+| Embedded JSON v3 | Offline packs, other tools          |
+| Standalone HTML  | One file to email or host           |
+| HTML + `--answers` | A handout for printing            |
 | GIFT / QTI       | Moodle, Canvas, Blackboard          |
-| CSV              | spreadsheets, Kahoot/Quizlet import |
+| CSV              | Spreadsheets, Kahoot/Quizlet import |
 | Offline pack     | USB stick, `file://`                |
+
+## Import
+
+A spreadsheet or a Markdown file into Trivia Syntax:
+
+```bash
+bun run cli/index.ts import questions.csv --out quiz.trivia
+bun run cli/index.ts import notes.md --format markdown --out quiz.trivia
+```
+
+CSV expects a header row. Markdown reads headings as questions and bullets as
+answers. The importer reports columns it does not know instead of guessing.
+
+## Count and check
+
+```bash
+bun run cli/index.ts stats questions/
+```
+
+Questions, rounds, points and types, without loading a browser.
 
 ## Sharing the order, not the answers
 
 The settings panel copies a link with the seed and the order flags in it:
-`?seed=music-night&shuffle=1`. Open it and you get the same plan. The answers
-never travel in a URL.
+`?seed=music-night&shuffle=1`. Open it and you get the same plan. Answers never
+travel in a URL.
 
 ```js
 import { shareQuizUrl, copyQuizShareLink } from "pq-trivia";
@@ -53,11 +97,17 @@ answered, correct, correct percent, points and average points. The summary at
 the top counts graded attempts and the average score.
 
 ```js
-import { analyticsCsv } from "pq-trivia/core";
+import { downloadQuizAttempts } from "pq-trivia";
+
+await downloadQuizAttempts(quiz); // false when nothing is saved
 ```
 
-The settings panel has **Save class analytics**. The saved attempts are the
-same records the resume prompt reads, so nothing is collected twice.
+The settings panel has **Save class analytics**. The saved attempts are the same
+records the resume prompt reads, so nothing is collected twice.
+
+`analyticsCsv(attempts)` is the function behind it. It lives in
+`src/core/export/analytics.ts` and is not part of `pq-trivia/core`; import it
+directly if you keep your own list of attempts.
 
 ## Grading a stack of answers
 
